@@ -1,0 +1,6 @@
+Remora is free software: GPL-3.0-or-later (see LICENSE.txt). It bundles:
+
+- Outfit, by the Outfit Project Authors (https://github.com/Outfitio/Outfit-Fonts),
+  under the SIL Open Font License 1.1 (Outfit-OFL.txt).
+- Brand logos from Simple Icons 13.21.0 (https://simpleicons.org), CC0 1.0. The logos
+  remain trademarks of their owners; Remora shows them only to identify the connected tool.

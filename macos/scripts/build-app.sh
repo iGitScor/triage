@@ -15,6 +15,8 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/Outfit.woff2 "$APP/Contents/Resources/"
 cp -R Resources/en.lproj Resources/fr.lproj "$APP/Contents/Resources/"
 cp -R Resources/Logos "$APP/Contents/Resources/"
+cp ../LICENSE "$APP/Contents/Resources/LICENSE.txt"
+cp Resources/LICENCES.txt Resources/Outfit-OFL.txt "$APP/Contents/Resources/"
 [ -f Resources/AppIcon.icns ] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 
 # Prefer an Apple-issued certificate: macOS remembers Keychain access per team ID, so rebuilds don't prompt.
