@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://triage.iscor.me/sitemap.xml

@@ -1,0 +1,72 @@
+/* Myna design tokens: the single source for the app, the docs and the marketing site.
+   Palette: off-white, black, one lime accent. Lime is only ever a fill (with
+   --on-accent text on it) or text on dark surfaces: on light backgrounds it has
+   no contrast (≈1.1:1), so accent text and icons there use --accent-text
+   (≥ 5:1 on every light surface). */
+
+:root {
+  --backdrop: #f0f0e8;
+  --backdrop-2: #f0f0e8;
+  --surface: #f7f7f1;
+  --card: #e8e8df;
+  --card-2: #dcdcd2;
+  --field: #ffffff;
+  --border: #d0d0c8;
+  --ink: #111111;
+  --ink-soft: #333330;
+  --muted: #55554e;
+  --line: rgba(17, 17, 17, 0.08);
+  --accent: #b9ff66;
+  --accent-deep: #9de049;
+  --accent-soft: rgba(185, 255, 102, 0.35);
+  --accent-text: #356509;
+  --on-accent: #111111;
+  --progress: #111111;
+  --focus: #111111;
+  --navy: #111111;
+  --cream: #f0f0e8;
+  --on-dark: #f0f0e8;
+  --on-dark-muted: #a3a39b;
+  --dark: #111111;
+  --dark-2: #1c1c1c;
+  --dark-3: #2a2a2a;
+  /* Status text on every light surface, --card-2 included: at least 4.5:1. */
+  --ok: #146b50;
+  --warn: #725200;
+  --danger: #a82c23;
+  --r-xl: 34px;
+  --r-lg: 26px;
+  --r-md: 18px;
+  --font: 'Outfit Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --backdrop: #0e0e14;
+    --backdrop-2: #0e0e14;
+    --surface: #13131c;
+    --card: #1a1a26;
+    --card-2: #242433;
+    --field: #13131c;
+    --border: #2a2a3a;
+    --ink: #e4e4ec;
+    --ink-soft: #c4c4d0;
+    --muted: #8c8ca2;
+    --line: rgba(255, 255, 255, 0.08);
+    --accent-soft: rgba(185, 255, 102, 0.14);
+    --accent-text: #b9ff66;
+    --progress: #b9ff66;
+    --focus: #b9ff66;
+    --navy: #0e0e14;
+    --cream: #e4e4ec;
+    --dark: #07070b;
+    --dark-2: #13131c;
+    --dark-3: #242433;
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    color-scheme: dark;
+  }
+}

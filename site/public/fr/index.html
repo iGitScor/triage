@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Remora — Boîte de réception GitHub, GitLab, Slack et Linear pour Mac</title>
+    <meta name="description" content="Relectures de code, merge requests, mentions Slack et tickets Linear dans une seule boîte, dans la barre des menus du Mac. Gratuit, open source, sans compte." />
+    <link rel="canonical" href="https://triage.iscor.me/fr/" />
+    <link rel="alternate" hreflang="fr" href="https://triage.iscor.me/fr/" />
+    <link rel="alternate" hreflang="en" href="https://triage.iscor.me/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://triage.iscor.me/" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f0e8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e14" />
+    <link rel="icon" type="image/svg+xml" href="/site/favicon.svg" />
+    <link rel="apple-touch-icon" href="/site/apple-touch-icon.png" />
+    <link rel="preload" href="/site/outfit.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/site/tokens.css" />
+    <link rel="stylesheet" href="/site/site.css" />
+    <link rel="stylesheet" href="/site/remora.css" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Remora" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:url" content="https://triage.iscor.me/fr/" />
+    <meta property="og:title" content="Remora — Boîte de réception GitHub, GitLab, Slack et Linear pour Mac" />
+    <meta property="og:description" content="Relectures de code, merge requests, mentions Slack et tickets Linear dans une seule boîte, dans la barre des menus du Mac. Gratuit, open source, sans compte." />
+    <meta property="og:image" content="https://triage.iscor.me/site/og.fr.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Remora : tout ce qui a besoin de vous, dans la barre des menus du Mac. La boîte avec réponses, relectures et tâches rangées par ce qu’il faut faire." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Remora — Boîte de réception GitHub, GitLab, Slack et Linear pour Mac" />
+    <meta name="twitter:description" content="Relectures de code, merge requests, mentions Slack et tickets Linear dans une seule boîte, dans la barre des menus du Mac. Gratuit, open source, sans compte." />
+    <meta name="twitter:image" content="https://triage.iscor.me/site/og.fr.png" />
+    <script src="/site/site.js" defer></script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Remora",
+  "url": "https://triage.iscor.me/fr/",
+  "description": "Remora est une boîte de réception dans la barre des menus du Mac : relectures de code, merge requests, mentions Slack et tickets Linear, rangés par ce que vous avez à faire. Sur l’appareil, sans compte, seulement les outils autorisés.",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Productivity",
+  "operatingSystem": "macOS 14 or later",
+  "softwareVersion": "0.2.0",
+  "inLanguage": [
+    "en",
+    "fr"
+  ],
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "downloadUrl": "https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg",
+  "installUrl": "https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg",
+  "screenshot": [
+    "https://triage.iscor.me/site/screens/myturn.fr.light.png",
+    "https://triage.iscor.me/site/screens/waiting.fr.light.png",
+    "https://triage.iscor.me/site/screens/snoozed.fr.light.png"
+  ],
+  "image": "https://triage.iscor.me/site/og.fr.png",
+  "codeRepository": "https://github.com/iGitScor/triage",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  }
+}
+    </script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Mes données passent-elles par un serveur Remora ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS. Pas de télémétrie, pas d’analytics, pas de rapports de plantage."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Faut-il Claude ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre Mac, sans IA générative. Claude n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Oui. Indiquez votre adresse en connectant le compte : Remora ne parle qu’à celle-ci. Configuration de chaque outil : connecter vos outils (en anglais)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Existe-t-il une version Windows ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Elle arrive : une app Windows construite avec Tauri, avec les mêmes règles et le même modèle de conformité. Son cœur et les quatre sources sont prêts ; l’app dans la zone de notification suit."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Pourquoi macOS demande-t-il le mot de passe du trousseau ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une app qui n’est pas signée par un développeur enregistré. Choisissez Toujours autoriser."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "macOS dit qu’il ne peut pas vérifier l’app ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Remora n’est pas encore notarisée. Clic droit, puis Ouvrir ; sous macOS 15, Réglages Système → Confidentialité et sécurité → Ouvrir quand même. macOS ne demande qu’une fois."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Combien ça coûte ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Rien. Remora est un logiciel libre sous licence GPL-3.0-or-later, et son code source est sur GitHub : votre équipe sécurité peut lire exactement ce qu’elle fait."
+      }
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu</a>
+    <header class="site-header">
+      <div class="wrap header-bar">
+        <a class="brand brand-remora" href="/fr/" aria-label="Remora, accueil"><span class="brand-disc"><svg viewBox="5 35 88 32" fill="currentColor" aria-hidden="true"><path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z"/><path fill-rule="evenodd" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z"/></svg></span><span class="brand-name">Remora</span></a>
+        <nav class="site-nav" aria-label="Navigation principale"><ul><li><a href="/fr/fonctionnalites">Fonctionnalités</a></li><li><a href="/fr/confidentialite">Confidentialité et conformité</a></li><li><a href="https://github.com/iGitScor/triage">GitHub</a></li></ul></nav>
+        <div class="header-actions">
+          <nav class="lang-switch" aria-label="Langue"><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr" aria-label="Français" aria-current="true">FR</a><a href="/en/" hreflang="en" lang="en" data-lang="en" aria-label="English">EN</a></nav>
+          <a class="btn btn-primary btn-sm" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Télécharger</a>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="wrap hero-grid">
+          <div>
+            <span class="eyebrow">Barre des menus · macOS · bientôt Windows</span>
+            <h1 id="hero-title">Tout ce qui a<br /><span class="mark">besoin de vous.</span></h1>
+            <p class="lead">Rien de plus. Relectures de code, vos merge requests, mentions Slack et tickets Linear, dans une seule boîte de réception, dans la barre des menus. Rangés par ce que vous avez à faire, pas par leur provenance.</p>
+            <div class="ctas"><a class="btn btn-primary btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Télécharger pour Mac <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14M7 12l5 5 5-5M5 21h14"/></svg></a><a class="btn btn-secondary btn-lg" href="/fr/confidentialite">Confidentialité et conformité</a></div>
+            <p class="cta-note">Gratuit et open source. macOS 14 ou ultérieur, sans compte. La première fois, clic droit sur Remora puis Ouvrir : l’app n’est pas encore notarisée.</p>
+            <p class="notice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Remora parle français et anglais, tout comme le tri sur l’appareil.</span></p>
+          </div>
+          <div class="desk">
+            <div class="menubar" aria-hidden="true">
+              <span class="status-item"><span class="logo logo-fish"></span><span class="counter"><span class="logo logo-slack"></span>2</span><span class="counter"><span class="logo logo-github"></span>3</span><span class="counter"><span class="logo logo-gitlab"></span>1</span><span class="counter"><span class="logo logo-notion"></span>1</span></span>
+              <svg class="glyph" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.9a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M12 20h.01"/></svg><svg class="glyph" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="17" height="10" rx="2.5"/><path d="M22 11v2M5 10h9v4H5z"/></svg><span>jeu. 9:41</span>
+            </div>
+            <div class="desk-body"><div class="popover"><picture class="screen"><source media="(prefers-color-scheme: dark)" type="image/webp" srcset="/site/screens/myturn.fr.dark.webp" /><source media="(prefers-color-scheme: dark)" srcset="/site/screens/myturn.fr.dark.png" /><source type="image/webp" srcset="/site/screens/myturn.fr.light.webp" /><img src="/site/screens/myturn.fr.light.png" alt="L’onglet À moi : réponses, relectures avec leur estimation, vos merge requests et tâches, rangées par ce qu’il y a à faire" width="800" height="1200" fetchpriority="high" decoding="async" /></picture></div></div>
+            <p class="desk-note">La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-tight" aria-label="Remora">
+        <div class="wrap"><div class="facts"><div class="fact"><strong>0</strong><span>serveur, compte ou traceur de notre part</span></div><div class="fact"><strong>4</strong><span>outils : GitHub, GitLab, Slack et Linear</span></div><div class="fact"><strong>5</strong><span>éléments par verbe, le reste replié</span></div><div class="fact"><strong>100 %</strong><span>du tri et du classement faits sur votre Mac</span></div></div></div>
+      </section>
+
+      <section class="section" aria-labelledby="tabs-title">
+        <div class="wrap">
+          <div class="section-head"><span class="eyebrow">En images</span><h2 id="tabs-title">À vous, aux autres, <span class="mark">plus tard.</span></h2><p class="lead">Trois onglets au lieu de quatre applis. Ce qui vous attend, ce que vous attendez, et ce que vous avez choisi de revoir plus tard.</p></div>
+          <ul class="tabs-show"><li><figure><picture class="screen screen-whole"><source media="(prefers-color-scheme: dark)" type="image/webp" srcset="/site/screens/myturn.fr.dark.webp" /><source media="(prefers-color-scheme: dark)" srcset="/site/screens/myturn.fr.dark.png" /><source type="image/webp" srcset="/site/screens/myturn.fr.light.webp" /><img src="/site/screens/myturn.fr.light.png" alt="L’onglet À moi : réponses, relectures avec leur estimation, vos merge requests et tâches, rangées par ce qu’il y a à faire" width="800" height="1200" loading="lazy" decoding="async" /></picture><figcaption><strong>À moi</strong>Quelqu’un attend après vous : une réponse, une relecture, une correction, une tâche, un rappel.</figcaption></figure></li><li><figure><picture class="screen screen-whole"><source media="(prefers-color-scheme: dark)" type="image/webp" srcset="/site/screens/waiting.fr.dark.webp" /><source media="(prefers-color-scheme: dark)" srcset="/site/screens/waiting.fr.dark.png" /><source type="image/webp" srcset="/site/screens/waiting.fr.light.webp" /><img src="/site/screens/waiting.fr.light.png" alt="L’onglet En attente : les merge requests qui attendent des relecteurs, avec une relance suggérée" width="800" height="1200" loading="lazy" decoding="async" /></picture><figcaption><strong>En attente</strong>Vous attendez les autres. Remora suggère des relecteurs et rédige la relance.</figcaption></figure></li><li><figure><picture class="screen screen-whole"><source media="(prefers-color-scheme: dark)" type="image/webp" srcset="/site/screens/snoozed.fr.dark.webp" /><source media="(prefers-color-scheme: dark)" srcset="/site/screens/snoozed.fr.dark.png" /><source type="image/webp" srcset="/site/screens/snoozed.fr.light.webp" /><img src="/site/screens/snoozed.fr.light.png" alt="L’onglet Reportés : ce qui revient lundi, et un conseil sur ce que vous repoussez sans cesse" width="800" height="1200" loading="lazy" decoding="async" /></picture><figcaption><strong>Reportés</strong>Hors de vue jusqu’au bon moment, ou jusqu’à du nouveau. Avec une raison.</figcaption></figure></li></ul>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="verbs-title">
+        <div class="wrap feature-row">
+          <div>
+            <span class="eyebrow">Des verbes, pas des applis</span>
+            <h2 id="verbs-title">Rangé par <span class="mark">ce qu’il faut faire.</span></h2>
+            <p class="lead">Une question sur Slack et un commentaire GitLab finissent tous deux dans À répondre. Les messages sont triés sur votre Mac par des règles de mots-clés et le modèle de langue d’Apple embarqué. Pas d’IA générative, rien n’est envoyé.</p>
+          </div>
+          <div><ul class="verbs"><li><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></span>À répondre</li><li><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>À relire</li><li><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></span>À corriger</li><li><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5v7M8.3 7.2C12 9 13 12 15.5 12"/></svg></span>Prêtes à fusionner</li><li><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></span>À faire</li><li><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>Rappels</li><li class="is-quiet"><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 11h16M4 16h10"/></svg></span>À lire</li><li class="is-quiet"><span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/></svg></span>En attente des autres</li></ul><p class="cta-note">À lire et En attente sont affichés, jamais comptés : le badge ne compte que ce qui a besoin de vous.</p></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="line-title">
+        <div class="wrap feature-row">
+          <figure class="line-art" role="img" aria-label="Le poisson Remora tiré vers le bas depuis la barre des menus : une ligne de pêche suit le pointeur et une bulle indique dans 25 minutes.">
+            <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg">
+              <rect class="bar" x="-1" y="-1" width="522" height="38" />
+              <rect class="highlight" x="292" y="6" width="66" height="24" rx="6" />
+              <g class="ink" transform="translate(300 10) scale(0.56)">
+                <path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z" transform="translate(-5 -35)" />
+                <path fill-rule="evenodd" transform="translate(-5 -35)" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z" />
+              </g>
+              <rect class="soft" x="380" y="13" width="44" height="10" rx="5" />
+              <rect class="soft" x="436" y="13" width="64" height="10" rx="5" />
+              <path class="rod" d="M326 30 C 326 110, 250 150, 236 222" />
+              <g class="catch">
+                <path class="rod" d="M236 222 q -2 12 8 12" />
+                <rect class="bubble" x="150" y="244" width="196" height="62" rx="16" />
+                <text class="bubble-text" x="248" y="270" text-anchor="middle">dans 25 min</text>
+                <text class="bubble-sub" x="248" y="291" text-anchor="middle">10:06 · relâchez pour le nommer</text>
+                <text class="hint" x="372" y="282">↓ plus bas : plus tard</text>
+              </g>
+            </svg>
+          </figure>
+          <div>
+            <span class="eyebrow">Rappels</span>
+            <h2 id="line-title">Lancez un rappel <span class="mark">depuis la barre des menus.</span></h2>
+            <p class="lead">Attrapez le poisson et tirez vers le bas. Plus vous descendez, plus il revient tard : des minutes, puis des heures, puis des jours. Relâchez, tapez ce qu’il faut retenir, Entrée. Échap annule.</p>
+            <p class="cta-note">Ou appuyez sur + dans la boîte. À l’heure dite, une notification arrive, avec des boutons pour reporter.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="features-title">
+        <div class="wrap">
+          <div class="section-head"><span class="eyebrow">Fonctionnalités</span><h2 id="features-title">Moins de bruit, <span class="mark">plus de fait.</span></h2><p class="lead">Chaque fonctionnalité a un seul but : moins de choses en tête à la fois.</p></div>
+          <div class="grid grid-3"><article class="card card-field"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></span><h3>Terminé tant que rien ne change</h3><p>Marquez-le terminé et il disparaît, jusqu’à ce qu’un commit, une approbation ou une réponse le fasse revenir.</p></article><article class="card card-field"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span><h3>Reporter avec une raison</h3><p>En attente de quelqu’un, pas le temps, demande de la concentration. Chaque raison propose un retour adapté, dont « jusqu’à du nouveau ».</p></article><article class="card card-field"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4"/></svg></span><h3>Préparer la relecture</h3><p>« ~6 min · 4 fichiers · tests ✓ · Auth » sous chaque demande de relecture, à partir des chemins et du nombre de lignes seulement. Puis une session, les plus rapides d’abord.</p></article><article class="card card-field"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-2.5-5.1"/></svg></span><h3>Assistant d’attente</h3><p>Pas de relecteur sur votre merge request ? Des suggestions parmi ceux qui relisent d’habitude. Silence depuis un jour ? Une relance rédigée, que vous copiez. Remora n’envoie jamais rien.</p></article><article class="card card-field"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><h3>Des notifications qui agissent</h3><p>Approuvée, modifications demandées, tests en échec, un rappel à l’heure. Terminez ou reportez directement depuis la notification.</p></article><article class="card card-field"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span><h3>Apprend vos habitudes</h3><p>Ce que vous traitez vite et ce que vous repoussez, appris sur votre Mac. Ça départage, et une petite étoile dit pourquoi.</p></article></div>
+          <p class="cta-note"><a class="link-arrow" href="/fr/fonctionnalites">Toutes les fonctionnalités</a></p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="sources-title">
+        <div class="wrap">
+          <div class="section-head"><span class="eyebrow">Sources</span><h2 id="sources-title">Vos outils, <span class="mark">vos comptes.</span></h2><p class="lead">Connectez autant de comptes que nécessaire et nommez-les : « GitLab boulot », « Slack client ». Chacun s’ouvre dans son appli quand elle est installée.</p></div>
+          <div class="sources"><article class="source"><span class="logo logo-github"></span><div><h3>GitHub</h3><p>Les pull requests que vous avez ouvertes et les demandes de relecture. GitHub Enterprise aussi.</p></div></article><article class="source"><span class="logo logo-gitlab"></span><div><h3>GitLab</h3><p>Vos merge requests, celles que vous relisez, approbations et pipelines. Auto-hébergé aussi.</p></div></article><article class="source"><span class="logo logo-slack"></span><div><h3>Slack</h3><p>Mentions et messages directs, ouverts dans l’appli Slack.</p></div></article><article class="source"><span class="logo logo-linear"></span><div><h3>Linear</h3><p>Les tickets qui vous sont assignés, avec priorité et échéance, plus les mentions non lues.</p></div></article><article class="source"><span class="logo logo-claude"></span><div><h3>Claude (facultatif)</h3><p>Un court brief sur quoi traiter d’abord. Désactivé par défaut, et seulement si votre organisation l’autorise.</p></div></article><article class="source"><span class="logo logo-notion"></span><div><h3>Notion<span class="soon">bientôt</span></h3><p>Les tâches qui vous sont assignées dans les bases choisies.</p></div></article></div>
+        </div>
+      </section>
+
+      <section class="band" aria-labelledby="privacy-title">
+        <div class="wrap">
+          <div class="section-head"><span class="eyebrow">Confidentialité et conformité</span><h2 id="privacy-title">Pensé pour les équipes qui ont des règles.</h2><p>Aucune donnée ne quitte votre Mac, sauf vers les outils autorisés. Appliqué dans le code, vérifié par des tests, verrouillable par votre DSI.</p></div>
+          <div class="grid grid-3"><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Seulement les destinations autorisées</h3><p>Chaque outil déclare les adresses qu’il peut joindre. Toute autre adresse est bloquée, y compris les domaines qui imitent.</p></article><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg></span><h3>IA externe désactivée par défaut</h3><p>Claude est facultatif. Votre organisation peut l’interdire, et toutes les fonctions d’IA disparaissent.</p></article><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></span><h3>Géré par votre DSI</h3><p>Outils autorisés, IA et avatars se verrouillent par profil de configuration (MDM). Par stratégie de groupe sous Windows.</p></article></div>
+          <p class="cta-note"><a class="link-arrow" href="/fr/confidentialite">Chaque flux de données, et comment il est contrôlé</a></p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <div class="wrap">
+          <div class="section-head"><span class="eyebrow">FAQ</span><h2 id="faq-title">Bon à savoir</h2></div>
+          <div class="faq"><details><summary>Mes données passent-elles par un serveur Remora ?</summary><div><p>Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS. Pas de télémétrie, pas d’analytics, pas de rapports de plantage.</p></div></details><details><summary>Faut-il Claude ?</summary><div><p>Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre Mac, sans IA générative. Claude n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas.</p></div></details><details><summary>Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?</summary><div><p>Oui. Indiquez votre adresse en connectant le compte : Remora ne parle qu’à celle-ci. Configuration de chaque outil : <a href="https://github.com/iGitScor/triage/blob/main/docs/SOURCES.md">connecter vos outils</a> (en anglais).</p></div></details><details><summary>Existe-t-il une version Windows ?</summary><div><p>Elle arrive : une app Windows construite avec Tauri, avec les mêmes règles et le même modèle de conformité. Son cœur et les quatre sources sont prêts ; l’app dans la zone de notification suit.</p></div></details><details><summary>Pourquoi macOS demande-t-il le mot de passe du trousseau ?</summary><div><p>Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une app qui n’est pas signée par un développeur enregistré. Choisissez Toujours autoriser.</p></div></details><details><summary>macOS dit qu’il ne peut pas vérifier l’app ?</summary><div><p>Remora n’est pas encore notarisée. Clic droit, puis Ouvrir ; sous macOS 15, Réglages Système → Confidentialité et sécurité → Ouvrir quand même. macOS ne demande qu’une fois.</p></div></details><details><summary>Combien ça coûte ?</summary><div><p>Rien. Remora est un logiciel libre sous licence <a href="https://github.com/iGitScor/triage/blob/main/LICENSE">GPL-3.0-or-later</a>, et son code source est sur <a href="https://github.com/iGitScor/triage">GitHub</a> : votre équipe sécurité peut lire exactement ce qu’elle fait.</p></div></details></div>
+        </div>
+      </section>
+
+      <section class="section final" aria-labelledby="final-title">
+        <div class="wrap">
+          <h2 id="final-title">Votre boîte,<br />sans le <span class="mark">bruit.</span></h2>
+          <p class="lead">Connectez un outil, voyez ce qui a besoin de vous, fermez les autres onglets.</p>
+          <div class="ctas"><a class="btn btn-primary btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Télécharger pour Mac <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14M7 12l5 5 5-5M5 21h14"/></svg></a><a class="btn btn-ink btn-lg" href="https://github.com/iGitScor/triage">Code source sur GitHub</a></div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="footer-grid">
+          <div class="footer-brand"><a class="brand brand-remora" href="/fr/" aria-label="Remora, accueil"><span class="brand-disc"><svg viewBox="5 35 88 32" fill="currentColor" aria-hidden="true"><path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z"/><path fill-rule="evenodd" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z"/></svg></span><span class="brand-name">Remora</span></a><p>Une boîte de réception dans la barre des menus pour tout ce qui a besoin de vous. Elle tourne sur votre Mac et ne parle qu’aux outils autorisés.</p></div>
+          <nav aria-labelledby="f-product"><h2 id="f-product">Produit</h2><ul><li><a href="/fr/fonctionnalites">Fonctionnalités</a></li><li><a href="/fr/confidentialite">Confidentialité et conformité</a></li><li><a href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Télécharger pour Mac</a></li><li><a href="https://github.com/iGitScor/triage/releases">Notes de version</a></li></ul></nav><nav aria-labelledby="f-resources"><h2 id="f-resources">Ressources</h2><ul><li><a href="https://github.com/iGitScor/triage/blob/main/docs/SOURCES.md">Connecter vos outils (en anglais)</a></li><li><a href="https://github.com/iGitScor/triage/blob/main/docs/COMPLIANCE.md">Conformité et flux de données (en anglais)</a></li><li><a href="https://github.com/iGitScor/triage">Code source sur GitHub</a></li></ul></nav><nav aria-labelledby="f-trust"><h2 id="f-trust">Confiance</h2><ul><li><a href="https://github.com/iGitScor/triage/blob/main/LICENSE">Licence GPL-3.0-or-later</a></li><li><a href="https://github.com/iGitScor/triage/security">Signaler une vulnérabilité</a></li><li><a href="https://github.com/iGitScor/triage/issues">Questions et retours</a></li></ul></nav>
+        </div>
+        <div class="footer-bottom"><span>Remora est un logiciel libre sous licence GPL-3.0-or-later, conçu avec l’aide de Claude.</span><span>Logos des outils : Simple Icons (CC0) · police Outfit (OFL)</span></div>
+      </div>
+    </footer>
+  </body>
+</html>

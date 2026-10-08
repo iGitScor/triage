@@ -1,0 +1,453 @@
+/*
+  Remora's own components, on top of site.css (shared with Myna). Only tokens.css variables;
+  no inline styles anywhere, so the pages keep a strict style-src 'self'.
+*/
+
+/* ---------- Brand ---------- */
+
+.brand-remora {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brand-remora:hover {
+  color: var(--ink);
+}
+
+.brand-disc {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.brand-disc svg {
+  width: 24px;
+  height: auto;
+}
+
+.brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.center-page .brand-disc {
+  width: 44px;
+  height: 44px;
+}
+
+.center-page .brand-disc svg {
+  width: 32px;
+}
+
+.center-page .brand-name {
+  font-size: 30px;
+}
+
+/* ---------- Tool logos (Simple Icons, CC0), drawn in the current colour ---------- */
+
+.logo {
+  display: inline-block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  -webkit-mask: var(--logo) center / contain no-repeat;
+  mask: var(--logo) center / contain no-repeat;
+}
+
+.logo-github {
+  --logo: url('/site/logos/github.svg');
+}
+.logo-gitlab {
+  --logo: url('/site/logos/gitlab.svg');
+}
+.logo-slack {
+  --logo: url('/site/logos/slack.svg');
+}
+.logo-linear {
+  --logo: url('/site/logos/linear.svg');
+}
+.logo-notion {
+  --logo: url('/site/logos/notion.svg');
+}
+.logo-claude {
+  --logo: url('/site/logos/claude.svg');
+}
+.logo-fish {
+  --logo: url('/site/fish.svg');
+  width: 2.2em;
+}
+
+/* ---------- The desk: a menu bar and the Remora popover under it ---------- */
+
+.desk {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 85% 0%, var(--accent-soft), transparent 60%),
+    linear-gradient(160deg, var(--card) 0%, var(--backdrop) 70%);
+  box-shadow: 0 30px 70px -30px rgba(17, 17, 17, 0.35);
+}
+
+.menubar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  height: 34px;
+  padding: 0 14px;
+  background: rgba(247, 247, 241, 0.72);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.menubar .glyph {
+  width: 16px;
+  height: 16px;
+  opacity: 0.85;
+}
+
+.status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(17, 17, 17, 0.1);
+}
+
+.status-item .logo-fish {
+  font-size: 13px;
+}
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.counter .logo {
+  font-size: 12px;
+}
+
+.desk-body {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 18px 0 18px;
+}
+
+.popover {
+  position: relative;
+  width: min(100%, 360px);
+  margin-right: clamp(0px, 4vw, 40px);
+  margin-top: 8px;
+}
+
+.popover::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  right: 150px;
+  width: 16px;
+  height: 16px;
+  transform: rotate(45deg);
+  border-radius: 3px;
+  background: var(--backdrop);
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+
+.screen {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  border-bottom: 0;
+  background: var(--backdrop);
+  box-shadow: 0 24px 50px -20px rgba(17, 17, 17, 0.45);
+}
+
+.screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* A full screenshot, outside the desk. */
+.screen-whole {
+  border-bottom: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.desk-note {
+  margin: 0;
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .menubar {
+    background: rgba(19, 19, 28, 0.72);
+  }
+
+  .status-item {
+    background: rgba(255, 255, 255, 0.14);
+  }
+}
+
+/* ---------- The three tabs, side by side ---------- */
+
+.tabs-show {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2.5vw, 28px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tabs-show figure {
+  margin: 0;
+}
+
+.tabs-show figcaption {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.tabs-show figcaption strong {
+  display: block;
+  color: var(--ink);
+  font-size: 17px;
+}
+
+@media (max-width: 860px) {
+  .tabs-show {
+    grid-template-columns: minmax(0, 420px);
+    justify-content: center;
+  }
+}
+
+/* ---------- Verbs ---------- */
+
+.verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.verbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--card);
+  font-weight: 600;
+}
+
+.verbs li.is-quiet {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.verbs .dot {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.verbs .dot svg {
+  width: 13px;
+  height: 13px;
+}
+
+.verbs .is-quiet .dot {
+  background: var(--card-2);
+  color: var(--muted);
+}
+
+/* ---------- Drag a reminder: the fishing line ---------- */
+
+.line-art {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--card) 0%, var(--backdrop) 100%);
+}
+
+.line-art svg {
+  width: 100%;
+  height: auto;
+}
+
+.line-art .bar {
+  fill: var(--surface);
+  stroke: var(--line);
+}
+
+.line-art .ink {
+  fill: var(--ink);
+}
+
+.line-art .soft {
+  fill: var(--muted);
+}
+
+.line-art .rod {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.line-art .bubble {
+  fill: var(--dark);
+}
+
+.line-art .bubble-text {
+  fill: var(--accent);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.line-art .bubble-sub {
+  fill: var(--on-dark-muted);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.line-art .hint {
+  fill: var(--muted);
+  font-family: var(--font);
+  font-size: 12px;
+}
+
+.line-art .highlight {
+  fill: var(--ink);
+  opacity: 0.1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .line-art .rod {
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    animation: cast 1.6s 0.4s ease-out forwards;
+  }
+
+  .line-art .catch {
+    opacity: 0;
+    animation: rise 0.5s 1.8s ease-out forwards;
+  }
+}
+
+@keyframes cast {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rise {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Sources ---------- */
+
+.sources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.source {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 20px;
+  border-radius: var(--r-md);
+  background: var(--card);
+}
+
+.source .logo {
+  font-size: 26px;
+  margin-top: 2px;
+}
+
+.source h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.source p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.source .soon {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--card-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: 2px;
+}
+
+@media (max-width: 900px) {
+  .sources {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .sources {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Keyboard and MDM snippets ---------- */
+
+.code-card pre code .tok-key {
+  color: var(--accent-text);
+}
+
+.band .code-card pre code .tok-key {
+  color: var(--accent);
+}

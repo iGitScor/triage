@@ -1,0 +1,21 @@
+# Remora
+
+> Remora is a menu bar inbox for your Mac: code reviews, merge requests, Slack mentions and Linear issues, sorted by what you have to do. On-device, no account, only the tools you allow.
+
+Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
+(To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
+ranking on the device, and only talks to the tools the user or their organization allows. A Windows version is in
+progress. French pages: https://triage.iscor.me/fr/.
+
+## Pages
+
+- [Remora — Menu bar inbox for GitHub, GitLab, Slack and Linear](https://triage.iscor.me/en/): Code reviews, merge requests, Slack mentions and Linear issues in one Mac menu bar inbox, sorted by what to do. Free, open source, on-device, no account.
+- [Features — Remora, the menu bar inbox for developers](https://triage.iscor.me/en/features): Verbs instead of apps, Done and Pin, snooze with a reason, reminders dragged from the menu bar, review prep and sessions, a waiting assistant. All of Remora.
+- [Privacy & compliance — Remora sends nothing but to your tools](https://triage.iscor.me/en/privacy): No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow.
+
+## Links
+
+- [Download for Mac](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)
+- [Source code](https://github.com/iGitScor/triage)
+- [Compliance and data flows](https://github.com/iGitScor/triage/blob/main/docs/COMPLIANCE.md)
+- [Connecting your tools](https://github.com/iGitScor/triage/blob/main/docs/SOURCES.md)

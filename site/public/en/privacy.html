@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy &amp; compliance — Remora sends nothing but to your tools</title>
+    <meta name="description" content="No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow." />
+    <link rel="canonical" href="https://triage.iscor.me/en/privacy" />
+    <link rel="alternate" hreflang="en" href="https://triage.iscor.me/en/privacy" />
+    <link rel="alternate" hreflang="fr" href="https://triage.iscor.me/fr/confidentialite" />
+    <link rel="alternate" hreflang="x-default" href="https://triage.iscor.me/" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f0e8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e14" />
+    <link rel="icon" type="image/svg+xml" href="/site/favicon.svg" />
+    <link rel="apple-touch-icon" href="/site/apple-touch-icon.png" />
+    <link rel="preload" href="/site/outfit.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/site/tokens.css" />
+    <link rel="stylesheet" href="/site/site.css" />
+    <link rel="stylesheet" href="/site/remora.css" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Remora" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:url" content="https://triage.iscor.me/en/privacy" />
+    <meta property="og:title" content="Privacy &amp; compliance — Remora sends nothing but to your tools" />
+    <meta property="og:description" content="No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow." />
+    <meta property="og:image" content="https://triage.iscor.me/site/og.en.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Remora: everything that needs you, in your Mac’s menu bar. The inbox with replies, reviews and tasks sorted by what to do." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Privacy &amp; compliance — Remora sends nothing but to your tools" />
+    <meta name="twitter:description" content="No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow." />
+    <meta name="twitter:image" content="https://triage.iscor.me/site/og.en.png" />
+    <script src="/site/site.js" defer></script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://triage.iscor.me/en/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Privacy & compliance",
+      "item": "https://triage.iscor.me/en/privacy"
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-bar">
+        <a class="brand brand-remora" href="/en/" aria-label="Remora, home"><span class="brand-disc"><svg viewBox="5 35 88 32" fill="currentColor" aria-hidden="true"><path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z"/><path fill-rule="evenodd" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z"/></svg></span><span class="brand-name">Remora</span></a>
+        <nav class="site-nav" aria-label="Main navigation"><ul><li><a href="/en/features">Features</a></li><li><a href="/en/privacy" aria-current="page">Privacy & compliance</a></li><li><a href="https://github.com/iGitScor/triage">GitHub</a></li></ul></nav>
+        <div class="header-actions">
+          <nav class="lang-switch" aria-label="Language"><a href="/fr/confidentialite" hreflang="fr" lang="fr" data-lang="fr" aria-label="Français">FR</a><a href="/en/privacy" hreflang="en" lang="en" data-lang="en" aria-label="English" aria-current="true">EN</a></nav>
+          <a class="btn btn-primary btn-sm" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download</a>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-hero" aria-labelledby="page-title">
+        <div class="wrap">
+          <span class="eyebrow">Privacy & compliance</span>
+          <h1 id="page-title">Only the tools <span class="mark">you allow.</span></h1>
+          <p class="lead">Remora has no server, no account and no telemetry. It talks directly to the tools you connect, and to nothing else. Built for organizations with strict data rules.</p>
+        </div>
+      </section>
+
+      <section class="section-tight" aria-labelledby="out-title">
+        <div class="wrap">
+          <div class="section-head"><span class="eyebrow">On the network</span><h2 id="out-title">What leaves your Mac</h2><p class="lead">Read requests to your own tools, with your own tokens. Data comes back and stays on your Mac.</p></div>
+          <div class="table-wrap"><table><caption class="visually-hidden">What leaves your Mac</caption><thead><tr><th scope="col">Flow</th><th scope="col">Destination</th><th scope="col">What is sent</th><th scope="col">Default</th></tr></thead><tbody><tr><th scope="row">GitHub</th><td><code>api.github.com</code>, <code>github.com</code>, avatars, or your GitHub Enterprise host</td><td>Your token; read requests for your pull requests, review requests and changed file paths</td><td>Allowed</td></tr><tr><th scope="row">GitLab</th><td>Your GitLab host</td><td>Your token; read requests for your merge requests, approvals, pipelines and changed file paths</td><td>Allowed</td></tr><tr><th scope="row">Slack</th><td><code>slack.com</code></td><td>Your user token; searches for your mentions and direct messages</td><td>Allowed</td></tr><tr><th scope="row">Linear</th><td><code>api.linear.app</code></td><td>Your API key; read requests for assigned issues and notifications</td><td>Allowed</td></tr><tr><th scope="row">Claude</th><td>Anthropic, through Claude Code or <code>api.anthropic.com</code></td><td>Titles, contexts, authors and statuses of inbox items</td><td><strong>Off</strong></td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="stay-title">
+        <div class="wrap feature-row">
+          <div><span class="eyebrow">On your Mac</span><h2 id="stay-title">What stays where</h2></div>
+          <div class="table-wrap"><table><caption class="visually-hidden">What stays where</caption><thead><tr><th scope="col">Data</th><th scope="col">Where</th></tr></thead><tbody><tr><th scope="row">Inbox cache, states, reminders, snooze history, preferences</th><td><code>~/Library/Application Support/Remora</code>, protected by FileVault</td></tr><tr><th scope="row">Tokens</th><td>One item in your login Keychain</td></tr><tr><th scope="row">What you handle fast or snooze</th><td><code>learning.json</code>, used for ranking on this Mac only</td></tr><tr><th scope="row">Review prep</th><td>File paths and line counts only; code is never stored</td></tr><tr><th scope="row">Drafted messages</th><td>Written from templates, copied to your clipboard, never sent</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="band" aria-labelledby="enforce-title">
+        <div class="wrap">
+          <div class="section-head"><span class="eyebrow">Enforced, not promised</span><h2 id="enforce-title">Checked in code, <span class="mark">covered by tests.</span></h2></div>
+          <div class="grid grid-3"><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Declared destinations</h3><p>Every plugin declares the hosts it may reach. A test fails if one doesn’t.</p></article><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><h3>One gate</h3><p>Plugins only get a network client limited to their own hosts. Anything else fails with “Blocked: not an allowed destination”, look-alike domains included.</p></article><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg></span><h3>External AI off by default</h3><p>Claude plugins are refused until external AI is allowed; then the brief, summaries and triage appear.</p></article><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></span><h3>On-device intelligence</h3><p>Sorting messages, topic similarity, ranking and snooze advice use Apple’s on-device language models. Nothing is sent.</p></article><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6"/></svg></span><h3>No telemetry</h3><p>No analytics, no crash reporting, no update pings. Fonts and logos are bundled, never downloaded.</p></article><article class="card"><span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span><h3>Erase local data</h3><p>Settings → Privacy lists every connected account’s destinations, and erases everything Remora stored in one click.</p></article></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="mdm-title">
+        <div class="wrap feature-row">
+          <div>
+            <span class="eyebrow">For IT</span>
+            <h2 id="mdm-title">Lock the policy <span class="mark">with MDM.</span></h2>
+            <p class="lead">Deploy a configuration profile for the preference domain <code>fr.igitscor.remora</code>. Settings → Privacy then shows “Managed by your organization”, and users can’t change it.</p>
+          </div>
+          <figure class="code-card">
+            <figcaption><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Configuration profile payload</span></figcaption>
+            <pre><code><span class="tok-note">&lt;!-- Preference domain fr.igitscor.remora --&gt;</span>
+&lt;key&gt;<span class="tok-key">AllowedPlugins</span>&lt;/key&gt;
+&lt;array&gt;
+  &lt;string&gt;github&lt;/string&gt;
+  &lt;string&gt;gitlab&lt;/string&gt;
+  &lt;string&gt;linear&lt;/string&gt;
+&lt;/array&gt;
+&lt;key&gt;<span class="tok-key">AllowExternalAI</span>&lt;/key&gt;&lt;false/&gt;
+&lt;key&gt;<span class="tok-key">AllowRemoteImages</span>&lt;/key&gt;&lt;true/&gt;</code></pre>
+          </figure>
+        </div>
+        <div class="wrap">
+          <div class="table-wrap"><table><caption class="visually-hidden">Lock the policy <span class="mark">with MDM.</span></caption><thead><tr><th scope="col">Key</th><th scope="col">Type</th><th scope="col">Meaning</th></tr></thead><tbody><tr><th scope="row"><code>AllowedPlugins</code></th><td>Array of strings</td><td>Allowed tools: <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code></td></tr><tr><th scope="row"><code>AllowExternalAI</code></th><td>Boolean</td><td>Allow Claude to receive inbox content</td></tr><tr><th scope="row"><code>AllowRemoteImages</code></th><td>Boolean</td><td>Load avatars from allowed tools only</td></tr></tbody></table></div>
+          <p class="notice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\Remora</code> for data, and the policy under <code>HKLM\SOFTWARE\Policies\Remora</code> (Group Policy or Intune).</span></p>
+          <p class="cta-note"><a class="link-arrow" href="https://github.com/iGitScor/triage/blob/main/docs/COMPLIANCE.md">The full document for compliance teams</a></p>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="footer-grid">
+          <div class="footer-brand"><a class="brand brand-remora" href="/en/" aria-label="Remora, home"><span class="brand-disc"><svg viewBox="5 35 88 32" fill="currentColor" aria-hidden="true"><path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z"/><path fill-rule="evenodd" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z"/></svg></span><span class="brand-name">Remora</span></a><p>A menu bar inbox for everything that needs you. It runs on your Mac and talks only to the tools you allow.</p></div>
+          <nav aria-labelledby="f-product"><h2 id="f-product">Product</h2><ul><li><a href="/en/features">Features</a></li><li><a href="/en/privacy">Privacy & compliance</a></li><li><a href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac</a></li><li><a href="https://github.com/iGitScor/triage/releases">Release notes</a></li></ul></nav><nav aria-labelledby="f-resources"><h2 id="f-resources">Resources</h2><ul><li><a href="https://github.com/iGitScor/triage/blob/main/docs/SOURCES.md">Connecting your tools</a></li><li><a href="https://github.com/iGitScor/triage/blob/main/docs/COMPLIANCE.md">Compliance and data flows</a></li><li><a href="https://github.com/iGitScor/triage">Source code on GitHub</a></li></ul></nav><nav aria-labelledby="f-trust"><h2 id="f-trust">Trust</h2><ul><li><a href="https://github.com/iGitScor/triage/blob/main/LICENSE">GPL-3.0-or-later licence</a></li><li><a href="https://github.com/iGitScor/triage/security">Report a vulnerability</a></li><li><a href="https://github.com/iGitScor/triage/issues">Questions and feedback</a></li></ul></nav>
+        </div>
+        <div class="footer-bottom"><span>Remora is free software under the GPL-3.0-or-later licence, built with the help of Claude.</span><span>Tool logos: Simple Icons (CC0) · Outfit font (OFL)</span></div>
+      </div>
+    </footer>
+  </body>
+</html>
