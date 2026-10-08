@@ -129,7 +129,9 @@ struct SnoozeAdvisorTests {
         #expect(!model.similar("Q4 hiring scorecard", "Bump eslint to v9"))
         #expect(model.similar("Refactor the search service", "Split search into smaller modules"))
         #expect(!model.similar("Refactor the search service", "Update the privacy policy page"))
-        #expect(model.similar("Préparer la démo client", "Slides pour la démo du client"))
+        if NLEmbedding.wordEmbedding(for: .french) != nil {
+            #expect(model.similar("Préparer la démo client", "Slides pour la démo du client"))
+        }
         #expect(!model.similar("Speed up the CI pipeline", "Team offsite in November"))
     }
 

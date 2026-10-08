@@ -59,8 +59,9 @@ struct VerbClassifierTests {
         #expect(layout.actionCount == 1)
     }
 
-    /// Sentences the model never saw as examples.
-    @Test(.enabled(if: NLEmbedding.sentenceEmbedding(for: .english) != nil))
+    /// Sentences the model never saw as examples, in both languages. macOS downloads the embeddings on
+    /// demand, so a fresh machine (CI) may not have the French one yet.
+    @Test(.enabled(if: NLEmbedding.sentenceEmbedding(for: .english) != nil && NLEmbedding.sentenceEmbedding(for: .french) != nil))
     func embeddingsSortUnseenSentences() {
         let model = EmbeddingIntentClassifier()
         let cases: [(String, TextIntent)] = [
