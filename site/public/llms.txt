@@ -17,5 +17,6 @@ progress. French pages: https://triage.iscor.me/fr/.
 
 - [Download for Mac](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)
 - [Source code](https://github.com/iGitScor/triage)
-- [Compliance and data flows](https://github.com/iGitScor/triage/blob/main/docs/COMPLIANCE.md)
-- [Connecting your tools](https://github.com/iGitScor/triage/blob/main/docs/SOURCES.md)
+- [Documentation](https://triage.iscor.me/docs/): the user guide, IT and compliance, and writing a plugin
+- [Connecting your tools](https://triage.iscor.me/docs/guide/connecting-tools)
+- [Data flows](https://triage.iscor.me/docs/admin/data-flows) and [MDM policy](https://triage.iscor.me/docs/admin/mdm)

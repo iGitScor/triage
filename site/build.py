@@ -19,6 +19,7 @@ REPO = "https://github.com/iGitScor/triage"
 DMG = REPO + "/releases/latest/download/Remora.dmg"
 VERSION = "0.2.0"
 LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
+DOCS = {"en": "/docs/", "fr": "/docs/fr/"}
 
 ICONS = {
     "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -97,7 +98,7 @@ T = {
         "footer_blurb": "A menu bar inbox for everything that needs you. It runs on your Mac and talks only to the tools you allow.",
         "footer": {
             "product": ("Product", [("features", "Features"), ("privacy", "Privacy & compliance"), (DMG, "Download for Mac"), (REPO + "/releases", "Release notes")]),
-            "resources": ("Resources", [(REPO + "/blob/main/docs/SOURCES.md", "Connecting your tools"), (REPO + "/blob/main/docs/COMPLIANCE.md", "Compliance and data flows"), (REPO, "Source code on GitHub")]),
+            "resources": ("Resources", [("/docs/", "Documentation"), ("/docs/guide/connecting-tools", "Connecting your tools"), ("/docs/admin/", "For IT and compliance"), ("/docs/develop/plugins", "Writing a plugin"), (REPO, "Source code on GitHub")]),
             "trust": ("Trust", [(REPO + "/blob/main/LICENSE", "GPL-3.0-or-later licence"), (REPO + "/security", "Report a vulnerability"), (REPO + "/issues", "Questions and feedback")]),
         },
         "footer_bottom": ("Remora is free software under the GPL-3.0-or-later licence, built with the help of Claude.", "Tool logos: Simple Icons (CC0) · Outfit font (OFL)"),
@@ -130,7 +131,7 @@ T = {
         "footer_blurb": "Une boîte de réception dans la barre des menus pour tout ce qui a besoin de vous. Elle tourne sur votre Mac et ne parle qu’aux outils autorisés.",
         "footer": {
             "product": ("Produit", [("features", "Fonctionnalités"), ("privacy", "Confidentialité et conformité"), (DMG, "Télécharger pour Mac"), (REPO + "/releases", "Notes de version")]),
-            "resources": ("Ressources", [(REPO + "/blob/main/docs/SOURCES.md", "Connecter vos outils (en anglais)"), (REPO + "/blob/main/docs/COMPLIANCE.md", "Conformité et flux de données (en anglais)"), (REPO, "Code source sur GitHub")]),
+            "resources": ("Ressources", [("/docs/fr/", "Documentation"), ("/docs/fr/guide/connecter-vos-outils", "Connecter vos outils"), ("/docs/fr/admin/", "DSI et conformité"), ("/docs/develop/plugins", "Écrire une extension (en anglais)"), (REPO, "Code source sur GitHub")]),
             "trust": ("Confiance", [(REPO + "/blob/main/LICENSE", "Licence GPL-3.0-or-later"), (REPO + "/security", "Signaler une vulnérabilité"), (REPO + "/issues", "Questions et retours")]),
         },
         "footer_bottom": ("Remora est un logiciel libre sous licence GPL-3.0-or-later, conçu avec l’aide de Claude.", "Logos des outils : Simple Icons (CC0) · police Outfit (OFL)"),
@@ -240,7 +241,7 @@ def header(lang: str, page: str) -> str:
         f'<li><a href="{PAGES[key][lang]}"{" aria-current=\"page\"" if key == page else ""}>{label}</a></li>'
         for key, label in t["nav"].items()
     )
-    items += f'<li><a href="{REPO}">GitHub</a></li>'
+    items += f'<li><a href="{DOCS[lang]}">Docs</a></li><li><a href="{REPO}">GitHub</a></li>'
     switch = "".join(
         f'<a href="{PAGES[page][code]}" hreflang="{code}" lang="{code}" data-lang="{code}" aria-label="{name}"'
         f'{" aria-current=\"true\"" if code == lang else ""}>{code.upper()}</a>'
@@ -435,7 +436,7 @@ def home(lang: str) -> str:
             faq=[
                 ("Is my data sent to a Remora server?", "There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain. No telemetry, no analytics, no crash reports."),
                 ("Do I need Claude?", "No. Sorting, ranking, snooze advice and review prep all run on your Mac without generative AI. Claude only adds optional briefs and summaries, and it is off until you, and your organization, allow it."),
-                ("Does it work with GitHub Enterprise and self-hosted GitLab?", f'Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href="{REPO}/blob/main/docs/SOURCES.md">connecting your tools</a>.'),
+                ("Does it work with GitHub Enterprise and self-hosted GitLab?", f'Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href="/docs/guide/connecting-tools">connecting your tools</a>.'),
                 ("Is there a Windows version?", "It’s on its way: a Windows app built with Tauri, with the same rules and the same compliance model. Its core and the four sources are done; the tray app comes next."),
                 ("Why does macOS ask for my Keychain password?", "Remora keeps all your tokens in one Keychain item. macOS asks once per new build of an app that isn’t signed by a registered developer. Choose Always Allow."),
                 ("macOS says it can’t check the app?", "Remora isn’t notarized yet. Right-click it and choose Open; on macOS 15, use System Settings → Privacy & Security → Open Anyway. macOS only asks once."),
@@ -505,7 +506,7 @@ def home(lang: str) -> str:
             faq=[
                 ("Mes données passent-elles par un serveur Remora ?", "Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS. Pas de télémétrie, pas d’analytics, pas de rapports de plantage."),
                 ("Faut-il Claude ?", "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre Mac, sans IA générative. Claude n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas."),
-                ("Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?", f'Oui. Indiquez votre adresse en connectant le compte : Remora ne parle qu’à celle-ci. Configuration de chaque outil : <a href="{REPO}/blob/main/docs/SOURCES.md">connecter vos outils</a> (en anglais).'),
+                ("Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?", f'Oui. Indiquez votre adresse en connectant le compte : Remora ne parle qu’à celle-ci. Configuration de chaque outil : <a href="/docs/fr/guide/connecter-vos-outils">connecter vos outils</a>.'),
                 ("Existe-t-il une version Windows ?", "Elle arrive : une app Windows construite avec Tauri, avec les mêmes règles et le même modèle de conformité. Son cœur et les quatre sources sont prêts ; l’app dans la zone de notification suit."),
                 ("Pourquoi macOS demande-t-il le mot de passe du trousseau ?", "Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une app qui n’est pas signée par un développeur enregistré. Choisissez Toujours autoriser."),
                 ("macOS dit qu’il ne peut pas vérifier l’app ?", "Remora n’est pas encore notarisée. Clic droit, puis Ouvrir ; sous macOS 15, Réglages Système → Confidentialité et sécurité → Ouvrir quand même. macOS ne demande qu’une fois."),
@@ -823,7 +824,8 @@ def privacy(lang: str) -> str:
             ],
             mdm_caption="Configuration profile payload",
             windows="The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\Remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
-            more="The full document for compliance teams",
+            more="Data flows, MDM profile and deployment, for IT and compliance teams",
+            more_href="/docs/admin/",
         )
     else:
         c = dict(
@@ -870,7 +872,8 @@ def privacy(lang: str) -> str:
             ],
             mdm_caption="Contenu du profil de configuration",
             windows="L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\Remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",
-            more="Le document complet pour les équipes conformité (en anglais)",
+            more="Flux de données, profil MDM et déploiement, pour la DSI et la conformité",
+            more_href="/docs/fr/admin/",
         )
     return (
         head(lang, "privacy", c["title"], c["description"])
@@ -918,7 +921,7 @@ def privacy(lang: str) -> str:
         <div class="wrap">
           {table(c['mdm_title'], c['mdm_cols'], c['mdm_rows'])}
           <p class="notice">{icon("info", 18)}<span>{c['windows']}</span></p>
-          <p class="cta-note"><a class="link-arrow" href="{REPO}/blob/main/docs/COMPLIANCE.md">{c['more']}</a></p>
+          <p class="cta-note"><a class="link-arrow" href="{c['more_href']}">{c['more']}</a></p>
         </div>
       </section>
 """
@@ -1037,8 +1040,9 @@ progress. French pages: {ORIGIN}/fr/.
 
 - [Download for Mac]({DMG})
 - [Source code]({REPO})
-- [Compliance and data flows]({REPO}/blob/main/docs/COMPLIANCE.md)
-- [Connecting your tools]({REPO}/blob/main/docs/SOURCES.md)
+- [Documentation]({ORIGIN}/docs/): the user guide, IT and compliance, and writing a plugin
+- [Connecting your tools]({ORIGIN}/docs/guide/connecting-tools)
+- [Data flows]({ORIGIN}/docs/admin/data-flows) and [MDM policy]({ORIGIN}/docs/admin/mdm)
 """
 
 

@@ -1,12 +1,34 @@
 # Cloudflare static assets headers (https://developers.cloudflare.com/workers/static-assets/headers/).
-# Every page: only this origin's scripts, styles, fonts and images; no inline code; no framing.
+# When several rules match, Cloudflare joins their values, so each page family gets exactly one
+# Content-Security-Policy: two would both apply.
+
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000
 
+# The marketing pages: only this origin's scripts, styles, fonts and images; no inline code (their
+# JSON-LD is a data block, which CSP does not run); no framing.
+/
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+/index.html
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+/404.html
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+/en/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+/fr/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+
+# The docs (VitePress): its theme switch is an inline script and Mermaid draws with inline styles.
+# Everything still comes from this origin.
+/docs/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+
 # The site's own files and screenshots: a day in the cache, then revalidated in the background.
 /site/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+# The docs' content-hashed bundles.
+/docs/assets/*
+  Cache-Control: public, max-age=31536000, immutable
