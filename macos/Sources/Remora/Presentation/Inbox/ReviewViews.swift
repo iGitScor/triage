@@ -18,13 +18,11 @@ struct ReviewPrepLine: View {
                             .foregroundStyle(Myna.ok)
                             .help(L("tests"))
                     }
-                    ForEach(prep.flags.prefix(2), id: \.self) { flag in
-                        BadgeChip(badge: Badge(id: flag.rawValue, label: flag.title, symbol: flag.symbol,
-                                               tone: flag == .lockfileOnly ? .neutral : .warning))
-                    }
-                    if prep.flags.count > 2 {
-                        Text("+\(prep.flags.count - 2)").font(Myna.font(10.5, .semibold)).foregroundStyle(Myna.muted)
-                            .help(prep.flags.dropFirst(2).map(\.title).joined(separator: ", "))
+                    // Longer labels (French) fit fewer chips: the rest folds into "+N".
+                    ViewThatFits(in: .horizontal) {
+                        flags(shown: 2)
+                        flags(shown: 1)
+                        flags(shown: 0)
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.down")
@@ -49,6 +47,20 @@ struct ReviewPrepLine: View {
         }
         .padding(8)
         .background(Myna.line, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func flags(shown: Int) -> some View {
+        HStack(spacing: 6) {
+            ForEach(prep.flags.prefix(shown), id: \.self) { flag in
+                BadgeChip(badge: Badge(id: flag.rawValue, label: flag.title, symbol: flag.symbol,
+                                       tone: flag == .lockfileOnly ? .neutral : .warning))
+            }
+            if prep.flags.count > shown {
+                Text("+\(prep.flags.count - shown)").font(Myna.font(10.5, .semibold)).foregroundStyle(Myna.muted)
+                    .help(prep.flags.dropFirst(shown).map(\.title).joined(separator: ", "))
+            }
+        }
+        .fixedSize()
     }
 }
 
