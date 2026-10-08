@@ -25,8 +25,8 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" Resources/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Resources/Info.plist
-      - name: Build the app (signed ad hoc)
-        run: ./scripts/build-app.sh
+      - name: Build the app (Universal, signed ad hoc)
+        run: REMORA_UNIVERSAL=1 ./scripts/build-app.sh
       - name: Package the DMG
         run: |
           mkdir -p build/dmg

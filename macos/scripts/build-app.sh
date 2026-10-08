@@ -4,8 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 CONFIG="${CONFIG:-release}"
-swift build -c "$CONFIG"
-BIN="$(swift build -c "$CONFIG" --show-bin-path)"
+# REMORA_UNIVERSAL=1 builds for Apple Silicon and Intel (releases); otherwise this Mac's architecture only.
+ARCHS=()
+[ "${REMORA_UNIVERSAL:-0}" = 1 ] && ARCHS=(--arch arm64 --arch x86_64)
+swift build -c "$CONFIG" ${ARCHS[@]+"${ARCHS[@]}"}
+BIN="$(swift build -c "$CONFIG" ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)"
 
 APP=build/Remora.app
 rm -rf "$APP"
