@@ -21,8 +21,8 @@
 <p align="center">
   <a href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac</a> ·
   <a href="https://triage.iscor.me/en/">Website</a> ·
-  <a href="docs/SOURCES.md">Connecting your tools</a> ·
-  <a href="docs/COMPLIANCE.md">Compliance</a>
+  <a href="https://triage.iscor.me/docs/">Documentation</a> ·
+  <a href="https://triage.iscor.me/docs/admin/">For IT and compliance</a>
 </p>
 
 <table>
@@ -61,7 +61,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | **Remora for macOS** [`macos/`](macos) | The menu bar app | Swift 6, SwiftUI and AppKit, NaturalLanguage |
 | **Remora for Windows** [`windows/`](windows) | The same rules and sources for Windows, in progress: core and plugins done, tray app next | Rust, Tauri 2 |
 | **Website** [`site/`](site) | Marketing pages in English and French, static on Cloudflare | HTML, CSS, a Python generator |
-| **Docs** [`docs/`](docs) | Connecting tools, compliance and data flows, proposals | Markdown |
+| **Docs** [`docs/`](docs) | The user guide, IT and compliance, and developer docs, in English and French | VitePress |
 
 ## Features
 
@@ -109,7 +109,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this Mac |
 | Claude API | Brief, summaries, triage | Anthropic API key |
 
-Accounts can be named ("Work GitLab", "Client Slack"), several per tool. Setup: [docs/SOURCES.md](docs/SOURCES.md).
+Accounts can be named ("Work GitLab", "Client Slack"), several per tool. Setup: [connecting your tools](https://triage.iscor.me/docs/guide/connecting-tools).
 
 ## Privacy and compliance
 
@@ -123,7 +123,7 @@ Accounts can be named ("Work GitLab", "Client Slack"), several per tool. Setup: 
 - **Local data.** Tokens in one Keychain item; everything else in `~/Library/Application Support/Remora/`.
   Settings → Privacy lists every data flow and erases local data. No telemetry, analytics or crash reporting.
 
-Every flow, in detail, for compliance teams: [docs/COMPLIANCE.md](docs/COMPLIANCE.md).
+Every flow, the MDM profile and deployment, for IT and compliance teams: [the admin docs](https://triage.iscor.me/docs/admin/).
 
 ## Engineering highlights
 
@@ -164,16 +164,21 @@ cd windows && cargo test --workspace     # Windows core and plugins
 ```
 
 Copy `build/Remora.app` to `/Applications` and turn on *Open at login* in Settings. Signing and sharing the app:
-[macos/docs/DISTRIBUTION.md](macos/docs/DISTRIBUTION.md).
+[building and releasing](https://triage.iscor.me/docs/develop/building).
 
 ## Documentation
 
-- [Connecting your tools](docs/SOURCES.md)
-- [Compliance and data flows](docs/COMPLIANCE.md)
-- [Proposal: delegation and team features](docs/proposals/DELEGATION.md)
-- macOS: [build and run](macos/README.md), [architecture](macos/docs/ARCHITECTURE.md),
-  [writing a plugin](macos/docs/PLUGINS.md), [signing](macos/docs/DISTRIBUTION.md)
-- Windows: [status](windows/README.md)
+The documentation is at **[triage.iscor.me/docs](https://triage.iscor.me/docs/)**, in English and French; its sources are in
+[`docs/`](docs) (VitePress).
+
+- **Guide**: [getting started](https://triage.iscor.me/docs/guide/getting-started), [connecting your tools](https://triage.iscor.me/docs/guide/connecting-tools),
+  [the inbox](https://triage.iscor.me/docs/guide/inbox), [snooze and reminders](https://triage.iscor.me/docs/guide/snooze-and-reminders), [reviews](https://triage.iscor.me/docs/guide/reviews),
+  [the assistant](https://triage.iscor.me/docs/guide/assistant), [FAQ](https://triage.iscor.me/docs/guide/faq).
+- **For IT and compliance**: [overview](https://triage.iscor.me/docs/admin/), [data flows](https://triage.iscor.me/docs/admin/data-flows),
+  [MDM policy](https://triage.iscor.me/docs/admin/mdm), [deployment](https://triage.iscor.me/docs/admin/deployment).
+- **Developers**: [architecture](https://triage.iscor.me/docs/develop/), [writing a plugin](https://triage.iscor.me/docs/develop/plugins),
+  [building and releasing](https://triage.iscor.me/docs/develop/building), [Windows](https://triage.iscor.me/docs/develop/windows),
+  [proposal: delegation](https://triage.iscor.me/docs/develop/proposals/delegation).
 
 ## Releasing
 
@@ -183,14 +188,12 @@ SHA-256 as a GitHub release. The download link above always points to the latest
 
 ## Website
 
-[`site/`](site) holds the marketing pages, served by Cloudflare as static assets (no server code, a strict CSP, no
+[`site/`](site) holds the marketing pages and, built from [`docs/`](docs), the documentation, served by Cloudflare as static assets (no server code, a strict CSP, no
 analytics). The copy lives in [`site/build.py`](site/build.py), which writes the English and French pages:
 
 ```sh
 macos/scripts/screenshots.sh      # the demo inbox, each tab, both languages and schemes
-python3 site/build.py             # writes site/public
-site/og/render.sh                 # social cards and the touch icon
-cd site && npx wrangler deploy    # publishes to Cloudflare
+site/deploy.sh                    # marketing pages, social cards, docs, then Cloudflare
 ```
 
 ## Security
