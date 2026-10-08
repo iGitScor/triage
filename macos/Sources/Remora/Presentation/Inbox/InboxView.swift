@@ -10,7 +10,14 @@ struct InboxView: View {
     }
 
     @Environment(InboxModel.self) private var model
-    @State private var tab = Tab.myTurn
+    @State private var tab = Self.launchTab
+
+    /// `--demo --tab snoozed` opens on that tab, for screenshots.
+    private static var launchTab: Tab {
+        let arguments = CommandLine.arguments
+        guard arguments.contains("--demo"), let index = arguments.firstIndex(of: "--tab"), index + 1 < arguments.count else { return .myTurn }
+        return Tab.allCases.first { "\($0)".lowercased() == arguments[index + 1].lowercased() } ?? .myTurn
+    }
     @State private var picker: TimePickerSubject?
     @State private var draft: DraftSubject?
     @State private var reviewing = false

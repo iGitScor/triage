@@ -66,7 +66,12 @@ enum DemoData {
                  badges: [diff(820, 410)]),
             item(12, .tasks, "Update the onboarding checklist", "Team tasks", minutes: 40_000,
                  author: "Notion", plugin: "notion"),
+            item(13, .authored, "Show snooze reasons in notifications", "acme/inbox #81", minutes: 3_000,
+                 author: "you", badges: [passing, diff(96, 14)], people: [person("erin"), person("bob")]),
+            item(14, .authored, "Group reminders by day", "acme/inbox #82", minutes: 90,
+                 author: "you", badges: [passing, diff(140, 22)]),
         ]
+        items[13].suggestedPeople = [person("dave")]
         items[0].changes = passkeyFiles
         items[1].changes = queueFiles
         return [account: items]
