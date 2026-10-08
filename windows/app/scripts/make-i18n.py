@@ -7,6 +7,8 @@ import pathlib
 import re
 import sys
 
+# The Windows console's code page can't print ✓ or French accents.
+sys.stdout.reconfigure(encoding="utf-8")
 root = pathlib.Path(__file__).resolve().parent.parent
 repo = root.parent.parent
 sys.path.insert(0, str(repo / "macos" / "scripts"))
