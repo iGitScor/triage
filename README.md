@@ -6,6 +6,8 @@ Slack mentions and DMs, Notion tasks, and your own reminders. Claude can brief y
 Inspired by [gitbar](https://gitbar.app) (MR widget), Gestimer (drag to set a reminder) and Google Inbox
 (bundles, Done, Pin, Snooze). Styled with the Myna design tokens.
 
+Built with the help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
+
 ## Repository
 
 | Folder | What |
