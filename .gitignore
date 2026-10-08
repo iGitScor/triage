@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Swift (macos/)
+.build/
+build/
+.swiftpm/
+DerivedData/
+*.xcodeproj
+
+# Rust and Tauri (windows/)
+target/
+node_modules/
+dist/
+
+# Python
+__pycache__/
