@@ -1,20 +1,42 @@
 # Remora for Windows
 
-Status: **in progress**. A [Tauri](https://tauri.app) app (Rust core + web UI) for colleagues on Windows, following
-the macOS app's design and rules. Product overview: [../README.md](../README.md).
+Status: **preview**. A [Tauri 2](https://tauri.app) tray app for colleagues on Windows: a Rust core, a Svelte
+interface on WebView2, the macOS app's design and rules. Product overview: [../README.md](../README.md).
 
-| Crate | What | Status |
+| Part | What | Tests |
 |---|---|---|
-| `crates/remora_core` | Domain and rules, ported from the macOS `RemoraCore` with its tests: verbs, My turn / Waiting, prioritizer, Done and snooze rules, notifications, snooze clock, compliance policy | Done |
-| `crates/remora_plugins` | GitHub, GitLab, Slack and Linear sources with their fixture tests; HTTP client limited to each plugin's declared hosts | Done |
-| `src-tauri`, `src` | Tray app, storage (Credential Manager, `%LOCALAPPDATA%\Remora`), Svelte UI | Next |
+| `crates/remora_core` | Domain and rules, ported from the macOS `RemoraCore`: verbs, My turn / Waiting, prioritizer, Done and snooze rules, notifications, snooze clock, compliance policy | 19 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack and Linear, with an HTTP client limited to each plugin's declared hosts | 12 |
+| `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\Remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 13 |
+| `app/src-tauri` | The tray icon and its popup, notifications, start with Windows, the Ctrl+Alt+R reminder shortcut, the commands the interface calls | |
+| `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked |
 
-Strings in the core are English and act as translation keys for the UI (the same idea as `L()` on macOS).
+Not yet on Windows: the Claude assistant, smart snooze (reasons and insights), review prep and sessions, the
+waiting assistant, and notification buttons.
 
 ## Develop
 
+Requires Rust ([rustup](https://rustup.rs/)) and Node 22. The core crates build and test on any OS; the tray app
+runs on Windows, and on a Mac for development (in the menu bar, with its own data folder and Keychain entry).
+
 ```sh
-cargo test --workspace     # core tests (also run by .github/workflows/windows.yml on windows-latest)
+cargo test                       # the three library crates (no Node needed)
+
+cd app
+npm ci
+npm run tauri dev                # the tray app, with live reload
+npm run tauri dev -- -- --demo   # sample data in a window, nothing saved
+npm run check                    # type-check the interface
+npm run i18n                     # French strings from macos/scripts/translations_fr.py
+npm run build && node scripts/preview.mjs   # every screen in English and French, light and dark
+npm run tauri build              # the NSIS installer (on Windows)
 ```
 
-Compliance follows the same model as macOS: see [data flows](https://triage.iscor.me/docs/admin/data-flows) and [Remora for Windows](https://triage.iscor.me/docs/develop/windows).
+`cargo test --workspace` also builds the tray app: build the interface first (`npm run build` in `app/`).
+`src/fixtures/demo.json`, used by the preview, comes from `cargo run -p remora_app --example demo_view`.
+
+CI ([windows.yml](../.github/workflows/windows.yml)) runs all of it on `windows-latest` and keeps the installer as an
+artifact; [release.yml](../.github/workflows/release.yml) attaches `Remora-Setup.exe` to each release.
+
+Compliance follows the macOS model: see [data flows](https://triage.iscor.me/docs/admin/data-flows) and
+[Remora for Windows](https://triage.iscor.me/docs/develop/windows).
