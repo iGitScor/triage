@@ -1,0 +1,860 @@
+{
+  "accounts": [
+    {
+      "allowed": true,
+      "egress": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
+      "error": null,
+      "hosts": [
+        "api.github.com",
+        "github.com",
+        "avatars.githubusercontent.com"
+      ],
+      "id": "github",
+      "identity": "you",
+      "name": null,
+      "pluginId": "github",
+      "pluginName": "GitHub",
+      "settings": {}
+    },
+    {
+      "allowed": true,
+      "egress": "Reads your merge requests, approvals and pipelines from your GitLab host.",
+      "error": null,
+      "hosts": [
+        "gitlab.com"
+      ],
+      "id": "gitlab",
+      "identity": "you",
+      "name": null,
+      "pluginId": "gitlab",
+      "pluginName": "GitLab",
+      "settings": {}
+    },
+    {
+      "allowed": true,
+      "egress": "Searches your recent mentions and direct messages in Slack.",
+      "error": null,
+      "hosts": [
+        "slack.com"
+      ],
+      "id": "slack",
+      "identity": "you",
+      "name": null,
+      "pluginId": "slack",
+      "pluginName": "Slack",
+      "settings": {}
+    },
+    {
+      "allowed": true,
+      "egress": "Reads issues assigned to you and your Linear inbox.",
+      "error": null,
+      "hosts": [
+        "api.linear.app",
+        "public.linear.app"
+      ],
+      "id": "linear",
+      "identity": "you",
+      "name": null,
+      "pluginId": "linear",
+      "pluginName": "Linear",
+      "settings": {}
+    }
+  ],
+  "inbox": {
+    "accountNames": {},
+    "connected": true,
+    "counts": {
+      "done": 0,
+      "myTurn": 7,
+      "snoozed": 4,
+      "waiting": 2
+    },
+    "demo": true,
+    "errors": [],
+    "lastRefresh": "2026-10-08T18:33:49.488369Z",
+    "layout": {
+      "done": [],
+      "myTurn": [
+        {
+          "bundle": {
+            "id": "verb.reply",
+            "rank": 1,
+            "title": "To reply"
+          },
+          "items": [
+            {
+              "accountId": "slack",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "Bob",
+                "tone": null
+              },
+              "badges": [],
+              "bundle": {
+                "id": "verb.reply",
+                "rank": 1,
+                "title": "To reply"
+              },
+              "context": "#releases",
+              "date": "2026-10-08T18:03:49.487343Z",
+              "due": null,
+              "id": "demo/3",
+              "needsAction": true,
+              "participants": [],
+              "pluginId": "slack",
+              "preview": "@you the flag is at 20% in prod, metrics look good so far…",
+              "priority": null,
+              "title": "Can you double check the rollout plan before Friday?",
+              "url": "https://slack.com"
+            },
+            {
+              "accountId": "slack",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "Carol",
+                "tone": null
+              },
+              "badges": [],
+              "bundle": {
+                "id": "verb.reply",
+                "rank": 1,
+                "title": "To reply"
+              },
+              "context": "Direct message",
+              "date": "2026-10-08T16:13:49.487343Z",
+              "due": null,
+              "id": "demo/4",
+              "needsAction": true,
+              "participants": [],
+              "pluginId": "slack",
+              "preview": "There’s a new ramen place near the office",
+              "priority": null,
+              "title": "Lunch tomorrow? 🍜",
+              "url": "https://slack.com"
+            }
+          ]
+        },
+        {
+          "bundle": {
+            "id": "code.review",
+            "rank": 2,
+            "title": "To review"
+          },
+          "items": [
+            {
+              "accountId": "github",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "erin",
+                "tone": null
+              },
+              "badges": [
+                {
+                  "id": "checks.passing",
+                  "label": "Checks",
+                  "notify": null,
+                  "tone": "positive"
+                },
+                {
+                  "id": "diff",
+                  "label": "+214 −37",
+                  "notify": null,
+                  "tone": "neutral"
+                }
+              ],
+              "bundle": {
+                "id": "code.review",
+                "rank": 2,
+                "title": "To review"
+              },
+              "context": "acme/web #482",
+              "date": "2026-10-08T18:21:49.487343Z",
+              "due": null,
+              "id": "demo/1",
+              "needsAction": true,
+              "participants": [
+                {
+                  "avatarUrl": null,
+                  "name": "you",
+                  "tone": null
+                },
+                {
+                  "avatarUrl": null,
+                  "name": "frank",
+                  "tone": null
+                }
+              ],
+              "pluginId": "github",
+              "preview": null,
+              "priority": null,
+              "title": "Add passkeys to the sign-in page",
+              "url": "https://github.com"
+            },
+            {
+              "accountId": "gitlab",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "dave",
+                "tone": null
+              },
+              "badges": [
+                {
+                  "id": "checks.failing",
+                  "label": "Checks failed",
+                  "notify": null,
+                  "tone": "negative"
+                },
+                {
+                  "id": "diff",
+                  "label": "+88 −120",
+                  "notify": null,
+                  "tone": "neutral"
+                }
+              ],
+              "bundle": {
+                "id": "code.review",
+                "rank": 2,
+                "title": "To review"
+              },
+              "context": "acme/platform !1290",
+              "date": "2026-10-08T16:58:49.487343Z",
+              "due": null,
+              "id": "demo/2",
+              "needsAction": true,
+              "participants": [
+                {
+                  "avatarUrl": null,
+                  "name": "you",
+                  "tone": null
+                }
+              ],
+              "pluginId": "gitlab",
+              "preview": null,
+              "priority": null,
+              "title": "Move the image resizer to the new queue",
+              "url": "https://gitlab.com"
+            }
+          ]
+        },
+        {
+          "bundle": {
+            "id": "verb.fix",
+            "rank": 3,
+            "title": "To fix"
+          },
+          "items": [
+            {
+              "accountId": "github",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "you",
+                "tone": null
+              },
+              "badges": [
+                {
+                  "id": "changes",
+                  "label": "Changes requested",
+                  "notify": null,
+                  "tone": "negative"
+                },
+                {
+                  "id": "checks.passing",
+                  "label": "Checks",
+                  "notify": null,
+                  "tone": "positive"
+                }
+              ],
+              "bundle": {
+                "id": "verb.fix",
+                "rank": 3,
+                "title": "To fix"
+              },
+              "context": "acme/inbox #75",
+              "date": "2026-10-08T11:53:49.487343Z",
+              "due": null,
+              "id": "demo/6",
+              "needsAction": true,
+              "participants": [
+                {
+                  "avatarUrl": null,
+                  "name": "frank",
+                  "tone": null
+                }
+              ],
+              "pluginId": "github",
+              "preview": null,
+              "priority": null,
+              "title": "Cache GraphQL responses per account",
+              "url": "https://github.com"
+            }
+          ]
+        },
+        {
+          "bundle": {
+            "id": "verb.merge",
+            "rank": 4,
+            "title": "Ready to merge"
+          },
+          "items": [
+            {
+              "accountId": "github",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "you",
+                "tone": null
+              },
+              "badges": [
+                {
+                  "id": "approved",
+                  "label": "Approved",
+                  "notify": null,
+                  "tone": "accent"
+                },
+                {
+                  "id": "checks.passing",
+                  "label": "Checks",
+                  "notify": null,
+                  "tone": "positive"
+                },
+                {
+                  "id": "diff",
+                  "label": "+320 −12",
+                  "notify": null,
+                  "tone": "neutral"
+                }
+              ],
+              "bundle": {
+                "id": "verb.merge",
+                "rank": 4,
+                "title": "Ready to merge"
+              },
+              "context": "acme/inbox #77",
+              "date": "2026-10-08T18:25:49.487343Z",
+              "due": null,
+              "id": "demo/5",
+              "needsAction": true,
+              "participants": [
+                {
+                  "avatarUrl": null,
+                  "name": "erin",
+                  "tone": null
+                },
+                {
+                  "avatarUrl": null,
+                  "name": "dave",
+                  "tone": null
+                }
+              ],
+              "pluginId": "github",
+              "preview": null,
+              "priority": null,
+              "title": "Snooze reminders for review requests",
+              "url": "https://github.com"
+            }
+          ]
+        },
+        {
+          "bundle": {
+            "id": "docs.tasks",
+            "rank": 5,
+            "title": "To do"
+          },
+          "items": [
+            {
+              "accountId": "linear",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "Linear",
+                "tone": null
+              },
+              "badges": [
+                {
+                  "id": "due.today",
+                  "label": "Due today",
+                  "notify": null,
+                  "tone": "warning"
+                }
+              ],
+              "bundle": {
+                "id": "docs.tasks",
+                "rank": 5,
+                "title": "To do"
+              },
+              "context": "ENG-31",
+              "date": "2026-10-07T09:13:49.487343Z",
+              "due": null,
+              "id": "demo/8",
+              "needsAction": true,
+              "participants": [],
+              "pluginId": "linear",
+              "preview": null,
+              "priority": null,
+              "title": "Write Q4 hiring scorecard",
+              "url": "https://linear.com"
+            }
+          ]
+        }
+      ],
+      "pinned": [],
+      "snoozed": [
+        {
+          "accountId": "github",
+          "appUrl": null,
+          "author": {
+            "avatarUrl": null,
+            "name": "frank",
+            "tone": null
+          },
+          "badges": [],
+          "bundle": {
+            "id": "code.review",
+            "rank": 2,
+            "title": "To review"
+          },
+          "context": "acme/web #491",
+          "date": "2026-10-08T13:53:49.487343Z",
+          "due": null,
+          "id": "demo/10",
+          "needsAction": true,
+          "participants": [],
+          "pluginId": "github",
+          "preview": null,
+          "priority": null,
+          "title": "WEB-42 alert on upload failures",
+          "url": "https://github.com"
+        },
+        {
+          "accountId": "github",
+          "appUrl": null,
+          "author": {
+            "avatarUrl": null,
+            "name": "erin",
+            "tone": null
+          },
+          "badges": [
+            {
+              "id": "checks.passing",
+              "label": "Checks",
+              "notify": null,
+              "tone": "positive"
+            },
+            {
+              "id": "diff",
+              "label": "+64 −10",
+              "notify": null,
+              "tone": "neutral"
+            }
+          ],
+          "bundle": {
+            "id": "code.review",
+            "rank": 2,
+            "title": "To review"
+          },
+          "context": "acme/web #490",
+          "date": "2026-10-08T13:33:49.487343Z",
+          "due": null,
+          "id": "demo/9",
+          "needsAction": true,
+          "participants": [],
+          "pluginId": "github",
+          "preview": null,
+          "priority": null,
+          "title": "WEB-42 retry failed uploads",
+          "url": "https://github.com"
+        },
+        {
+          "accountId": "github",
+          "appUrl": null,
+          "author": {
+            "avatarUrl": null,
+            "name": "dave",
+            "tone": null
+          },
+          "badges": [
+            {
+              "id": "diff",
+              "label": "+820 −410",
+              "notify": null,
+              "tone": "neutral"
+            }
+          ],
+          "bundle": {
+            "id": "code.review",
+            "rank": 2,
+            "title": "To review"
+          },
+          "context": "acme/search #77",
+          "date": "2026-10-08T03:33:49.487343Z",
+          "due": null,
+          "id": "demo/11",
+          "needsAction": true,
+          "participants": [],
+          "pluginId": "github",
+          "preview": null,
+          "priority": null,
+          "title": "Refactor the search service",
+          "url": "https://github.com"
+        },
+        {
+          "accountId": "linear",
+          "appUrl": null,
+          "author": {
+            "avatarUrl": null,
+            "name": "Linear",
+            "tone": null
+          },
+          "badges": [],
+          "bundle": {
+            "id": "docs.tasks",
+            "rank": 5,
+            "title": "To do"
+          },
+          "context": "ENG-12",
+          "date": "2026-09-10T23:53:49.487343Z",
+          "due": null,
+          "id": "demo/12",
+          "needsAction": true,
+          "participants": [],
+          "pluginId": "linear",
+          "preview": null,
+          "priority": null,
+          "title": "Update the onboarding checklist",
+          "url": "https://linear.com"
+        }
+      ],
+      "waiting": [
+        {
+          "bundle": {
+            "id": "verb.awaiting",
+            "rank": 9,
+            "title": "Waiting on others"
+          },
+          "items": [
+            {
+              "accountId": "github",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "you",
+                "tone": null
+              },
+              "badges": [
+                {
+                  "id": "draft",
+                  "label": "Draft",
+                  "notify": null,
+                  "tone": "neutral"
+                }
+              ],
+              "bundle": {
+                "id": "verb.awaiting",
+                "rank": 9,
+                "title": "Waiting on others"
+              },
+              "context": "acme/inbox #79",
+              "date": "2026-10-07T17:33:49.487343Z",
+              "due": null,
+              "id": "demo/7",
+              "needsAction": false,
+              "participants": [],
+              "pluginId": "github",
+              "preview": null,
+              "priority": null,
+              "title": "WIP: Notion tasks bundle",
+              "url": "https://github.com"
+            },
+            {
+              "accountId": "github",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "you",
+                "tone": null
+              },
+              "badges": [
+                {
+                  "id": "checks.passing",
+                  "label": "Checks",
+                  "notify": null,
+                  "tone": "positive"
+                },
+                {
+                  "id": "diff",
+                  "label": "+96 −14",
+                  "notify": null,
+                  "tone": "neutral"
+                }
+              ],
+              "bundle": {
+                "id": "verb.awaiting",
+                "rank": 9,
+                "title": "Waiting on others"
+              },
+              "context": "acme/inbox #81",
+              "date": "2026-10-06T16:33:49.487343Z",
+              "due": null,
+              "id": "demo/13",
+              "needsAction": false,
+              "participants": [
+                {
+                  "avatarUrl": null,
+                  "name": "erin",
+                  "tone": null
+                },
+                {
+                  "avatarUrl": null,
+                  "name": "bob",
+                  "tone": null
+                }
+              ],
+              "pluginId": "github",
+              "preview": null,
+              "priority": null,
+              "title": "Show snooze reasons in notifications",
+              "url": "https://github.com"
+            }
+          ]
+        }
+      ]
+    },
+    "states": {
+      "demo/10": {
+        "done": null,
+        "pinned": false,
+        "remindedAt": null,
+        "snooze": {
+          "fingerprint": "1791467629|",
+          "mode": "hide",
+          "note": null,
+          "reason": "noTime",
+          "until": "2026-10-12T07:00:00Z",
+          "untilNews": null
+        }
+      },
+      "demo/11": {
+        "done": null,
+        "pinned": false,
+        "remindedAt": null,
+        "snooze": {
+          "fingerprint": "1791430429|diff",
+          "mode": "hide",
+          "note": null,
+          "reason": "motivation",
+          "until": "2026-10-12T07:00:00Z",
+          "untilNews": null
+        }
+      },
+      "demo/12": {
+        "done": null,
+        "pinned": false,
+        "remindedAt": null,
+        "snooze": {
+          "fingerprint": "1789084429|",
+          "mode": "hide",
+          "note": null,
+          "reason": "noTime",
+          "until": "2026-10-12T07:00:00Z",
+          "untilNews": null
+        }
+      },
+      "demo/9": {
+        "done": null,
+        "pinned": false,
+        "remindedAt": null,
+        "snooze": {
+          "fingerprint": "1791466429|checks.passing,diff",
+          "mode": "hide",
+          "note": null,
+          "reason": "noTime",
+          "until": "2026-10-12T07:00:00Z",
+          "untilNews": null
+        }
+      }
+    }
+  },
+  "preferences": {
+    "allowExternalAi": false,
+    "allowRemoteImages": true,
+    "allowedPlugins": null,
+    "appearance": "system",
+    "notifyArrivals": true,
+    "notifyStatusChanges": true,
+    "openInApps": true,
+    "refreshMinutes": 5,
+    "trayCount": "waitingOnMe",
+    "wakeOnActivity": true
+  },
+  "sources": [
+    {
+      "manifest": {
+        "egress": {
+          "description": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
+          "externalAi": false,
+          "hosts": [
+            "api.github.com",
+            "github.com",
+            "avatars.githubusercontent.com"
+          ]
+        },
+        "fields": [
+          {
+            "defaultValue": "https://github.com",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "host",
+            "label": "Host",
+            "placeholder": "https://github.com"
+          },
+          {
+            "defaultValue": "",
+            "help": "Classic token with the repo and read:org scopes.",
+            "isOptional": false,
+            "isSecret": true,
+            "key": "token",
+            "label": "Personal access token",
+            "placeholder": ""
+          }
+        ],
+        "id": "github",
+        "logo": "github",
+        "name": "GitHub",
+        "setupLabel": "Create a token",
+        "setupSteps": [
+          "Click “Create a token”: GitHub opens with the repo and read:org scopes selected.",
+          "Set an expiration, click “Generate token” and paste it below."
+        ],
+        "setupUrl": "{host}/settings/tokens/new?scopes=repo,read:org&description=Remora",
+        "summary": "Pull requests you opened and review requests. Works with GitHub Enterprise."
+      },
+      "refusal": null
+    },
+    {
+      "manifest": {
+        "egress": {
+          "description": "Reads your merge requests, approvals and pipelines from your GitLab host.",
+          "externalAi": false,
+          "hosts": [
+            "gitlab.com"
+          ]
+        },
+        "fields": [
+          {
+            "defaultValue": "https://gitlab.com",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "host",
+            "label": "Host",
+            "placeholder": "https://gitlab.com"
+          },
+          {
+            "defaultValue": "",
+            "help": "Token with the read_api scope.",
+            "isOptional": false,
+            "isSecret": true,
+            "key": "token",
+            "label": "Personal access token",
+            "placeholder": ""
+          }
+        ],
+        "id": "gitlab",
+        "logo": "gitlab",
+        "name": "GitLab",
+        "setupLabel": "Create a token",
+        "setupSteps": [
+          "If you use self-hosted GitLab, set the host first.",
+          "Click “Create a token”: GitLab opens with the read_api scope selected.",
+          "Click “Create personal access token” and paste it below."
+        ],
+        "setupUrl": "{host}/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api",
+        "summary": "Merge requests you opened and those you review. Works with self-hosted GitLab."
+      },
+      "refusal": null
+    },
+    {
+      "manifest": {
+        "egress": {
+          "description": "Searches your recent mentions and direct messages in Slack.",
+          "externalAi": false,
+          "hosts": [
+            "slack.com"
+          ]
+        },
+        "fields": [
+          {
+            "defaultValue": "",
+            "help": "A user token (xoxp-…) with the search:read scope.",
+            "isOptional": false,
+            "isSecret": true,
+            "key": "token",
+            "label": "User OAuth token",
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "3",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "days",
+            "label": "Look back (days)",
+            "placeholder": "3"
+          }
+        ],
+        "id": "slack",
+        "logo": "slack",
+        "name": "Slack",
+        "setupLabel": "Create the Slack app",
+        "setupSteps": [
+          "Click “Create the Slack app”, pick your workspace, then Next and Create. The app comes pre-filled.",
+          "In the app page, open “Install App” and click “Install to <workspace>”, then Allow.",
+          "Copy the “User OAuth Token” (it starts with xoxp-) and paste it below."
+        ],
+        "setupUrl": "https://api.slack.com/apps?new_app=1&manifest_json=%7B%22display_information%22%3A%7B%22name%22%3A%22Remora%22%2C%22description%22%3A%22Mentions+and+DMs+in+your+inbox%22%7D%2C%22oauth_config%22%3A%7B%22scopes%22%3A%7B%22user%22%3A%5B%22search%3Aread%22%5D%7D%7D%2C%22settings%22%3A%7B%22org_deploy_enabled%22%3Afalse%2C%22socket_mode_enabled%22%3Afalse%2C%22token_rotation_enabled%22%3Afalse%7D%7D",
+        "summary": "Mentions and direct messages from the last few days."
+      },
+      "refusal": null
+    },
+    {
+      "manifest": {
+        "egress": {
+          "description": "Reads issues assigned to you and your Linear inbox.",
+          "externalAi": false,
+          "hosts": [
+            "api.linear.app",
+            "public.linear.app"
+          ]
+        },
+        "fields": [
+          {
+            "defaultValue": "",
+            "help": "Linear → Settings → Security & access → Personal API keys.",
+            "isOptional": false,
+            "isSecret": true,
+            "key": "token",
+            "label": "Personal API key",
+            "placeholder": ""
+          }
+        ],
+        "id": "linear",
+        "logo": "linear",
+        "name": "Linear",
+        "setupLabel": "Create an API key",
+        "setupSteps": [
+          "Click “Create an API key”: Linear opens its Security & access settings.",
+          "Under Personal API keys, create a key named Remora (read access is enough) and paste it below."
+        ],
+        "setupUrl": "https://linear.app/settings/account/security",
+        "summary": "Issues assigned to you, and the mentions and comments waiting in your Linear inbox."
+      },
+      "refusal": null
+    }
+  ]
+}

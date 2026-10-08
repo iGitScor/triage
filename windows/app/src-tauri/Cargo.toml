@@ -1,0 +1,31 @@
+[package]
+name = "remora"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Remora for Windows: the tray app."
+publish = false
+
+[lib]
+name = "remora_tray"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+remora_core = { path = "../../crates/remora_core" }
+remora_plugins = { path = "../../crates/remora_plugins" }
+remora_app = { path = "../../crates/remora_app" }
+tauri = { version = "2.12.1", features = ["tray-icon", "image-png"] }
+tauri-plugin-notification = "2.5.1"
+tauri-plugin-opener = "2.7.0"
+tauri-plugin-autostart = "2.7.0"
+tauri-plugin-global-shortcut = "2.4.0"
+tauri-plugin-single-instance = "2.5.2"
+tauri-plugin-positioner = { version = "2.4.0", features = ["tray-icon"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+chrono = "0.4.45"
+sys-locale = "0.3.2"
+tokio = { version = "1.53.2", features = ["time", "sync", "macros"] }
+
+[build-dependencies]
+tauri-build = { version = "2.7.1", features = [] }

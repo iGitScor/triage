@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What the Remora window may do: its own commands (no permission needed) and listening to events. Links, notifications and start at login go through Rust only.",
+  "windows": ["main"],
+  "permissions": ["core:event:default", "core:window:allow-hide"]
+}

@@ -1,8 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["crates/remora_core", "crates/remora_plugins"]
+members = ["crates/remora_core", "crates/remora_plugins", "crates/remora_app", "app/src-tauri"]
+# `cargo test` without --workspace skips the tray app, which needs the built interface (npm run build in app/).
+default-members = ["crates/remora_core", "crates/remora_plugins", "crates/remora_app"]
 
 [workspace.package]
 version = "0.2.0"
 edition = "2021"
-license = "UNLICENSED"
+license = "GPL-3.0-or-later"
