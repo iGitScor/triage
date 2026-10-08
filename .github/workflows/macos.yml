@@ -1,0 +1,26 @@
+name: macOS
+
+on:
+  push:
+    paths: ["macos/**", ".github/workflows/macos.yml"]
+  pull_request:
+    paths: ["macos/**", ".github/workflows/macos.yml"]
+
+jobs:
+  test-and-build:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: macos
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: swift test
+      - name: Build the app (signed ad hoc on CI)
+        run: ./scripts/build-app.sh
+      - name: Package
+        run: ditto -c -k --keepParent build/Remora.app build/Remora-macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Remora-macos
+          path: macos/build/Remora-macos.zip
