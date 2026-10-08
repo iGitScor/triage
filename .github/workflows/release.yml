@@ -1,0 +1,51 @@
+name: Release
+
+# Push a tag such as v0.2.0: tests, then a DMG published as a GitHub release.
+# The DMG keeps the same name in every release, so the website links to
+# https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: macos
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: swift test
+      - name: Stamp the version from the tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" Resources/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Resources/Info.plist
+      - name: Build the app (signed ad hoc)
+        run: ./scripts/build-app.sh
+      - name: Package the DMG
+        run: |
+          mkdir -p build/dmg
+          cp -R build/Remora.app build/dmg/
+          ln -s /Applications build/dmg/Applications
+          cp ../LICENSE build/dmg/LICENSE.txt
+          cp Resources/LICENCES.txt build/dmg/Third-party\ licences.txt
+          cp Resources/Outfit-OFL.txt build/dmg/
+          hdiutil create -volname Remora -srcfolder build/dmg -ov -format UDZO build/Remora.dmg
+          shasum -a 256 build/Remora.dmg | sed 's| build/| |' > build/Remora.dmg.sha256
+          cat build/Remora.dmg.sha256
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > build/notes.md <<'EOF'
+          **Download [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)** (macOS 14 or later), open it and drag Remora to Applications.
+
+          Remora isn't notarized yet: the first time, right-click Remora → Open (on macOS 15: System Settings → Privacy & Security → Open Anyway). macOS asks for Keychain access once after each update; choose Always Allow.
+          EOF
+          gh release create "$GITHUB_REF_NAME" build/Remora.dmg build/Remora.dmg.sha256 \
+            --title "Remora ${GITHUB_REF_NAME#v}" --notes-file build/notes.md --generate-notes --verify-tag
