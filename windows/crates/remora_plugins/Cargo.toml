@@ -1,0 +1,18 @@
+[package]
+name = "remora_plugins"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait = "0.1.92"
+chrono = { version = "0.4.45", features = ["serde"] }
+futures = "0.3.34"
+regex = "1.13.1"
+remora_core = { version = "0.2.0", path = "../remora_core" }
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "native-tls", "query"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+
+[dev-dependencies]
+tokio = { version = "1.53.2", features = ["macros", "rt-multi-thread"] }

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/remora_core"]
+members = ["crates/remora_core", "crates/remora_plugins"]
 
 [workspace.package]
 version = "0.2.0"
