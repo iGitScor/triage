@@ -21,9 +21,9 @@ open build/Remora.app --args --window   # your real inbox in a window (handy whe
 
 Copy `build/Remora.app` to `/Applications` to keep it, and turn on *Open at login* in Settings.
 With an Apple Development certificate, rebuilds keep Keychain access; otherwise expect one prompt per
-new build. See [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) for signing and sharing the app.
+new build. See [building and releasing](https://triage.iscor.me/docs/develop/building) for signing, and [deploying](https://triage.iscor.me/docs/admin/deployment) for sharing the app.
 
 ## Docs (macOS)
 
-- [Architecture](docs/ARCHITECTURE.md): layers, data flow, the inbox rules.
-- [Writing a plugin](docs/PLUGINS.md); connecting tools as a user: [../docs/SOURCES.md](../docs/SOURCES.md).
+- [Architecture](https://triage.iscor.me/docs/develop/) (`docs/develop/index.md`): layers, data flow, the inbox rules.
+- [Writing a plugin](https://triage.iscor.me/docs/develop/plugins); connecting tools as a user: [the guide](https://triage.iscor.me/docs/guide/connecting-tools).

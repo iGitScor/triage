@@ -1,12 +1,18 @@
+---
+title: Architecture
+description: How Remora for macOS is built. Three Swift modules with dependencies pointing inwards, the domain and its rules, the refresh flow, the inbox rules and the menu bar.
+---
+
 # Architecture
 
-Remora is a Swift package with three modules. Dependencies point inwards only.
+Remora for macOS is a Swift package with three modules (Swift 6, language mode 5). Dependencies point inwards
+only. The [Windows app](./windows) ports the same domain and rules to Rust, with the same tests.
 
-```
-Remora (app: SwiftUI, AppKit, Keychain, files, notifications)
-  ├── RemoraPlugins (GitHub, GitLab, Slack, Notion, Claude)
-  │     └── RemoraCore
-  └── RemoraCore (domain + use cases, no UI, no platform APIs besides Foundation)
+```mermaid
+flowchart TB
+  App["Remora<br/>SwiftUI, AppKit, Keychain, files, notifications"] --> Plugins["RemoraPlugins<br/>GitHub, GitLab, Slack, Linear, Notion, Claude"]
+  App --> Core["RemoraCore<br/>domain and rules, Foundation only"]
+  Plugins --> Core
 ```
 
 ## RemoraCore
@@ -22,7 +28,8 @@ Remora (app: SwiftUI, AppKit, Keychain, files, notifications)
   `tasks`, `reminders`). Plugins choose one; they never invent UI.
 - `ItemState`: what the user decided (pinned, done, snoozed). Stored locally, never sent to a source.
 - `Account`: a connected plugin instance. Non-secret settings only.
-- `SourcePlugin` / `AssistantPlugin` + `PluginManifest`: the plugin contracts (see PLUGINS.md).
+- `SourcePlugin` / `AssistantPlugin` + `PluginManifest`: the plugin contracts (see [Writing a plugin](./plugins)).
+- `CompliancePolicy` and `Egress`: what may leave the Mac (see [Data flows](/admin/data-flows)).
 
 **Application** (`Sources/RemoraCore/Application`)
 
@@ -44,7 +51,8 @@ Remora (app: SwiftUI, AppKit, Keychain, files, notifications)
   `EmbeddingIntentClassifier` (Infrastructure, Apple NaturalLanguage sentence embeddings compared with
   example sentences; answers only when the two classes are clearly apart, otherwise *To reply*).
 
-**Infrastructure**: `HTTPClient` (protocol, so plugins are testable with a stub) and JSON helpers.
+**Infrastructure**: `HTTPClient` (a protocol, so plugins are testable with a stub), `GuardedHTTPClient` (refuses
+hosts a plugin doesn’t declare), and JSON helpers.
 
 ## Whose turn
 
@@ -85,4 +93,5 @@ notifications are scheduled with the system, so they fire even if Remora isn't r
   mouse-tracking loop that maps the distance to a time with `SnoozeClock`. The drag bubble (`DragHUD`) is
   plain AppKit because SwiftUI doesn't redraw during that loop; the quick-add box is a SwiftUI floating panel.
 
-Launch flags: `--demo` (sample data, nothing persisted), `--window` (inbox in a window), `--dark`.
+Launch flags: `--demo` (sample data, nothing persisted; `--tab waiting` opens on a tab), `--window` (inbox in a
+window), `--dark`.

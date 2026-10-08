@@ -1,5 +1,5 @@
 //! Remora's domain and rules, shared by the Windows app. A port of the macOS app's `RemoraCore`
-//! (see Remora/docs/ARCHITECTURE.md): same concepts, same IDs, same tests.
+//! (see docs/develop/index.md): same concepts, same IDs, same tests.
 
 pub mod assembler;
 pub mod classifier;

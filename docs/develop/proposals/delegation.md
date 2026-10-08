@@ -1,3 +1,8 @@
+---
+title: "Proposal: delegation and teams"
+description: A proposal, not built yet. Delegating an item with a drafted handoff, Waiting grouped by person, and lighter team features, all local.
+---
+
 # Proposal: delegation and team features
 
 Status: proposal, not built. Constraints: reduce overload (one suggestion at a time, everything on demand) and

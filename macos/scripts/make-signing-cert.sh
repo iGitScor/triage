@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Creates a self-signed "Remora Local Signing" certificate in the login keychain.
 # Builds signed with it keep the same identity, so the Keychain stops asking after each rebuild.
-# Local use only: it does not make the app distributable (see docs/DISTRIBUTION.md).
+# Local use only: it does not make the app distributable (see docs/develop/building.md).
 set -euo pipefail
 
 NAME="Remora Local Signing"

@@ -1,0 +1,158 @@
+/* VitePress's theme variables, mapped onto Myna's tokens (brand/tokens.css). */
+:root {
+  --vp-font-family-base: var(--font);
+  --vp-font-family-mono: var(--mono);
+
+  --vp-c-bg: var(--backdrop);
+  --vp-c-bg-alt: var(--surface);
+  --vp-c-bg-elv: var(--field);
+  --vp-c-bg-soft: var(--card);
+  --vp-c-divider: var(--border);
+  --vp-c-gutter: var(--border);
+  --vp-c-text-1: var(--ink);
+  --vp-c-text-2: var(--ink-soft);
+  --vp-c-text-3: var(--muted);
+
+  /* Lime is a fill; text and links use the readable accent. */
+  --vp-c-brand-1: var(--accent-text);
+  --vp-c-brand-2: var(--accent-text);
+  --vp-c-brand-3: var(--ink);
+  --vp-c-brand-soft: var(--accent-soft);
+
+  --vp-button-brand-bg: var(--accent);
+  --vp-button-brand-text: var(--on-accent);
+  --vp-button-brand-border: var(--accent);
+  --vp-button-brand-hover-bg: var(--accent-deep);
+  --vp-button-brand-hover-text: var(--on-accent);
+  --vp-button-brand-hover-border: var(--accent-deep);
+  --vp-button-brand-active-bg: var(--accent-deep);
+  --vp-button-brand-active-text: var(--on-accent);
+
+  --vp-home-hero-name-color: var(--ink);
+  --vp-custom-block-tip-bg: var(--accent-soft);
+  --vp-code-bg: var(--card);
+}
+
+.dark {
+  --vp-c-bg: var(--backdrop);
+  --vp-c-bg-alt: var(--surface);
+  --vp-c-bg-elv: var(--card);
+  --vp-c-bg-soft: var(--card);
+  --vp-c-brand-3: var(--accent);
+  --vp-button-brand-text: #111111;
+  --vp-home-hero-name-color: var(--ink);
+}
+
+/* The docs follow VitePress's own light/dark switch, not only the OS setting: every token that
+   changes with the scheme is set again here, from brand/tokens.css (a test keeps them equal). */
+html.dark {
+  --backdrop: #0e0e14;
+  --backdrop-2: #0e0e14;
+  --surface: #13131c;
+  --card: #1a1a26;
+  --card-2: #242433;
+  --field: #13131c;
+  --border: #2a2a3a;
+  --ink: #e4e4ec;
+  --ink-soft: #c4c4d0;
+  --muted: #8c8ca2;
+  --line: rgba(255, 255, 255, 0.08);
+  --accent-soft: rgba(185, 255, 102, 0.14);
+  --accent-text: #b9ff66;
+  --progress: #b9ff66;
+  --focus: #b9ff66;
+  --navy: #0e0e14;
+  --cream: #e4e4ec;
+  --dark: #07070b;
+  --dark-2: #13131c;
+  --dark-3: #242433;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  color-scheme: dark;
+}
+html:not(.dark) {
+  --backdrop: #f0f0e8;
+  --backdrop-2: #f0f0e8;
+  --surface: #f7f7f1;
+  --card: #e8e8df;
+  --card-2: #dcdcd2;
+  --field: #ffffff;
+  --border: #d0d0c8;
+  --ink: #111111;
+  --ink-soft: #333330;
+  --muted: #55554e;
+  --line: rgba(17, 17, 17, 0.08);
+  --accent-soft: rgba(185, 255, 102, 0.35);
+  --accent-text: #356509;
+  --progress: #111111;
+  --focus: #111111;
+  --navy: #111111;
+  --cream: #f0f0e8;
+  --dark: #111111;
+  --dark-2: #1c1c1c;
+  --dark-3: #2a2a2a;
+  --ok: #146b50;
+  --warn: #725200;
+  --danger: #a82c23;
+  color-scheme: light;
+}
+
+.VPNavBarTitle .logo {
+  height: 30px;
+}
+
+.VPHero .name,
+.VPHero .text {
+  letter-spacing: -0.02em;
+}
+
+/* The lime highlighter from the marketing pages. */
+.mark {
+  background: var(--accent);
+  color: var(--on-accent);
+  padding: 0 0.15em;
+  border-radius: 4px;
+}
+
+/* Mermaid measures labels with a normal line height; the docs' taller one
+   would push the last line of a label out of its box. */
+.vp-doc .mermaid foreignObject,
+.vp-doc .mermaid foreignObject * {
+  line-height: 1.5;
+}
+
+/* Screenshots under the home features: side by side, stacked on phones. */
+/* Feature icons as on the marketing pages: a line icon on an ink tile. */
+.VPFeature .icon {
+  border-radius: 14px;
+  background-color: var(--ink);
+  color: var(--backdrop);
+}
+
+.home-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 32px;
+  align-items: center;
+  max-width: 1152px;
+  margin: 64px auto 32px;
+  padding: 0 24px;
+}
+
+.VPNavBarTitle .logo {
+  height: 28px;
+}
+
+.VPNavBarTitle .title {
+  font-weight: 700;
+}
+
+.vp-doc kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--vp-c-divider);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  font-family: var(--vp-font-family-base);
+  font-size: 0.85em;
+}

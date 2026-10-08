@@ -17,4 +17,4 @@ Strings in the core are English and act as translation keys for the UI (the same
 cargo test --workspace     # core tests (also run by .github/workflows/windows.yml on windows-latest)
 ```
 
-Compliance follows the same model as macOS: see [../docs/COMPLIANCE.md](../docs/COMPLIANCE.md).
+Compliance follows the same model as macOS: see [data flows](https://triage.iscor.me/docs/admin/data-flows) and [Remora for Windows](https://triage.iscor.me/docs/develop/windows).

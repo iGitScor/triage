@@ -15,3 +15,13 @@ dist/
 
 # Python
 __pycache__/
+
+# Wrangler (Cloudflare) local cache and state
+.wrangler/
+
+# Built docs and the screenshots copied into them
+site/public/docs/
+docs/public/screenshots/
+docs/public/favicon.svg
+docs/.vitepress/cache/
+docs/.vitepress/dist/
