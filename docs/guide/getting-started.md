@@ -26,6 +26,19 @@ The fish appears in the menu bar. Remora has no Dock icon: it’s a menu bar app
 Settings → General → **Open at login**, so Remora is there every morning.
 :::
 
+## On Windows (preview)
+
+1. [Download Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe). It needs Windows 10 or 11.
+2. Run it. It installs Remora for your user only, with no admin rights.
+3. The installer isn’t signed yet: if Windows says it protected your PC, click **More info** → **Run anyway**.
+
+Remora sits in the notification area of the taskbar (click **^** if it’s hidden, and drag it next to the clock to
+keep it visible). Click it to open the inbox; right-click it for the menu. Tray icons can’t be dragged on Windows, so a
+new reminder is **Ctrl+Alt+R**, from anywhere. Settings → General → **Start with Windows** starts it at sign-in.
+
+The Windows version has the inbox, snooze, reminders, notifications and the four tools. The Claude assistant, smart
+snooze (reasons and insights), review prep and the waiting assistant are on the Mac only for now.
+
 ## Connect a first tool
 
 Click the fish, then the gear (Settings) → **Sources**, and pick a tool. Each one has a button that opens the

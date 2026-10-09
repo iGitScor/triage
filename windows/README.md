@@ -7,7 +7,7 @@ interface on WebView2, the macOS app's design and rules. Product overview: [../R
 |---|---|---|
 | `crates/remora_core` | Domain and rules, ported from the macOS `RemoraCore`: verbs, My turn / Waiting, prioritizer, Done and snooze rules, notifications, snooze clock, compliance policy | 19 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack and Linear, with an HTTP client limited to each plugin's declared hosts | 12 |
-| `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\Remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 13 |
+| `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\fr.igitscor.remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 15 |
 | `app/src-tauri` | The tray icon and its popup, notifications, start with Windows, the Ctrl+Alt+R reminder shortcut, the commands the interface calls | |
 | `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked |
 

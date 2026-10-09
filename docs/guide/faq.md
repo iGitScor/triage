@@ -36,8 +36,9 @@ sync of a new account is silent on purpose.
 
 ## Can I use it on Windows?
 
-A Windows version is on its way, with the same rules and the same compliance model. Its core and the four sources
-are done; the tray app comes next. See [Remora for Windows](/develop/windows).
+Yes, in preview: [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe), for Windows 10 or 11, installed for your user only. It has the same rules,
+the same four tools and the same compliance model; see [Getting started](./getting-started#on-windows-preview) for
+what it doesn’t do yet.
 
 ## How do I erase everything?
 

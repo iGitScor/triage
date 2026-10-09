@@ -28,6 +28,22 @@ menus.
 Réglages → Général → **Ouvrir à la connexion**, pour retrouver Remora chaque matin.
 :::
 
+## Sous Windows (aperçu)
+
+1. [Téléchargez Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe). Il faut Windows 10 ou 11.
+2. Lancez-le. Il installe Remora pour votre utilisateur seulement, sans droits d’administrateur.
+3. L’installeur n’est pas encore signé : si Windows dit avoir protégé votre PC, cliquez sur **Informations
+   complémentaires** → **Exécuter quand même**.
+
+Remora se place dans la zone de notification de la barre des tâches (cliquez sur **^** si elle est masquée, et
+glissez-la près de l’horloge pour la garder visible). Un clic ouvre la boîte ; un clic droit, le menu. Les icônes de
+la zone de notification ne se tirent pas sous Windows : un nouveau rappel se crée avec **Ctrl+Alt+R**, de partout.
+Réglages → Général → **Lancer au démarrage de Windows** la démarre à l’ouverture de session.
+
+La version Windows a la boîte, les reports, les rappels, les notifications et les quatre outils. L’assistant Claude,
+le report intelligent (raisons et conseils), la préparation des relectures et l’assistant d’attente restent sur Mac
+pour l’instant.
+
 ## Connecter un premier outil
 
 Cliquez sur le poisson, puis sur la roue dentée (Réglages) → **Sources**, et choisissez un outil. Chacun a un

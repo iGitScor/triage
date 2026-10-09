@@ -6,7 +6,7 @@ description: Every network flow of Remora (GitHub, GitLab, Slack, Linear, Claude
 # Data flows
 
 This page lists every flow. It describes the macOS app; the Windows app follows the same model (declared hosts,
-guarded client, policy) with Windows equivalents: Credential Manager, `%LOCALAPPDATA%\Remora`, and a policy under
+guarded client, policy) with Windows equivalents: Credential Manager, `%LOCALAPPDATA%\fr.igitscor.remora`, and a policy under
 `HKLM\SOFTWARE\Policies\Remora` (Group Policy or Intune).
 
 ## What leaves the Mac

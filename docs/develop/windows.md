@@ -13,7 +13,7 @@ same. Each release attaches `Remora-Setup.exe` (per-user install, no admin right
 |---|---|---|
 | `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock, compliance policy | 19 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack and Linear, and the HTTP client limited to each plugin’s declared hosts | 12 |
-| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, and the inbox service the tray app drives | 13 |
+| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, and the inbox service the tray app drives | 15 |
 | `app/src-tauri` | Tray icon and popup, notifications, start with Windows, the reminder shortcut, the commands | |
 | `app/src` | The Svelte interface, in English and French | type-checked |
 
@@ -25,7 +25,7 @@ assistant, and buttons in notifications.
 | | macOS | Windows |
 |---|---|---|
 | Tokens | Keychain, one item | Credential Manager, one entry |
-| Data | `~/Library/Application Support/Remora` | `%LOCALAPPDATA%\Remora` |
+| Data | `~/Library/Application Support/Remora` | `%LOCALAPPDATA%\fr.igitscor.remora` |
 | Managed policy | Configuration profile, domain `fr.igitscor.remora` | `HKLM\SOFTWARE\Policies\Remora` (Group Policy, Intune) |
 | TLS | System trust | `native-tls`: the Windows certificate store, so corporate root certificates work |
 | Reminders | Drag the menu bar fish | A global shortcut (tray icons can’t be dragged) |

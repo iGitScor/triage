@@ -39,8 +39,9 @@ première synchronisation d’un nouveau compte est volontairement silencieuse.
 
 ## Remora existe-t-elle sur Windows ?
 
-Une version Windows arrive, avec les mêmes règles et le même modèle de conformité. Son cœur et les quatre sources
-sont prêts ; l’app dans la zone de notification suit. Voir [Remora pour Windows](/develop/windows) (en anglais).
+Oui, en aperçu : [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe), pour Windows 10 ou 11, installée pour votre utilisateur seulement. Mêmes
+règles, mêmes quatre outils, même modèle de conformité ; voir [Premiers pas](./premiers-pas#sous-windows-apercu) pour ce
+qu’elle ne fait pas encore.
 
 ## Comment tout effacer ?
 

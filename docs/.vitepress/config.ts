@@ -5,6 +5,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 const REPO = 'https://github.com/iGitScor/triage'
 const SITE = 'https://triage.iscor.me'
 const DMG = `${REPO}/releases/latest/download/Remora.dmg`
+const EXE = `${REPO}/releases/latest/download/Remora-Setup.exe`
 
 const guideEn: DefaultTheme.SidebarItem[] = [
   {
@@ -165,7 +166,7 @@ export default withMermaid(
             { text: 'Guide', link: '/guide/getting-started', activeMatch: '/guide/' },
             { text: 'IT and compliance', link: '/admin/', activeMatch: '/admin/' },
             { text: 'Developers', link: '/develop/', activeMatch: '/develop/' },
-            { text: 'Download', link: DMG },
+            { text: 'Download', items: [{ text: 'Mac (macOS 14+)', link: DMG }, { text: 'Windows 10 or 11 (preview)', link: EXE }] },
           ],
           sidebar: { '/guide/': guideEn, '/admin/': adminEn, '/develop/': develop },
           editLink: { pattern: `${REPO}/edit/main/docs/:path`, text: 'Edit this page' },
@@ -182,7 +183,7 @@ export default withMermaid(
             { text: 'Guide', link: '/fr/guide/premiers-pas', activeMatch: '/fr/guide/' },
             { text: 'DSI et conformité', link: '/fr/admin/', activeMatch: '/fr/admin/' },
             { text: 'Développeurs (en anglais)', link: '/develop/' },
-            { text: 'Télécharger', link: DMG },
+            { text: 'Télécharger', items: [{ text: 'Mac (macOS 14+)', link: DMG }, { text: 'Windows 10 ou 11 (aperçu)', link: EXE }] },
           ],
           sidebar: { '/fr/guide/': guideFr, '/fr/admin/': adminFr },
           editLink: { pattern: `${REPO}/edit/main/docs/:path`, text: 'Modifier cette page' },

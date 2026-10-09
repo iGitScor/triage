@@ -6,7 +6,7 @@ description: Verrouiller les outils que Remora peut connecter, l’IA externe et
 # Gérer la politique par MDM
 
 L’organisation peut verrouiller la politique de confidentialité de Remora par un profil de configuration pour le
-domaine de préférences **`fr.igitscor.remora`**. Tout MDM qui déploie des réglages personnalisés convient : Jamf
+domaine de préférences **`fr.igitscor.remora`** sur Mac, et par des [valeurs de registre](#windows-strategie-de-groupe-ou-intune) sous Windows. Tout MDM qui déploie des réglages personnalisés convient : Jamf
 Pro, Kandji, Microsoft Intune, Mosyle, Apple Business Essentials…
 
 Dès qu’une clé est définie, Réglages → Confidentialité affiche **Géré par votre organisation** et l’utilisateur ne
@@ -66,6 +66,32 @@ les vôtres (`uuidgen` dans le Terminal) et les identifiants par ceux de votre o
 Dans les MDM qui ne prennent que les réglages (une charge « Application & Custom Settings » dans Jamf, « Custom
 Configuration » dans Kandji, « Fichier de préférences » dans Intune), indiquez `fr.igitscor.remora` comme domaine
 et les trois clés comme liste de propriétés.
+
+## Windows : stratégie de groupe ou Intune
+
+L’app Windows lit les trois mêmes clés sous **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`** :
+
+| Valeur | Type | Signification |
+|---|---|---|
+| `AllowedPlugins` | `REG_MULTI_SZ` | Les outils autorisés, un identifiant par ligne |
+| `AllowExternalAI` | `REG_DWORD` | `1` pour autoriser l’IA externe, `0` pour l’interdire |
+| `AllowRemoteImages` | `REG_DWORD` | `1` pour charger les avatars des outils autorisés, `0` sinon |
+
+Déployez-les par une préférence de stratégie de groupe (Configuration ordinateur → Préférences → Paramètres Windows →
+Registre), un script de correction ou de configuration Intune, ou un fichier `.reg`. La même politique que le profil
+ci-dessus, en PowerShell (en administrateur) :
+
+```powershell
+$key = 'HKLM:\SOFTWARE\Policies\Remora'
+New-Item -Path $key -Force | Out-Null
+New-ItemProperty -Path $key -Name AllowedPlugins -PropertyType MultiString -Value 'github','gitlab','linear' -Force
+New-ItemProperty -Path $key -Name AllowExternalAI -PropertyType DWord -Value 0 -Force
+New-ItemProperty -Path $key -Name AllowRemoteImages -PropertyType DWord -Value 1 -Force
+```
+
+Vérifiez avec `reg query HKLM\SOFTWARE\Policies\Remora`. Remora lit la politique à son démarrage : l’utilisateur voit
+*Géré par votre organisation* dans Réglages → Confidentialité après sa prochaine ouverture de session, ou après avoir
+quitté et rouvert Remora. Un utilisateur ne peut pas écrire sous `HKLM\SOFTWARE\Policies`, donc pas l’assouplir.
 
 ## Vérifier sur un Mac
 

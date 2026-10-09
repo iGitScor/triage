@@ -4,8 +4,8 @@
 
 Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
 (To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
-ranking on the device, and only talks to the tools the user or their organization allows. A Windows version is in
-progress. French pages: https://triage.iscor.me/fr/.
+ranking on the device, and only talks to the tools the user or their organization allows. A Windows tray app is in
+preview. French pages: https://triage.iscor.me/fr/.
 
 ## Pages
 
@@ -16,6 +16,7 @@ progress. French pages: https://triage.iscor.me/fr/.
 ## Links
 
 - [Download for Mac](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)
+- [Download for Windows (preview)](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe)
 - [Source code](https://github.com/iGitScor/triage)
 - [Documentation](https://triage.iscor.me/docs/): the user guide, IT and compliance, and writing a plugin
 - [Connecting your tools](https://triage.iscor.me/docs/guide/connecting-tools)

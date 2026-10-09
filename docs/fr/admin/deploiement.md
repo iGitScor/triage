@@ -58,6 +58,16 @@ Remora est un simple paquet d’app, sans installeur, agent de lancement ni exte
 `/Applications` comme toute autre app, avec le profil de configuration. *Ouvrir à la connexion* reste un choix de
 chaque utilisateur dans les réglages de Remora (il utilise les éléments de connexion de macOS).
 
+## Windows (aperçu)
+
+Chaque version publie aussi **Remora-Setup.exe** (avec son SHA-256), toujours à
+`https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe`. C’est un installeur NSIS qui installe pour l’utilisateur courant, dans
+`%LOCALAPPDATA%\Remora`, sans droits d’administrateur ; installation silencieuse : `Remora-Setup.exe /S`.
+Ses données sont dans `%LOCALAPPDATA%\fr.igitscor.remora` et ses jetons dans une entrée du Gestionnaire d’identification
+(`fr.igitscor.remora`). Il n’est pas encore signé, donc SmartScreen prévient une fois (*Informations complémentaires* →
+*Exécuter quand même*) ; pour l’éviter, signez-le avec le certificat de signature de code de votre organisation avant
+de le déployer. La politique se règle dans le registre : voir [MDM](./mdm#windows-strategie-de-groupe-ou-intune).
+
 ## Mises à jour
 
 Remora ne se met pas à jour toute seule et ne vérifie pas les mises à jour : rien n’appelle l’extérieur. Suivez les

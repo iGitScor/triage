@@ -43,7 +43,7 @@
   "description": "Remora is a menu bar inbox for your Mac: code reviews, merge requests, Slack mentions and Linear issues, sorted by what you have to do. On-device, no account, only the tools you allow.",
   "applicationCategory": "BusinessApplication",
   "applicationSubCategory": "Productivity",
-  "operatingSystem": "macOS 14 or later",
+  "operatingSystem": "macOS 14 or later, Windows 10 or 11",
   "softwareVersion": "0.2.0",
   "inLanguage": [
     "en",
@@ -101,7 +101,7 @@
       "name": "Is there a Windows version?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "It’s on its way: a Windows app built with Tauri, with the same rules and the same compliance model. Its core and the four sources are done; the tray app comes next."
+        "text": "Yes, in preview: Remora-Setup.exe for Windows 10 or 11, installed for your user only (no admin rights). Same rules, same four tools, same compliance model, with the policy in the registry for Group Policy or Intune. The Claude assistant, smart snooze and review prep are Mac only for now. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway."
       }
     },
     {
@@ -148,11 +148,11 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="wrap hero-grid">
           <div>
-            <span class="eyebrow">Menu bar inbox · macOS · Windows soon</span>
+            <span class="eyebrow">Menu bar inbox · macOS · Windows</span>
             <h1 id="hero-title">Everything that<br /><span class="mark">needs you.</span></h1>
             <p class="lead">Nothing that doesn’t. Code reviews, your merge requests, Slack mentions and Linear issues, in one inbox in your menu bar. Sorted by what you have to do, not by where it came from.</p>
-            <div class="ctas"><a class="btn btn-primary btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14M7 12l5 5 5-5M5 21h14"/></svg></a><a class="btn btn-secondary btn-lg" href="/en/privacy">Privacy & compliance</a></div>
-            <p class="cta-note">Free and open source. macOS 14 or later, no account. The first time, right-click Remora and choose Open: it isn’t notarized yet.</p>
+            <div class="ctas"><a class="btn btn-primary btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14M7 12l5 5 5-5M5 21h14"/></svg></a><a class="btn btn-secondary btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe">Download for Windows</a></div>
+            <p class="cta-note">Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway.</p>
             <p class="notice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Remora speaks English and French, and so does on-device sorting.</span></p>
           </div>
           <div class="desk">
@@ -167,7 +167,7 @@
       </section>
 
       <section class="section-tight" aria-label="Remora">
-        <div class="wrap"><div class="facts"><div class="fact"><strong>0</strong><span>servers, accounts or trackers of ours</span></div><div class="fact"><strong>4</strong><span>tools: GitHub, GitLab, Slack and Linear</span></div><div class="fact"><strong>5</strong><span>items per verb, the rest folded away</span></div><div class="fact"><strong>100%</strong><span>of sorting and ranking done on your Mac</span></div></div></div>
+        <div class="wrap"><div class="facts"><div class="fact"><strong>0</strong><span>servers, accounts or trackers of ours</span></div><div class="fact"><strong>4</strong><span>tools: GitHub, GitLab, Slack and Linear</span></div><div class="fact"><strong>5</strong><span>items per verb, the rest folded away</span></div><div class="fact"><strong>100%</strong><span>of sorting and ranking done on your computer</span></div></div></div>
       </section>
 
       <section class="section" aria-labelledby="tabs-title">
@@ -245,7 +245,7 @@
       <section class="section" aria-labelledby="faq-title">
         <div class="wrap">
           <div class="section-head"><span class="eyebrow">FAQ</span><h2 id="faq-title">Good to know</h2></div>
-          <div class="faq"><details><summary>Is my data sent to a Remora server?</summary><div><p>There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain. No telemetry, no analytics, no crash reports.</p></div></details><details><summary>Do I need Claude?</summary><div><p>No. Sorting, ranking, snooze advice and review prep all run on your Mac without generative AI. Claude only adds optional briefs and summaries, and it is off until you, and your organization, allow it.</p></div></details><details><summary>Does it work with GitHub Enterprise and self-hosted GitLab?</summary><div><p>Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href="/docs/guide/connecting-tools">connecting your tools</a>.</p></div></details><details><summary>Is there a Windows version?</summary><div><p>It’s on its way: a Windows app built with Tauri, with the same rules and the same compliance model. Its core and the four sources are done; the tray app comes next.</p></div></details><details><summary>Why does macOS ask for my Keychain password?</summary><div><p>Remora keeps all your tokens in one Keychain item. macOS asks once per new build of an app that isn’t signed by a registered developer. Choose Always Allow.</p></div></details><details><summary>macOS says it can’t check the app?</summary><div><p>Remora isn’t notarized yet. Right-click it and choose Open; on macOS 15, use System Settings → Privacy & Security → Open Anyway. macOS only asks once.</p></div></details><details><summary>How much does it cost?</summary><div><p>Nothing. Remora is free software under the <a href="https://github.com/iGitScor/triage/blob/main/LICENSE">GPL-3.0-or-later</a> licence, and its source code is on <a href="https://github.com/iGitScor/triage">GitHub</a>, so your security team can read exactly what it does.</p></div></details></div>
+          <div class="faq"><details><summary>Is my data sent to a Remora server?</summary><div><p>There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain. No telemetry, no analytics, no crash reports.</p></div></details><details><summary>Do I need Claude?</summary><div><p>No. Sorting, ranking, snooze advice and review prep all run on your Mac without generative AI. Claude only adds optional briefs and summaries, and it is off until you, and your organization, allow it.</p></div></details><details><summary>Does it work with GitHub Enterprise and self-hosted GitLab?</summary><div><p>Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href="/docs/guide/connecting-tools">connecting your tools</a>.</p></div></details><details><summary>Is there a Windows version?</summary><div><p>Yes, in preview: <a href="https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe">Remora-Setup.exe</a> for Windows 10 or 11, installed for your user only (no admin rights). Same rules, same four tools, same compliance model, with the policy in the registry for Group Policy or Intune. The Claude assistant, smart snooze and review prep are Mac only for now. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway.</p></div></details><details><summary>Why does macOS ask for my Keychain password?</summary><div><p>Remora keeps all your tokens in one Keychain item. macOS asks once per new build of an app that isn’t signed by a registered developer. Choose Always Allow.</p></div></details><details><summary>macOS says it can’t check the app?</summary><div><p>Remora isn’t notarized yet. Right-click it and choose Open; on macOS 15, use System Settings → Privacy & Security → Open Anyway. macOS only asks once.</p></div></details><details><summary>How much does it cost?</summary><div><p>Nothing. Remora is free software under the <a href="https://github.com/iGitScor/triage/blob/main/LICENSE">GPL-3.0-or-later</a> licence, and its source code is on <a href="https://github.com/iGitScor/triage">GitHub</a>, so your security team can read exactly what it does.</p></div></details></div>
         </div>
       </section>
 
@@ -253,7 +253,7 @@
         <div class="wrap">
           <h2 id="final-title">Your inbox,<br />without the <span class="mark">noise.</span></h2>
           <p class="lead">Connect one tool, see what needs you, close the other tabs.</p>
-          <div class="ctas"><a class="btn btn-primary btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14M7 12l5 5 5-5M5 21h14"/></svg></a><a class="btn btn-ink btn-lg" href="https://github.com/iGitScor/triage">Source on GitHub</a></div>
+          <div class="ctas"><a class="btn btn-primary btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14M7 12l5 5 5-5M5 21h14"/></svg></a><a class="btn btn-ink btn-lg" href="https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe">Download for Windows</a></div>
         </div>
       </section>
     </main>
@@ -261,7 +261,7 @@
       <div class="wrap">
         <div class="footer-grid">
           <div class="footer-brand"><a class="brand brand-remora" href="/en/" aria-label="Remora, home"><span class="brand-disc"><svg viewBox="5 35 88 32" fill="currentColor" aria-hidden="true"><path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z"/><path fill-rule="evenodd" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z"/></svg></span><span class="brand-name">Remora</span></a><p>A menu bar inbox for everything that needs you. It runs on your Mac and talks only to the tools you allow.</p></div>
-          <nav aria-labelledby="f-product"><h2 id="f-product">Product</h2><ul><li><a href="/en/features">Features</a></li><li><a href="/en/privacy">Privacy & compliance</a></li><li><a href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac</a></li><li><a href="https://github.com/iGitScor/triage/releases">Release notes</a></li></ul></nav><nav aria-labelledby="f-resources"><h2 id="f-resources">Resources</h2><ul><li><a href="/docs/">Documentation</a></li><li><a href="/docs/guide/connecting-tools">Connecting your tools</a></li><li><a href="/docs/admin/">For IT and compliance</a></li><li><a href="/docs/develop/plugins">Writing a plugin</a></li><li><a href="https://github.com/iGitScor/triage">Source code on GitHub</a></li></ul></nav><nav aria-labelledby="f-trust"><h2 id="f-trust">Trust</h2><ul><li><a href="https://github.com/iGitScor/triage/blob/main/LICENSE">GPL-3.0-or-later licence</a></li><li><a href="https://github.com/iGitScor/triage/security">Report a vulnerability</a></li><li><a href="https://github.com/iGitScor/triage/issues">Questions and feedback</a></li></ul></nav>
+          <nav aria-labelledby="f-product"><h2 id="f-product">Product</h2><ul><li><a href="/en/features">Features</a></li><li><a href="/en/privacy">Privacy & compliance</a></li><li><a href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac</a></li><li><a href="https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe">Download for Windows (preview)</a></li><li><a href="https://github.com/iGitScor/triage/releases">Release notes</a></li></ul></nav><nav aria-labelledby="f-resources"><h2 id="f-resources">Resources</h2><ul><li><a href="/docs/">Documentation</a></li><li><a href="/docs/guide/connecting-tools">Connecting your tools</a></li><li><a href="/docs/admin/">For IT and compliance</a></li><li><a href="/docs/develop/plugins">Writing a plugin</a></li><li><a href="https://github.com/iGitScor/triage">Source code on GitHub</a></li></ul></nav><nav aria-labelledby="f-trust"><h2 id="f-trust">Trust</h2><ul><li><a href="https://github.com/iGitScor/triage/blob/main/LICENSE">GPL-3.0-or-later licence</a></li><li><a href="https://github.com/iGitScor/triage/security">Report a vulnerability</a></li><li><a href="https://github.com/iGitScor/triage/issues">Questions and feedback</a></li></ul></nav>
         </div>
         <div class="footer-bottom"><span>Remora is free software under the GPL-3.0-or-later licence, built with the help of Claude.</span><span>Tool logos: Simple Icons (CC0) · Outfit font (OFL)</span></div>
       </div>

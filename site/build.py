@@ -17,6 +17,7 @@ ROOT = pathlib.Path(__file__).parent / "public"
 ORIGIN = "https://triage.iscor.me"
 REPO = "https://github.com/iGitScor/triage"
 DMG = REPO + "/releases/latest/download/Remora.dmg"
+EXE = REPO + "/releases/latest/download/Remora-Setup.exe"
 VERSION = "0.2.0"
 LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 DOCS = {"en": "/docs/", "fr": "/docs/fr/"}
@@ -93,11 +94,12 @@ T = {
         "lang_label": "Language",
         "home_label": "Remora, home",
         "get": "Download for Mac",
+        "get_windows": "Download for Windows",
         "get_short": "Download",
         "source": "Source on GitHub",
         "footer_blurb": "A menu bar inbox for everything that needs you. It runs on your Mac and talks only to the tools you allow.",
         "footer": {
-            "product": ("Product", [("features", "Features"), ("privacy", "Privacy & compliance"), (DMG, "Download for Mac"), (REPO + "/releases", "Release notes")]),
+            "product": ("Product", [("features", "Features"), ("privacy", "Privacy & compliance"), (DMG, "Download for Mac"), (EXE, "Download for Windows (preview)"), (REPO + "/releases", "Release notes")]),
             "resources": ("Resources", [("/docs/", "Documentation"), ("/docs/guide/connecting-tools", "Connecting your tools"), ("/docs/admin/", "For IT and compliance"), ("/docs/develop/plugins", "Writing a plugin"), (REPO, "Source code on GitHub")]),
             "trust": ("Trust", [(REPO + "/blob/main/LICENSE", "GPL-3.0-or-later licence"), (REPO + "/security", "Report a vulnerability"), (REPO + "/issues", "Questions and feedback")]),
         },
@@ -126,11 +128,12 @@ T = {
         "lang_label": "Langue",
         "home_label": "Remora, accueil",
         "get": "Télécharger pour Mac",
+        "get_windows": "Télécharger pour Windows",
         "get_short": "Télécharger",
         "source": "Code source sur GitHub",
         "footer_blurb": "Une boîte de réception dans la barre des menus pour tout ce qui a besoin de vous. Elle tourne sur votre Mac et ne parle qu’aux outils autorisés.",
         "footer": {
-            "product": ("Produit", [("features", "Fonctionnalités"), ("privacy", "Confidentialité et conformité"), (DMG, "Télécharger pour Mac"), (REPO + "/releases", "Notes de version")]),
+            "product": ("Produit", [("features", "Fonctionnalités"), ("privacy", "Confidentialité et conformité"), (DMG, "Télécharger pour Mac"), (EXE, "Télécharger pour Windows (aperçu)"), (REPO + "/releases", "Notes de version")]),
             "resources": ("Ressources", [("/docs/fr/", "Documentation"), ("/docs/fr/guide/connecter-vos-outils", "Connecter vos outils"), ("/docs/fr/admin/", "DSI et conformité"), ("/docs/develop/plugins", "Écrire une extension (en anglais)"), (REPO, "Code source sur GitHub")]),
             "trust": ("Confiance", [(REPO + "/blob/main/LICENSE", "Licence GPL-3.0-or-later"), (REPO + "/security", "Signaler une vulnérabilité"), (REPO + "/issues", "Questions et retours")]),
         },
@@ -327,6 +330,10 @@ def cta_button(lang: str, cls: str = "btn btn-primary btn-lg") -> str:
     return f'<a class="{cls}" href="{DMG}">{T[lang]["get"]} {icon("drag", 20)}</a>'
 
 
+def windows_button(lang: str, cls: str = "btn btn-secondary btn-lg") -> str:
+    return f'<a class="{cls}" href="{EXE}">{T[lang]["get_windows"]}</a>'
+
+
 def faq(items: list[tuple[str, str]]) -> str:
     return '<div class="faq">' + "".join(f"<details><summary>{q}</summary><div><p>{a}</p></div></details>" for q, a in items) + "</div>"
 
@@ -377,14 +384,14 @@ def home(lang: str) -> str:
     t = T[lang]
     if lang == "en":
         c = dict(
-            eyebrow="Menu bar inbox · macOS · Windows soon",
+            eyebrow="Menu bar inbox · macOS · Windows",
             h1='Everything that<br /><span class="mark">needs you.</span>',
             lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions and Linear issues, in one inbox in your menu bar. Sorted by what you have to do, not by where it came from.",
             secondary="Privacy & compliance",
-            note="Free and open source. macOS 14 or later, no account. The first time, right-click Remora and choose Open: it isn’t notarized yet.",
+            note="Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway.",
             notice="Remora speaks English and French, and so does on-device sorting.",
             desk_note="The real app, with sample data. One fish in the menu bar, one count per tool.",
-            facts=[("0", "servers, accounts or trackers of ours"), ("4", "tools: GitHub, GitLab, Slack and Linear"), ("5", "items per verb, the rest folded away"), ("100%", "of sorting and ranking done on your Mac")],
+            facts=[("0", "servers, accounts or trackers of ours"), ("4", "tools: GitHub, GitLab, Slack and Linear"), ("5", "items per verb, the rest folded away"), ("100%", "of sorting and ranking done on your computer")],
             tabs_eyebrow="See it",
             tabs_title='Your turn, their turn, <span class="mark">later.</span>',
             tabs_lead="Three tabs instead of four apps. What waits on you, what you wait on, and what you chose to see again later.",
@@ -437,7 +444,7 @@ def home(lang: str) -> str:
                 ("Is my data sent to a Remora server?", "There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain. No telemetry, no analytics, no crash reports."),
                 ("Do I need Claude?", "No. Sorting, ranking, snooze advice and review prep all run on your Mac without generative AI. Claude only adds optional briefs and summaries, and it is off until you, and your organization, allow it."),
                 ("Does it work with GitHub Enterprise and self-hosted GitLab?", f'Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href="/docs/guide/connecting-tools">connecting your tools</a>.'),
-                ("Is there a Windows version?", "It’s on its way: a Windows app built with Tauri, with the same rules and the same compliance model. Its core and the four sources are done; the tray app comes next."),
+                ("Is there a Windows version?", f'Yes, in preview: <a href="{EXE}">Remora-Setup.exe</a> for Windows 10 or 11, installed for your user only (no admin rights). Same rules, same four tools, same compliance model, with the policy in the registry for Group Policy or Intune. The Claude assistant, smart snooze and review prep are Mac only for now. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway.'),
                 ("Why does macOS ask for my Keychain password?", "Remora keeps all your tokens in one Keychain item. macOS asks once per new build of an app that isn’t signed by a registered developer. Choose Always Allow."),
                 ("macOS says it can’t check the app?", "Remora isn’t notarized yet. Right-click it and choose Open; on macOS 15, use System Settings → Privacy & Security → Open Anyway. macOS only asks once."),
                 ("How much does it cost?", f'Nothing. Remora is free software under the <a href="{REPO}/blob/main/LICENSE">GPL-3.0-or-later</a> licence, and its source code is on <a href="{REPO}">GitHub</a>, so your security team can read exactly what it does.'),
@@ -447,14 +454,14 @@ def home(lang: str) -> str:
         )
     else:
         c = dict(
-            eyebrow="Barre des menus · macOS · bientôt Windows",
+            eyebrow="Barre des menus · macOS · Windows",
             h1='Tout ce qui a<br /><span class="mark">besoin de vous.</span>',
             lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack et tickets Linear, dans une seule boîte de réception, dans la barre des menus. Rangés par ce que vous avez à faire, pas par leur provenance.",
             secondary="Confidentialité et conformité",
-            note="Gratuit et open source. macOS 14 ou ultérieur, sans compte. La première fois, clic droit sur Remora puis Ouvrir : l’app n’est pas encore notarisée.",
+            note="Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même.",
             notice="Remora parle français et anglais, tout comme le tri sur l’appareil.",
             desk_note="La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.",
-            facts=[("0", "serveur, compte ou traceur de notre part"), ("4", "outils : GitHub, GitLab, Slack et Linear"), ("5", "éléments par verbe, le reste replié"), ("100 %", "du tri et du classement faits sur votre Mac")],
+            facts=[("0", "serveur, compte ou traceur de notre part"), ("4", "outils : GitHub, GitLab, Slack et Linear"), ("5", "éléments par verbe, le reste replié"), ("100 %", "du tri et du classement faits sur votre ordinateur")],
             tabs_eyebrow="En images",
             tabs_title='À vous, aux autres, <span class="mark">plus tard.</span>',
             tabs_lead="Trois onglets au lieu de quatre applis. Ce qui vous attend, ce que vous attendez, et ce que vous avez choisi de revoir plus tard.",
@@ -507,7 +514,7 @@ def home(lang: str) -> str:
                 ("Mes données passent-elles par un serveur Remora ?", "Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS. Pas de télémétrie, pas d’analytics, pas de rapports de plantage."),
                 ("Faut-il Claude ?", "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre Mac, sans IA générative. Claude n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas."),
                 ("Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?", f'Oui. Indiquez votre adresse en connectant le compte : Remora ne parle qu’à celle-ci. Configuration de chaque outil : <a href="/docs/fr/guide/connecter-vos-outils">connecter vos outils</a>.'),
-                ("Existe-t-il une version Windows ?", "Elle arrive : une app Windows construite avec Tauri, avec les mêmes règles et le même modèle de conformité. Son cœur et les quatre sources sont prêts ; l’app dans la zone de notification suit."),
+                ("Existe-t-il une version Windows ?", f'Oui, en aperçu : <a href="{EXE}">Remora-Setup.exe</a> pour Windows 10 ou 11, installée pour votre utilisateur seulement (sans droits d’administrateur). Mêmes règles, mêmes quatre outils, même modèle de conformité, avec la politique dans le registre pour la stratégie de groupe ou Intune. L’assistant Claude, le report intelligent et la préparation des relectures restent sur Mac pour l’instant. L’installeur n’est pas encore signé : si SmartScreen prévient, cliquez sur Informations complémentaires → Exécuter quand même.'),
                 ("Pourquoi macOS demande-t-il le mot de passe du trousseau ?", "Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une app qui n’est pas signée par un développeur enregistré. Choisissez Toujours autoriser."),
                 ("macOS dit qu’il ne peut pas vérifier l’app ?", "Remora n’est pas encore notarisée. Clic droit, puis Ouvrir ; sous macOS 15, Réglages Système → Confidentialité et sécurité → Ouvrir quand même. macOS ne demande qu’une fois."),
                 ("Combien ça coûte ?", f'Rien. Remora est un logiciel libre sous licence <a href="{REPO}/blob/main/LICENSE">GPL-3.0-or-later</a>, et son code source est sur <a href="{REPO}">GitHub</a> : votre équipe sécurité peut lire exactement ce qu’elle fait.'),
@@ -540,7 +547,7 @@ def home(lang: str) -> str:
                 "description": t["description"],
                 "applicationCategory": "BusinessApplication",
                 "applicationSubCategory": "Productivity",
-                "operatingSystem": "macOS 14 or later",
+                "operatingSystem": "macOS 14 or later, Windows 10 or 11",
                 "softwareVersion": VERSION,
                 "inLanguage": ["en", "fr"],
                 "isAccessibleForFree": True,
@@ -566,7 +573,7 @@ def home(lang: str) -> str:
             <span class="eyebrow">{c['eyebrow']}</span>
             <h1 id="hero-title">{c['h1']}</h1>
             <p class="lead">{c['lead']}</p>
-            <div class="ctas">{cta_button(lang)}<a class="btn btn-secondary btn-lg" href="{PAGES['privacy'][lang]}">{c['secondary']}</a></div>
+            <div class="ctas">{cta_button(lang)}{windows_button(lang)}</div>
             <p class="cta-note">{c['note']}</p>
             <p class="notice">{icon("info", 18)}<span>{c['notice']}</span></p>
           </div>
@@ -642,7 +649,7 @@ def home(lang: str) -> str:
         <div class="wrap">
           <h2 id="final-title">{c['final_title']}</h2>
           <p class="lead">{c['final_lead']}</p>
-          <div class="ctas">{cta_button(lang)}<a class="btn btn-ink btn-lg" href="{REPO}">{t['source']}</a></div>
+          <div class="ctas">{cta_button(lang)}{windows_button(lang, "btn btn-ink btn-lg")}</div>
         </div>
       </section>
 """
@@ -753,7 +760,7 @@ def features(lang: str) -> str:
           <span class="eyebrow">{t['nav']['features']}</span>
           <h1 id="page-title">{title}</h1>
           <p class="lead">{lead}</p>
-          <div class="ctas">{cta_button(lang)}</div>
+          <div class="ctas">{cta_button(lang)}{windows_button(lang)}</div>
         </div>
       </section>
       <nav class="subnav" aria-label="{t['nav']['features']}"><div class="wrap"><ul>{subnav}</ul></div></nav>
@@ -823,7 +830,7 @@ def privacy(lang: str) -> str:
                 ("<code>AllowRemoteImages</code>", "Boolean", "Load avatars from allowed tools only"),
             ],
             mdm_caption="Configuration profile payload",
-            windows="The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\Remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
+            windows="The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
             more="Data flows, MDM profile and deployment, for IT and compliance teams",
             more_href="/docs/admin/",
         )
@@ -871,7 +878,7 @@ def privacy(lang: str) -> str:
                 ("<code>AllowRemoteImages</code>", "Booléen", "Charger les avatars depuis les outils autorisés seulement"),
             ],
             mdm_caption="Contenu du profil de configuration",
-            windows="L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\Remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",
+            windows="L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",
             more="Flux de données, profil MDM et déploiement, pour la DSI et la conformité",
             more_href="/docs/fr/admin/",
         )
@@ -1030,8 +1037,8 @@ def llms() -> str:
 
 Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
 (To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
-ranking on the device, and only talks to the tools the user or their organization allows. A Windows version is in
-progress. French pages: {ORIGIN}/fr/.
+ranking on the device, and only talks to the tools the user or their organization allows. A Windows tray app is in
+preview. French pages: {ORIGIN}/fr/.
 
 ## Pages
 
@@ -1039,6 +1046,7 @@ progress. French pages: {ORIGIN}/fr/.
 ## Links
 
 - [Download for Mac]({DMG})
+- [Download for Windows (preview)]({EXE})
 - [Source code]({REPO})
 - [Documentation]({ORIGIN}/docs/): the user guide, IT and compliance, and writing a plugin
 - [Connecting your tools]({ORIGIN}/docs/guide/connecting-tools)

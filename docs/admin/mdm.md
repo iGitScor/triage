@@ -6,7 +6,7 @@ description: Lock which tools Remora may connect, whether external AI is allowed
 # Managing the policy with MDM
 
 The organization can lock Remora’s privacy policy with a configuration profile for the preference domain
-**`fr.igitscor.remora`**. Any MDM that deploys custom settings works: Jamf Pro, Kandji, Microsoft Intune, Mosyle,
+**`fr.igitscor.remora`** on Macs, and with [registry values](#windows-group-policy-or-intune) on Windows. Any MDM that deploys custom settings works: Jamf Pro, Kandji, Microsoft Intune, Mosyle,
 Apple Business Essentials…
 
 When at least one key is set, Settings → Privacy shows **Managed by your organization** and the user can’t change
@@ -65,6 +65,32 @@ your own (`uuidgen` in Terminal) and the identifiers with your organization’s.
 In MDMs that take the settings only (an “Application & Custom Settings” payload in Jamf, “Custom Configuration” in
 Kandji, “Preference file” in Intune), give `fr.igitscor.remora` as the domain and the three keys as the
 property list.
+
+## Windows: Group Policy or Intune
+
+The Windows app reads the same three keys from **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**:
+
+| Value | Type | Meaning |
+|---|---|---|
+| `AllowedPlugins` | `REG_MULTI_SZ` | The allowed tools, one ID per line |
+| `AllowExternalAI` | `REG_DWORD` | `1` to allow external AI, `0` to forbid it |
+| `AllowRemoteImages` | `REG_DWORD` | `1` to load avatars from allowed tools, `0` not to |
+
+Deploy them with a Group Policy Preference (Computer Configuration → Preferences → Windows Settings → Registry), an
+Intune remediation or configuration script, or a `.reg` file. The same policy as the profile above, in PowerShell
+(as administrator):
+
+```powershell
+$key = 'HKLM:\SOFTWARE\Policies\Remora'
+New-Item -Path $key -Force | Out-Null
+New-ItemProperty -Path $key -Name AllowedPlugins -PropertyType MultiString -Value 'github','gitlab','linear' -Force
+New-ItemProperty -Path $key -Name AllowExternalAI -PropertyType DWord -Value 0 -Force
+New-ItemProperty -Path $key -Name AllowRemoteImages -PropertyType DWord -Value 1 -Force
+```
+
+Check it with `reg query HKLM\SOFTWARE\Policies\Remora`. Remora reads the policy when it starts: users see *Managed by
+your organization* in Settings → Privacy after their next sign-in, or after quitting and reopening Remora. Users can’t
+write under `HKLM\SOFTWARE\Policies`, so they can’t loosen it.
 
 ## Checking it on a Mac
 

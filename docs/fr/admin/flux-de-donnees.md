@@ -6,7 +6,7 @@ description: Chaque flux réseau de Remora (GitHub, GitLab, Slack, Linear, Claud
 # Flux de données
 
 Cette page liste chaque flux. Elle décrit l’app macOS ; l’app Windows suit le même modèle (adresses déclarées, client
-contrôlé, politique) avec les équivalents Windows : Gestionnaire d’identification, `%LOCALAPPDATA%\Remora`, et une
+contrôlé, politique) avec les équivalents Windows : Gestionnaire d’identification, `%LOCALAPPDATA%\fr.igitscor.remora`, et une
 politique sous `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe ou Intune).
 
 ## Ce qui quitte le Mac
