@@ -36,6 +36,11 @@ pub fn run() {
     let demo_mode = args.iter().any(|a| a == "--demo");
     let window_mode = demo_mode || args.iter().any(|a| a == "--window");
 
+    if let Some(legacy) = paths::legacy_data_dir() {
+        if let Err(error) = paths::migrate(&legacy, &paths::data_dir()) {
+            eprintln!("Remora: could not move the data saved by 0.3.0: {error}");
+        }
+    }
     let mut inbox = if demo_mode {
         Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default())
     } else {
