@@ -80,7 +80,9 @@ what you keep snoozing. It stays off until external AI is allowed, in Settings �
 See [The assistant](./assistant).
 
 - **Claude Code** (recommended): uses the Claude Code installed and signed in on your Mac, on your Claude plan.
-  Settings → Sources, under *Assistant* → Claude Code → **Connect**.
+  Settings → Sources, under *Assistant* → Claude Code → **Connect**. Anthropic's installer is the simplest: it
+  doesn't need Node.js. Installs through Homebrew, npm (nvm, volta), bun, mise or asdf are found too; otherwise,
+  paste the output of `which claude` into *Path to claude*. Settings → Privacy shows which `claude` Remora runs.
 - **Claude API**: an API key from the Claude Console. Settings → Sources, under *Assistant* → Claude API.
 
 ## Several accounts

@@ -82,7 +82,10 @@ pour trier ce que vous reportez sans cesse. Il reste désactivé tant que l’IA
 Réglages → Confidentialité ou par votre organisation. Voir [L’assistant](./assistant).
 
 - **Claude Code** (recommandé) : utilise le Claude Code installé et connecté sur votre Mac, sur votre abonnement
-  Claude. Réglages → Sources, section *Assistant* → Claude Code → **Connecter**.
+  Claude. Réglages → Sources, section *Assistant* → Claude Code → **Connecter**. L’installeur d’Anthropic est le
+  plus simple : il n’a pas besoin de Node.js. Les installations par Homebrew, npm (nvm, volta), bun, mise ou asdf
+  sont trouvées aussi ; sinon, collez le résultat de `which claude` dans *Chemin de claude*. Réglages →
+  Confidentialité indique quel `claude` Remora lance.
 - **API Claude** : une clé d’API de la Claude Console. Réglages → Sources, section *Assistant* → Claude API.
 
 ## Plusieurs comptes
