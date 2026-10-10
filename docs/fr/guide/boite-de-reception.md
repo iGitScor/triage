@@ -79,6 +79,9 @@ jamais plus que ce qu’on peut saisir d’un coup d’œil.
 - **VoiceOver** lit chaque élément comme un seul bouton ; le rotor des actions propose Marquer comme terminé,
   Reporter, Épingler, Commencer et les éléments liés. L’icône de la barre des menus dit combien d’éléments vous
   attendent, ou la tâche en cours.
+- **Moins de mouvement** : avec Réduire les animations (macOS) ou les effets d’animation désactivés (Windows), rien
+  ne glisse, ne rebondit ni ne tourne. Les thèmes de contraste de Windows donnent une bordure aux boutons, pastilles
+  et cartes.
 
 ## Notifications
 

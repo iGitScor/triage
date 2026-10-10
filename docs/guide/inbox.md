@@ -74,6 +74,8 @@ take in at a glance.
   them.
 - **VoiceOver** reads each item as one button; the actions rotor has Mark as done, Snooze, Pin, Start and the
   linked items. The menu bar item says how many items need you, or the task in progress.
+- **Less motion**: with Reduce Motion (macOS) or Animation effects off (Windows), nothing slides, springs or
+  spins. Windows contrast themes give pills, chips and cards a border.
 
 ## Notifications
 

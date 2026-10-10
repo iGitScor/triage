@@ -52,6 +52,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Chat messages are sorted more accurately: a question mark in a link or code, or a word like "pleased", no
   longer sends a message to *To reply*. On the Mac, sorting is also several times faster.
 - Windows: error messages and empty tabs are in French on a French system, values included ("Erreur réseau : …").
+- Reduce Motion (Mac) and Windows' Animation effects setting are respected: no slides, springs or spinning; Windows
+  contrast themes show borders and the selected tab.
+- Windows: searching waits for you to stop typing, and the inbox doesn't reload while its window is hidden.
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.
 
 ### Releases
