@@ -6,6 +6,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
 ## Unreleased
 
 
+- **Text size** (Mac, Settings → General → Appearance): default, large or larger; and no text is smaller than 11 pt.
 - **Updates**, off until you turn them on (Settings → General): Remora checks GitHub once a day and installs a new
   version when you choose, only if it is signed with Remora's release key. **Check now** works either way. IT can
   decide for everyone with `AutomaticUpdates`.
@@ -25,6 +26,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 
 
+- Mac: counts read right in English and French ("1 file", "1 élément marqué comme terminé"), and reminders say
+  "Rappel" in French. A long task title no longer widens the menu bar menu.
 - Mac: review estimates leave out lockfiles and generated files (a lockfile-only update is no longer "~60 min"),
   risky-area chips no longer fire on lookalike words ("author", "latest"), and after five timed reviews the
   estimate follows your pace.

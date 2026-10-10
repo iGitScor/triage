@@ -108,3 +108,4 @@ La première synchronisation d’un nouveau compte ne notifie jamais : connecter
 | Un compteur par source | Un compteur par outil dans la barre des menus, dans l’ordre du verbe le plus pressant |
 | Pastille citron quand quelque chose m’attend | Met en valeur l’icône quand *À moi* n’est pas vide |
 | Thème | Système, clair ou sombre |
+| Taille du texte (Mac) | Par défaut, grande ou plus grande ; aucun texte sous 11 pt |
