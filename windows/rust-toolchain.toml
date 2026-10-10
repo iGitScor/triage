@@ -1,0 +1,5 @@
+# The Rust release CI and releases build with; rustup installs it on first use. Bump it on purpose, in its own commit.
+[toolchain]
+channel = "1.98.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

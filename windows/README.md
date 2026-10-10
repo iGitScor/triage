@@ -17,7 +17,7 @@ waiting assistant, and notification buttons.
 
 ## Develop
 
-Requires Rust ([rustup](https://rustup.rs/)) and Node 22. The core crates build and test on any OS; the tray app
+Requires Rust ([rustup](https://rustup.rs/), which installs the version in `rust-toolchain.toml`) and Node 22. The core crates build and test on any OS; the tray app
 runs on Windows, and on a Mac for development (in the menu bar, with its own data folder and Keychain entry).
 
 ```sh

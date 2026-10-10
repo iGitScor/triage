@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: The tag matches the version in the source
         run: python3 scripts/version.py --check "${GITHUB_REF_NAME#v}"
 
   macos:
     needs: version
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 45
     outputs:
       signed: ${{ steps.signing.outputs.identity != '' }}
@@ -40,10 +40,12 @@ jobs:
       run:
         working-directory: macos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Xcode 26.6 (Swift 6.2), not whatever the image defaults to
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
       # From the source before anything is built: Swift packages (none today) and the files the app bundles.
       - name: SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: macos
           format: cyclonedx-json
@@ -113,15 +115,15 @@ jobs:
           fi
           swift scripts/updates/sign.swift build/Remora.dmg > build/Remora.dmg.update-sig
       - name: Provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: macos/build/Remora.dmg
       - name: SBOM attestation
-        uses: actions/attest-sbom@v2
+        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
         with:
           subject-path: macos/build/Remora.dmg
           sbom-path: macos/build/Remora.dmg.cdx.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: macos
           path: |
@@ -147,23 +149,22 @@ jobs:
         working-directory: windows
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       # From the lockfiles before anything is installed or built: the Rust crates (Cargo.lock) and the interface's
       # npm packages (app/package-lock.json).
       - name: SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: windows
           format: cyclonedx-json
           output-file: windows/Remora-Setup.exe.cdx.json
           upload-artifact: false
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - name: Rust from windows/rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: windows
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -202,14 +203,14 @@ jobs:
       - name: Upload the app for signing
         id: unsigned-app
         if: steps.signing.outputs.enabled == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unsigned-app
           path: windows/target/release/remora.exe
           if-no-files-found: error
       - name: Sign the app
         if: steps.signing.outputs.enabled == 'true'
-        uses: signpath/github-action-submit-signing-request@v3
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
@@ -228,14 +229,14 @@ jobs:
       - name: Upload the installer for signing
         id: unsigned-installer
         if: steps.signing.outputs.enabled == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unsigned-installer
           path: windows/target/release/bundle/nsis/*-setup.exe
           if-no-files-found: error
       - name: Sign the installer
         if: steps.signing.outputs.enabled == 'true'
-        uses: signpath/github-action-submit-signing-request@v3
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
@@ -275,15 +276,15 @@ jobs:
           fi
           app/node_modules/.bin/tauri signer sign --app-version "${GITHUB_REF_NAME#v}" Remora-Setup.exe
       - name: Provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: windows/Remora-Setup.exe
       - name: SBOM attestation
-        uses: actions/attest-sbom@v2
+        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
         with:
           subject-path: windows/Remora-Setup.exe
           sbom-path: windows/Remora-Setup.exe.cdx.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: windows
           path: |
@@ -300,7 +301,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: dist
           merge-multiple: true

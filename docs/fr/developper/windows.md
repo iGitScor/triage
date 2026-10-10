@@ -66,7 +66,7 @@ garder le verrou de la boîte de réception, donc l’interface n’attend jamai
 
 ## Construire et tester
 
-Demande Rust ([rustup](https://rustup.rs/)) et Node 22.
+Demande Rust ([rustup](https://rustup.rs/), qui installe la version de `windows/rust-toolchain.toml`) et Node 22.
 
 ```sh
 cd windows

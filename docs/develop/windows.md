@@ -65,7 +65,7 @@ interface never waits on a slow tool.
 
 ## Build and test
 
-Requires Rust ([rustup](https://rustup.rs/)) and Node 22.
+Requires Rust ([rustup](https://rustup.rs/), which installs the version in `windows/rust-toolchain.toml`) and Node 22.
 
 ```sh
 cd windows
