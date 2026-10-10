@@ -1,0 +1,49 @@
+name: Something doesn't work
+description: A bug in the Mac or Windows app, the website or the docs.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting it. Please **remove tokens, email addresses and message content** from anything you
+        paste: a made-up example is enough. A security issue goes [here instead](https://github.com/iGitScor/triage/security/advisories/new).
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where
+      options: [macOS, Windows, Website or docs]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Settings → General → Version.
+      placeholder: "0.3.1"
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool involved
+      multiple: true
+      options: [GitHub, GitLab, Slack, Linear, Notion, Claude Code, Claude API, Reminders, None]
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: And what you expected instead. A screenshot helps, once private content is hidden.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      placeholder: |
+        1. …
+        2. …
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I removed tokens, email addresses and message content from this report.
+          required: true

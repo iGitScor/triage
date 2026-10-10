@@ -38,6 +38,9 @@ keep working; on Windows without `make`, run those directly.
   usually needs its Rust twin in `windows/crates` (or a line in [the Windows page](docs/develop/windows.md) saying
   it isn't there yet), with a test on each side using the same fixture.
 - **Strings are English in the code.** Add the French to `macos/scripts/translations_fr.py`, then `make i18n`
+- **User-visible changes are documented**: the guide in `docs/guide` and its French twin in `docs/fr/guide`, the
+  website copy in `site/build.py` (`make site`) when a feature is advertised there, and a line under *Unreleased*
+  in [`CHANGELOG.md`](CHANGELOG.md). Keep it short.
 - **Privacy rules hold**: a plugin declares every host it reaches (`egress`, enforced by the guarded HTTP client
   and its tests); tokens go only to the Keychain or the Credential Manager; no telemetry, analytics or crash
   reporting; nothing is sent to an AI unless external AI is allowed.
@@ -53,6 +56,9 @@ match the source.
 first.
 
 ## Security and licence
+
+Report vulnerabilities privately, as [SECURITY.md](SECURITY.md) explains, not in issues. Bugs and ideas go through
+the issue forms.
 
 Remora is [GPL-3.0-or-later](LICENSE). By contributing, you agree that your contribution is released under the
 same licence.

@@ -1,0 +1,21 @@
+name: An idea
+description: A feature, a tool to support, or something that could be simpler.
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What gets in your way today
+      description: The situation, before the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where
+      multiple: true
+      options: [macOS, Windows, Both]

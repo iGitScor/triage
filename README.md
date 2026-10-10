@@ -203,7 +203,8 @@ site/deploy.sh                    # marketing pages, social cards, docs, then Cl
 
 ## Security
 
-Please report vulnerabilities privately through [GitHub security advisories](https://github.com/iGitScor/triage/security).
+Please report vulnerabilities privately, as [SECURITY.md](SECURITY.md) explains. What changed in each release:
+[CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
