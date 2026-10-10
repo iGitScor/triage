@@ -26,7 +26,7 @@
 # site/csp.py after each docs build, never 'unsafe-inline'. Mermaid draws with inline styles. Everything comes from
 # this origin.
 /docs/*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-DQUgNM9X0iH2019NkUxeBvnBoEoRKkHBc/I0iLqPNPA=' 'sha256-La1r0VSk0Po4KFI0duEKhmPu+u0I416JW3oONqtdf4M=' 'sha256-ww1ZBwXwb1lM0lPh8J1QcUPMkjadx9qcl/iMhzBkP78='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-DQUgNM9X0iH2019NkUxeBvnBoEoRKkHBc/I0iLqPNPA=' 'sha256-La1r0VSk0Po4KFI0duEKhmPu+u0I416JW3oONqtdf4M=' 'sha256-q9vCC5x28l0bOhaHUG9FnlBGt7wj7ERR6jCfE49FLGA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
 
 # The site's own files and screenshots: a day in the cache, then revalidated in the background.
 /site/*
