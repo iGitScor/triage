@@ -1,0 +1,5 @@
+# Formatting-only commits, skipped by git blame (GitHub reads this file; locally:
+# git config blame.ignoreRevsFile .git-blame-ignore-revs).
+
+# style: format the code with the shared rules
+3e37cc6b282b8fc243099fe8d946780deb2f7443
