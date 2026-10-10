@@ -25,3 +25,8 @@ docs/public/screenshots/
 docs/public/favicon.svg
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+
+# Roadmap
+roadmap
+# Roadmap viewer (generated, holds a local path)
+roadmap/index.html
