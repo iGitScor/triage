@@ -46,7 +46,9 @@ l’un de ces mots va dans *À répondre*.
 
 - **Terminé** masque un élément jusqu’à ce qu’il change : un commit, une approbation, un commentaire, une réponse.
   Il revient alors tout seul dans *À moi*. **Tout effacer**, dans l’onglet Terminés, vide la liste ; les éléments
-  effacés reviennent quand même s’il y a du nouveau.
+  effacés reviennent quand même s’il y a du nouveau. Après Terminé, *Tout marquer comme terminé* ou *Tout effacer*,
+  **Annuler** s’affiche quelques secondes (⌘Z sur Mac, Ctrl+Z sur Windows). Retirer un compte demande confirmation :
+  son jeton est supprimé.
 - **Épingler** garde un élément en haut de *À moi*, quoi qu’il arrive ensuite.
 
 ## Ce qui passe en premier

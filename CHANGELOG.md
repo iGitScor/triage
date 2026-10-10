@@ -38,6 +38,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
   marks, and emails or phone numbers by their name. Titles from GitHub, GitLab, Linear and Notion lose their emoji
   codes and marks too.
 - A Slack app's event reminder (Google Calendar…) leaves the inbox once the event starts, unless you pinned or
+  started it.
+- **Undo** after Done, *Mark all as done* or *Clear all*, for a few seconds (⌘Z on the Mac, Ctrl+Z on Windows).
+  Removing an account now asks first, on both apps.
 - A server error says what happened (not found, refused, a problem on the server) and its code, instead of the
   server's raw answer.
 - Mac: a group's *Snooze all* and *Mark all as done* (formerly *Sweep*) are in a ⋯ menu that shows on hover, and the

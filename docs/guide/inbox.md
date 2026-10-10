@@ -45,7 +45,8 @@ to *To reply*.
 
 - **Done** hides an item until something changes on it: a new commit, an approval, a comment, a reply. Then it
   comes back to *My turn* on its own. **Clear all** in the Done tab empties the list; cleared items still come
-  back on new activity.
+  back on new activity. After Done, *Mark all as done* or *Clear all*, **Undo** shows for a few seconds (⌘Z on the
+  Mac, Ctrl+Z on Windows). Removing an account asks first: its token is deleted.
 - **Pin** keeps an item at the top of *My turn*, whatever arrives after it.
 
 ## What comes first
