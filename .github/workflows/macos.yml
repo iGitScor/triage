@@ -7,14 +7,22 @@ on:
   pull_request:
     paths: ["macos/**", ".github/workflows/macos.yml"]
 
+# A newer push to the same branch or pull request cancels the run in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-and-build:
     runs-on: macos-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: macos
     steps:
       - uses: actions/checkout@v4
+      - name: Formatting (.swift-format)
+        run: swift format lint --strict --parallel -r Sources Tests Package.swift
       - name: Every UI string has French, and Localizable.strings is up to date
         run: python3 scripts/make-strings.py --check
       - name: Test

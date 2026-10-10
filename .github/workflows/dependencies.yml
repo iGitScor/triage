@@ -9,6 +9,7 @@ on:
     paths:
       - "windows/Cargo.lock"
       - "windows/deny.toml"
+      - "package-lock.json"
       - "windows/app/package-lock.json"
       - "docs/package-lock.json"
       - ".github/workflows/dependencies.yml"
@@ -16,6 +17,7 @@ on:
     paths:
       - "windows/Cargo.lock"
       - "windows/deny.toml"
+      - "package-lock.json"
       - "windows/app/package-lock.json"
       - "docs/package-lock.json"
       - ".github/workflows/dependencies.yml"
@@ -52,3 +54,6 @@ jobs:
       - name: Documentation
         run: npm audit --audit-level=critical
         working-directory: docs
+      # Repository tooling (Biome, lefthook): never shipped.
+      - name: Tooling
+        run: npm audit --audit-level=critical
