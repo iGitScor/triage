@@ -68,10 +68,20 @@ and comments from your Linear inbox.
 Urgent and High issues are marked as such; Low and Backlog issues are shown but not counted. Overdue and
 due-today issues get a notification.
 
-## Notion (soon)
+## Notion
 
-Listed with a *Soon* badge. Many Notion workspaces only let owners create tokens, so Notion will come with a
-simpler setup.
+Open tasks assigned to you, from the Notion databases you choose (on Mac).
+
+1. Settings → Sources → **Notion** → **Create a token**: in Notion, **New token**, name it Remora, keep the *Notion
+   API* capability, pick an expiration. Copy it (Notion shows it once) and paste it.
+2. Paste the links of your task databases, comma separated (open the database as a full page, then ••• → Copy
+   link). The token sees what you see: nothing to share.
+3. If your tasks use other names, set the **Assignee property** (the people property saying who a task is for) and
+   the **Done statuses**. A task is done when its *Status* is one of those, or when a checkbox named *Done* or
+   *Complete* is ticked.
+
+No **New token** button? Your workspace lets only owners create tokens: ask one, or paste the secret of an
+internal connection an owner made, and add **Your Notion email** so Remora finds your tasks.
 
 ## Claude (optional)
 

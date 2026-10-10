@@ -70,10 +70,21 @@ mentions et commentaires non lus de votre boîte Linear.
 Les tickets *Urgent* et *High* sont signalés ; *Low* et le Backlog sont affichés mais pas comptés. Les tickets en
 retard ou à rendre aujourd’hui déclenchent une notification.
 
-## Notion (bientôt)
+## Notion
 
-Listé avec un badge *Bientôt*. Beaucoup d’espaces Notion ne laissent que les propriétaires créer des jetons :
-Notion arrivera avec une configuration plus simple.
+Les tâches ouvertes qui vous sont assignées, dans les bases Notion que vous choisissez (sur Mac).
+
+1. Réglages → Sources → **Notion** → **Créer un jeton** : dans Notion, **New token**, nommez-le Remora, gardez la
+   capacité *Notion API*, choisissez une expiration. Copiez-le (Notion ne l’affiche qu’une fois) et collez-le.
+2. Collez les liens de vos bases de tâches, séparés par des virgules (ouvrez la base en pleine page, puis ••• →
+   Copier le lien). Le jeton voit ce que vous voyez : rien à partager.
+3. Si vos tâches utilisent d’autres noms, réglez la **Propriété « assigné à »** (la propriété personnes qui dit
+   à qui est la tâche) et les **statuts terminés**. Une tâche est terminée quand son *Statut* en fait partie, ou
+   quand une case nommée *Done* ou *Complete* est cochée.
+
+Pas de bouton **New token** ? Votre espace ne laisse que les propriétaires créer des jetons : demandez à l’un
+d’eux, ou collez le secret d’une connexion interne créée par un propriétaire, et ajoutez **votre e-mail Notion**
+pour que Remora trouve vos tâches.
 
 ## Claude (facultatif)
 

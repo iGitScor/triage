@@ -58,8 +58,8 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 
 | Part | What it is | Stack |
 |---|---|---|
-| **Remora for macOS** [`macos/`](macos) | The menu bar app | Swift 6, SwiftUI and AppKit, NaturalLanguage |
-| **Remora for Windows** [`windows/`](windows) | The same rules and sources for Windows, in progress: core and plugins done, tray app next | Rust, Tauri 2 |
+| **Remora for macOS** [`macos/`](macos) | The menu bar app | Swift 6 (strict concurrency), SwiftUI and AppKit, NaturalLanguage |
+| **Remora for Windows** [`windows/`](windows) | The same rules, sources and assistant in a tray app for Windows 10 and 11, in preview: keyword sorting only, [what differs](https://triage.iscor.me/docs/develop/windows) | Rust, Tauri 2, Svelte |
 | **Website** [`site/`](site) | Marketing pages in English and French, static on Cloudflare | HTML, CSS, a Python generator |
 | **Docs** [`docs/`](docs) | The user guide, IT and compliance, and developer docs, in English and French | VitePress |
 
@@ -105,7 +105,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | GitLab (+ self-hosted) | Merge requests you opened or review, approvals, pipelines | Token: `read_api` |
 | Slack | Mentions and DMs from the last N days | User token `xoxp-…`: `search:read` |
 | Linear | Issues assigned to you (priority, due date), unread mentions and comments | Personal API key |
-| Notion *(soon)* | Open tasks assigned to you in chosen databases | Personal access token |
+| Notion | Open tasks assigned to you in chosen databases (Mac only) | Personal access token, or an internal connection's secret |
 | Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this Mac |
 | Claude API | Brief, summaries, triage | Anthropic API key |
 
