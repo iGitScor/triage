@@ -7,4 +7,9 @@ python3 site/build.py
 site/og/render.sh
 [ -d docs/node_modules ] || npm --prefix docs ci
 npm --prefix docs run build
-cd site && npx --yes wrangler@4 deploy
+python3 site/csp.py
+# The wrangler of site/package-lock.json, exactly, never "the latest 4.x" with Cloudflare credentials.
+npm --prefix site ci --ignore-scripts
+# Wrangler sends usage telemetry to Cloudflare by default: not from here.
+export WRANGLER_SEND_METRICS=false
+cd site && npx --no-install wrangler deploy
