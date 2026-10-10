@@ -287,6 +287,31 @@ impl Inbox {
         Ok(self.secrets.as_ref().unwrap())
     }
 
+    // The credential store can be slow: the app reads and writes it without holding the inbox lock (PERF-07), with
+    // `vault`, `needs_secrets` and `provide_secrets` for the read, then `secrets_after` and a `…_saved` method for each
+    // change. The methods without `_saved` do the same in one step, for tests and the demo.
+
+    pub fn vault(&self) -> Arc<dyn Vault> {
+        self.vault.clone()
+    }
+
+    /// The tokens haven't been read yet (once per launch).
+    pub fn needs_secrets(&self) -> bool {
+        self.secrets.is_none()
+    }
+
+    /// Tokens read from the vault outside the lock; kept only if nothing read them meanwhile.
+    pub fn provide_secrets(&mut self, secrets: Secrets) {
+        self.secrets.get_or_insert(secrets);
+    }
+
+    /// Every account's tokens after `change`, to save with `Vault::save`, then pass to a `…_saved` method.
+    pub fn secrets_after(&mut self, change: impl FnOnce(&mut Secrets)) -> Result<Secrets, String> {
+        let mut all = self.secrets()?.clone();
+        change(&mut all);
+        Ok(all)
+    }
+
     /// One plugin per allowed account, each with an HTTP client limited to its declared hosts.
     /// Refused accounts get an error instead.
     /// `manual`: asked for by the user, which doesn't wait out a slow-down (`Backoff`). An account that keeps failing,
@@ -1004,19 +1029,33 @@ impl Inbox {
         account: Account,
         secrets: HashMap<String, String>,
     ) -> Result<(), String> {
+        let all = self.assistant_secrets(&account, secrets)?;
+        self.vault.save(&all)?;
+        self.finish_assistant_connect_saved(account, all);
+        Ok(())
+    }
+
+    /// The tokens with `account` as the only assistant.
+    pub fn assistant_secrets(
+        &mut self,
+        account: &Account,
+        secrets: HashMap<String, String>,
+    ) -> Result<Secrets, String> {
         let previous: Vec<String> =
             self.accounts.iter().filter(|a| claude::is_assistant(&a.plugin_id)).map(|a| a.id.clone()).collect();
-        let mut all = self.secrets()?.clone();
-        for id in &previous {
-            all.remove(id);
-        }
-        all.insert(account.id.clone(), secrets);
-        self.vault.save(&all)?;
-        self.secrets = Some(all);
+        self.secrets_after(|all| {
+            for id in &previous {
+                all.remove(id);
+            }
+            all.insert(account.id.clone(), secrets);
+        })
+    }
+
+    pub fn finish_assistant_connect_saved(&mut self, account: Account, saved: Secrets) {
+        self.secrets = Some(saved);
         self.accounts.retain(|a| !claude::is_assistant(&a.plugin_id));
         self.accounts.push(account);
         self.persist(ACCOUNTS, &self.accounts);
-        Ok(())
     }
 
     /// A made-up item to test an assistant with when the whole-inbox brief is off: nothing from the inbox.
@@ -1047,20 +1086,31 @@ impl Inbox {
     /// Saves an account whose first fetch worked. Its items arrive silently.
     pub fn finish_connect(
         &mut self,
-        mut account: Account,
+        account: Account,
         secrets: HashMap<String, String>,
         snapshot: SourceSnapshot,
         now: DateTime<Utc>,
     ) -> Result<(), String> {
-        let mut all = self.secrets()?.clone();
-        all.insert(account.id.clone(), secrets);
+        let all = self.secrets_after(|all| {
+            all.insert(account.id.clone(), secrets);
+        })?;
         self.vault.save(&all)?;
-        self.secrets = Some(all);
+        self.finish_connect_saved(account, all, snapshot, now);
+        Ok(())
+    }
+
+    pub fn finish_connect_saved(
+        &mut self,
+        mut account: Account,
+        saved: Secrets,
+        snapshot: SourceSnapshot,
+        now: DateTime<Utc>,
+    ) {
+        self.secrets = Some(saved);
         account.identity = Some(snapshot.identity.clone());
         let id = account.id.clone();
         self.accounts.push(account);
         self.apply(vec![(id, Ok(snapshot))], now);
-        Ok(())
     }
 
     /// Reconnect: the same account with a new token, so its Done, snoozes and pins stay. The caller
@@ -1094,10 +1144,24 @@ impl Inbox {
         if !self.accounts.iter().any(|a| a.id == account_id) {
             return Err("This account is no longer connected.".into());
         }
-        let mut all = self.secrets()?.clone();
-        all.insert(account_id.to_string(), secrets);
+        let all = self.secrets_after(|all| {
+            all.insert(account_id.to_string(), secrets);
+        })?;
         self.vault.save(&all)?;
-        self.secrets = Some(all);
+        self.finish_reconnect_saved(account_id, all, snapshot, now)
+    }
+
+    pub fn finish_reconnect_saved(
+        &mut self,
+        account_id: &str,
+        saved: Secrets,
+        snapshot: SourceSnapshot,
+        now: DateTime<Utc>,
+    ) -> Result<(), String> {
+        if !self.accounts.iter().any(|a| a.id == account_id) {
+            return Err("This account is no longer connected.".into());
+        }
+        self.secrets = Some(saved);
         self.backoff.remove(account_id);
         self.apply(vec![(account_id.to_string(), Ok(snapshot))], now);
         Ok(())
@@ -1111,11 +1175,17 @@ impl Inbox {
     }
 
     pub fn disconnect(&mut self, account_id: &str) -> Result<(), String> {
-        self.undo_point = None;
-        let mut all = self.secrets()?.clone();
-        all.remove(account_id);
+        let all = self.secrets_after(|all| {
+            all.remove(account_id);
+        })?;
         self.vault.save(&all)?;
-        self.secrets = Some(all);
+        self.disconnect_saved(account_id, all);
+        Ok(())
+    }
+
+    pub fn disconnect_saved(&mut self, account_id: &str, saved: Secrets) {
+        self.undo_point = None;
+        self.secrets = Some(saved);
         self.accounts.retain(|a| a.id != account_id);
         self.items.remove(account_id);
         self.recompute_links();
@@ -1127,14 +1197,18 @@ impl Inbox {
         self.persist(CACHE, &self.items);
         self.persist(STATES, &self.states);
         self.enforce_ai_policy();
-        Ok(())
     }
 
     /// Settings → Privacy → Erase local data: every account, file and token.
     pub fn erase_local_data(&mut self) -> Result<(), String> {
+        self.vault.save(&Secrets::new())?;
+        self.erase_local_data_saved()
+    }
+
+    /// Erase, the tokens already deleted. The files go under the lock, so no save can bring one back.
+    pub fn erase_local_data_saved(&mut self) -> Result<(), String> {
         self.remarks.clear();
         self.undo_point = None;
-        self.vault.save(&Secrets::new())?;
         if let Some(store) = &self.store {
             store.erase().map_err(|e| e.to_string())?;
         }
@@ -1157,6 +1231,11 @@ impl Inbox {
         self.persist(STATES, &self.states);
         self.persist(REMINDERS, &self.reminders);
         true
+    }
+
+    /// The files, for the app to flush when it quits.
+    pub fn store(&self) -> Option<JsonStore> {
+        self.store.clone()
     }
 
     fn persist<T: Serialize>(&self, name: &str, value: &T) {
@@ -1500,6 +1579,68 @@ mod tests {
         reopened.erase_local_data().unwrap();
         assert!(reopened.all_items().is_empty());
         assert!(store.load::<Vec<Account>>(ACCOUNTS).is_none());
+    }
+
+    /// A refresh that brings nothing new writes no file (PERF-07).
+    #[test]
+    fn a_refresh_with_nothing_new_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let folder = dir.path().join("Remora");
+        let store = JsonStore::new(folder.clone());
+        let mut inbox = Inbox::open(store.clone(), Arc::new(MemoryVault::default()), Managed::default());
+        inbox.accounts = self::inbox().accounts;
+        inbox.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
+        store.flush();
+        for name in [ACCOUNTS, CACHE, STATES] {
+            std::fs::write(folder.join(format!("{name}.json")), "untouched").unwrap();
+        }
+
+        inbox.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
+        store.flush();
+        for name in [ACCOUNTS, CACHE, STATES] {
+            assert_eq!(std::fs::read_to_string(folder.join(format!("{name}.json"))).unwrap(), "untouched", "{name}");
+        }
+
+        inbox.toggle_pin("1");
+        store.flush();
+        assert_ne!(std::fs::read_to_string(folder.join(format!("{STATES}.json"))).unwrap(), "untouched");
+    }
+
+    /// The app saves tokens outside the lock: `secrets_after`, then `Vault::save`, then a `…_saved` method.
+    #[tokio::test]
+    async fn tokens_can_be_saved_outside_the_inbox() {
+        let vault = Arc::new(MemoryVault::default());
+        vault.save(&Secrets::from([("old".to_string(), HashMap::new())])).unwrap();
+        let mut inbox = Inbox::in_memory(vault.clone(), Managed::default());
+        assert!(inbox.needs_secrets());
+        inbox.provide_secrets(inbox.vault().load().unwrap());
+        assert!(!inbox.needs_secrets());
+
+        let secrets = HashMap::from([("token".to_string(), "lin_api_k".to_string())]);
+        let (account, _) =
+            inbox.prepare_connect("linear", None, HashMap::new(), &secrets, Arc::new(NoNetwork)).unwrap();
+        let id = account.id.clone();
+        let all = inbox
+            .secrets_after(|all| {
+                all.insert(id.clone(), secrets);
+            })
+            .unwrap();
+        assert!(!vault.load().unwrap().contains_key(&id), "nothing saved yet");
+        inbox.vault().save(&all).unwrap();
+        let identity = SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] };
+        inbox.finish_connect_saved(account, all, identity, now());
+        assert_eq!(vault.load().unwrap()[&id]["token"], "lin_api_k");
+        assert!(vault.load().unwrap().contains_key("old"));
+        assert_eq!(inbox.accounts.len(), 1);
+
+        let all = inbox
+            .secrets_after(|all| {
+                all.remove(&id);
+            })
+            .unwrap();
+        inbox.vault().save(&all).unwrap();
+        inbox.disconnect_saved(&id, all);
+        assert!(inbox.accounts.is_empty() && !vault.load().unwrap().contains_key(&id));
     }
 
     /// A refresh started before Erase finishes after it, and used to write the cache back.

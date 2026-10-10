@@ -1,6 +1,6 @@
 //! What the interface may ask. Each command locks the inbox briefly; network calls run without the lock.
 
-use crate::{changed, AppState, REMINDER_SHORTCUT};
+use crate::{changed, save_secrets, AppState, REMINDER_SHORTCUT};
 use chrono::{DateTime, Duration, Utc};
 use remora_app::view::{inbox_view, InboxView};
 use remora_app::{paths, AccountInfo, Managed, Preferences, SourceInfo};
@@ -184,8 +184,14 @@ pub async fn connect(
                 .map_err(|e| e.to_string())?;
             None
         };
+        let _writes = state.vault_writes.lock().await;
+        let (vault, all) = {
+            let mut inbox = state.inbox.lock().await;
+            (inbox.vault(), inbox.assistant_secrets(&account, secrets)?)
+        };
+        save_secrets(vault, all.clone()).await?;
         let mut inbox = state.inbox.lock().await;
-        inbox.finish_assistant_connect(account, secrets)?;
+        inbox.finish_assistant_connect_saved(account, all);
         if brief.is_some() {
             inbox.store_brief(brief);
         }
@@ -196,7 +202,18 @@ pub async fn connect(
     let (account, plugin) =
         state.inbox.lock().await.prepare_connect(&plugin_id, name, settings, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await.map_err(|e| e.to_string())?;
-    state.inbox.lock().await.finish_connect(account, secrets, snapshot, Utc::now())?;
+    let _writes = state.vault_writes.lock().await;
+    let (vault, all) = {
+        let mut inbox = state.inbox.lock().await;
+        (
+            inbox.vault(),
+            inbox.secrets_after(|all| {
+                all.insert(account.id.clone(), secrets);
+            })?,
+        )
+    };
+    save_secrets(vault, all.clone()).await?;
+    state.inbox.lock().await.finish_connect_saved(account, all, snapshot, Utc::now());
     changed(&app).await;
     Ok(())
 }
@@ -211,7 +228,21 @@ pub async fn reconnect(
 ) -> Result<()> {
     let plugin = state.inbox.lock().await.prepare_reconnect(&account_id, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await.map_err(|e| e.to_string())?;
-    state.inbox.lock().await.finish_reconnect(&account_id, secrets, snapshot, Utc::now())?;
+    let _writes = state.vault_writes.lock().await;
+    let (vault, all) = {
+        let mut inbox = state.inbox.lock().await;
+        if !inbox.accounts.iter().any(|a| a.id == account_id) {
+            return Err("This account is no longer connected.".into());
+        }
+        (
+            inbox.vault(),
+            inbox.secrets_after(|all| {
+                all.insert(account_id.clone(), secrets);
+            })?,
+        )
+    };
+    save_secrets(vault, all.clone()).await?;
+    state.inbox.lock().await.finish_reconnect_saved(&account_id, all, snapshot, Utc::now())?;
     changed(&app).await;
     Ok(())
 }
@@ -225,7 +256,18 @@ pub async fn rename_account(app: AppHandle, state: State<'_, AppState>, id: Stri
 
 #[tauri::command]
 pub async fn disconnect(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
-    state.inbox.lock().await.disconnect(&id)?;
+    let _writes = state.vault_writes.lock().await;
+    let (vault, all) = {
+        let mut inbox = state.inbox.lock().await;
+        (
+            inbox.vault(),
+            inbox.secrets_after(|all| {
+                all.remove(&id);
+            })?,
+        )
+    };
+    save_secrets(vault, all.clone()).await?;
+    state.inbox.lock().await.disconnect_saved(&id, all);
     changed(&app).await;
     Ok(())
 }
@@ -285,7 +327,10 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<()> {
 
 #[tauri::command]
 pub async fn erase_local_data(app: AppHandle, state: State<'_, AppState>) -> Result<()> {
-    state.inbox.lock().await.erase_local_data()?;
+    let _writes = state.vault_writes.lock().await;
+    let vault = state.inbox.lock().await.vault();
+    save_secrets(vault, remora_app::Secrets::new()).await?;
+    state.inbox.lock().await.erase_local_data_saved()?;
     crate::updates::forget(&app).await;
     crate::avatars::forget();
     changed(&app).await;

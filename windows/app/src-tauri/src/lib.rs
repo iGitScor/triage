@@ -8,7 +8,7 @@ mod i18n;
 mod updates;
 
 use remora_app::tray::{notification_text, TrayImage, TraySummary};
-use remora_app::{demo, paths, CredentialVault, Inbox, JsonStore, Managed, MemoryVault};
+use remora_app::{demo, paths, CredentialVault, Inbox, JsonStore, Managed, MemoryVault, Secrets, Vault};
 use remora_core::Notice;
 use remora_plugins::{HttpClient, ReqwestClient};
 use std::sync::Arc;
@@ -24,6 +24,10 @@ use tokio::sync::{Mutex, Notify};
 
 pub struct AppState {
     pub inbox: Mutex<Inbox>,
+    /// Held while the tokens change, from reading them to saving them, so two changes never race.
+    pub vault_writes: Mutex<()>,
+    /// The inbox's files, flushed when the app quits.
+    pub store: Option<JsonStore>,
     pub http: Arc<dyn HttpClient>,
     pub refresh_now: Notify,
     pub demo: bool,
@@ -79,7 +83,9 @@ pub fn run() {
         demo::load(&mut inbox, chrono::Utc::now());
     }
     let state = AppState {
+        store: inbox.store(),
         inbox: Mutex::new(inbox),
+        vault_writes: Mutex::new(()),
         http: Arc::new(ReqwestClient::new()),
         refresh_now: Notify::new(),
         demo: demo_mode,
@@ -183,11 +189,16 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building Remora")
-        .run(|_, event| {
+        .run(|app, event| match event {
             // A tray app keeps running when its popup closes.
-            if let tauri::RunEvent::ExitRequested { api, code: None, .. } = event {
-                api.prevent_exit();
+            tauri::RunEvent::ExitRequested { api, code: None, .. } => api.prevent_exit(),
+            // Files are written in the background: the last saves land before the process ends.
+            tauri::RunEvent::Exit => {
+                if let Some(store) = &app.state::<AppState>().store {
+                    store.flush();
+                }
             }
+            _ => {}
         });
 }
 
@@ -333,12 +344,28 @@ pub async fn refresh(app: &AppHandle, manual: bool) {
             inbox.managed = remora_app::Managed::read();
             inbox.enforce_ai_policy();
         }
+        // The tokens are read once per launch, outside the lock.
+        let vault = {
+            let inbox = state.inbox.lock().await;
+            inbox.needs_secrets().then(|| inbox.vault())
+        };
+        if let Some(vault) = vault {
+            if let Ok(Ok(secrets)) = tauri::async_runtime::spawn_blocking(move || vault.load()).await {
+                state.inbox.lock().await.provide_secrets(secrets);
+            }
+        }
         let jobs = state.inbox.lock().await.fetch_jobs(state.http.clone(), chrono::Utc::now(), manual);
         let results = remora_app::run(jobs).await;
         let notices = state.inbox.lock().await.apply(results, chrono::Utc::now());
         post(app, &notices);
     }
     changed(app).await;
+}
+
+/// Saves every account's tokens off the async runtime and without the inbox lock: the Credential Manager can be slow.
+/// The caller holds `vault_writes` from `secrets_after` to the `…_saved` call.
+pub async fn save_secrets(vault: Arc<dyn Vault>, secrets: Secrets) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || vault.save(&secrets)).await.map_err(|e| e.to_string())?
 }
 
 /// Tells the interface to reload, and updates the tray.
