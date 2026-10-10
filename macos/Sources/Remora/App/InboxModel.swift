@@ -285,7 +285,6 @@ final class InboxModel {
     /// suggestions go. Runs at launch, at each refresh (a new MDM profile) and when Privacy settings change.
     func enforcePolicy() {
         guard !isDemo else { return }
-        let policy = policy
         var dropped = false
         for account in accounts {
             guard let refusal = refusal(for: account) else { continue }
