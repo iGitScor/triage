@@ -73,3 +73,6 @@ of *My turn*.
 ## In progress
 
 **Start** a reminder (from its notification, or on any item: hover → **Start**, or right-click) to say you’re on it.
+It moves to an **In progress** tab, the menu bar shows *1 in progress (25 min)* with a swimming fish, and the inbox opens on that tab
+until you mark it **Done** or **Stop** it (which puts it back where it was). With one task running, right-clicking
+the fish offers **Done** and **Stop** too. On Windows, the tray icon turns dark and its tooltip shows the task.

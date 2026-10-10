@@ -76,3 +76,7 @@ le poisson → **Nouveau rappel**.
 ## En cours
 
 **Commencez** un rappel (depuis sa notification, ou sur n’importe quel élément : survol → **Commencer**, ou clic
+droit) pour dire que vous êtes dessus. Il passe dans un onglet **En cours**, la barre des menus affiche *1 en
+cours (25 min)* avec un poisson qui nage, et la boîte s’ouvre sur cet onglet jusqu’à ce que vous le marquiez **Terminé** ou l’**Arrêtiez** (il
+retrouve alors sa place). Avec une seule tâche en cours, le clic droit sur le poisson propose aussi **Terminé** et
+**Arrêter**. Sous Windows, l’icône de la barre des tâches passe en sombre et son info-bulle affiche la tâche.
