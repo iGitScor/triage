@@ -94,6 +94,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
   Remora.dmg --repo iGitScor/triage`.
 
 
+- Mac: with VoiceOver or Switch Control, the menu bar button opens the inbox instead of waiting for a drag, and
+  offers "New reminder…" as an action.
 - Mac: with Claude Code, inbox content is no longer visible to other programs in the process list.
 - Windows: the window and the tray menu could use different languages; they now both follow the system's.
 - Mac: the refresh arrow kept spinning after a refresh had finished.
