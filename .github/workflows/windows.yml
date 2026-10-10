@@ -6,6 +6,7 @@ on:
     paths:
       - "windows/**"
       - "macos/scripts/translations_fr.py"
+      - "scripts/make-emoji.py"
       - "macos/Resources/Logos/**"
       - "site/public/site/tokens.css"
       - ".github/workflows/windows.yml"
@@ -13,6 +14,7 @@ on:
     paths:
       - "windows/**"
       - "macos/scripts/translations_fr.py"
+      - "scripts/make-emoji.py"
       - "macos/Resources/Logos/**"
       - "site/public/site/tokens.css"
       - ".github/workflows/windows.yml"
@@ -40,11 +42,13 @@ jobs:
       - name: Install the interface's packages
         run: npm ci
         working-directory: windows/app
-      - name: French strings are up to date
+      - name: Every string the app shows has French, and fr.json is up to date
         run: python scripts/make-i18n.py --check
         working-directory: windows/app
-      - name: Type-check and build the interface
-        run: npm run check && npm run build
+      - name: Emoji tables match scripts/make-emoji.py
+        run: python ../scripts/make-emoji.py --check
+      - name: Type-check, test and build the interface
+        run: npm run check && npm test && npm run build
         working-directory: windows/app
       - name: Lint
         run: cargo clippy --workspace --all-targets -- -D warnings

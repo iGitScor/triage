@@ -15,6 +15,8 @@ jobs:
         working-directory: macos
     steps:
       - uses: actions/checkout@v4
+      - name: Every UI string has French, and Localizable.strings is up to date
+        run: python3 scripts/make-strings.py --check
       - name: Test
         run: swift test
       - name: Build the app (signed ad hoc on CI)

@@ -49,6 +49,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Mac: Remora only runs a `claude` that only you can change, and checks it is Claude Code before sending it anything.
 - Chat messages are sorted more accurately: a question mark in a link or code, or a word like "pleased", no
   longer sends a message to *To reply*. On the Mac, sorting is also several times faster.
+- Windows: error messages and empty tabs are in French on a French system, values included ("Erreur réseau : …").
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.
 
 - Windows: **Create a token** opened a broken link for GitHub and GitLab.

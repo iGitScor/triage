@@ -38,6 +38,10 @@ keep working; on Windows without `make`, run those directly.
   usually needs its Rust twin in `windows/crates` (or a line in [the Windows page](docs/develop/windows.md) saying
   it isn't there yet), with a test on each side using the same fixture.
 - **Strings are English in the code.** Add the French to `macos/scripts/translations_fr.py`, then `make i18n`
+  regenerates both apps' files. CI fails when a string the interface shows has no French: `L(…)` and SwiftUI texts
+  on the Mac; `t(…)` calls (and objects marked `// t-keys`) and the Rust messages that reach the interface on
+  Windows, where `{name}` reads as `%@`. Windows translates error messages by the key they were made from
+  (`translateMessage`), values included.
 - **User-visible changes are documented**: the guide in `docs/guide` and its French twin in `docs/fr/guide`, the
   website copy in `site/build.py` (`make site`) when a feature is advertised there, and a line under *Unreleased*
   in [`CHANGELOG.md`](CHANGELOG.md). Keep it short.
