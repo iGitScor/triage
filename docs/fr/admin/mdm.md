@@ -97,7 +97,8 @@ et les clés comme liste de propriétés.
 
 ## Windows : stratégie de groupe ou Intune
 
-L’app Windows lit les trois mêmes clés sous **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`** :
+L’app Windows lit les trois mêmes clés, et `AutomaticUpdates`, sous **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**,
+puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par utilisateur (une valeur définie dans HKLM l’emporte) :
 
 | Valeur | Type | Signification |
 |---|---|---|
@@ -118,8 +119,11 @@ New-ItemProperty -Path $key -Name AllowExternalAI -PropertyType DWord -Value 0 -
 New-ItemProperty -Path $key -Name AllowRemoteImages -PropertyType DWord -Value 1 -Force
 ```
 
-Vérifiez avec `reg query HKLM\SOFTWARE\Policies\Remora`. Remora lit la politique à son démarrage : l’utilisateur voit
-*Géré par votre organisation* dans Réglages → Confidentialité après sa prochaine ouverture de session, ou après avoir
+Vérifiez avec `reg query HKLM\SOFTWARE\Policies\Remora`. Remora lit la politique au lancement puis à chaque
+actualisation : un changement s’applique dans l’intervalle d’actualisation, sans redémarrage, et l’utilisateur voit
+*Géré par votre organisation* dans Réglages → Confidentialité. Un utilisateur ne peut pas écrire sous
+`HKLM\SOFTWARE\Policies`, donc pas assouplir ce qu’elle fixe.
+
 Une erreur de saisie n’ouvre jamais rien. `AllowedPlugins` accepte aussi une liste en `REG_SZ` (`github, slack`), et
 les interrupteurs un `REG_SZ` `0` ou `1`. Tout autre type, ou une valeur illisible, est appliqué de la façon la
 plus stricte (aucun outil, pas d’IA externe, pas d’avatars, pas de mises à jour), et Réglages → Confidentialité indique la valeur à

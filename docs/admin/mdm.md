@@ -90,12 +90,13 @@ your own (`uuidgen` in Terminal) and the identifiers with your organization’s.
 ```
 
 In MDMs that take the settings only (an “Application & Custom Settings” payload in Jamf, “Custom Configuration” in
-Kandji, “Preference file” in Intune), give `fr.igitscor.remora` as the domain and the three keys as the
+Kandji, “Preference file” in Intune), give `fr.igitscor.remora` as the domain and the keys as the
 property list.
 
 ## Windows: Group Policy or Intune
 
-The Windows app reads the same three keys from **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**:
+The Windows app reads the same three keys, and `AutomaticUpdates`, from **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**,
+then from `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` for user-scoped policies (a value set in HKLM wins):
 
 | Value | Type | Meaning |
 |---|---|---|
@@ -116,8 +117,10 @@ New-ItemProperty -Path $key -Name AllowExternalAI -PropertyType DWord -Value 0 -
 New-ItemProperty -Path $key -Name AllowRemoteImages -PropertyType DWord -Value 1 -Force
 ```
 
-Check it with `reg query HKLM\SOFTWARE\Policies\Remora`. Remora reads the policy when it starts: users see *Managed by
-write under `HKLM\SOFTWARE\Policies`, so they can’t loosen it.
+Check it with `reg query HKLM\SOFTWARE\Policies\Remora`. Remora reads the policy at launch and again at every refresh:
+a change applies within the refresh interval, without a restart, and users see *Managed by your organization* in
+Settings → Privacy. Users can’t write under `HKLM\SOFTWARE\Policies`, so they can’t loosen what it sets.
+
 A typing mistake never opens things up. `AllowedPlugins` also accepts a `REG_SZ` list (`github, slack`), and the
 switches a `REG_SZ` `0` or `1`. Any other type, or a value Remora can’t read, is applied as strictly as possible (no
 tool, no external AI, no avatars, no updates), and Settings → Privacy names the value to fix.

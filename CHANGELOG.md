@@ -25,7 +25,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - **Send to the assistant** (Mac, Settings → General): keep a tool's items away from Claude entirely. IT can do the
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 
+### Changed
 
+- Windows: rows show their reviewers and what each decided, and GitLab avatars from Gravatar appear. Avatars are
+  fetched by Remora itself, only from the tools' hosts, and the window loads nothing from the internet.
+- Windows: a policy change from Group Policy or Intune applies at the next refresh, and user-scoped policies (HKCU)
+  are read too.
 - Mac: counts read right in English and French ("1 file", "1 élément marqué comme terminé"), and reminders say
   "Rappel" in French. A long task title no longer widens the menu bar menu.
 - Mac: review estimates leave out lockfiles and generated files (a lockfile-only update is no longer "~60 min"),
@@ -93,7 +98,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Each download comes with an SBOM (CycloneDX) and a signed record of how it was built: `gh attestation verify
   Remora.dmg --repo iGitScor/triage`.
 
+### Fixed
 
+- Mac: a settings file Remora can't read is kept aside and named in Settings → Privacy, instead of being replaced
+  (which could lose every account).
 - Mac: with VoiceOver or Switch Control, the menu bar button opens the inbox instead of waiting for a drag, and
   offers "New reminder…" as an action.
 - Mac: with Claude Code, inbox content is no longer visible to other programs in the process list.
