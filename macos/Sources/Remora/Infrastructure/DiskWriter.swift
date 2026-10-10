@@ -8,7 +8,9 @@ final class DiskWriter {
     var onResult: (_ file: String, _ failure: String?) -> Void = { _, _ in }
 
     private let delay: Duration
-    private let queue = DispatchQueue(label: "Remora.DiskWriter", qos: .utility)
+    /// Not a `label: "…"` literal, which `make-strings.py` would take for interface text.
+    private static let queueName = "Remora.DiskWriter"
+    private let queue = DispatchQueue(label: queueName, qos: .utility)
     /// File name → how to save its latest value.
     private var pending: [String: @Sendable () throws -> Void] = [:]
     private var scheduled: Task<Void, Never>?
