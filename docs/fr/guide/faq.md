@@ -46,7 +46,8 @@ qu’elle ne fait pas encore.
 ## Comment tout effacer ?
 
 Réglages → Confidentialité → **Effacer les données locales…** déconnecte tous les comptes, supprime le cache,
-l’historique et les réglages, et retire les jetons du trousseau. Ensuite, glissez Remora à la Corbeille.
+l’historique, les réglages et les notifications, et retire les jetons du trousseau. Ensuite, glissez Remora à la
+Corbeille.
 
 ## Combien ça coûte ?
 

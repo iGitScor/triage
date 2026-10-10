@@ -42,8 +42,8 @@ what it doesn’t do yet.
 
 ## How do I erase everything?
 
-Settings → Privacy → **Erase local data…** disconnects every account, deletes the cache, history and settings,
-and removes the tokens from the Keychain. Then drag Remora to the Bin.
+Settings → Privacy → **Erase local data…** disconnects every account, deletes the cache, history, settings and
+notifications, and removes the tokens from the Keychain. Then drag Remora to the Bin.
 
 ## How much does it cost?
 

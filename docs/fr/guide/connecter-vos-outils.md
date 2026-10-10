@@ -32,7 +32,8 @@ GitHub et autorisez-le pour l’organisation, sinon ses dépôts restent invisib
 
 Affiche vos merge requests, celles que vous relisez, leurs approbations et pipelines.
 
-1. Réglages → Sources → **GitLab**, avec `https://gitlab.com` ou l’adresse de votre GitLab.
+1. Réglages → Sources → **GitLab**, avec `https://gitlab.com` ou l’adresse de votre GitLab. Elle doit être en
+   https : Remora n’envoie pas de jeton en http simple.
 2. Créez un jeton d’accès personnel avec la portée `read_api` (GitLab → votre avatar → Modifier le profil → Jetons
    d’accès).
 3. Collez-le et cliquez sur **Connecter**.

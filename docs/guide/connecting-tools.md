@@ -30,7 +30,8 @@ it for the organization, or its repositories stay invisible.
 
 Shows your merge requests, the ones you review, their approvals and pipelines.
 
-1. Settings → Sources → **GitLab**, with `https://gitlab.com` or your own GitLab address.
+1. Settings → Sources → **GitLab**, with `https://gitlab.com` or your own GitLab address. It must use https:
+   Remora doesn't send a token over plain http.
 2. Create a personal access token with the `read_api` scope (GitLab → your avatar → Edit profile → Access
    tokens).
 3. Paste it and click **Connect**.
