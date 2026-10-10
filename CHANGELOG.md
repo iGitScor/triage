@@ -16,6 +16,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - **VoiceOver** (Mac): each item reads as one button with its actions, and the menu bar item says how many items
   need you.
 - Windows: clicking a notification opens its item, and an action that fails says why instead of doing nothing.
+- **More settings IT can manage** (Mac): `HiddenContentSources`, `RefreshMinutes`, `OpenInApps` and
+  `ClaudeCodePath`, locked in Settings when set.
 - **Send to the assistant** (Mac, Settings → General): keep a tool's items away from Claude entirely. IT can do the
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 

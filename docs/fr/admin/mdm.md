@@ -21,6 +21,10 @@ peut plus modifier la politique.
 | `AllowRemoteImages` | Booléen | Charger les avatars, depuis les outils autorisés seulement | `true` |
 | `AIExcludedSources` | Tableau de chaînes | Les outils dont les éléments ne parviennent jamais à l’assistant (brief, résumés, tri) ; `reminders` pour les rappels de l’utilisateur. S’ajoute au choix de l’utilisateur et le verrouille dans les Réglages | Aucun |
 | `AllowedAIModels` | Tableau de chaînes | Les modèles Claude que l’assistant peut utiliser. Un modèle absent de la liste (ou celui par défaut, s’il n’y est pas) est remplacé par le premier | Tous |
+| `HiddenContentSources` | Tableau de chaînes | Les outils dont les notifications disent où quelque chose s’est passé, pas ce qui a été écrit ; `reminders` pour les rappels de l’utilisateur. S’ajoute au choix de l’utilisateur et le verrouille dans les Réglages | Aucun |
+| `RefreshMinutes` | Entier | La fréquence de vérification des outils, de 1 à 60 minutes (une autre valeur est ignorée). Verrouillé dans les Réglages | 5 |
+| `OpenInApps` | Booléen | Ouvrir les éléments Slack et Linear dans leur app quand elle est installée ; `false` ouvre toujours la page web | `true` |
+| `ClaudeCodePath` | Chaîne | Le `claude` que Remora exécute, à la place de celui trouvé ou saisi dans le compte. Il doit toujours s’appeler `claude`, appartenir à l’utilisateur ou à root, et répondre comme Claude Code | Trouvé automatiquement |
 
 Identifiants : `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (API Claude).
 Pour choisir entre Claude Code et l’API Claude, ne listez que l’un des deux dans `AllowedPlugins`.

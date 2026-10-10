@@ -21,6 +21,10 @@ the policy.
 | `AllowRemoteImages` | Boolean | Load avatars, from the hosts of allowed tools only | `true` |
 | `AIExcludedSources` | Array of strings | Tools whose items never reach the assistant (brief, summaries, triage); `reminders` for the user’s own reminders. Added to the user’s own choice and locked in Settings | None |
 | `AllowedAIModels` | Array of strings | The Claude models the assistant may use. A model that isn’t listed (or the default, when it isn’t) is replaced by the first one | Any |
+| `HiddenContentSources` | Array of strings | Tools whose notifications say where something happened, not what was written; `reminders` for the user’s own reminders. Added to the user’s own choice and locked in Settings | None |
+| `RefreshMinutes` | Integer | How often tools are checked, from 1 to 60 minutes (another value is ignored). Locked in Settings | 5 |
+| `OpenInApps` | Boolean | Open Slack and Linear items in their desktop app when installed; `false` always opens the web page | `true` |
+| `ClaudeCodePath` | String | The `claude` Remora runs, instead of the one found or entered in the account. It must still be named `claude`, belong to the user or root, and answer as Claude Code | Found automatically |
 
 Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (Claude API).
 To choose between Claude Code and the Claude API, list only one of them in `AllowedPlugins`.
