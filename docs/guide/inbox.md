@@ -70,7 +70,9 @@ take in at a glance.
 Remora notifies you when something new needs you (a review request, a mention, a task) and when your merge
 request changes status (approved, changes requested, checks failed). Each notification has buttons: **Done**, **Snooze 1 hour**
 or **Tomorrow 9:00**, without opening Remora. Settings → General → **Notifications**
-turns each kind on or off.
+**Hide message content** lists your connected tools (and your reminders): for the ones you tick, notifications
+still say what happened and where (*Mentions · #general*) but not what was written. Handy for Slack during a
+screen share.
 
 The first sync of a new account never notifies: connecting a tool doesn’t flood you.
 

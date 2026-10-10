@@ -70,5 +70,9 @@ Remora garde aussi vos propres rappels, à la façon de Gestimer :
 Le bouton **+ Rappel** en bas de la boîte fait la même chose avec le sélecteur d’heure, tout comme clic droit sur
 le poisson → **Nouveau rappel**.
 
-À l’échéance, une notification arrive avec **Terminé** et **Encore 10 minutes**, et le rappel apparaît en haut de
+À l’échéance, une notification arrive avec **Commencer**, **Terminé** et **Encore 10 minutes**, et le rappel apparaît en haut de
 *À moi*.
+
+## En cours
+
+**Commencez** un rappel (depuis sa notification, ou sur n’importe quel élément : survol → **Commencer**, ou clic

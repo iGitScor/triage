@@ -67,5 +67,9 @@ Remora also holds your own reminders, Gestimer style:
 The **+ Reminder** button at the bottom of the inbox does the same with the time picker, and so does
 right-click on the fish → **New reminder**.
 
-When it’s due, a notification arrives with **Done** and **10 more minutes**, and the reminder appears at the top
+When it’s due, a notification arrives with **Start**, **Done** and **10 more minutes**, and the reminder appears at the top
 of *My turn*.
+
+## In progress
+
+**Start** a reminder (from its notification, or on any item: hover → **Start**, or right-click) to say you’re on it.
