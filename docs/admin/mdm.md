@@ -89,8 +89,10 @@ New-ItemProperty -Path $key -Name AllowRemoteImages -PropertyType DWord -Value 1
 ```
 
 Check it with `reg query HKLM\SOFTWARE\Policies\Remora`. Remora reads the policy when it starts: users see *Managed by
-your organization* in Settings → Privacy after their next sign-in, or after quitting and reopening Remora. Users can’t
 write under `HKLM\SOFTWARE\Policies`, so they can’t loosen it.
+A typing mistake never opens things up. `AllowedPlugins` also accepts a `REG_SZ` list (`github, slack`), and the
+switches a `REG_SZ` `0` or `1`. Any other type, or a value Remora can’t read, is applied as strictly as possible (no
+tool, no external AI, no avatars, no updates), and Settings → Privacy names the value to fix.
 
 ## Checking it on a Mac
 

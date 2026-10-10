@@ -91,7 +91,10 @@ New-ItemProperty -Path $key -Name AllowRemoteImages -PropertyType DWord -Value 1
 
 Vérifiez avec `reg query HKLM\SOFTWARE\Policies\Remora`. Remora lit la politique à son démarrage : l’utilisateur voit
 *Géré par votre organisation* dans Réglages → Confidentialité après sa prochaine ouverture de session, ou après avoir
-quitté et rouvert Remora. Un utilisateur ne peut pas écrire sous `HKLM\SOFTWARE\Policies`, donc pas l’assouplir.
+Une erreur de saisie n’ouvre jamais rien. `AllowedPlugins` accepte aussi une liste en `REG_SZ` (`github, slack`), et
+les interrupteurs un `REG_SZ` `0` ou `1`. Tout autre type, ou une valeur illisible, est appliqué de la façon la
+plus stricte (aucun outil, pas d’IA externe, pas d’avatars, pas de mises à jour), et Réglages → Confidentialité indique la valeur à
+corriger.
 
 ## Vérifier sur un Mac
 
