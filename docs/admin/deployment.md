@@ -21,7 +21,13 @@ Check a download:
 
 ```sh
 shasum -a 256 -c Remora.dmg.sha256
+gh attestation verify Remora.dmg --repo iGitScor/triage
 ```
+
+The second line checks GitHub's signed record that this exact file was built by the release workflow from the
+repository's tagged commit (build provenance). Each release also has an **SBOM**, `Remora.dmg.cdx.json` and
+`Remora-Setup.exe.cdx.json` (CycloneDX), listing the third-party components from the lockfiles; it is attested
+the same way. The Mac app has no third-party packages, so its SBOM is short.
 
 ## Signing, Gatekeeper and the Keychain
 
@@ -58,7 +64,7 @@ settings (it uses macOS’s login items).
 
 ## Windows (preview)
 
-Each release also has **Remora-Setup.exe** (with its SHA-256), always at
+Each release also has **Remora-Setup.exe** (with its SHA-256, SBOM and attestation), always at
 `https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe`. It is an NSIS installer that installs for the current user, in
 `%LOCALAPPDATA%\Remora`, with no admin rights; silent install: `Remora-Setup.exe /S`. Its data is in
 `%LOCALAPPDATA%\fr.igitscor.remora` and its tokens in one Credential Manager entry (`fr.igitscor.remora`). It isn’t signed yet, so

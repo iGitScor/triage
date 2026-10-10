@@ -55,6 +55,8 @@ first checks that the tag matches the version in the source, then builds both ap
 as CI: the Mac app is tested, stamped with a build number (`CFBundleVersion`, the run number), built Universal,
 signed, and packaged as `Remora.dmg` with the licences; the Windows app goes through the translation check,
 type-check, clippy and tests before `Remora-Setup.exe` is built. Only when both succeed does a last job publish the
+GitHub release, with every file, its SHA-256 and its SBOM (CycloneDX) at once. Each build job signs the provenance
+and SBOM attestations of the file it built (`gh attestation verify`). The names never change, so
 `releases/latest/download/Remora.dmg` always serves the newest.
 
 For a signed and notarized build, see [Deploying Remora](/admin/deployment#signing-it-with-your-developer-id).

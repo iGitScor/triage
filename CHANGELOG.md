@@ -52,6 +52,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Windows: error messages and empty tabs are in French on a French system, values included ("Erreur réseau : …").
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.
 
+### Releases
+
+- Each download comes with an SBOM (CycloneDX) and a signed record of how it was built: `gh attestation verify
+  Remora.dmg --repo iGitScor/triage`.
+
+
 - Windows: **Create a token** opened a broken link for GitHub and GitLab.
 - Security and privacy hardening on macOS and Windows; details in the advisories published with the release.
 

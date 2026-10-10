@@ -26,7 +26,11 @@ details private until then.
 ## Supported versions
 
 Only the [latest release](https://github.com/iGitScor/triage/releases/latest) receives security fixes. Each release
+publishes the SHA-256 of `Remora.dmg` and `Remora-Setup.exe`, their SBOM (CycloneDX) and a signed build
+provenance: check them before installing (`gh attestation verify Remora.dmg --repo iGitScor/triage`).
+
 ## Scope
+
 In scope: the macOS app, the Windows app, and the website and documentation at
 [triage.iscor.me](https://triage.iscor.me). The tools Remora connects to (GitHub, GitLab, Slack, Linear, Notion) and
 Anthropic's services have their own programs.

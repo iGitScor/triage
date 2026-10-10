@@ -21,7 +21,13 @@ Vérifier un téléchargement :
 
 ```sh
 shasum -a 256 -c Remora.dmg.sha256
+gh attestation verify Remora.dmg --repo iGitScor/triage
 ```
+
+La seconde ligne vérifie l’enregistrement signé par GitHub attestant que ce fichier précis a été construit par le
+workflow de publication à partir du commit étiqueté du dépôt (provenance). Chaque version publie aussi un **SBOM**,
+`Remora.dmg.cdx.json` et `Remora-Setup.exe.cdx.json` (CycloneDX), qui liste les composants tiers d’après les
+fichiers de verrouillage ; il est attesté de la même façon. L’app Mac n’a aucun paquet tiers : son SBOM est court.
 
 ## Signature, Gatekeeper et trousseau
 
@@ -60,7 +66,7 @@ chaque utilisateur dans les réglages de Remora (il utilise les éléments de co
 
 ## Windows (aperçu)
 
-Chaque version publie aussi **Remora-Setup.exe** (avec son SHA-256), toujours à
+Chaque version publie aussi **Remora-Setup.exe** (avec son SHA-256, son SBOM et son attestation), toujours à
 `https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe`. C’est un installeur NSIS qui installe pour l’utilisateur courant, dans
 `%LOCALAPPDATA%\Remora`, sans droits d’administrateur ; installation silencieuse : `Remora-Setup.exe /S`.
 Ses données sont dans `%LOCALAPPDATA%\fr.igitscor.remora` et ses jetons dans une entrée du Gestionnaire d’identification
