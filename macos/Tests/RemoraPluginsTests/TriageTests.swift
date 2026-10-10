@@ -23,14 +23,14 @@ struct TriageTests {
         ]}}
         """
         let runner = RecordingRunner(output: output)
-        let plugin = try ClaudeCodePlugin(config: config(["path": "/bin/echo"]), runner: runner)
+        let plugin = try ClaudeCodePlugin(config: config(["path": fakeClaude()]), runner: runner)
         let suggestions = try await plugin.triage(items, now: now)
 
         #expect(suggestions.map(\.id) == ["a", "b"])
         #expect(suggestions[0].action == .reschedule && suggestions[0].until == Date(iso8601: later))
         #expect(suggestions[1].action == .done && suggestions[1].until == nil)
         let arguments = await runner.arguments
-        let message = arguments[arguments.firstIndex(of: "--print")! + 1]
+        let message = String(decoding: await runner.input ?? Data(), as: UTF8.self)
         #expect(message.contains(#""timesSnoozed":3"#) && message.contains(#""reason":"motivation""#))
         #expect(arguments[arguments.firstIndex(of: "--json-schema")! + 1].contains(#""enum":["keep","reschedule","done","now"]"#))
     }

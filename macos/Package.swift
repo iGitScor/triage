@@ -1,16 +1,18 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-let settings: [SwiftSetting] = [.swiftLanguageMode(.v5)]
+// Swift 6 language mode everywhere (the tools version's default): strict concurrency checking.
 
 let package = Package(
     name: "Remora",
     platforms: [.macOS(.v14)],
     targets: [
-        .target(name: "RemoraCore", swiftSettings: settings),
-        .target(name: "RemoraPlugins", dependencies: ["RemoraCore"], swiftSettings: settings),
-        .executableTarget(name: "Remora", dependencies: ["RemoraCore", "RemoraPlugins"], swiftSettings: settings),
-        .testTarget(name: "RemoraCoreTests", dependencies: ["RemoraCore"], swiftSettings: settings),
-        .testTarget(name: "RemoraPluginsTests", dependencies: ["RemoraPlugins"], swiftSettings: settings),
+        .target(name: "RemoraCore"),
+        .target(name: "RemoraPlugins", dependencies: ["RemoraCore"]),
+        .executableTarget(name: "Remora", dependencies: ["RemoraCore", "RemoraPlugins"]),
+        .testTarget(name: "RemoraCoreTests", dependencies: ["RemoraCore"]),
+        .testTarget(name: "RemoraPluginsTests", dependencies: ["RemoraPlugins"]),
+        // The app layer (inbox model, stores, Keychain vault, policy) on a temporary folder and stand-ins.
+        .testTarget(name: "RemoraTests", dependencies: ["Remora"]),
     ]
 )

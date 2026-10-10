@@ -125,7 +125,7 @@ struct TimePicker: View {
     private var title: String {
         switch subject {
         case .snooze: L("Snooze until…")
-        case .snoozeMany(let items): L("Snooze %d items until…", items.count)
+        case .snoozeMany(let items): L("Snooze %d item until…", plural: "Snooze %d items until…", items.count)
         case .newReminder: L("New reminder")
         }
     }
@@ -269,6 +269,13 @@ private struct Scrubber: View {
 
     /// Always derived from the date, so presets and suggestions move the knob too.
     private var progress: Double { clock.progress(for: date.timeIntervalSinceNow) }
+    @FocusState private var focused: Bool
+
+    /// One of 18 steps along the track, as on Windows: from the keyboard and VoiceOver.
+    private func step(_ steps: Int) {
+        let position = min(max(progress + Double(steps) / 18, 0), 1)
+        date = clock.roundedUp(Date.now.addingTimeInterval(clock.duration(at: position)))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -296,6 +303,22 @@ private struct Scrubber: View {
                 })
             }
             .frame(height: 24)
+            // Not only a drag: ← → from the keyboard, swipe up or down with VoiceOver, which reads the time.
+            .focusable()
+            .focused($focused)
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Myna.accent, lineWidth: focused ? 2 : 0).padding(-3))
+            .onKeyPress(.rightArrow) { step(1); return .handled }
+            .onKeyPress(.leftArrow) { step(-1); return .handled }
+            .accessibilityElement()
+            .accessibilityLabel(L("When"))
+            .accessibilityValue(clock.describe(date))
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: step(1)
+                case .decrement: step(-1)
+                @unknown default: break
+                }
+            }
             HStack {
                 Text("5 min")
                 Spacer()
@@ -303,6 +326,11 @@ private struct Scrubber: View {
             }
             .font(Myna.font(10))
             .foregroundStyle(Myna.muted)
+            // An exact date and time, by keyboard too, and beyond a week.
+            DatePicker(L("Exact date"), selection: $date, in: Date.now..., displayedComponents: [.date, .hourAndMinute])
+                .datePickerStyle(.compact)
+                .font(Myna.font(11.5))
+                .foregroundStyle(Myna.muted)
         }
     }
 }

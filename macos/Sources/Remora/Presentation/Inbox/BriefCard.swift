@@ -6,6 +6,11 @@ struct BriefCard: View {
     @Environment(InboxModel.self) private var model
 
     var body: some View {
+        // "Written … ago" and whether a new brief is possible follow the clock while the card is shown.
+        TimelineView(.everyMinute) { _ in card }
+    }
+
+    private var card: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")

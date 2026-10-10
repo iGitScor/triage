@@ -29,12 +29,24 @@ struct SnoozeAdvisorTests {
         func hour(_ date: Date) -> Int { calendar.component(.hour, from: date) }
         func weekday(_ date: Date) -> Int { calendar.component(.weekday, from: date) }
 
+        // Thursday + 3 days is Sunday: it comes back Monday at 9:00 instead.
         let waiting = advisor.suggestedReturn(for: .waiting, history: [], now: morning)
-        #expect(calendar.dateComponents([.day], from: morning, to: waiting).day == 2 && hour(waiting) == 9)
+        #expect(weekday(waiting) == 2 && hour(waiting) == 9)
         #expect(hour(advisor.suggestedReturn(for: .noTime, history: [], now: morning)) == 13)
         #expect(weekday(advisor.suggestedReturn(for: .notUrgent, history: [], now: morning)) == 2)
         let focus = advisor.suggestedReturn(for: .focus, history: [], now: morning)
         #expect(hour(focus) == 9 && focus > morning)
+    }
+
+    /// Suggestions skip the weekend, except for later the same day.
+    @Test func returnsSkipTheWeekend() {
+        func weekday(_ date: Date) -> Int { calendar.component(.weekday, from: date) }
+        let friday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 18))!
+        #expect(weekday(advisor.suggestedReturn(for: .noTime, history: [], now: friday)) == 2, "Friday evening: Monday, not Saturday")
+        #expect(weekday(advisor.suggestedReturn(for: .focus, history: [], now: friday)) == 2)
+        let saturday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 10, hour: 10))!
+        let later = advisor.suggestedReturn(for: .noTime, history: [], now: saturday)
+        #expect(calendar.isDate(later, inSameDayAs: saturday), "working on a Saturday: later the same day stays")
     }
 
     @Test func motivationAimsForYourBestHour() {

@@ -4,16 +4,21 @@ import SwiftUI
 
 /// Loads Myna's Outfit variable font and instantiates it at any weight.
 enum Fonts {
-    private static var descriptor: CTFontDescriptor?
+    /// Loaded and registered once, on first use: a `static let` is initialized exactly once, thread-safely, and a
+    /// font descriptor is immutable, so sharing it is safe.
+    nonisolated(unsafe) private static let descriptor: CTFontDescriptor? = {
+        guard let url = Bundle.main.url(forResource: "Outfit", withExtension: "woff2"),
+              let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor] else { return nil }
+        CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        return descriptors.first
+    }()
     private static let weightAxis = 0x7767_6874 // "wght"
 
     static var hasOutfit: Bool { descriptor != nil }
 
+    /// At launch, so the first view doesn't pay for it.
     static func register() {
-        guard let url = Bundle.main.url(forResource: "Outfit", withExtension: "woff2"),
-              let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor] else { return }
-        CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
-        descriptor = descriptors.first
+        _ = descriptor
     }
 
     static func outfit(size: CGFloat, weight: Font.Weight) -> Font? {

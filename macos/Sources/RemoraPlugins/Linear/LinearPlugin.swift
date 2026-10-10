@@ -47,7 +47,8 @@ public struct LinearPlugin: SourcePlugin {
         let mentions = notifications
             .filter { $0.readAt == nil && $0.createdAt > weekAgo && $0.isActionable }
             .map { $0.item(accountID: accountID) }
-        return SourceSnapshot(identity: viewer.name, items: issues + mentions)
+        let truncated = viewer.assignedIssues.pageInfo?.hasNextPage == true
+        return SourceSnapshot(identity: viewer.name, items: issues + mentions, remarks: truncated ? [SourceSnapshot.truncated("Linear")] : [])
     }
 
     /// https://linear.app/acme/issue/ENG-42/slug → linear://acme/issue/ENG-42/slug, opened by the desktop app.
@@ -60,7 +61,10 @@ public struct LinearPlugin: SourcePlugin {
         let request = try URLRequest.post(endpoint, json: ["query": text], headers: ["Authorization": token])
         let response = try await http.decode(Response<T>.self, from: request)
         guard let data = response.data else {
-            throw HTTPError.api("Linear: \(response.errors?.first?.message ?? L("the request failed."))")
+            let message = response.errors?.first?.message ?? L("the request failed.")
+            // "Authentication required, not authenticated": a key Linear no longer accepts.
+            if message.lowercased().contains("authenticat") { throw HTTPError.unauthorized }
+            throw HTTPError.api("Linear: \(message)")
         }
         return data
     }
@@ -71,6 +75,7 @@ public struct LinearPlugin: SourcePlugin {
         name
         assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
           nodes { id identifier title url priority dueDate updatedAt state { name type } }
+          pageInfo { hasNextPage }
         }
       }
     }
@@ -94,7 +99,11 @@ extension LinearPlugin {
         var errors: [Message]?
     }
 
-    struct Nodes<T: Decodable>: Decodable { var nodes: [T] }
+    struct Nodes<T: Decodable>: Decodable {
+        struct PageInfo: Decodable { var hasNextPage: Bool }
+        var nodes: [T]
+        var pageInfo: PageInfo?
+    }
 
     struct IssuesData: Decodable { var viewer: Viewer }
     struct NotificationsData: Decodable { var notifications: Nodes<Notification> }
@@ -133,7 +142,7 @@ extension LinearPlugin {
                 accountID: accountID,
                 pluginID: LinearPlugin.manifest.id,
                 bundle: .tasks,
-                title: title,
+                title: Readable.text(title),
                 context: identifier,
                 url: url,
                 badges: badges,
@@ -180,7 +189,7 @@ extension LinearPlugin {
                 accountID: accountID,
                 pluginID: LinearPlugin.manifest.id,
                 bundle: .mentions,
-                title: title ?? L("New comment"),
+                title: title.map(Readable.text) ?? L("New comment"),
                 context: "Linear",
                 url: url,
                 author: actor.map { Person(name: $0.name, avatarURL: URL(lenient: $0.avatarUrl)) },

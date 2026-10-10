@@ -47,10 +47,12 @@ public struct CompliancePolicy: Equatable, Sendable {
 public enum EgressError: LocalizedError, Equatable {
     case blockedHost(String)
     case blockedPlugin(String)
+    case blockedRedirect(String)
 
     public var errorDescription: String? {
         switch self {
         case .blockedHost(let host): L("Blocked: %@ is not an allowed destination.", host)
+        case .blockedRedirect(let host): L("Blocked: the server redirected to %@.", host)
         case .blockedPlugin(let reason): reason
         }
     }

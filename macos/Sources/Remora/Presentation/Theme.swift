@@ -28,8 +28,13 @@ enum Myna {
     static let radiusLarge: CGFloat = 18
     static let radiusMedium: CGFloat = 12
 
-    static func font(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        Fonts.outfit(size: size, weight: weight) ?? .system(size: size, weight: weight, design: .rounded)
+    /// No text under 11 pt, and every size follows the text size chosen in Settings → General.
+    static let smallestText: CGFloat = 11
+    @MainActor static var textScale: CGFloat = 1
+
+    @MainActor static func font(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        let size = max(smallestText, size) * textScale
+        return Fonts.outfit(size: size, weight: weight) ?? .system(size: size, weight: weight, design: .rounded)
     }
 
     static func color(for tone: Tone) -> (foreground: Color, background: Color) {

@@ -73,7 +73,13 @@ public struct SnoozeAdvisor: Sendable {
 
     // MARK: When to come back
 
+    /// Days off are skipped: a suggestion for a later day that falls on a weekend comes back the next working
+    /// day, at the same time. Today stays today, weekend or not: you're working.
     public func suggestedReturn(for reason: SnoozeReason, history: [SnoozeRecord], now: Date = .now) -> Date {
+        workday(rawReturn(for: reason, history: history, now: now), from: now)
+    }
+
+    private func rawReturn(for reason: SnoozeReason, history: [SnoozeRecord], now: Date) -> Date {
         switch reason {
         case .waiting:
             return morning(daysAfter: 3, of: now, hour: 9)
@@ -106,7 +112,7 @@ public struct SnoozeAdvisor: Sendable {
         let durations = similar.map { $0.until.timeIntervalSince($0.at) }.sorted()
         let median = durations[durations.count / 2]
         let date = now.addingTimeInterval(median)
-        return median >= 12 * 3_600 ? morning(daysAfter: 0, of: date, hour: 9) : clock.roundedUp(date)
+        return median >= 12 * 3_600 ? workday(morning(daysAfter: 0, of: date, hour: 9), from: now) : clock.roundedUp(date)
     }
 
     /// A small, guilt-free way in when you're not feeling it.
@@ -179,6 +185,17 @@ public struct SnoozeAdvisor: Sendable {
 
     // MARK: Helpers
 
+    /// The next working day at the same time, for a date on a later day that falls on a weekend (the calendar's own,
+    /// so it follows the region: Saturday and Sunday in France).
+    func workday(_ date: Date, from now: Date) -> Date {
+        guard !calendar.isDate(date, inSameDayAs: now) else { return date }
+        var date = date
+        for _ in 0..<7 where calendar.isDateInWeekend(date) {
+            date = calendar.date(byAdding: .day, value: 1, to: date) ?? date
+        }
+        return date
+    }
+
     private func morning(daysAfter days: Int, of date: Date, hour: Int) -> Date {
         let day = calendar.date(byAdding: .day, value: days, to: date) ?? date
         return calendar.date(bySettingHour: hour, minute: 0, second: 0, of: day) ?? day
@@ -224,7 +241,7 @@ public struct KeywordSimilarity: SimilarityModel {
 
 extension String {
     /// The place without the item number: "acme/app #12" → "acme/app", "g/p !3" → "g/p", "#releases" stays.
-    var contextKey: String {
+    public var contextKey: String {
         var parts = split(separator: " ")
         if let last = parts.last, last.count > 1, let first = last.first, "#!".contains(first),
            last.dropFirst().allSatisfy(\.isNumber) {

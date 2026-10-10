@@ -11,6 +11,8 @@ struct DraftSubject: Identifiable {
 
 struct DraftPanel: View {
     let subject: DraftSubject
+    /// The item's page, when Remora may open it (`InboxModel.webLink(for:)`).
+    let link: URL?
     let dismiss: () -> Void
 
     @State private var text = ""
@@ -37,7 +39,7 @@ struct DraftPanel: View {
             HStack {
                 ActionButton(label: copied ? "Copied" : "Copy", symbol: copied ? "checkmark" : "doc.on.doc", action: copy)
                 Spacer()
-                if let url = subject.item.url {
+                if let url = link {
                     Button {
                         copy()
                         NSWorkspace.shared.open(url)

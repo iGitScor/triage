@@ -49,4 +49,46 @@ struct ReviewPrepTests {
         let prep = ReviewPrep(item)!
         #expect(prep.lines == nil && prep.size == .medium && prep.estimatedMinutes == 12)
     }
+
+    /// Lockfiles and generated files don't make a review longer.
+    @Test func generatedFilesDontCount() {
+        let lockfileOnly = ReviewPrep(review("1", [("package-lock.json", 2_400)]))!
+        #expect(lockfileOnly.estimatedMinutes == 2 && lockfileOnly.size == .tiny, "not ~60 min")
+        let mixed = ReviewPrep(review("2", [("src/api.ts", 40), ("yarn.lock", 900), ("dist/app.min.js", 3_000),
+                                            ("src/__snapshots__/api.test.ts.snap", 200)]))!
+        #expect(mixed.lines == 40 && mixed.fileCount == 4, "every file listed, only the reviewable ones counted")
+        #expect(mixed.estimatedMinutes == 3)
+        #expect(mixed.topFiles.map(\.path) == ["src/api.ts"])
+    }
+
+    /// Flags and tests match words of the path, not fragments.
+    @Test func flagsMatchWordsNotFragments() {
+        let lookalikes = ReviewPrep(review("1", [("src/author/latest.ts", 10), ("src/personality.ts", 10), ("docs/environment.md", 5)]))!
+        #expect(lookalikes.flags.isEmpty && !lookalikes.testsTouched)
+        let real = ReviewPrep(review("2", [("Sources/OAuthClient.swift", 10), ("Tests/RetryTests.swift", 10), (".env.example", 1),
+                                           ("Package.swift", 1)]))!
+        #expect(real.flags == [.auth, .infra, .dependencies])
+        #expect(real.testsTouched)
+    }
+
+    /// One default for a review without a file list.
+    @Test func unknownReviewsShareOneDefault() {
+        let unknown = makeItem("u", bundle: .reviews)
+        #expect(ReviewQueue.remainingMinutes([unknown]) == ReviewPrep.unknownMinutes)
+        let quick = review("q", [("a.ts", 10)])
+        #expect(ReviewQueue.order([unknown, quick], now: now).map(\.id) == ["q", "u"], "ordered with the same default")
+    }
+
+    /// From five timed reviews on, estimates follow your pace.
+    @Test func estimatesLearnYourPace() {
+        #expect(ReviewPace.factor(Array(repeating: ReviewTiming(estimated: 10, actual: 20), count: 4)) == 1, "not before five")
+        let slower = Array(repeating: ReviewTiming(estimated: 10, actual: 20), count: 5)
+        #expect(ReviewPace.factor(slower) == 2)
+        let forgotten = slower + Array(repeating: ReviewTiming(estimated: 10, actual: 600), count: 10)
+        #expect(ReviewPace.factor(forgotten) == 2, "a timer left running for hours says nothing")
+        #expect(ReviewPace.factor(Array(repeating: ReviewTiming(estimated: 10, actual: 100), count: 5)) == 3, "at most three times")
+        let prep = ReviewPrep(review("1", [("a.ts", 400)]), pace: 2)!
+        #expect(prep.estimatedMinutes == 24)
+    }
+
 }

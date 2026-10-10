@@ -70,10 +70,18 @@ public struct ClaudePlugin: AssistantPlugin {
         return output.suggestions(knownIDs: Set(items.map(\.item.id)), now: now)
     }
 
+    /// The answer isn't streamed, so nothing arrives until it's complete: allow as long as Anthropic's own SDKs do.
+    static let timeout: TimeInterval = 600
+
     private func send(_ body: Request) async throws -> Response {
         var headers = ["x-api-key": apiKey, "anthropic-version": "2023-06-01"]
         if body.fallbacks != nil { headers["anthropic-beta"] = "server-side-fallback-2026-07-01" }
-        return try await http.decode(Response.self, from: try URLRequest.post(endpoint, json: body, headers: headers))
+        let request = try URLRequest.post(endpoint, json: body, headers: headers, timeout: Self.timeout)
+        do {
+            return try await http.decode(Response.self, from: request)
+        } catch let error as URLError where error.code == .timedOut {
+            throw HTTPError.api(L("Claude took too long to answer. Try again later."))
+        }
     }
 
     static func body(items: [InboxItem], model: String, now: Date) -> Request {
@@ -94,6 +102,8 @@ public struct ClaudePlugin: AssistantPlugin {
 
     private static func output<Output: Decodable>(of response: Response) throws -> Output {
         if response.stopReason == "refusal" { throw HTTPError.api(L("Claude declined this request.")) }
+        // Thinking counts toward max_tokens: a long one can leave the answer cut off, and half a JSON is unusable.
+        if response.stopReason == "max_tokens" { throw HTTPError.api(L("Claude’s answer was cut off. Try again, or with fewer items.")) }
         guard let text = response.content.first(where: { $0.type == "text" })?.text,
               let output = try? JSONDecoder().decode(Output.self, from: Data(text.utf8)) else {
             throw HTTPError.api(L("Claude returned an unexpected answer."))

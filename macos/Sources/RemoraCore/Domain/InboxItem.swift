@@ -25,6 +25,9 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     public var suggestedPeople: [Person]?
     /// Files a pull/merge request touches: paths and line counts only, never code.
     public var changes: ChangeSet?
+    /// When it stops being worth showing (an app's reminder of an event that has started): it then leaves the
+    /// inbox as if cleared, unless you pinned or started it.
+    public var expires: Date?
 
     public init(
         id: String,

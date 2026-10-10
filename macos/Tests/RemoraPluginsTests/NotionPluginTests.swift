@@ -37,4 +37,35 @@ struct NotionPluginTests {
         #expect(items.first?.context == "Team tasks")
         #expect(items.first?.hasBadge("overdue") == true)
     }
+
+    /// A priority select isn't the status, and an "Urgent" checkbox doesn't mean done; a "Done" checkbox does.
+    @Test func readsTheStatusAndDoneCheckboxByTypeAndName() throws {
+        let json = { (extra: String) in
+            Data("""
+            {"id": "p", "last_edited_time": "2026-10-08T10:00:00.000Z", "properties": {
+              "Name": {"type": "title", "title": [{"plain_text": "Ship it"}]},
+              "Priority": {"type": "select", "select": {"name": "Done"}},
+              "Urgent": {"type": "checkbox", "checkbox": true}\(extra)
+            }}
+            """.utf8)
+        }
+        let decoder = JSONDecoder.api(snakeCase: true)
+        let open = try decoder.decode(NotionPlugin.Page.self, from: json(""))
+        #expect(open.status == nil)
+        #expect(!open.isDone(["done"]))
+        let selectStatus = try decoder.decode(NotionPlugin.Page.self, from: json(#", "Status": {"type": "select", "select": {"name": "Done"}}"#))
+        #expect(selectStatus.status == "Done")
+        #expect(selectStatus.isDone(["done"]))
+        let checked = try decoder.decode(NotionPlugin.Page.self, from: json(#", "Done": {"type": "checkbox", "checkbox": true}"#))
+        #expect(checked.isDone(["archived"]))
+    }
+
+    /// An internal connection without an email would list everyone's tasks.
+    @Test func refusesToListEveryonesTasks() async throws {
+        let http = StubHTTP(routes: ["/users/me": #"{"id": "bot1", "type": "bot", "bot": {"owner": {"workspace": true}}}"#])
+        let plugin = try NotionPlugin(config: config(["token": "secret", "databases": "0123456789abcdef0123456789abcdef"]), http: http)
+        await #expect(throws: HTTPError.api(L("Remora can’t tell which Notion user you are: add your Notion email to this account."))) {
+            try await plugin.fetch()
+        }
+    }
 }

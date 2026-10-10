@@ -56,7 +56,8 @@ public struct WaitingAssistant: Sendable {
             return L("Hi %@, could you review “%@”? %@\n%@\nThanks!", names, item.title, facts, link)
         case .nudge(let people, let days):
             let names = people.map { "@" + $0.name }.joined(separator: " ")
-            return L("Hi %@, a gentle ping on “%@”: it has been waiting for a review for %d day(s). %@\n%@\nThanks!", names, item.title, days, facts, link)
+            let waited = L("%d day", plural: "%d days", days)
+            return L("Hi %@, a gentle ping on “%@”: it has been waiting for a review for %@. %@\n%@\nThanks!", names, item.title, waited, facts, link)
         }
     }
 

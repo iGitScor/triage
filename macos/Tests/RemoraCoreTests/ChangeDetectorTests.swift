@@ -23,4 +23,13 @@ struct ChangeDetectorTests {
         let quiet = Badge(id: "draft", label: "Draft", tone: .neutral)
         #expect(ChangeDetector.notices(previous: [makeItem("1")], current: [makeItem("1", badges: [quiet])]).isEmpty)
     }
+
+    @Test func redactedNoticeKeepsWhereButNotWhat() {
+        let notice = Notice(kind: .arrival, itemID: "1", title: "Mentions", subtitle: "#general", body: "Salary review moved", url: nil)
+        let redacted = notice.redacted()
+        #expect(redacted.title == "Mentions")
+        #expect(redacted.subtitle == "#general")
+        #expect(redacted.itemID == "1")
+        #expect(!redacted.body.contains("Salary"))
+    }
 }

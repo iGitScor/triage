@@ -68,6 +68,17 @@ public struct SnoozedItem: Sendable {
 public struct TriageSuggestion: Codable, Equatable, Sendable, Identifiable {
     public enum Action: String, Codable, CaseIterable, Sendable {
         case keep, reschedule, done, now
+
+        /// Ticked before the user looks. Only rescheduling, which keeps the item snoozed and is easy to undo:
+        /// "done" hides an item and "now" opens its link, and the suggestions come from a model reading titles that
+        /// anyone can write, so those two are the user's own choice.
+        public var preselected: Bool { self == .reschedule }
+    }
+
+    /// What "Apply" would do: the preselected suggestions, plus or minus the ones the user ticked or unticked.
+    /// "Keep" is never applied.
+    public static func selection(_ suggestions: [TriageSuggestion], toggled: Set<String>) -> [TriageSuggestion] {
+        suggestions.filter { $0.action != .keep && $0.action.preselected != toggled.contains($0.id) }
     }
 
     public var id: String

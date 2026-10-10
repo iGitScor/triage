@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds build/Remora.app from the Swift package and signs it ad hoc.
+# Builds build/Remora.app from the Swift package and signs it (see below for which identity).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -33,11 +33,15 @@ fi
 for NAME in "Remora Local Signing" "Perch Local Signing"; do
     if [ -z "$IDENTITY" ] && echo "$IDENTITIES" | grep -q "\"$NAME\""; then IDENTITY="$NAME"; fi
 done
+# Always the hardened runtime: the app needs no exception (no plug-ins, no JIT; starting `claude` is allowed).
+# Apple's timestamp server only accepts Apple-issued certificates, and notarization requires it.
+OPTIONS=(--force --options runtime)
+case "$IDENTITY" in "Developer ID Application:"*) OPTIONS+=(--timestamp) ;; esac
 if [ -n "$IDENTITY" ]; then
     echo "Signing with $IDENTITY"
-    codesign --force --sign "$IDENTITY" "$APP"
+    codesign "${OPTIONS[@]}" --sign "$IDENTITY" "$APP"
 else
     echo "No signing certificate, signing ad hoc."
-    codesign --force --sign - "$APP"
+    codesign "${OPTIONS[@]}" --sign - "$APP"
 fi
 echo "Built $APP"

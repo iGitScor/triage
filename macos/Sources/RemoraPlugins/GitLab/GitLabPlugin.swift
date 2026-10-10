@@ -50,22 +50,50 @@ public struct GitLabPlugin: SourcePlugin {
         let all = try await [(authored, true), (reviewing, false)].flatMap { list, isAuthored in
             list.map { ($0, isAuthored) }
         }
-        let items = try await all.concurrentMap { mr, isAuthored in
-            try await self.item(for: mr, authored: isAuthored)
+        // Approvals, pipeline and changed files for every merge request in one GraphQL request, instead of two or
+        // three REST calls each. An instance where it fails (older GitLab, GraphQL off) gets the REST calls.
+        let details = all.isEmpty ? [:] : ((try? await graphQLDetails()) ?? [:])
+        let items = try await all.concurrentMap(limit: 4) { mr, isAuthored in
+            if let found = details[mr.id] {
+                return Self.item(
+                    mr: mr, approvals: found.approvals, detail: found.detail, files: isAuthored ? nil : found.files,
+                    authored: isAuthored, accountID: self.accountID, host: self.host
+                )
+            }
+            return await self.item(for: mr, authored: isAuthored)
         }
-        return SourceSnapshot(identity: user.username, items: items)
+        // A full page means there may be more: GitLab's count header isn't always sent.
+        let truncated = try await [authored, reviewing].contains { $0.count >= 50 }
+        return SourceSnapshot(identity: user.username, items: items, remarks: truncated ? [SourceSnapshot.truncated("GitLab")] : [])
     }
 
-    private func item(for mr: MergeRequest, authored: Bool) async throws -> InboxItem {
+    /// The REST way, one merge request at a time. Best-effort: a call that fails leaves that part out instead of
+    /// failing the whole account.
+    private func item(for mr: MergeRequest, authored: Bool) async -> InboxItem {
         let base = "projects/\(mr.projectId)/merge_requests/\(mr.iid)"
-        async let approvals: Approvals = get("\(base)/approvals")
-        async let detail: Detail = get(base)
+        async let approvals: Approvals? = try? get("\(base)/approvals")
+        async let detail: Detail? = try? get(base)
         // Review prep: file paths only. The diff text in this response is never decoded.
         let files: [DiffFile]? = authored ? nil : try? await get("\(base)/diffs", ["per_page": "50"])
-        return try await Self.item(
-            mr: mr, approvals: approvals, detail: detail, files: files,
+        return await Self.item(
+            mr: mr, approvals: approvals ?? Approvals(), detail: detail ?? Detail(), files: files,
             authored: authored, accountID: accountID, host: host
         )
+    }
+
+    static let detailsQuery = """
+    query { currentUser {
+      authored: authoredMergeRequests(state: opened, first: 50) { nodes { ...status } }
+      reviewing: reviewRequestedMergeRequests(state: opened, first: 50) { nodes { ...status diffStats { path additions deletions } } }
+    } }
+    fragment status on MergeRequest { id approved approvedBy { nodes { username avatarUrl } } headPipeline { status } }
+    """
+
+    /// The details of every open merge request you wrote or review, keyed by its REST id.
+    private func graphQLDetails() async throws -> [Int: GraphQL.Details] {
+        let request = try URLRequest.post(host.appending(path: "api/graphql"), json: ["query": Self.detailsQuery], headers: ["PRIVATE-TOKEN": token])
+        let response = try await http.decode(GraphQL.Response.self, from: request, using: .api())
+        return response.details
     }
 
     static func item(
@@ -109,7 +137,7 @@ public struct GitLabPlugin: SourcePlugin {
             accountID: accountID,
             pluginID: manifest.id,
             bundle: authored ? .authored : .reviews,
-            title: mr.title,
+            title: Readable.text(mr.title),
             context: "\(project) !\(mr.iid)",
             url: URL(lenient: mr.webUrl),
             author: Person(name: mr.author.username, avatarURL: URL(lenient: mr.author.avatarUrl, relativeTo: host)),
@@ -118,7 +146,9 @@ public struct GitLabPlugin: SourcePlugin {
             date: mr.updatedAt,
             needsAction: review.needsAction(authored: authored),
             changes: files.flatMap { files in
-                files.isEmpty ? nil : ChangeSet(files: files.map { ChangedFile(path: $0.newPath ?? $0.oldPath ?? "?") })
+                files.isEmpty ? nil : ChangeSet(files: files.map {
+                    ChangedFile(path: $0.newPath ?? $0.oldPath ?? "?", additions: $0.additions, deletions: $0.deletions)
+                })
             }
         )
     }
@@ -171,14 +201,70 @@ extension GitLabPlugin {
         var approvedBy: [Approver]?
     }
 
-    /// One file of `/diffs`: only the paths are decoded, never the `diff` text.
+    /// One file of `/diffs`: only the paths are decoded, never the `diff` text. GraphQL adds the line counts.
     struct DiffFile: Decodable {
         var newPath: String?
         var oldPath: String?
+        var additions: Int?
+        var deletions: Int?
     }
 
     struct Detail: Decodable {
         struct Pipeline: Decodable { var status: String }
         var headPipeline: Pipeline?
+    }
+
+    /// The GraphQL answer, turned into the REST shapes above so both ways build the same items.
+    enum GraphQL {
+        struct Response: Decodable {
+            struct Body: Decodable { var currentUser: CurrentUser? }
+            struct CurrentUser: Decodable { var authored: Connection?; var reviewing: Connection? }
+            struct Connection: Decodable { var nodes: [Node?]? }
+            var data: Body?
+
+            var details: [Int: Details] {
+                let nodes = [data?.currentUser?.authored, data?.currentUser?.reviewing].compactMap { $0?.nodes }.flatMap { $0 }.compactMap { $0 }
+                var found: [Int: Details] = [:]
+                for node in nodes {
+                    guard let id = node.restID else { continue }
+                    // The same merge request in both lists: keep the one with files.
+                    if found[id]?.files == nil || node.diffStats != nil { found[id] = node.details }
+                }
+                return found
+            }
+        }
+
+        struct Node: Decodable {
+            struct Person: Decodable { var username: String; var avatarUrl: String? }
+            struct People: Decodable { var nodes: [Person?]? }
+            struct Pipeline: Decodable { var status: String }
+            struct Stat: Decodable { var path: String; var additions: Int?; var deletions: Int? }
+
+            var id: String
+            var approved: Bool?
+            var approvedBy: People?
+            var headPipeline: Pipeline?
+            var diffStats: [Stat]?
+
+            /// "gid://gitlab/MergeRequest/101" → 101, the id REST uses.
+            var restID: Int? { id.split(separator: "/").last.flatMap { Int($0) } }
+
+            var details: Details {
+                Details(
+                    approvals: Approvals(
+                        approved: approved,
+                        approvedBy: (approvedBy?.nodes ?? []).compactMap { $0 }.map { Approvals.Approver(user: User(username: $0.username, avatarUrl: $0.avatarUrl)) }
+                    ),
+                    detail: Detail(headPipeline: headPipeline.map { Detail.Pipeline(status: $0.status.lowercased()) }),
+                    files: diffStats.map { $0.map { DiffFile(newPath: $0.path, additions: $0.additions, deletions: $0.deletions) } }
+                )
+            }
+        }
+
+        struct Details {
+            var approvals: Approvals
+            var detail: Detail
+            var files: [DiffFile]?
+        }
     }
 }

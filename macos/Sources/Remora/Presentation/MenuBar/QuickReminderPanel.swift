@@ -28,6 +28,8 @@ final class QuickReminderPanel {
         })
         panel.place(near: point, offset: NSPoint(x: -20, y: 10))
         panel.makeKeyAndOrderFront(nil)
+        // Shown again while open (another drag): the previous monitor goes first.
+        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             Task { @MainActor in self?.close() }
         }

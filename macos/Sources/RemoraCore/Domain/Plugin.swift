@@ -102,23 +102,40 @@ public struct PluginConfig: Sendable {
         return value
     }
 
+    /// "gitlab.acme.io/" → https://gitlab.acme.io. Tokens travel with every request, so only https is accepted
+    /// (plain http only to this computer, for a local test server).
     public func url(_ key: String) throws -> URL {
         var raw = try required(key)
         while raw.hasSuffix("/") { raw.removeLast() }
         if !raw.contains("://") { raw = "https://" + raw }
-        guard let url = URL(string: raw), url.host != nil else { throw PluginError.invalidField(key) }
-        return url
+        guard let url = URL(string: raw), let host = url.host?.lowercased(), !host.isEmpty else { throw PluginError.invalidField(key) }
+        switch url.scheme?.lowercased() {
+        case "https": return url
+        case "http" where Self.loopback.contains(host): return url
+        default: throw PluginError.insecureField(key)
+        }
     }
+
+    static let loopback: Set<String> = ["localhost", "127.0.0.1", "::1"]
 }
 
 /// What a source returns on each refresh.
 public struct SourceSnapshot: Sendable {
     public var identity: String
     public var items: [InboxItem]
+    /// What the user should know about this fetch, already translated: a list cut at its limit, a
+    /// permission missing. Shown with the account in Settings and in the inbox's footer.
+    public var remarks: [String]
 
-    public init(identity: String, items: [InboxItem]) {
+    public init(identity: String, items: [InboxItem], remarks: [String] = []) {
         self.identity = identity
         self.items = items
+        self.remarks = remarks
+    }
+
+    /// Lists stop at 50 items each: past that, the tool has more than the inbox shows. Same text on Windows.
+    public static func truncated(_ tool: String) -> String {
+        L("%@ has more than Remora shows: only the latest 50 of each list are listed.", tool)
     }
 }
 
@@ -132,12 +149,14 @@ public protocol SourcePlugin: Sendable {
 public enum PluginError: LocalizedError, Equatable {
     case missingField(String)
     case invalidField(String)
+    case insecureField(String)
     case unknownPlugin(String)
 
     public var errorDescription: String? {
         switch self {
         case .missingField(let key): L("“%@” is required.", key)
         case .invalidField(let key): L("“%@” is not valid.", key)
+        case .insecureField(let key): L("“%@” must start with https://: the token would travel unencrypted.", key)
         case .unknownPlugin(let id): L("Unknown plugin “%@”.", id)
         }
     }

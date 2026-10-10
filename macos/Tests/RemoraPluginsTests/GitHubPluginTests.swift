@@ -28,6 +28,16 @@ struct GitHubPluginTests {
     }}
     """
 
+    /// A list past its 50 says so; one that fits doesn't.
+    @Test func saysWhenAListIsCut() async throws {
+        let plugin = { (json: String) in try GitHubPlugin(config: config(["host": "github.com", "token": "t"]), http: StubHTTP(routes: ["/graphql": json])) }
+        #expect(try await plugin(response).fetch().remarks.isEmpty, "no count: nothing to say")
+        let fits = response.replacingOccurrences(of: #""reviewing": {"nodes""#, with: #""reviewing": {"issueCount": 1, "nodes""#)
+        #expect(try await plugin(fits).fetch().remarks.isEmpty)
+        let cut = response.replacingOccurrences(of: #""reviewing": {"nodes""#, with: #""reviewing": {"issueCount": 73, "nodes""#)
+        #expect(try await plugin(cut).fetch().remarks == [SourceSnapshot.truncated("GitHub")])
+    }
+
     @Test func mapsAuthoredAndReviewRequests() async throws {
         let plugin = try GitHubPlugin(
             config: config(["host": "github.com", "token": "t"]),
@@ -56,7 +66,8 @@ struct GitHubPluginTests {
             config: config(["host": "https://github.com", "token": "t"]),
             http: StubHTTP(routes: ["/graphql": #"{"errors": [{"message": "Bad credentials"}]}"#])
         )
-        await #expect(throws: HTTPError.api("Bad credentials")) { try await plugin.fetch() }
+        // A rejected token: the account asks for reconnecting.
+        await #expect(throws: HTTPError.unauthorized) { try await plugin.fetch() }
     }
 
     @Test func requiresToken() {

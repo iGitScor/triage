@@ -6,15 +6,18 @@ public struct ItemState: Hashable, Codable, Sendable {
     public var done: Mark?
     public var snooze: Snooze?
     public var remindedAt: Date?
+    /// Set while the user is working on it: the item leaves the inbox for the In progress view.
+    public var startedAt: Date?
 
-    public init(pinned: Bool = false, done: Mark? = nil, snooze: Snooze? = nil, remindedAt: Date? = nil) {
+    public init(pinned: Bool = false, done: Mark? = nil, snooze: Snooze? = nil, remindedAt: Date? = nil, startedAt: Date? = nil) {
         self.pinned = pinned
         self.done = done
         self.snooze = snooze
         self.remindedAt = remindedAt
+        self.startedAt = startedAt
     }
 
-    public var isEmpty: Bool { !pinned && done == nil && snooze == nil && remindedAt == nil }
+    public var isEmpty: Bool { !pinned && done == nil && snooze == nil && remindedAt == nil && startedAt == nil }
 
     /// Remembers the item's fingerprint so new activity brings it back.
     public struct Mark: Hashable, Codable, Sendable {

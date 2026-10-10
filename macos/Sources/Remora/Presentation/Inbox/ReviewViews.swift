@@ -83,15 +83,15 @@ struct ReviewSession: View {
                 IconButton(symbol: "xmark", help: "Close", size: 24, action: dismiss)
             }
             if let item = current {
-                Text(L("%d of %d · ~%d min left", index + 1, queue.count, ReviewQueue.remainingMinutes(Array(queue[index...]))))
+                Text(L("%d of %d · ~%d min left", index + 1, queue.count, ReviewQueue.remainingMinutes(Array(queue[index...]), pace: model.reviewPace)))
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(item.context).font(Myna.font(11.5, .medium)).foregroundStyle(Myna.muted)
+                    Text(item.shownContext).font(Myna.font(11.5, .medium)).foregroundStyle(Myna.muted)
                     Text(item.title).font(Myna.font(14, .semibold)).foregroundStyle(Myna.ink)
                     if let author = item.author { Text(L("by %@", author.name)).font(Myna.font(11.5)).foregroundStyle(Myna.muted) }
                     HStack(spacing: 4) { ForEach(item.badges) { BadgeChip(badge: $0) } }
-                    if let prep = ReviewPrep(item) { ReviewPrepLine(prep: prep) }
+                    if let prep = ReviewPrep(item, pace: model.reviewPace) { ReviewPrepLine(prep: prep) }
                 }
                 .padding(12)
                 .background(Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))

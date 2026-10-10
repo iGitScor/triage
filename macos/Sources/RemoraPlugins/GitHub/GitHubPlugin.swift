@@ -56,7 +56,10 @@ public struct GitHubPlugin: SourcePlugin {
 
     static func snapshot(from response: GraphQLResponse, accountID: UUID) throws -> SourceSnapshot {
         guard let data = response.data else {
-            throw HTTPError.api(response.errors?.first?.message ?? L("GitHub returned no data."))
+            let message = response.errors?.first?.message ?? L("GitHub returned no data.")
+            // A token GitHub no longer accepts: the user reconnects.
+            if message.caseInsensitiveCompare("Bad credentials") == .orderedSame { throw HTTPError.unauthorized }
+            throw HTTPError.api(message)
         }
         let authored = data.authored.nodes.compactMap { $0 }.map {
             $0.item(accountID: accountID, bundle: .authored, authored: true)
@@ -64,14 +67,18 @@ public struct GitHubPlugin: SourcePlugin {
         let reviewing = data.reviewing.nodes.compactMap { $0 }.map {
             $0.item(accountID: accountID, bundle: .reviews, authored: false)
         }
-        return SourceSnapshot(identity: data.viewer.login, items: authored + reviewing)
+        let truncated = [data.authored, data.reviewing].contains { ($0.issueCount ?? 0) > $0.nodes.count }
+        return SourceSnapshot(
+            identity: data.viewer.login, items: authored + reviewing,
+            remarks: truncated ? [SourceSnapshot.truncated("GitHub")] : []
+        )
     }
 
     static let query = """
     query($authored: String!, $reviewing: String!) {
       viewer { login }
-      authored: search(query: $authored, type: ISSUE, first: 50) { nodes { ...PR } }
-      reviewing: search(query: $reviewing, type: ISSUE, first: 50) { nodes { ...PR } }
+      authored: search(query: $authored, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
+      reviewing: search(query: $reviewing, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
     }
     fragment PR on PullRequest {
       id number title url isDraft updatedAt additions deletions mergeable reviewDecision
@@ -105,7 +112,11 @@ struct GraphQLResponse: Decodable {
     }
 
     struct Login: Decodable { var login: String }
-    struct Search: Decodable { var nodes: [PullRequest?] }
+    struct Search: Decodable {
+        /// All the matches, beyond the 50 listed.
+        var issueCount: Int?
+        var nodes: [PullRequest?]
+    }
     struct Message: Decodable { var message: String }
 
     var data: Payload?
@@ -172,7 +183,7 @@ struct PullRequest: Decodable {
             accountID: accountID,
             pluginID: GitHubPlugin.manifest.id,
             bundle: bundle,
-            title: title,
+            title: Readable.text(title),
             context: "\(repository.nameWithOwner) #\(number)",
             url: url,
             author: author?.person,

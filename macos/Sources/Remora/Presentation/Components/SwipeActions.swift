@@ -29,6 +29,8 @@ private struct SwipeActionsModifier: ViewModifier {
     @State private var width: CGFloat = 400
     @State private var monitor: Any?
     @State private var direction: Direction = .undecided
+    @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private enum Direction { case undecided, horizontal, vertical }
 
@@ -41,8 +43,12 @@ private struct SwipeActionsModifier: ViewModifier {
             .background { revealed }
             .clipShape(RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
-            .onHover { $0 ? startMonitoring() : stopMonitoring() }
-            .onDisappear(perform: stopMonitoring)
+            .onHover { inside in
+                hovering = inside
+                inside ? startMonitoring() : stopMonitoring()
+            }
+            // A row that leaves mid-swipe (Done slides it out) takes its monitor with it.
+            .onDisappear(perform: removeMonitor)
     }
 
     @ViewBuilder private var revealed: some View {
@@ -72,10 +78,15 @@ private struct SwipeActionsModifier: ViewModifier {
         }
     }
 
+    /// When the pointer leaves: at once, or when the swipe in progress ends (`handle`).
     private func stopMonitoring() {
-        guard direction != .horizontal, let monitor else { return }
-        NSEvent.removeMonitor(monitor)
-        self.monitor = nil
+        guard direction != .horizontal else { return }
+        removeMonitor()
+    }
+
+    private func removeMonitor() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
     }
 
     /// Returns true when the event was consumed by the swipe.
@@ -99,6 +110,8 @@ private struct SwipeActionsModifier: ViewModifier {
             let wasHorizontal = direction == .horizontal
             direction = .undecided
             if wasHorizontal { finish() }
+            // The swipe ended after the pointer left the row: nothing keeps the monitor any more.
+            if !hovering { removeMonitor() }
             return wasHorizontal
         default:
             return false
@@ -115,11 +128,15 @@ private struct SwipeActionsModifier: ViewModifier {
 
     private func finish() {
         guard abs(offset) >= threshold else {
-            withAnimation(.spring(duration: 0.3)) { offset = 0 }
+            withAnimation(reduceMotion ? nil : .spring(duration: 0.3)) { offset = 0 }
             return
         }
         let action = offset > 0 ? leading : trailing
-        if action.dismisses {
+        if reduceMotion {
+            // No slide-out: the action runs and the row goes back in place at once.
+            offset = 0
+            action.perform()
+        } else if action.dismisses {
             withAnimation(.easeIn(duration: 0.18)) { offset = offset > 0 ? width : -width }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
                 action.perform()

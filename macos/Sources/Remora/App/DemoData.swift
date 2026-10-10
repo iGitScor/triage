@@ -3,12 +3,13 @@ import RemoraCore
 
 /// Sample items for `--demo`, so the app can be explored without connecting anything.
 enum DemoData {
+    /// In the Mac's language, as Claude writes a real brief (the French screenshots show it).
     static let brief = Brief(
-        summary: "Two reviews are blocking teammates and one of your PRs needs changes. Bob is waiting on you for Friday's rollout.",
+        summary: L("Two reviews are blocking teammates and one of your PRs needs changes. Bob is waiting on you for Friday's rollout."),
         focus: [
-            .init(id: "demo/1", reason: "Erin is blocked; checks are green, small diff."),
-            .init(id: "demo/3", reason: "Direct question with a Friday deadline."),
-            .init(id: "demo/6", reason: "Frank requested changes on your PR."),
+            .init(id: "demo/1", reason: L("Erin is blocked; checks are green, small diff.")),
+            .init(id: "demo/3", reason: L("Direct question with a Friday deadline.")),
+            .init(id: "demo/6", reason: L("Frank requested changes on your PR.")),
         ]
     )
 

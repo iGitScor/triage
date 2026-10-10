@@ -35,4 +35,45 @@ struct GitLabPluginTests {
         let stored = String(data: try JSONEncoder().encode(review), encoding: .utf8) ?? ""
         #expect(!stored.contains("secret code"), "diff text is never kept")
     }
+
+    /// One GraphQL request instead of two or three REST calls per merge request.
+    @Test func detailsComeFromOneGraphQLRequest() async throws {
+        let graphQL = """
+        {"data": {"currentUser": {
+          "authored": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
+            "approvedBy": {"nodes": [{"username": "erin", "avatarUrl": null}]}, "headPipeline": {"status": "FAILED"}}]},
+          "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
+            "approvedBy": {"nodes": [{"username": "erin"}]}, "headPipeline": {"status": "FAILED"},
+            "diffStats": [{"path": "app/models/user.rb", "additions": 12, "deletions": 3}]}]}
+        }}}
+        """
+        let http = RecordingHTTP(StubHTTP(routes: [
+            "/api/v4/user": #"{"username": "alice"}"#,
+            "/api/v4/merge_requests": "[\(mr)]",
+            "/api/graphql": graphQL,
+        ]))
+        let snapshot = try await GitLabPlugin(config: config(["host": "gitlab.acme.io", "token": "t"]), http: http).fetch()
+
+        let paths = await http.paths
+        #expect(paths.filter { $0.contains("/projects/") }.isEmpty, "no per-merge-request call")
+        #expect(paths.count == 4, "user, the two lists, and one GraphQL request")
+        let authored = snapshot.items[0]
+        #expect(authored.hasBadge("approved") && authored.hasBadge("checks.failing"))
+        #expect(authored.changes == nil)
+        let review = snapshot.items[1]
+        #expect(review.changes?.files == [ChangedFile(path: "app/models/user.rb", additions: 12, deletions: 3)])
+    }
+}
+
+/// Records the paths a plugin requests, then answers with `base`.
+actor RecordingHTTP: HTTPClient {
+    let base: StubHTTP
+    private(set) var paths: [String] = []
+
+    init(_ base: StubHTTP) { self.base = base }
+
+    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        paths.append(request.url?.path ?? "")
+        return try await base.send(request)
+    }
 }

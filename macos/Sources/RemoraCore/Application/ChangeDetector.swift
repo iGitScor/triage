@@ -18,6 +18,13 @@ public struct Notice: Equatable, Sendable {
         self.body = body
         self.url = url
     }
+
+    /// Keeps what kind of notice it is and where it comes from, hides what was written.
+    public func redacted() -> Notice {
+        var notice = self
+        notice.body = L(kind == .reminder ? "Reminder" : "New activity")
+        return notice
+    }
 }
 
 /// Compares two snapshots of the same account and tells what is worth a notification.

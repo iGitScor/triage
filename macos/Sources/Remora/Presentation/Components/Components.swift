@@ -23,7 +23,8 @@ struct Avatar: View {
     }
 }
 
-/// Overlapping reviewer avatars, each ringed with its review tone.
+/// Overlapping reviewer avatars, each ringed with its review tone and marked ✓ (approved) or ✕ (changes requested),
+/// so the state doesn't rest on colour alone; VoiceOver reads each reviewer with their state.
 struct PeopleStack: View {
     let people: [Person]
     var limit = 4
@@ -33,6 +34,8 @@ struct PeopleStack: View {
             ForEach(people.prefix(limit)) { person in
                 Avatar(person: person, size: 18)
                     .overlay(Circle().strokeBorder(ring(for: person), lineWidth: 1.5))
+                    .overlay(alignment: .bottomTrailing) { mark(for: person) }
+                    .help(Self.describe(person))
             }
             if people.count > limit {
                 Text("+\(people.count - limit)")
@@ -40,6 +43,34 @@ struct PeopleStack: View {
                     .foregroundStyle(Myna.muted)
                     .padding(.leading, 8)
             }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(L("Reviewers: %@", people.map(Self.describe).formatted(.list(type: .and))))
+    }
+
+    /// "Erin, approved", "Dave, changes requested", "Frank, waiting".
+    static func describe(_ person: Person) -> String {
+        switch person.tone {
+        case .accent?, .positive?: L("%@, approved", person.name)
+        case .negative?: L("%@, changes requested", person.name)
+        default: L("%@, waiting", person.name)
+        }
+    }
+
+    @ViewBuilder private func mark(for person: Person) -> some View {
+        let symbol: String? = switch person.tone {
+        case .accent?, .positive?: "checkmark"
+        case .negative?: "xmark"
+        default: nil
+        }
+        if let symbol {
+            Image(systemName: symbol)
+                .font(.system(size: 5.5, weight: .black))
+                .foregroundStyle(person.tone == .negative ? Myna.onDark : Myna.onAccent)
+                .frame(width: 9, height: 9)
+                .background(ring(for: person), in: Circle())
+                .overlay(Circle().strokeBorder(Myna.card, lineWidth: 1))
+                .offset(x: 2, y: 2)
         }
     }
 
@@ -87,7 +118,9 @@ struct IconButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help(help)
+        // An icon alone: the tooltip is also what VoiceOver says (it read "gearshape" for Settings).
+        .help(L(help))
+        .accessibilityLabel(L(help))
         .onHover { hovering = $0 }
     }
 
@@ -161,6 +194,28 @@ struct RemoraMark: View {
     var body: some View {
         Image(nsImage: RemoraArt.mark(size: size, disc: NSColor(hex: 0xB9FF66), fish: NSColor(hex: 0x111111)))
             .frame(width: size, height: size)
+    }
+}
+
+/// Text that depends on the time ("5m", "updated 3 min ago"): redrawn every minute while on screen, by itself, so
+/// the model doesn't publish the clock for it.
+struct LiveText: View {
+    let text: () -> String
+
+    init(_ text: @escaping () -> String) {
+        self.text = text
+    }
+
+    var body: some View {
+        TimelineView(.everyMinute) { _ in Text(text()) }
+    }
+}
+
+extension InboxItem {
+    /// The context as shown: a reminder's is stored as "Reminder" and translated here, at display, so a
+    /// language change applies to reminders saved before it.
+    var shownContext: String {
+        bundle == .reminders && context == "Reminder" ? L("Reminder") : context
     }
 }
 

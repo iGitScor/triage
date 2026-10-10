@@ -5,12 +5,15 @@ import SwiftUI
 struct ItemRow: View {
     @Environment(InboxModel.self) private var model
     let item: InboxItem
+    /// The row the keyboard is on: it shows its actions as if hovered.
+    var selected = false
     let onSnooze: () -> Void
     var onDraft: ((DraftSubject) -> Void)?
 
     @State private var hovering = false
 
     private var state: ItemState { model.state(of: item) }
+    private var showsActions: Bool { hovering || selected }
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -34,7 +37,7 @@ struct ItemRow: View {
                         .foregroundStyle(Myna.inkSoft)
                 }
                 footer
-                if item.bundle == .reviews, let prep = ReviewPrep(item) {
+                if item.bundle == .reviews, let prep = ReviewPrep(item, pace: model.reviewPace) {
                     ReviewPrepLine(prep: prep)
                 }
                 if let onDraft, let help = model.waitingHelp(item) {
@@ -47,12 +50,67 @@ struct ItemRow: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(background, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
-        .overlay(alignment: .topTrailing) { if hovering { actions } }
+        .overlay {
+            if selected {
+                RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous).strokeBorder(Myna.ink.opacity(0.6), lineWidth: 1.5)
+            }
+        }
+        .overlay(alignment: .topTrailing) { if showsActions { actions } }
         .contentShape(Rectangle())
         .onTapGesture { model.open(item, inBrowser: NSEvent.modifierFlags.contains(.option)) }
         .onHover { hovering = $0 }
         .contextMenu { menu }
         .swipeActions(leading: doneSwipe, trailing: snoozeSwipe)
+        // One element for VoiceOver: read as a button that opens the item, with the hover and swipe actions,
+        // the linked items and the draft as named actions (the buttons inside are otherwise unreachable).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAction { model.open(item) }
+        .accessibilityAction(named: L(state.done == nil ? "Mark as done" : "Move to inbox")) {
+            withAnimation(.snappy) { model.toggleDone(item) }
+        }
+        .accessibilityAction(named: L("Snooze…"), onSnooze)
+        .accessibilityAction(named: L(state.pinned ? "Unpin" : "Pin")) { model.togglePin(item) }
+        .accessibilityAction(named: L(state.startedAt == nil ? "Start" : "Stop")) {
+            withAnimation(.snappy) { state.startedAt == nil ? model.start(item) : model.stop(item) }
+        }
+        .accessibilityActions {
+            if item.appURL != nil, item.url != nil {
+                Button(L("Open in browser")) { model.open(item, inBrowser: true) }
+            }
+            if state.snooze != nil {
+                Button(L("Unsnooze")) { model.unsnooze(item) }
+            }
+            ForEach(model.linkedItems(item)) { other in
+                Button(L("Linked: %@", other.title)) { model.open(other) }
+            }
+            if let onDraft, let help = model.waitingHelp(item) {
+                Button(Self.draftLabel(help)) {
+                    onDraft(DraftSubject(item: item, text: model.waitingAssistant.draft(help, for: item)))
+                }
+            }
+        }
+    }
+
+    private static func draftLabel(_ help: WaitingAssistant.Help) -> String {
+        switch help {
+        case .suggestReviewers: L("Ask for review")
+        case .nudge: L("Draft a nudge")
+        }
+    }
+
+    /// What VoiceOver reads: where, what, who, when, then the item's status and badges.
+    private var accessibilityText: String {
+        var parts = [model.accountLabel(for: item), item.shownContext, item.title, item.preview, item.author?.name, item.date.shortRelative]
+        if state.pinned { parts.append(L("Pinned")) }
+        if let startedAt = state.startedAt { parts.append(L("Started %@", startedAt.formatted(.relative(presentation: .named)))) }
+        if state.remindedAt != nil { parts.append(L("Reminder")) }
+        if let snooze = state.snooze {
+            parts.append(L("Snoozed until %@", snooze.until.formatted(.dateTime.weekday(.wide).hour().minute())))
+        }
+        parts += item.badges.map(\.label)
+        return parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
     }
 
     private var doneSwipe: SwipeAction {
@@ -92,7 +150,7 @@ struct ItemRow: View {
                     .padding(.vertical, 1)
                     .background(Myna.line, in: Capsule())
             }
-            Text(item.context)
+            Text(item.shownContext)
                 .font(Myna.font(11, .medium))
                 .foregroundStyle(Myna.muted)
                 .lineLimit(1)
@@ -101,14 +159,14 @@ struct ItemRow: View {
                 Label(snooze.until.formatted(.dateTime.weekday(.abbreviated).hour().minute()), systemImage: snooze.mode == .hide ? "moon.zzz" : "bell")
                     .font(Myna.font(10.5, .medium))
                     .foregroundStyle(Myna.accentText)
-            } else if !hovering {
+            } else if !showsActions {
                 if let reason = model.rankingReason(item) {
                     Image(systemName: "star.fill")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(Myna.accentText)
                         .help(reason)
                 }
-                Text(item.date.shortRelative)
+                LiveText { item.date.shortRelative }
                     .font(Myna.font(11))
                     .foregroundStyle(Myna.muted)
             }
@@ -120,8 +178,14 @@ struct ItemRow: View {
         let reason = state.snooze?.reason
         let linked = model.linkedItems(item)
         let times = state.snooze == nil ? 0 : model.snoozeCount(item)
-        if !badges.isEmpty || !item.participants.isEmpty || state.remindedAt != nil || state.pinned || reason != nil || times >= 2 || !linked.isEmpty {
+        if !badges.isEmpty || !item.participants.isEmpty || state.remindedAt != nil || state.startedAt != nil || state.pinned || reason != nil || times >= 2 || !linked.isEmpty {
             HStack(spacing: 4) {
+                if let startedAt = state.startedAt {
+                    BadgeChip(badge: Badge(
+                        id: "started", label: L("Started %@", startedAt.formatted(.relative(presentation: .named))),
+                        symbol: "play.fill", tone: .accent
+                    ))
+                }
                 if state.remindedAt != nil {
                     BadgeChip(badge: Badge(id: "reminder", label: L("Reminder"), symbol: "bell.fill", tone: .accent))
                 }
@@ -135,7 +199,7 @@ struct ItemRow: View {
                 ForEach(linked) { other in
                     Button { model.open(other) } label: {
                         BadgeChip(badge: Badge(
-                            id: "link", label: other.context,
+                            id: "link", label: other.shownContext,
                             symbol: PluginRegistry.manifest(other.pluginID)?.symbol ?? "link", tone: .accent
                         ))
                     }
@@ -153,6 +217,11 @@ struct ItemRow: View {
         HStack(spacing: 4) {
             ActionButton(label: state.pinned ? "Unpin" : "Pin", symbol: state.pinned ? "pin.slash" : "pin") {
                 model.togglePin(item)
+            }
+            if state.startedAt == nil {
+                ActionButton(label: "Start", symbol: "play") { withAnimation(.snappy) { model.start(item) } }
+            } else {
+                ActionButton(label: "Stop", symbol: "stop") { withAnimation(.snappy) { model.stop(item) } }
             }
             ActionButton(label: "Snooze", symbol: "moon.zzz", action: onSnooze)
             ActionButton(
@@ -182,6 +251,11 @@ struct ItemRow: View {
             Divider()
         }
         Button(L(state.pinned ? "Unpin" : "Pin")) { model.togglePin(item) }
+        if state.startedAt == nil {
+            Button("Start") { model.start(item) }
+        } else {
+            Button("Stop") { model.stop(item) }
+        }
         Button("Snooze…", action: onSnooze)
         if state.snooze != nil { Button("Unsnooze") { model.unsnooze(item) } }
         Button(L(state.done == nil ? "Mark as done" : "Move to inbox")) { model.toggleDone(item) }
@@ -189,10 +263,10 @@ struct ItemRow: View {
     }
 
     private var background: Color {
-        if state.remindedAt != nil || (item.hasBadge("approved") && item.bundle == .authored) {
-            return hovering ? Myna.accentSoft.opacity(1.4) : Myna.accentSoft
+        if state.remindedAt != nil || state.startedAt != nil || (item.hasBadge("approved") && item.bundle == .authored) {
+            return showsActions ? Myna.accentSoft.opacity(1.4) : Myna.accentSoft
         }
-        return hovering ? Myna.card2 : Myna.card
+        return showsActions ? Myna.card2 : Myna.card
     }
 }
 

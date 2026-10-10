@@ -33,6 +33,15 @@ struct LinearPluginTests {
         """
     }
 
+    @Test func saysWhenIssuesAreCut() async throws {
+        let more = issues.replacingOccurrences(of: "]}}}}", with: #"], "pageInfo": {"hasNextPage": true}}}}}"#)
+        let empty = #"{"data": {"notifications": {"nodes": []}}}"#
+        let plugin = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: more, notifications: empty))
+        #expect(try await plugin.fetch().remarks == [SourceSnapshot.truncated("Linear")])
+        let all = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: issues, notifications: empty))
+        #expect(try await all.fetch().remarks.isEmpty)
+    }
+
     @Test func issuesAndActionableNotifications() async throws {
         let notifications = """
         {"data": {"notifications": {"nodes": [
@@ -68,6 +77,7 @@ struct LinearPluginTests {
     @Test func rejectedKeyIsReported() async throws {
         let rejected = #"{"errors": [{"message": "Authentication required"}]}"#
         let plugin = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: rejected, notifications: rejected))
-        await #expect(throws: HTTPError.api("Linear: Authentication required")) { try await plugin.fetch() }
+        // A rejected key: the account asks for reconnecting.
+        await #expect(throws: HTTPError.unauthorized) { try await plugin.fetch() }
     }
 }

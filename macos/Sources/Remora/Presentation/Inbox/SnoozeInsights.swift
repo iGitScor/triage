@@ -76,7 +76,7 @@ struct InsightCard: View {
         case .avoidance(let context, _, _): L("You often put off %@", context)
         case .pileUp(let at, let items): L("%d items come back %@", items.count, at.formatted(.dateTime.weekday(.abbreviated).hour().minute()))
         case .cluster(let items): L("%d items on the same topic", items.count)
-        case .stale(let items): L("%d snoozed items went quiet", items.count)
+        case .stale(let items): L("%d snoozed item went quiet", plural: "%d snoozed items went quiet", items.count)
         }
     }
 
@@ -123,7 +123,8 @@ struct InsightCard: View {
 /// Claude's proposal for each snoozed item: tick what to apply.
 struct TriagePanel: View {
     @Environment(InboxModel.self) private var model
-    @State private var excluded: Set<String> = []
+    /// Suggestions the user ticked or unticked, away from their default (`Action.preselected`).
+    @State private var toggled: Set<String> = []
 
     var body: some View {
         if model.isTriaging {
@@ -146,9 +147,14 @@ struct TriagePanel: View {
                         row(suggestion, item: item)
                     }
                 }
-                let selected = model.triageSuggestions.filter { !excluded.contains($0.id) && $0.action != .keep }
+                if model.triageSuggestions.contains(where: { $0.action == .done || $0.action == .now }) {
+                    Text(L("“Let it go” and “Do it now” are yours to tick."))
+                        .font(Myna.font(11))
+                        .foregroundStyle(Myna.onDark.opacity(0.6))
+                }
+                let selected = TriageSuggestion.selection(model.triageSuggestions, toggled: toggled)
                 Button { withAnimation(.snappy) { model.apply(selected) } } label: {
-                    Text(L("Apply %d changes", selected.count)).frame(maxWidth: .infinity)
+                    Text(L("Apply %d change", plural: "Apply %d changes", selected.count)).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PillButtonStyle())
                 .disabled(selected.isEmpty)
@@ -160,10 +166,10 @@ struct TriagePanel: View {
     }
 
     private func row(_ suggestion: TriageSuggestion, item: InboxItem) -> some View {
-        let included = !excluded.contains(suggestion.id) && suggestion.action != .keep
+        let included = TriageSuggestion.selection([suggestion], toggled: toggled).isEmpty == false
         return Button {
             guard suggestion.action != .keep else { return }
-            excluded.formSymmetricDifference([suggestion.id])
+            toggled.formSymmetricDifference([suggestion.id])
         } label: {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: included ? "checkmark.circle.fill" : "circle")

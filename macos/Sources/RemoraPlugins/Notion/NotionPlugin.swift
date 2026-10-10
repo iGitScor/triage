@@ -27,7 +27,6 @@ public struct NotionPlugin: SourcePlugin {
         ],
         setupLabel: "Create a token",
         setupURL: { _ in URL(string: "https://www.notion.so/developers/tokens") },
-        isComingSoon: true,
         egress: Egress(hosts: ["api.notion.com"], description: "Reads open tasks from the Notion databases you choose."),
         logo: "notion"
     )
@@ -52,24 +51,31 @@ public struct NotionPlugin: SourcePlugin {
     }
 
     public func fetch() async throws -> SourceSnapshot {
-        let me = try await currentUser()
-        let items = try await databases.concurrentMap(limit: 4) { id in try await self.tasks(in: id, assignedTo: me?.id) }
-        return SourceSnapshot(identity: me?.label ?? "Notion", items: items.flatMap { $0 })
+        // Without knowing who you are, the query would return everyone's tasks: better say so.
+        guard let me = try await currentUser() else {
+            throw HTTPError.api(L("Remora can’t tell which Notion user you are: add your Notion email to this account."))
+        }
+        let found = try await databases.concurrentMap(limit: 4) { id in try await self.tasks(in: id, assignedTo: me.id) }
+        let truncated = found.contains(where: \.more)
+        return SourceSnapshot(
+            identity: me.label, items: found.flatMap(\.items), remarks: truncated ? [SourceSnapshot.truncated("Notion")] : []
+        )
     }
 
-    private func tasks(in databaseID: String, assignedTo user: String?) async throws -> [InboxItem] {
+    /// The database's tasks for you, and whether it has more than one page of them.
+    private func tasks(in databaseID: String, assignedTo user: String) async throws -> (items: [InboxItem], more: Bool) {
         let database: Database = try await send(.get(api.appending(path: "databases/\(databaseID)"), headers: headers))
         var body = Query(sorts: [.init(timestamp: "last_edited_time", direction: "descending")], pageSize: 50)
-        if let user { body.filter = .init(property: assignee, people: .init(contains: user)) }
+        body.filter = .init(property: assignee, people: .init(contains: user))
         let query = body
-        let pages = try await database.dataSources.concurrentMap(limit: 2) { source -> [Page] in
+        let pages = try await database.dataSources.concurrentMap(limit: 2) { source -> Results<Page> in
             let request = try URLRequest.post(self.api.appending(path: "data_sources/\(source.id)/query"), json: query, headers: self.headers)
-            let results: Results<Page> = try await self.send(request)
-            return results.results
+            return try await self.send(request)
         }
-        return pages.flatMap { $0 }
-            .filter { !doneValues.contains(($0.status ?? "").lowercased()) && $0.checkbox != true }
+        let items = pages.flatMap(\.results)
+            .filter { !$0.isDone(doneValues) }
             .map { $0.item(accountID: accountID, database: database.name) }
+        return (items, pages.contains { $0.nextCursor != nil })
     }
 
     /// A personal access token is the user itself; an internal connection needs the email to find them.
@@ -129,7 +135,7 @@ extension NotionPlugin {
         enum CodingKeys: String, CodingKey { case filter, sorts, pageSize = "page_size" }
     }
 
-    struct Results<T: Decodable>: Decodable {
+    struct Results<T: Decodable & Sendable>: Decodable, Sendable {
         var results: [T]
         var nextCursor: String?
     }
@@ -156,7 +162,7 @@ extension NotionPlugin {
         var name: String { (title ?? []).map(\.plainText).joined().nilIfEmpty ?? dataSources.first?.name ?? "Notion" }
     }
 
-    struct Page: Decodable {
+    struct Page: Decodable, Sendable {
         var id: String
         var url: URL?
         var lastEditedTime: Date
@@ -165,8 +171,19 @@ extension NotionPlugin {
         var title: String {
             properties.values.compactMap(\.title).first.map { $0.map(\.plainText).joined() }?.nilIfEmpty ?? L("Untitled")
         }
-        var status: String? { properties.values.compactMap { $0.status?.name ?? $0.select?.name }.first }
-        var checkbox: Bool? { properties.values.compactMap(\.checkbox).first }
+        /// The status property, or a select named "Status": not any select, which could be a priority.
+        var status: String? {
+            properties.values.first { $0.type == "status" }?.status?.name
+                ?? properties.first { $0.key.lowercased() == "status" }?.value.select?.name
+        }
+
+        /// Done when its status is one of the done values, or a checkbox named like one ("Done", "Complete") is
+        /// ticked. Any other checkbox ("Urgent", "Blocked") says nothing about being done.
+        func isDone(_ doneValues: Set<String>) -> Bool {
+            if let status, doneValues.contains(status.lowercased()) { return true }
+            let doneNames = doneValues.union(["done", "complete", "completed"])
+            return properties.contains { doneNames.contains($0.key.lowercased()) && $0.value.checkbox == true }
+        }
         var due: Date? { properties.values.compactMap { DueDate.parse($0.date?.start) }.min() }
 
         func item(accountID: UUID, database: String) -> InboxItem {
@@ -178,7 +195,7 @@ extension NotionPlugin {
                 accountID: accountID,
                 pluginID: NotionPlugin.manifest.id,
                 bundle: .tasks,
-                title: title,
+                title: Readable.text(title),
                 context: database,
                 url: url,
                 author: Person(name: database),
@@ -194,6 +211,7 @@ extension NotionPlugin {
         struct Named: Decodable { var name: String }
         struct DateValue: Decodable { var start: String? }
 
+        var type: String?
         var title: [RichText]?
         var status: Named?
         var select: Named?

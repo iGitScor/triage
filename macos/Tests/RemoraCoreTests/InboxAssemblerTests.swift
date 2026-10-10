@@ -40,6 +40,21 @@ struct InboxAssemblerTests {
         #expect(assembler.placement(of: item, state: state, now: now) == .inbox)
     }
 
+    @Test func startedItemsLeaveEveryOtherSection() {
+        let items = [makeItem("1", needsAction: true), makeItem("2", needsAction: true), makeItem("3", needsAction: true)]
+        let states = ["1": ItemState(startedAt: now - 60), "3": ItemState(startedAt: now - 600)]
+        let layout = assembler.layout(items: items, states: states, now: now)
+        #expect(layout.inProgress.map(\.id) == ["3", "1"])
+        #expect(layout.myTurnItems.map(\.id) == ["2"])
+        #expect(layout.actionCount == 1)
+    }
+
+    @Test func oldStatesWithoutStartedAtStillDecode() throws {
+        let json = #"{"pinned":true}"#.data(using: .utf8)!
+        let state = try JSONDecoder().decode(ItemState.self, from: json)
+        #expect(state.pinned && state.startedAt == nil)
+    }
+
     @Test func pinnedItemsGetTheirOwnSection() {
         let layout = assembler.layout(items: [makeItem("1"), makeItem("2")], states: ["2": ItemState(pinned: true)], now: now)
         #expect(layout.pinned.map(\.id) == ["2"])

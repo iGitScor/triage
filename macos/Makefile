@@ -15,6 +15,8 @@ app:
 
 run: app
 	-pkill -x Remora
+	@# Reopening while the old copy is still quitting fails: wait for it (10 s at most).
+	@for i in $$(seq 50); do pgrep -x Remora >/dev/null || break; sleep 0.2; done
 	open build/Remora.app
 
 clean:

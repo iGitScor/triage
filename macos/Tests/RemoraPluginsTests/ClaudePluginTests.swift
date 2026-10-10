@@ -24,6 +24,31 @@ struct ClaudePluginTests {
         #expect(brief.focus == [Brief.Focus(id: "a", reason: "Blocks Frank")])
     }
 
+    /// A non-streamed answer is silent until complete, so Claude calls get a long timeout; the tools keep 30 s.
+    @Test func claudeCallsWaitLongerThanToolCalls() async throws {
+        final class Recorder: HTTPClient, @unchecked Sendable {
+            var timeouts: [TimeInterval] = []
+            func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+                timeouts.append(request.timeoutInterval)
+                throw URLError(.timedOut)
+            }
+        }
+        let recorder = Recorder()
+        await #expect(throws: HTTPError.api(L("Claude took too long to answer. Try again later."))) {
+            try await ClaudePlugin(config: config(["token": "k"]), http: recorder).brief([item], now: .now)
+        }
+        #expect(recorder.timeouts == [ClaudePlugin.timeout])
+        #expect(ClaudePlugin.timeout >= 300)
+        #expect(URLRequest.get(URL(string: "https://api.github.com")!).timeoutInterval == 30)
+    }
+
+    @Test func aCutOffAnswerSaysSo() async throws {
+        let http = StubHTTP(routes: ["/v1/messages": #"{"content": [{"type": "text", "text": "{\"summary\": \"One rev"}], "stop_reason": "max_tokens"}"#])
+        await #expect(throws: HTTPError.api(L("Claude’s answer was cut off. Try again, or with fewer items."))) {
+            try await ClaudePlugin(config: config(["token": "k"]), http: http).brief([item], now: .now)
+        }
+    }
+
     @Test func refusalBecomesAnError() async throws {
         let http = StubHTTP(routes: ["/v1/messages": #"{"content": [], "stop_reason": "refusal"}"#])
         await #expect(throws: HTTPError.self) {

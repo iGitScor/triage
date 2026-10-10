@@ -15,6 +15,8 @@ struct SettingsView: View {
         .frame(width: 560, height: 520)
         .tint(Myna.accentDeep)
         .preferredColorScheme(model.preferences.appearance.colorScheme)
+        // Drawn again with the new size when it changes.
+        .id(model.preferences.textSize)
     }
 }
 
@@ -50,9 +52,12 @@ private struct SourcesPane: View {
     private func tiles(_ manifests: [PluginManifest]) -> some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
             ForEach(manifests, id: \.id) { manifest in
-                Button { adding = manifest } label: { PluginTile(manifest: manifest) }
+                // What the policy refuses can't be started, and says why, before any form is filled in.
+                let refusal = model.policy.refusal(for: manifest)
+                Button { adding = manifest } label: { PluginTile(manifest: manifest, refusal: refusal) }
                     .buttonStyle(.plain)
-                    .disabled(manifest.isComingSoon)
+                    .disabled(manifest.isComingSoon || refusal != nil)
+                    .accessibilityHint(refusal ?? "")
             }
         }
     }
@@ -69,6 +74,8 @@ private struct AccountRow: View {
 
     @State private var editing = false
     @State private var draft = ""
+    @State private var confirmingRemove = false
+    @State private var reconnecting = false
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -101,18 +108,50 @@ private struct AccountRow: View {
                             .help("Rename")
                     }
                 }
-                if let error = model.errors[account.id] {
-                    Text(error).font(Myna.font(11.5)).foregroundStyle(Myna.danger).lineLimit(2)
+                if let failure = model.errors[account.id] {
+                    Text(failure.message).font(Myna.font(11.5)).foregroundStyle(Self.color(failure.kind)).lineLimit(2)
+                    // A rejected token is fixed here, keeping the account's Done, snoozes and pins.
+                    if failure.kind == .auth, manifest != nil {
+                        Button(L("Reconnect…")) { reconnecting = true }
+                            .controlSize(.small)
+                            .sheet(isPresented: $reconnecting) {
+                                if let manifest { ConnectForm(manifest: manifest, account: account) { reconnecting = false } }
+                            }
+                    }
                 } else {
                     Text(account.subtitle).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
                 }
+                ForEach(model.remarks[account.id] ?? [], id: \.self) { remark in
+                    Label(remark, systemImage: "info.circle")
+                        .font(Myna.font(11.5))
+                        .foregroundStyle(Myna.inkSoft)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer()
-            Button("Remove") { model.disconnect(account) }
+            Button("Remove") { confirmingRemove = true }
                 .buttonStyle(PillButtonStyle(prominent: false))
+                // The token is deleted from the Keychain: no undo, so it asks first.
+                .confirmationDialog(
+                    L("Remove %@?", account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID),
+                    isPresented: $confirmingRemove
+                ) {
+                    Button(L("Remove"), role: .destructive) { model.disconnect(account) }
+                } message: {
+                    Text(L("Its token is deleted from the Keychain and its items leave the inbox."))
+                }
         }
         .padding(12)
         .background(Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+    }
+
+    /// Calm for what isn't the tool's fault or only means waiting; a warning for a token to replace.
+    static func color(_ kind: FailureKind) -> Color {
+        switch kind {
+        case .offline, .rateLimited: Myna.muted
+        case .auth: Myna.color(for: .warning).foreground
+        case .unreachable, .other: Myna.danger
+        }
     }
 
     private func startEditing() {
@@ -129,7 +168,11 @@ private struct AccountRow: View {
 
 private struct PluginTile: View {
     let manifest: PluginManifest
+    /// Why the privacy policy refuses this tool, if it does: the tile is then locked.
+    var refusal: String? = nil
     @State private var hovering = false
+
+    private var available: Bool { !manifest.isComingSoon && refusal == nil }
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -143,14 +186,21 @@ private struct PluginTile: View {
                     Text(manifest.name).font(Myna.font(13.5, .semibold)).foregroundStyle(Myna.ink)
                     if manifest.isComingSoon { SoonBadge() }
                 }
-                Text(L(manifest.summary)).font(Myna.font(11)).foregroundStyle(Myna.muted).lineLimit(3)
+                if let refusal {
+                    Label(refusal, systemImage: "lock.fill")
+                        .font(Myna.font(11))
+                        .foregroundStyle(Myna.inkSoft)
+                        .lineLimit(3)
+                } else {
+                    Text(L(manifest.summary)).font(Myna.font(11)).foregroundStyle(Myna.muted).lineLimit(3)
+                }
             }
             Spacer(minLength: 0)
         }
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
-        .background(hovering && !manifest.isComingSoon ? Myna.card2 : Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
-        .opacity(manifest.isComingSoon ? 0.6 : 1)
+        .background(hovering && available ? Myna.card2 : Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        .opacity(available ? 1 : 0.6)
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
     }
@@ -160,6 +210,8 @@ private struct PluginTile: View {
 private struct ConnectForm: View {
     @Environment(InboxModel.self) private var model
     let manifest: PluginManifest
+    /// Reconnecting an account: its name and settings are filled in, only the token is asked again.
+    var account: Account? = nil
     let dismiss: () -> Void
 
     @State private var name = ""
@@ -204,6 +256,10 @@ private struct ConnectForm: View {
         }
         .frame(width: 460, height: 560)
         .onAppear {
+            if let account {
+                name = account.name ?? ""
+                values = account.settings
+            }
             for field in manifest.fields where values[field.key] == nil { values[field.key] = field.defaultValue }
         }
     }
@@ -304,23 +360,44 @@ private struct GeneralPane: View {
     }()
 
     @Environment(InboxModel.self) private var model
-    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    /// Read back from the system after each change, never assumed.
+    @State private var loginStatus = SMAppService.mainApp.status
+    @State private var loginError: String?
+    /// The user turned notifications off for Remora in System Settings.
+    @State private var notificationsDenied = false
 
     var body: some View {
         @Bindable var model = model
         Form {
             Section("Refresh") {
-                Picker("Check every", selection: $model.preferences.refreshMinutes) {
-                    ForEach([1, 2, 5, 10, 15, 30], id: \.self) { Text("\($0) min").tag($0) }
+                if ManagedPolicy.isForced(ManagedPolicy.refreshMinutesKey) {
+                    LabeledContent(L("Check every"), value: L("%d min", model.effectivePreferences.refreshMinutes))
+                        .help(L("Managed by your organization"))
+                } else {
+                    Picker("Check every", selection: $model.preferences.refreshMinutes) {
+                        ForEach([1, 2, 5, 10, 15, 30], id: \.self) { Text("\($0) min").tag($0) }
+                    }
                 }
-                Toggle("Open in desktop apps when installed", isOn: $model.preferences.openInApps)
+                Toggle("Open in desktop apps when installed", isOn: Binding(
+                    get: { model.effectivePreferences.openInApps },
+                    set: { model.preferences.openInApps = $0 }
+                ))
+                .managedByOrganization(ManagedPolicy.isForced(ManagedPolicy.openInAppsKey))
                 Text(L("Slack and Linear open in their app; ⌥-click opens the web page instead."))
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
-                Toggle("Open at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, enabled in
-                        try? enabled ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
-                    }
+                Toggle("Open at login", isOn: Binding(
+                    get: { loginStatus == .enabled || loginStatus == .requiresApproval },
+                    // A closure, not the method itself: Swift 6.2 crashes converting that method.
+                    set: { setOpenAtLogin($0) }
+                ))
+                if loginStatus == .requiresApproval {
+                    hint(L("macOS needs your approval: allow Remora in System Settings → General → Login Items."),
+                         action: L("Open Login Items")) { SMAppService.openSystemSettingsLoginItems() }
+                }
+                if let loginError {
+                    Text(L("Couldn’t change it: %@", loginError)).font(Myna.font(11.5)).foregroundStyle(Myna.danger)
+                }
             }
             Section("Menu bar") {
                 Picker("Show count of", selection: $model.preferences.menuBarCount) {
@@ -330,10 +407,28 @@ private struct GeneralPane: View {
                     .disabled(model.preferences.menuBarCount == .hidden)
                 Toggle("Lime pill when something needs me", isOn: $model.preferences.brandedMenuBar)
                     .disabled(model.preferences.menuBarCount == .hidden)
+                Toggle("Only show the task in progress while one runs", isOn: $model.preferences.focusWhileInProgress)
             }
             Section("Notifications") {
+                if notificationsDenied {
+                    hint(L("Notifications are off for Remora in System Settings: these choices apply once you allow them."),
+                         action: L("Open Notifications")) { Notifier.openSystemSettings() }
+                }
                 Toggle("New items that need me (reviews, mentions…)", isOn: $model.preferences.notifyArrivals)
                 Toggle("Status changes (approved, changes requested, checks failed)", isOn: $model.preferences.notifyStatusChanges)
+            }
+            Section {
+                ForEach(notifyingSources, id: \.id) { source in
+                    let locked = ManagedPolicy.managedHiddenContent().contains(source.id)
+                    Toggle(source.name, isOn: hidesContent(of: source.id))
+                        .managedByOrganization(locked)
+                }
+            } header: {
+                Text("Hide message content")
+            } footer: {
+                Text("Notifications still say where something happened (mention, channel, repository), not what was written.")
+                    .font(Myna.font(11.5))
+                    .foregroundStyle(Myna.muted)
             }
             Section("Assistant") {
                 Toggle("Whole-inbox brief", isOn: $model.preferences.wholeInboxBrief)
@@ -348,6 +443,20 @@ private struct GeneralPane: View {
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
             }
+            Section {
+                ForEach(notifyingSources, id: \.id) { source in
+                    let locked = ManagedPolicy.managedAIExclusions().contains(source.id)
+                    Toggle(source.name, isOn: sendsToAssistant(source.id))
+                        .disabled(locked)
+                        .help(locked ? L("Managed by your organization") : "")
+                }
+            } header: {
+                Text("Send to the assistant")
+            } footer: {
+                Text("Items from a tool that's off never reach Claude: not in the brief, summaries or triage.")
+                    .font(Myna.font(11.5))
+                    .foregroundStyle(Myna.muted)
+            }
             Section("Snooze") {
                 Toggle("Bring snoozed items back early on new activity", isOn: $model.preferences.wakeOnActivity)
             }
@@ -356,11 +465,157 @@ private struct GeneralPane: View {
                     ForEach(Preferences.Appearance.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                Picker("Text size", selection: $model.preferences.textSize) {
+                    ForEach(Preferences.TextSize.allCases) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.segmented)
             }
-            Section {
-                LabeledContent("Version", value: Self.version)
-            }
+            UpdatesSection(version: Self.version)
         }
         .formStyle(.grouped)
+        .task { await readSystemSettings() }
+        // Back from System Settings: what the user changed there shows at once.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await readSystemSettings() }
+        }
+    }
+
+    private func readSystemSettings() async {
+        loginStatus = SMAppService.mainApp.status
+        notificationsDenied = await Notifier.shared.isDenied()
+    }
+
+    private func setOpenAtLogin(_ enabled: Bool) {
+        do {
+            try enabled ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
+            loginError = nil
+        } catch {
+            loginError = error.localizedDescription
+        }
+        loginStatus = SMAppService.mainApp.status
+    }
+
+    /// A short explanation with the button that fixes it.
+    private func hint(_ text: String, action: String, perform: @escaping () -> Void) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Myna.color(for: .warning).foreground)
+            Text(text).font(Myna.font(11.5)).foregroundStyle(Myna.inkSoft).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 4)
+            Button(action, action: perform).controlSize(.small)
+        }
+    }
+
+    /// Connected integrations that can notify, plus your own reminders.
+    private var notifyingSources: [(id: String, name: String)] {
+        let connected = Set(model.accounts.map(\.pluginID))
+        let sources = PluginRegistry.manifests
+            .filter { connected.contains($0.id) && !PluginRegistry.isAssistant($0.id) }
+            .map { (id: $0.id, name: $0.name) }
+        return sources + [(id: "reminders", name: L("Reminders"))]
+    }
+
+    private func sendsToAssistant(_ pluginID: String) -> Binding<Bool> {
+        Binding(
+            get: { !model.assistantPolicy.excludedSources.contains(pluginID) },
+            set: { send in
+                if send {
+                    model.preferences.assistantExcludedSources.remove(pluginID)
+                } else {
+                    model.preferences.assistantExcludedSources.insert(pluginID)
+                }
+            }
+        )
+    }
+
+    private func hidesContent(of pluginID: String) -> Binding<Bool> {
+        Binding(
+            get: { model.effectivePreferences.hiddenContentPlugins.contains(pluginID) },
+            set: { hidden in
+                if hidden {
+                    model.preferences.hiddenContentPlugins.insert(pluginID)
+                } else {
+                    model.preferences.hiddenContentPlugins.remove(pluginID)
+                }
+            }
+        )
+    }
+}
+
+extension View {
+    /// A setting the organization forced: locked, and says why.
+    func managedByOrganization(_ locked: Bool) -> some View {
+        disabled(locked).help(locked ? L("Managed by your organization") : "")
+    }
+}
+
+/// The version, and updates once the user turns them on. Off by default: nothing calls home before.
+private struct UpdatesSection: View {
+    let version: String
+    @Environment(InboxModel.self) private var model
+
+    var body: some View {
+        @Bindable var model = model
+        let updater = model.updater
+        Section {
+            LabeledContent("Version", value: version)
+            if !updater.isSupported {
+                Text(L("This copy of Remora doesn’t update itself: download new versions from the releases page."))
+                    .font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+            } else if !model.updatesAllowed {
+                Text(L("Your organization installs new versions of Remora.")).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                    .help(L("Managed by your organization"))
+            } else {
+                Toggle("Check for updates automatically", isOn: Binding(
+                    get: { model.effectivePreferences.checkForUpdates },
+                    set: { model.preferences.checkForUpdates = $0 }
+                ))
+                .managedByOrganization(ManagedPolicy.isForced(ManagedPolicy.automaticUpdatesKey))
+                status(updater)
+            }
+        } header: {
+            Text("Updates")
+        } footer: {
+            if updater.isSupported, model.updatesAllowed {
+                Text("Once a day, Remora asks GitHub whether a new version is out. Nothing about you or your inbox is sent. A new version is installed only when you choose, and only if it is signed by Remora’s release key.")
+                    .font(Myna.font(11.5))
+                    .foregroundStyle(Myna.muted)
+            }
+        }
+    }
+
+    @ViewBuilder private func status(_ updater: Updater) -> some View {
+        switch updater.state {
+        case .available(let offer):
+            HStack {
+                Text(L("Remora %@ is available.", offer.version.description)).font(Myna.font(12, .semibold))
+                if let notes = offer.notes.flatMap(URL.init(string:)), UpdateHosts.allows(notes) {
+                    Link(L("What’s new"), destination: notes).font(Myna.font(11.5))
+                }
+                Spacer()
+                Button(L("Install and relaunch")) { Task { await updater.install() } }
+            }
+        case .installing:
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text(L("Downloading and checking the new version…")).font(Myna.font(11.5)).foregroundStyle(Myna.inkSoft)
+            }
+        default:
+            HStack {
+                switch updater.state {
+                case .checking:
+                    ProgressView().controlSize(.small)
+                    Text(L("Checking…")).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                case .upToDate:
+                    Text(L("Remora is up to date.")).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                case .failed(let message):
+                    Text(message).font(Myna.font(11.5)).foregroundStyle(Myna.danger).fixedSize(horizontal: false, vertical: true)
+                default:
+                    EmptyView()
+                }
+                Spacer()
+                Button(L("Check now")) { Task { await model.checkForUpdates() } }
+                    .disabled(updater.state == .checking)
+            }
+        }
     }
 }

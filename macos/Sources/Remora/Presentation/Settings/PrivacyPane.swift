@@ -7,10 +7,11 @@ import SwiftUI
 struct PrivacyPane: View {
     @Environment(InboxModel.self) private var model
     @State private var confirmingErase = false
+    @State private var eraseError: String?
 
     var body: some View {
         @Bindable var model = model
-        let managed = ManagedPolicy.isManaged
+        let managed = ManagedPolicy.isManaged()
         let policy = model.policy
         Form {
             Section {
@@ -62,7 +63,7 @@ struct PrivacyPane: View {
                                     .foregroundStyle(refusal == nil ? Myna.ok : Myna.danger)
                             }
                             let hosts = model.allowedHosts(for: account, manifest: manifest)
-                            Text(hosts.isEmpty ? L("Local program on this Mac") : hosts.joined(separator: ", "))
+                            Text(hosts.isEmpty ? localProgram(account) : hosts.joined(separator: ", "))
                                 .font(Myna.font(11.5, .medium))
                                 .foregroundStyle(Myna.inkSoft)
                             Text(refusal ?? L(manifest.egress.description)).font(Myna.font(11)).foregroundStyle(Myna.muted)
@@ -74,6 +75,13 @@ struct PrivacyPane: View {
             Section(L("Data on this Mac")) {
                 Text(AppFolder.url.path).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
                 Text(L("Inbox cache, settings and snooze history. Tokens are in the Keychain.")).font(Myna.font(11)).foregroundStyle(Myna.muted)
+                // A file Remora couldn't read (kept aside, never overwritten) or save.
+                ForEach(model.storageIssues) { issue in
+                    Label(issue.message, systemImage: "exclamationmark.triangle.fill")
+                        .font(Myna.font(11.5))
+                        .foregroundStyle(Myna.color(for: .warning).foreground)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 HStack {
                     Button(L("Show in Finder")) { NSWorkspace.shared.activateFileViewerSelecting([AppFolder.url]) }
                     Spacer()
@@ -83,9 +91,16 @@ struct PrivacyPane: View {
         }
         .formStyle(.grouped)
         .confirmationDialog(L("Erase all of Remora’s local data?"), isPresented: $confirmingErase) {
-            Button(L("Erase"), role: .destructive) { model.eraseLocalData() }
+            Button(L("Erase"), role: .destructive) {
+                do { try model.eraseLocalData() } catch { eraseError = error.localizedDescription }
+            }
         } message: {
-            Text(L("Disconnects every account, deletes the cache, history and settings, and removes the tokens from the Keychain."))
+            Text(L("Disconnects every account, deletes the cache, history, settings and notifications, and removes the tokens from the Keychain."))
+        }
+        .alert(L("The tokens are still in the Keychain"), isPresented: Binding(get: { eraseError != nil }, set: { if !$0 { eraseError = nil } })) {
+            Button(L("OK")) { eraseError = nil }
+        } message: {
+            Text(eraseError ?? "")
         }
     }
 
@@ -99,5 +114,12 @@ struct PrivacyPane: View {
                 model.preferences.allowedPlugins = allowed.sorted()
             }
         )
+    }
+
+    /// For Claude Code, the program that runs: the user sees which `claude` gets their inbox.
+    private func localProgram(_ account: Account) -> String {
+        guard account.pluginID == ClaudeCodePlugin.manifest.id else { return L("Local program on this Mac") }
+        guard let program = ClaudeCodePlugin.locate(ManagedPolicy.claudeCodePath() ?? account.settings["path"] ?? "") else { return L("Claude Code not found on this Mac") }
+        return L("Local program: %@", program.path)
     }
 }

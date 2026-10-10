@@ -8,6 +8,8 @@ public struct InboxLayout: Equatable, Sendable {
     }
 
     /// Pinned items always count as your turn.
+    /// Started by the user and not finished yet. Kept out of every other section.
+    public var inProgress: [InboxItem] = []
     public var pinned: [InboxItem] = []
     /// Someone is waiting on you.
     public var myTurn: [Group] = []
@@ -40,7 +42,7 @@ public struct InboxLayout: Equatable, Sendable {
 }
 
 public enum Placement: Equatable, Sendable {
-    case inbox, snoozed, done, cleared
+    case inProgress, inbox, snoozed, done, cleared
 }
 
 public struct InboxAssembler: Sendable {
@@ -53,7 +55,9 @@ public struct InboxAssembler: Sendable {
     }
 
     public func placement(of item: InboxItem, state: ItemState?, now: Date) -> Placement {
+        if let expires = item.expires, expires <= now, state?.startedAt == nil, state?.pinned != true { return .cleared }
         guard let state else { return .inbox }
+        if state.startedAt != nil { return .inProgress }
         if let snooze = state.snooze, snooze.mode == .hide, snooze.until > now {
             let untouched = snooze.fingerprint == item.fingerprint
             let wakes = wakeOnActivity || snooze.untilNews == true
@@ -86,6 +90,7 @@ public struct InboxAssembler: Sendable {
         for item in matching {
             let state = states[item.id]
             switch placement(of: item, state: state, now: now) {
+            case .inProgress: layout.inProgress.append(item)
             case .snoozed: layout.snoozed.append(item)
             case .done: layout.done.append(item)
             case .cleared: break
@@ -97,6 +102,7 @@ public struct InboxAssembler: Sendable {
 
         layout.myTurn = groups(myTurn, now: now)
         layout.waiting = groups(waiting, now: now)
+        layout.inProgress.sort { (states[$0.id]?.startedAt ?? now) < (states[$1.id]?.startedAt ?? now) }
         layout.snoozed.sort { (states[$0.id]?.snooze?.until ?? now) < (states[$1.id]?.snooze?.until ?? now) }
         layout.done.sort { (states[$0.id]?.done?.at ?? now) > (states[$1.id]?.done?.at ?? now) }
         return layout
