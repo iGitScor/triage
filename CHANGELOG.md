@@ -71,6 +71,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
   Remora.dmg --repo iGitScor/triage`.
 
 
+- Mac: if the Keychain refuses (Deny), connecting a tool now fails and says so instead of losing the token at the
+  next launch; removing an account or erasing says when the token is still there. A Keychain item Remora can't read
+  is no longer replaced, so other accounts keep their tokens.
 - Windows: **Create a token** opened a broken link for GitHub and GitLab.
 - Security and privacy hardening on macOS and Windows; details in the advisories published with the release.
 

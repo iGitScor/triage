@@ -31,7 +31,7 @@ certificate it remembers the **team ID**, which survives rebuilds; for self-sign
 fingerprint, which changes on every build. Expect **one** prompt per new build otherwise (*Always Allow*).
 
 `scripts/build-app.sh` signs with, in order: `REMORA_SIGN_IDENTITY`, an *Apple Development* certificate,
-*Remora Local Signing* (from `scripts/make-signing-cert.sh`), then ad hoc.
+*Remora Local Signing* (from `scripts/make-signing-cert.sh`), then ad hoc, always with the hardened runtime.
 
 **No prompts at all:** get a free Apple Development certificate. Xcode → Settings → Accounts → add your Apple ID →
 Manage Certificates → + → Apple Development. Then `make run`.
@@ -59,7 +59,20 @@ GitHub release, with every file, its SHA-256 and its SBOM (CycloneDX) at once. E
 and SBOM attestations of the file it built (`gh attestation verify`). The names never change, so
 `releases/latest/download/Remora.dmg` always serves the newest.
 
-For a signed and notarized build, see [Deploying Remora](/admin/deployment#signing-it-with-your-developer-id).
+### Release signing
+
+The secrets decide what is signed; without them (forks), the Mac app is signed ad hoc and the installer isn't,
+and each release's notes say so.
+
+- **macOS**: `scripts/make-signing-cert.sh --release` creates *Remora Release Signing* (20 years) and prints the
+  commands to store it as `MACOS_SIGNING_P12` and `MACOS_SIGNING_PASSWORD`. Keep that certificate: the Keychain
+  recognizes Remora by it, and a new one costs every user one more prompt. It isn't notarized: for that, see
+  [Deploying Remora](/admin/deployment#signing-it-with-your-developer-id).
+- **Windows**: SignPath signs `remora.exe`, then the installer rebuilt around it
+  (`tauri bundle --no-binary-patching`, so the signed app isn't rewritten), each after an approval in SignPath. It
+  needs the secret `SIGNPATH_API_TOKEN`, the variable `SIGNPATH_ORGANIZATION_ID`, and in SignPath the project
+  `remora`, the policy `release-signing` and the artifact configuration `exe`. See the
+  [code signing policy](/admin/code-signing).
 
 ## Screenshots
 

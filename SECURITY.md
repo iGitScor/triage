@@ -37,4 +37,5 @@ Anthropic's services have their own programs.
 
 How Remora is meant to protect data, which a report can measure it against:
 [security overview](https://triage.iscor.me/docs/admin/security),
+[data flows](https://triage.iscor.me/docs/admin/data-flows), [code signing policy](https://triage.iscor.me/docs/admin/code-signing) and
 [managing the policy](https://triage.iscor.me/docs/admin/mdm).
