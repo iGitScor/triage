@@ -88,6 +88,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
   Remora.dmg --repo iGitScor/triage`.
 
 
+- Windows: the window and the tray menu could use different languages; they now both follow the system's.
 - Mac: the refresh arrow kept spinning after a refresh had finished.
 - Mac: if the Keychain refuses (Deny), connecting a tool now fails and says so instead of losing the token at the
   next launch; removing an account or erasing says when the token is still there. A Keychain item Remora can't read
