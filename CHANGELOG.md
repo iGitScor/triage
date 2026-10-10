@@ -38,6 +38,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
   marks, and emails or phone numbers by their name. Titles from GitHub, GitLab, Linear and Notion lose their emoji
   codes and marks too.
 - A Slack app's event reminder (Google Calendar…) leaves the inbox once the event starts, unless you pinned or
+- A server error says what happened (not found, refused, a problem on the server) and its code, instead of the
+  server's raw answer.
+- Mac: a group's *Snooze all* and *Mark all as done* (formerly *Sweep*) are in a ⋯ menu that shows on hover, and the
+  group's name stays on one line.
+- Mac: Remora's files can only be opened by you, and the inbox cache stays out of Time Machine and iCloud backups.
+- Mac: Remora only runs a `claude` that only you can change, and checks it is Claude Code before sending it anything.
 - Chat messages are sorted more accurately: a question mark in a link or code, or a word like "pleased", no
   longer sends a message to *To reply*. On the Mac, sorting is also several times faster.
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.

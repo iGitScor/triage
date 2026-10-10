@@ -69,6 +69,8 @@ sent: tokens, links, code, the rest of a message, notes, files.
 | Tokens and API keys | One item in the login Keychain: service `fr.igitscor.remora`, account `secrets` |
 | Scheduled reminders and delivered notifications (titles) | macOS notifications (`UNUserNotificationCenter`) |
 
+The JSON files are in `~/Library/Application Support/Remora/`, a folder only the user can open (0700, files 0600);
+FileVault encrypts them with the rest of the disk. The inbox cache, briefs and summaries are left out of Time
 Machine and iCloud backups, since Remora can fetch them again. Review prep keeps file paths and line counts only;
 code is never stored. Remora keeps **no HTTP cache**: requests aren’t written to disk, and the cache earlier
 versions left in `~/Library/Caches/fr.igitscor.remora` and `~/Library/HTTPStorages` is deleted at launch.

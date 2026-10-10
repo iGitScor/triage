@@ -21,7 +21,8 @@ Briefs and summaries come back in your Mac’s language.
    off: see [For IT and compliance](/admin/).
 2. Settings → Sources, under *Assistant*, connect one of:
    - **Claude Code** (recommended): uses the Claude Code installed and signed in on your Mac, on your Claude
-     plan. No API key. If Remora doesn’t find `claude`, set *Path to claude*.
+     plan. No API key. If Remora doesn’t find `claude`, set *Path to claude*. Remora only runs a program named
+     `claude` that only you can change, and checks it is Claude Code before sending it anything.
    - **Claude API**: an API key from the Claude Console, billed to that account.
 
 ## What is sent

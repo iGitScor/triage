@@ -72,6 +72,8 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 | Jetons et clés d’API | Un seul élément du trousseau de session : service `fr.igitscor.remora`, compte `secrets` |
 | Rappels programmés et notifications reçues (titres) | Les notifications de macOS (`UNUserNotificationCenter`) |
 
+Les fichiers JSON sont dans `~/Library/Application Support/Remora/`, un dossier que seul l’utilisateur peut ouvrir
+(0700, fichiers 0600) ; FileVault les chiffre avec le reste du disque. Le cache de la boîte, les briefs et les
 résumés sont exclus des sauvegardes Time Machine et iCloud, puisque Remora peut les récupérer à nouveau. La préparation des relectures
 ne garde que des chemins et des nombres de lignes ; le code n’est jamais stocké. Remora ne garde **aucun cache
 HTTP** : les requêtes ne sont pas écrites sur le disque, et le cache laissé par les versions précédentes dans

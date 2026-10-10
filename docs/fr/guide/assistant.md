@@ -22,7 +22,8 @@ Briefs et résumés sont rédigés dans la langue de votre Mac.
    peut être verrouillé : voir [DSI et conformité](/fr/admin/).
 2. Réglages → Sources, section *Assistant*, connectez au choix :
    - **Claude Code** (recommandé) : utilise le Claude Code installé et connecté sur votre Mac, sur votre abonnement
-     Claude. Pas de clé d’API. Si Remora ne trouve pas `claude`, renseignez *Chemin de claude*.
+     Claude. Pas de clé d’API. Si Remora ne trouve pas `claude`, renseignez *Chemin de claude*. Remora n’exécute qu’un
+     programme nommé `claude` que vous seul pouvez modifier, et vérifie que c’est Claude Code avant de lui envoyer quoi que ce soit.
    - **API Claude** : une clé d’API de la Claude Console, facturée sur ce compte.
 
 ## Ce qui est envoyé
