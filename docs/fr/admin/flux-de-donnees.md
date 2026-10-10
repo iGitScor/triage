@@ -48,7 +48,11 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
   les envoie comme un bloc de données délimité et demande à Claude de ne jamais suivre les instructions qu’ils
   contiennent ; les réponses s’affichent en texte brut, et les suggestions de tri qui masquent ou ouvrent des
   éléments ne sont jamais cochées d’avance.
+- **Envoyer à l’assistant** (Réglages → Général) tient les éléments d’un outil entièrement à l’écart de Claude ;
+  l’organisation peut faire de même et limiter les modèles avec des [clés MDM](./mdm#les-cles) (`AIExcludedSources`,
+  `AllowedAIModels`).
 - **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications :
+  les titres de cet outil peuvent toujours parvenir à Claude : c’est le rôle d’*Envoyer à l’assistant*.
 - Avec Claude Code, Remora lance `claude` sans outils, sans extensions, hooks ni serveurs MCP, et sans rien
   ligne de commande, que d’autres processus peuvent lire. Les données vont là où ce Claude Code est configuré pour les envoyer
   (normalement Anthropic). Réglages → Confidentialité indique quel `claude` est lancé.

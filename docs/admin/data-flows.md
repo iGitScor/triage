@@ -46,6 +46,10 @@ sent: tokens, links, code, the rest of a message, notes, files.
 - Items are written by other people, so a message could try to give Claude orders. Remora sends them as a
   marked block of data and tells Claude never to follow instructions found in them; Claude's answers are shown as
   plain text, and triage suggestions that hide or open items are never ticked for the user.
+- **Send to the assistant** (Settings → General) keeps a tool's items away from Claude entirely; the organization
+  can do the same and limit the models with [MDM keys](./mdm#keys) (`AIExcludedSources`, `AllowedAIModels`).
+- **Hide message content** (Settings → General → Notifications) applies to notifications only: it doesn’t keep that tool’s
+  titles away from Claude: that is *Send to the assistant*.
 - With Claude Code, Remora runs `claude` with no tools, no plugins, hooks or MCP servers, and nothing saved to the
   processes can read. Data then goes wherever that Claude Code is set up to send it (normally Anthropic).
   Settings → Privacy shows which `claude` runs.

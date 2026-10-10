@@ -19,8 +19,29 @@ peut plus modifier la politique.
 | `AllowedPlugins` | Tableau de chaînes | Les outils qui peuvent être connectés et actualisés. Les autres sont refusés avec « Non autorisé par votre politique de confidentialité. » | Tous |
 | `AllowExternalAI` | Booléen | Autoriser les extensions Claude à envoyer le contenu de la boîte à Anthropic | `false` |
 | `AllowRemoteImages` | Booléen | Charger les avatars, depuis les outils autorisés seulement | `true` |
+| `AIExcludedSources` | Tableau de chaînes | Les outils dont les éléments ne parviennent jamais à l’assistant (brief, résumés, tri) ; `reminders` pour les rappels de l’utilisateur. S’ajoute au choix de l’utilisateur et le verrouille dans les Réglages | Aucun |
+| `AllowedAIModels` | Tableau de chaînes | Les modèles Claude que l’assistant peut utiliser. Un modèle absent de la liste (ou celui par défaut, s’il n’y est pas) est remplacé par le premier | Tous |
 
 Identifiants : `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (API Claude).
+Pour choisir entre Claude Code et l’API Claude, ne listez que l’un des deux dans `AllowedPlugins`.
+
+Par exemple, Claude autorisé pour les revues de code et les tâches, jamais pour Slack, et seulement avec Sonnet et
+Haiku :
+
+```xml
+<key>AllowExternalAI</key><true/>
+<key>AIExcludedSources</key>
+<array>
+    <string>slack</string>
+</array>
+<key>AllowedAIModels</key>
+<array>
+    <string>claude-sonnet-5-5</string>
+    <string>claude-haiku-5-5</string>
+</array>
+```
+
+Ces deux clés sont lues par l’app macOS ; l’app Windows n’a pas encore d’assistant.
 
 Un compte déjà connecté à un outil que la politique n’autorise plus cesse d’être actualisé à la synchronisation
 suivante.
@@ -65,7 +86,7 @@ les vôtres (`uuidgen` dans le Terminal) et les identifiants par ceux de votre o
 
 Dans les MDM qui ne prennent que les réglages (une charge « Application & Custom Settings » dans Jamf, « Custom
 Configuration » dans Kandji, « Fichier de préférences » dans Intune), indiquez `fr.igitscor.remora` comme domaine
-et les trois clés comme liste de propriétés.
+et les clés comme liste de propriétés.
 
 ## Windows : stratégie de groupe ou Intune
 

@@ -19,8 +19,28 @@ the policy.
 | `AllowedPlugins` | Array of strings | The tools that may be connected and refreshed. Any other is refused with “Not allowed by your privacy policy.” | All |
 | `AllowExternalAI` | Boolean | Allow Claude plugins to send inbox content to Anthropic | `false` |
 | `AllowRemoteImages` | Boolean | Load avatars, from the hosts of allowed tools only | `true` |
+| `AIExcludedSources` | Array of strings | Tools whose items never reach the assistant (brief, summaries, triage); `reminders` for the user’s own reminders. Added to the user’s own choice and locked in Settings | None |
+| `AllowedAIModels` | Array of strings | The Claude models the assistant may use. A model that isn’t listed (or the default, when it isn’t) is replaced by the first one | Any |
 
 Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (Claude API).
+To choose between Claude Code and the Claude API, list only one of them in `AllowedPlugins`.
+
+For example, Claude allowed for code reviews and tasks, never for Slack, and only with Sonnet and Haiku:
+
+```xml
+<key>AllowExternalAI</key><true/>
+<key>AIExcludedSources</key>
+<array>
+    <string>slack</string>
+</array>
+<key>AllowedAIModels</key>
+<array>
+    <string>claude-sonnet-5-5</string>
+    <string>claude-haiku-5-5</string>
+</array>
+```
+
+These two keys are read by the macOS app; the Windows app has no assistant yet.
 
 An account that is already connected to a tool the policy no longer allows stops refreshing at the next sync.
 
