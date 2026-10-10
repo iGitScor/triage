@@ -72,6 +72,8 @@ jamais plus que ce qu’on peut saisir d’un coup d’œil.
   terminer, S pour reporter, P pour épingler. ⌘F pour chercher (ou tapez directement), Échap pour quitter la
   recherche, ⌘R pour actualiser, ⌘Z pour annuler. Le bouton clavier en bas les rappelle.
 - **VoiceOver** lit chaque élément comme un seul bouton ; le rotor des actions propose Marquer comme terminé,
+  Reporter, Épingler, Commencer et les éléments liés. L’icône de la barre des menus dit combien d’éléments vous
+  attendent, ou la tâche en cours.
 
 ## Notifications
 

@@ -69,6 +69,7 @@ take in at a glance.
   ⌘F searches (or just start typing), Esc leaves the search, ⌘R refreshes, ⌘Z undoes. The keyboard button at the bottom lists
   them.
 - **VoiceOver** reads each item as one button; the actions rotor has Mark as done, Snooze, Pin, Start and the
+  linked items. The menu bar item says how many items need you, or the task in progress.
 
 ## Notifications
 
