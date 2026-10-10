@@ -201,6 +201,7 @@ struct CorruptStorageTests {
     @Test func aCorruptAccountsFileIsSaidAndKept() async throws {
         let harness = Harness()
         _ = try await harness.connected()
+        harness.outside.quit()
         let accounts = harness.folder.appending(path: "accounts.json")
         try Data("{not json".utf8).write(to: accounts)
         let model = harness.model()

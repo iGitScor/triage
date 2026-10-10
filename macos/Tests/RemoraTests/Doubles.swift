@@ -123,6 +123,12 @@ final class Outside {
     var installedApps = true
     var opened: [URL] = []
     var cachesRemoved = 0
+    /// Every model made on the folder: a relaunch writes what they still have pending, as quitting does.
+    var models: [InboxModel] = []
+
+    func quit() {
+        for model in models { model.flushWrites() }
+    }
 }
 
 /// One inbox on a temporary folder, with stand-ins for everything outside it.
@@ -144,7 +150,8 @@ struct Harness {
 
     func model() -> InboxModel {
         let outside = outside
-        return InboxModel(
+        outside.quit()
+        let model = InboxModel(
             environment: AppEnvironment(
                 folder: folder,
                 secrets: secrets,
@@ -161,6 +168,8 @@ struct Harness {
                 updates: updates,
                 network: network
             ))
+        outside.models.append(model)
+        return model
     }
 
     /// A model with a Linear account connected through the stand-in server.
@@ -172,6 +181,7 @@ struct Harness {
 
     /// Every file the model wrote, as text.
     func writtenText() -> String {
+        outside.quit()
         let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
         return files.compactMap { try? String(contentsOf: $0, encoding: .utf8) }.joined(separator: "\n")
     }

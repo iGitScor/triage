@@ -102,6 +102,11 @@ final class InboxModel {
     @ObservationIgnored private var ticking: Task<Void, Never>?
     @ObservationIgnored private var syncedAccounts: Set<UUID> = []
     @ObservationIgnored private let isDemo: Bool
+    /// Saves the files off the main thread, each once per burst of changes.
+    @ObservationIgnored let writer = DiskWriter()
+    /// Inside `batch`: insights and the ranker are worked out once, at the end.
+    @ObservationIgnored private var batchDepth = 0
+    @ObservationIgnored private var batchNeeds: (insights: Bool, ranker: Bool) = (false, false)
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -157,6 +162,7 @@ final class InboxModel {
             environment.removeURLCaches()
         }
         storageIssues = issues
+        writer.onResult = { [weak self] file, failure in self?.recordWrite(file, failure: failure) }
     }
 
     // MARK: Reading
@@ -641,7 +647,11 @@ final class InboxModel {
 
     private func learn(_ record: ActionRecord) {
         actionRecords = Array((actionRecords + [record]).suffix(1_000))
-        ranker = PersonalRanker(records: actionRecords)
+        if batchDepth > 0 {
+            batchNeeds.ranker = true
+        } else {
+            ranker = PersonalRanker(records: actionRecords)
+        }
         persist(learningStore, actionRecords)
     }
 
@@ -729,15 +739,19 @@ final class InboxModel {
 
     func clear(_ items: [InboxItem]) {
         remember(items.count == 1 ? L("Cleared") : L("Done items cleared"))
-        for item in items {
-            update(item) { $0.done?.clearedAt = .now }
+        batch {
+            for item in items {
+                update(item) { $0.done?.clearedAt = .now }
+            }
         }
     }
 
     /// Mark all as done.
     func sweep(_ items: [InboxItem]) {
         remember(L("%lld item marked as done", plural: "%lld items marked as done", items.count))
-        items.forEach(markDone)
+        batch {
+            for item in items { markDone(item) }
+        }
     }
 
     /// Marks the item as the one being worked on: it moves to the In progress view and the menu bar says so.
@@ -790,8 +804,10 @@ final class InboxModel {
     }
 
     func snoozeMany(_ items: [InboxItem], until date: Date, reason: SnoozeReason?, untilNews: Bool = false) {
-        for item in items {
-            snooze(item, until: date, mode: .hide, note: nil, reason: reason, untilNews: untilNews)
+        batch {
+            for item in items {
+                snooze(item, until: date, mode: .hide, note: nil, reason: reason, untilNews: untilNews)
+            }
         }
     }
 
@@ -868,6 +884,10 @@ final class InboxModel {
     /// Patterns in the snoozed pile, worked out off the main thread: clustering compares every pair of titles.
     /// A newer request wins over a slower, older one.
     func refreshInsights() {
+        guard batchDepth == 0 else {
+            batchNeeds.insights = true
+            return
+        }
         let (advisor, snoozed, states, history) = (advisor, layout.snoozed, states, snoozeHistory)
         insightsGeneration &+= 1
         let generation = insightsGeneration
@@ -881,6 +901,18 @@ final class InboxModel {
     }
 
     @ObservationIgnored private var insightsGeneration = 0
+
+    /// Several actions as one (Mark all as done, Snooze all): insights and the ranker are worked out once, after.
+    private func batch(_ actions: () -> Void) {
+        batchDepth += 1
+        actions()
+        batchDepth -= 1
+        guard batchDepth == 0 else { return }
+        let needs = batchNeeds
+        batchNeeds = (false, false)
+        if needs.ranker { ranker = PersonalRanker(records: actionRecords) }
+        if needs.insights { refreshInsights() }
+    }
     /// The latest computation, for tests to wait on.
     @ObservationIgnored private(set) var insightsTask: Task<Void, Never>?
 
@@ -890,15 +922,19 @@ final class InboxModel {
 
     /// Spreads a pile-up 30 minutes apart from its slot.
     func spread(_ items: [InboxItem], from start: Date) {
-        for (id, date) in advisor.spread(items, from: start) {
-            if let item = item(id) { reschedule(item, to: date) }
+        batch {
+            for (id, date) in advisor.spread(items, from: start) {
+                if let item = item(id) { reschedule(item, to: date) }
+            }
         }
     }
 
     /// Brings every item back at the earliest of their return times.
     func alignReturns(_ items: [InboxItem]) {
         guard let earliest = items.compactMap({ state(of: $0).snooze?.until }).min() else { return }
-        for item in items { reschedule(item, to: earliest) }
+        batch {
+            for item in items { reschedule(item, to: earliest) }
+        }
     }
 
     /// Asks the assistant what to do with each snoozed item, reusing a fresh answer for the same pile.
@@ -1084,6 +1120,8 @@ final class InboxModel {
         insights = []
         syncedAccounts = []
         preferences = Preferences()
+        // Nothing pending or in progress may land after the files are gone.
+        writer.discard()
         if let files = try? FileManager.default.contentsOfDirectory(
             at: environment.folder, includingPropertiesForKeys: nil)
         {
@@ -1120,17 +1158,20 @@ final class InboxModel {
 }
 
 extension InboxModel {
-    fileprivate func persist<Value>(_ store: JSONStore<Value>, _ value: Value) {
+    fileprivate func persist<Value: Sendable>(_ store: JSONStore<Value>, _ value: Value) {
         guard !isDemo else { return }
-        // A failed write is said in Settings → Privacy, once per file, and cleared when it works again.
-        let name = store.url.lastPathComponent
-        do {
-            try store.save(value)
-            storageIssues.removeAll { $0.file == name && !$0.corrupt }
-        } catch {
-            storageIssues.removeAll { $0.file == name && !$0.corrupt }
-            storageIssues.append(StorageIssue(file: name, corrupt: false, message: error.localizedDescription))
-        }
+        writer.save(value, to: store)
+    }
+
+    /// A failed write is said in Settings → Privacy, once per file, and cleared when it works again.
+    fileprivate func recordWrite(_ file: String, failure: String?) {
+        storageIssues.removeAll { $0.file == file && !$0.corrupt }
+        if let failure { storageIssues.append(StorageIssue(file: file, corrupt: false, message: failure)) }
+    }
+
+    /// Writes every pending change now and waits for it: when quitting.
+    func flushWrites() {
+        writer.flush()
     }
 }
 

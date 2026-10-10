@@ -33,6 +33,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Changes are saved a moment later, off the main thread: what's still pending is written before quitting.
+    func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated { InboxModel.shared.flushWrites() }
+    }
+
     /// The inbox in a regular window: handy when the menu bar is crowded, and for screenshots.
     @MainActor private func showWindow() {
         let window = NSWindow(
