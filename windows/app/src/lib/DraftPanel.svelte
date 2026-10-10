@@ -26,7 +26,7 @@ async function copy() {
     <button type="button" class="link" onclick={onclose}>{t('Close')}</button>
   </div>
   <p class="muted note">{t('Nothing is sent: copy it, then paste it where your team talks.')}</p>
-  <textarea class="field" bind:this={area} rows="7">{text}</textarea>
+  <textarea class="field" bind:this={area} rows="7" aria-label={t('Draft')}>{text}</textarea>
   <div class="row">
     {#if item.url}<button type="button" class="link" onclick={() => api.openItem(item.id, true)}>{t('Open')}</button>{/if}
     <span class="spacer"></span>

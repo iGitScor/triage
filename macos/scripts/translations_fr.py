@@ -494,6 +494,7 @@ FR = {
     "Your organization installs new versions of Remora.": "Votre organisation installe les nouvelles versions de Remora.",
     "%@ needs reconnecting": "%@ doit être reconnecté",
     "%d sources need reconnecting": "%d sources à reconnecter",
+    "Updated: %d on your turn, %d waiting": "Mis à jour : %d à vous, %d en attente",
     "Can’t reach the server. Check the address, or your VPN if it needs one.": "Serveur injoignable. Vérifiez l’adresse, ou votre VPN s’il en faut un.",
     "Offline": "Hors ligne",
     "Offline · updated %@": "Hors ligne · mis à jour %@",

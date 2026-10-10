@@ -63,6 +63,33 @@ body {
   height: 100%;
 }
 
+/* Text worth copying stays selectable (A11Y-18): titles, previews, errors, notices, a source's hosts. */
+.title,
+.preview,
+.error,
+.notice,
+.hosts {
+  user-select: text;
+}
+
+/* Headings that take focus when their screen opens: a place to start, not a control. */
+h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* For screen readers only, like the live region in App.svelte. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 button,
 input,
 select {

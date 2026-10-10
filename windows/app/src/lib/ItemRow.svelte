@@ -3,6 +3,7 @@ import { api, type Item, type ItemExtras, type ItemState } from './api'
 import Icon from './Icon.svelte'
 import Logo from './Logo.svelte'
 import { offer } from './failures'
+import { selectsIn } from './announce'
 import { avatarSrc, describe, mark, shown } from './people'
 import { reasonLabel } from './reasons'
 import { t, translateMessage } from './i18n'
@@ -48,12 +49,14 @@ async function markDone() {
 }
 
 function open(event: MouseEvent) {
+  // A click from the keyboard (detail 0) always opens; one that ends selecting the title doesn't.
+  if (event.detail > 0 && selectsIn(event.currentTarget as Element)) return
   api.openItem(item.id, event.shiftKey)
 }
 </script>
 
 <article class="item card" class:reminded={itemState?.remindedAt || itemState?.startedAt}>
-  <button type="button" class="open" onclick={open} title={t('Open (Shift: in the browser)')}>
+  <button type="button" class="open" onpointerdown={() => getSelection()?.removeAllRanges()} onclick={open} title={t('Open (Shift: in the browser)')}>
     <span class="avatar" aria-hidden="true">
       {#if item.author?.avatarUrl}<img src={avatarSrc(item.author.avatarUrl)} alt="" />{:else}{initial(item.author?.name ?? item.context)}{/if}
     </span>

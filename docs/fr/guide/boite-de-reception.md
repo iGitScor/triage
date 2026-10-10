@@ -82,6 +82,8 @@ jamais plus que ce qu’on peut saisir d’un coup d’œil.
 - **Moins de mouvement** : avec Réduire les animations (macOS) ou les effets d’animation désactivés (Windows), rien
   ne glisse, ne rebondit ni ne tourne. Les thèmes de contraste de Windows donnent une bordure aux boutons, pastilles
   et cartes.
+- **Lecteurs d’écran sous Windows** : ils annoncent ce qu’une actualisation a apporté et l’échec d’une action ;
+  chaque écran commence sur son titre. Les titres et les messages d’erreur se sélectionnent et se copient.
 - **Plus de contraste** : avec Augmenter le contraste (macOS), textes, bordures et séparateurs sont plus foncés en
   mode clair et plus clairs en mode sombre.
 

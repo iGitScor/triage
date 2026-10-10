@@ -76,6 +76,8 @@ take in at a glance.
   linked items. The menu bar item says how many items need you, or the task in progress.
 - **Less motion**: with Reduce Motion (macOS) or Animation effects off (Windows), nothing slides, springs or
   spins. Windows contrast themes give pills, chips and cards a border.
+- **Screen readers on Windows** hear what a refresh brought and when an action fails; each screen starts on its
+  heading. Titles and error messages can be selected and copied.
 - **More contrast**: with Increase Contrast (macOS), text, borders and dividers get darker in light mode and
   lighter in dark mode.
 

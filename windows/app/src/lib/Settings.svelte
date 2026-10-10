@@ -86,7 +86,7 @@ onMount(() => {
 <div class="screen">
   <header class="row top">
     <button type="button" class="icon-button" onclick={onclose} aria-label={t('Back')}><Icon name="back" /></button>
-    <h1>{t('Settings')}</h1>
+    <h1 tabindex="-1">{t('Settings')}</h1>
   </header>
   <div class="row panes" role="tablist" aria-label={t('Settings')} use:tablist>
     {#each [['sources', 'Sources'], ['general', 'General'], ['privacy', 'Privacy']] as [id, label] (id)}
@@ -113,7 +113,7 @@ onMount(() => {
           {#each mine as account (account.id)}
             <div class="account row">
               {#if renaming === account.id}
-                <input class="field" bind:value={newName} />
+                <input class="field" bind:value={newName} aria-label={t('Name')} />
                 <button type="button" class="link" onclick={async () => { await api.renameAccount(account.id, newName); renaming = null; await load() }}>{t('Save')}</button>
               {:else}
                 <span class="grow">

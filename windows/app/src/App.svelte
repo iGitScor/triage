@@ -1,6 +1,7 @@
 <script lang="ts">
 import { listen } from '@tauri-apps/api/event'
-import { onMount } from 'svelte'
+import { onMount, tick } from 'svelte'
+import { onAnnounce } from './lib/announce'
 import { api, type InboxView, type Settings as SettingsData } from './lib/api'
 import Inbox from './lib/Inbox.svelte'
 import QuickReminder from './lib/QuickReminder.svelte'
@@ -26,6 +27,24 @@ function apply(settings: SettingsData) {
 }
 
 // The first load at once, then a search once typing pauses.
+// Each screen takes focus when it opens (A11Y-17): its heading, or the reminder's field, which focuses itself.
+let shown = false
+$effect(() => {
+  const current = screen
+  if (!shown) {
+    shown = true
+    return
+  }
+  if (current !== 'reminder') tick().then(() => document.querySelector<HTMLElement>('.screen h1')?.focus())
+})
+
+// One polite live region, always on the page; emptied first so the same words are read again.
+let spoken = $state('')
+function speak(text: string) {
+  spoken = ''
+  tick().then(() => (spoken = text))
+}
+
 let searched = false
 $effect(() => {
   const q = query
@@ -37,6 +56,7 @@ $effect(() => {
 onMount(() => {
   document.documentElement.lang = lang
   api.settings().then(apply)
+  const stopAnnouncing = onAnnounce(speak)
   const unlisten = [
     listen('inbox-changed', reload),
     listen<string>('show', (e) => (screen = e.payload === 'settings' ? 'settings' : 'reminder')),
@@ -55,6 +75,7 @@ onMount(() => {
   const onVisible = () => document.visibilityState === 'visible' && reload()
   document.addEventListener('visibilitychange', onVisible)
   return () => {
+    stopAnnouncing()
     for (const p of unlisten) p.then((f) => f())
     window.removeEventListener('keydown', onKey)
     document.removeEventListener('visibilitychange', onVisible)
@@ -73,3 +94,4 @@ onMount(() => {
 {/if}
 
 <Toast />
+<div class="visually-hidden" aria-live="polite" aria-atomic="true">{spoken}</div>

@@ -12,6 +12,7 @@ import BriefCard from './BriefCard.svelte'
 import InsightCard from './InsightCard.svelte'
 import TriagePanel from './TriagePanel.svelte'
 import ReviewSession from './ReviewSession.svelte'
+import { announce } from './announce'
 import { offer } from './failures'
 import { t, translateMessage } from './i18n'
 import { tablist } from './tablist'
@@ -62,11 +63,30 @@ const allItems = $derived(
     : [],
 )
 
+// After Refresh, the next inbox says what came back (A11Y-17): the refresh itself runs in the background.
+let announceNext = false
 async function refresh() {
   refreshing = true
+  announceNext = true
   await api.refresh()
   setTimeout(() => (refreshing = false), 1200)
 }
+
+$effect(() => {
+  if (!view || !announceNext) return
+  announceNext = false
+  const health = view.health
+  if (health.state === 'offline') announce(t('Offline'))
+  else if (health.state === 'reconnect')
+    announce(
+      view.reconnectNames.length === 1
+        ? t('%@ needs reconnecting', view.reconnectNames[0])
+        : t('%d sources need reconnecting', view.reconnectNames.length),
+    )
+  else if (health.state === 'failing')
+    announce(health.count === 1 ? t('1 source failing') : t('%d sources failing', health.count))
+  else announce(t('Updated: %d on your turn, %d waiting', view.counts.myTurn, view.counts.waiting))
+})
 
 // Shown with t(): scripts/make-i18n.py reads `t-keys` objects.
 const empty: Record<Tab, string> = {
@@ -88,7 +108,7 @@ async function clearAll() {
 <div class="screen">
   <header class="row top">
     <Fish size={30} />
-    <h1>Remora</h1>
+    <h1 tabindex="-1">Remora</h1>
     {#if view?.demo}<span class="chip accent">{t('Demo')}</span>{/if}
     <span class="spacer"></span>
     {#if view?.assistant?.wholeInbox}
@@ -118,7 +138,7 @@ async function clearAll() {
 
   <label class="search">
     <Icon name="search" size={16} />
-    <input class="field" type="search" placeholder={t('Search')} bind:value={query} />
+    <input class="field" type="search" placeholder={t('Search')} aria-label={t('Search')} bind:value={query} />
   </label>
 
   <div class="scroll" role="tabpanel" id="inbox-panel" aria-labelledby="tab-{tab}">

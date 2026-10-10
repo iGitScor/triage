@@ -3,6 +3,7 @@
 // (Ctrl+Z works too). Gone after a few seconds or when dismissed.
 import { onMount } from 'svelte'
 import Icon from './Icon.svelte'
+import { announce } from './announce'
 import { onFailure, onOffer, type Offer } from './failures'
 import { t } from './i18n'
 
@@ -13,6 +14,8 @@ let timer: ReturnType<typeof setTimeout> | undefined
 function show(text: string, offer: Offer | null) {
   message = text
   action = offer
+  // Read by App's live region: one that appears with its text, like this toast, often isn't.
+  announce(text)
   clearTimeout(timer)
   timer = setTimeout(close, offer ? 8000 : 6000)
 }
@@ -48,7 +51,7 @@ onMount(() => {
 <svelte:window {onkeydown} />
 
 {#if message}
-  <div class="toast" role={action ? 'status' : 'alert'}>
+  <div class="toast">
     <span>{message}</span>
     {#if action}<button type="button" class="undo" onclick={run}>{action.action}</button>{/if}
     <button type="button" class="icon-button" onclick={close} aria-label={t('Close')}><Icon name="close" size={14} /></button>
