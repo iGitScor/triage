@@ -3,7 +3,7 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
-## Unreleased
+## 0.4.0 (2026-10-10)
 
 ### Added
 

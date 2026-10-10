@@ -1,7 +1,7 @@
 {
   "name": "remora-windows",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Remora for Windows: the tray app's interface (Svelte), shell in src-tauri.",
   "license": "GPL-3.0-or-later",
   "type": "module",
