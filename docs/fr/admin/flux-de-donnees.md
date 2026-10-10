@@ -55,6 +55,7 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 - **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications :
   les titres de cet outil peuvent toujours parvenir à Claude : c’est le rôle d’*Envoyer à l’assistant*.
 - Avec Claude Code, Remora lance `claude` sans outils, sans extensions, hooks ni serveurs MCP, et sans rien
+  enregistrer dans l’historique de sessions. Le contenu de la boîte passe par son entrée standard, jamais par la
   ligne de commande, que d’autres processus peuvent lire. Les données vont là où ce Claude Code est configuré pour les envoyer
   (normalement Anthropic). Réglages → Confidentialité indique quel `claude` est lancé.
 

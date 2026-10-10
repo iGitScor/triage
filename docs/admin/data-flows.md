@@ -52,6 +52,7 @@ sent: tokens, links, code, the rest of a message, notes, files.
 - **Hide message content** (Settings → General → Notifications) applies to notifications only: it doesn’t keep that tool’s
   titles away from Claude: that is *Send to the assistant*.
 - With Claude Code, Remora runs `claude` with no tools, no plugins, hooks or MCP servers, and nothing saved to the
+  user’s session history. The inbox content goes on its standard input, never on the command line, which other
   processes can read. Data then goes wherever that Claude Code is set up to send it (normally Anthropic).
   Settings → Privacy shows which `claude` runs.
 

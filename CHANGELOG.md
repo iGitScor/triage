@@ -91,6 +91,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
   Remora.dmg --repo iGitScor/triage`.
 
 
+- Mac: with Claude Code, inbox content is no longer visible to other programs in the process list.
 - Windows: the window and the tray menu could use different languages; they now both follow the system's.
 - Mac: the refresh arrow kept spinning after a refresh had finished.
 - Mac: if the Keychain refuses (Deny), connecting a tool now fails and says so instead of losing the token at the
