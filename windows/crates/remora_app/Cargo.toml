@@ -17,7 +17,7 @@ dirs = "6"
 uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.55"
+winreg = "0.56"
 
 [dev-dependencies]
 async-trait = "0.1.92"
