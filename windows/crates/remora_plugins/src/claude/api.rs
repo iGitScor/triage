@@ -189,7 +189,7 @@ pub fn retry_delay(error: &PluginError, attempt: u32, now: DateTime<Utc>) -> Opt
             (wait <= 60).then(|| Duration::from_secs(wait.max(0) as u64))
         }
         PluginError::RateLimited(None) => Some(backoff),
-        PluginError::Status(code) if matches!(code, 408 | 409 | 500..) => Some(backoff),
+        PluginError::Status(408 | 409 | 500..) => Some(backoff),
         _ => None,
     }
 }
