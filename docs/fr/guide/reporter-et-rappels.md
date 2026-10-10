@@ -54,7 +54,9 @@ L’onglet *Reportés* montre **un conseil à la fois**, quand il y a quelque ch
   vous.
 
 Si Claude est autorisé, **Trier avec Claude** propose pour chaque élément reporté de le garder, le reprogrammer, le
-laisser tomber ou le faire maintenant. Vous validez chaque changement. Voir [L’assistant](./assistant).
+laisser tomber ou le faire maintenant. Vous validez chaque changement : seules les nouvelles heures de retour sont
+cochées d’avance ; laisser tomber et faire maintenant sont à cocher vous-même, et appliquer ouvre au plus un élément.
+Voir [L’assistant](./assistant).
 
 Votre historique de reports (les 500 derniers) reste sur votre Mac.
 

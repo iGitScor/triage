@@ -12,7 +12,7 @@ sur votre boîte :
 - **Résumés de liste** (✦ sur l’en-tête d’un verbe, à partir de deux éléments) : de quoi parle le groupe, en deux
   phrases.
 - **Tri** (dans l’onglet *Reportés*) : garder, reprogrammer, laisser tomber ou faire maintenant, élément par
-  élément. Vous validez chaque changement.
+  élément. Vous validez chaque changement ; seules les reprogrammations sont cochées d’avance.
 
 Briefs et résumés sont rédigés dans la langue de votre Mac.
 

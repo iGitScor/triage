@@ -52,7 +52,8 @@ The *Snoozed* tab shows **one insight at a time**, when there’s something wort
 - **Gone quiet**: items with no activity for three weeks. Maybe they don’t need you any more.
 
 With Claude allowed, **Triage with Claude** proposes, for each snoozed item, to keep it, reschedule it, let it go
-or do it now. You confirm every change. See [The assistant](./assistant).
+or do it now. You confirm every change: only new return times are ticked for you; letting go and doing now are
+yours to tick, and applying opens at most one item. See [The assistant](./assistant).
 
 Your snooze history (the last 500 snoozes) stays on your Mac.
 

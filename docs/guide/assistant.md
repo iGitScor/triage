@@ -10,7 +10,8 @@ about your inbox:
 
 - **Brief** (✦ at the top of the inbox): three sentences and the items to handle first.
 - **Bundle summaries** (✦ on a verb’s header, from two items): what the group is about, in two sentences.
-- **Triage** (in the *Snoozed* tab): keep, reschedule, let go or do now, item by item. You confirm every change.
+- **Triage** (in the *Snoozed* tab): keep, reschedule, let go or do now, item by item. You confirm every change;
+  only reschedules are ticked for you.
 
 Briefs and summaries come back in your Mac’s language.
 
