@@ -22,6 +22,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Claude Code is found in more install folders (npm, nvm, volta, bun, mise, asdf) and its errors say what to do;
   Settings → Privacy shows which `claude` runs.
 - Server addresses must use https (plain http only for `localhost`).
+- GitLab: one request for every merge request's approvals and pipeline instead of two or three each (far fewer
+  calls); on the Mac, review prep now has line counts for GitLab too.
+- A tool that keeps failing is asked less often (up to every 30 minutes), and a rate limit is waited out until the
+  tool's reset time. A refresh you ask for tries again right away, except where a rate limit holds.
 - Windows: a policy value Remora can't read is applied as strictly as possible and named in Settings → Privacy.
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.
 
