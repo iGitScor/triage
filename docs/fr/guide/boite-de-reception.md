@@ -79,7 +79,8 @@ jamais plus que ce qu’on peut saisir d’un coup d’œil.
 
 Remora vous prévient quand quelque chose de nouveau a besoin de vous (une relecture, une mention, une tâche) et quand
 votre merge request change de statut (approuvée, modifications demandées, tests en échec). Chaque notification a
-des boutons : **Terminé**, **Reporter d’1 heure** ou **Demain 9:00**, sans ouvrir Remora. Réglages → Général →
+des boutons : **Terminé**, **Reporter d’1 heure** ou **Demain 9:00**, sans ouvrir Remora ; un clic ouvre l’élément.
+Sur Windows, pas encore de boutons, et un clic ouvre l’élément. Réglages → Général → **Notifications** active ou
 coupe chaque type.
 
 **Masquer le contenu des messages** liste vos outils connectés (et vos rappels) : pour ceux que vous cochez, les
