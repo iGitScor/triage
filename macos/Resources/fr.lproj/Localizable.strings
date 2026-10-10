@@ -60,10 +60,11 @@
 "All done!" = "Tout est fait !";
 "All reviewed" = "Tout est relu";
 "All reviews done. Nice work." = "Toutes les relectures sont faites. Bravo.";
-"Allow external AI (Claude)" = "Autoriser l’IA externe (Claude)";
+"Allow external AI" = "Autoriser l’IA externe";
 "Allowed" = "Autorisé";
 "Allowed tools" = "Outils autorisés";
 "Always write a new one" = "Toujours en écrire un nouveau";
+"An API key is needed for this server." = "Une clé API est nécessaire pour ce serveur.";
 "An Anthropic API key from the Claude Console." = "Une clé API Anthropic de la Claude Console.";
 "Appearance" = "Apparence";
 "Apply %d change" = "Appliquer %d changement";
@@ -104,13 +105,9 @@
 "Claude Code: %@" = "Claude Code : %@";
 "Claude Code’s default" = "Celui de Claude Code";
 "Claude declined this request." = "Claude a refusé cette demande.";
-"Claude is looking at your snoozed items…" = "Claude examine vos éléments reportés…";
-"Claude is reading your inbox…" = "Claude lit votre boîte…";
-"Claude plugins send the titles, contexts, authors and statuses of inbox items to Anthropic. When off, the brief, summaries and triage are unavailable." = "Les plugins Claude envoient à Anthropic les titres, contextes, auteurs et statuts des éléments. Désactivé : brief, résumés et tri indisponibles.";
 "Claude returned an unexpected answer." = "Claude a renvoyé une réponse inattendue.";
 "Claude took too long to answer. Try again later." = "Claude a mis trop de temps à répondre. Réessayez plus tard.";
 "Claude’s answer was cut off. Try again, or with fewer items." = "La réponse de Claude a été coupée. Réessayez, ou avec moins d’éléments.";
-"Claude’s suggestions" = "Suggestions de Claude";
 "Clear" = "Effacer";
 "Clear all" = "Tout effacer";
 "Cleared" = "Effacé";
@@ -149,6 +146,7 @@
 "Create a key and paste it below." = "Créez une clé et collez-la ci-dessous.";
 "Create a token" = "Créer un jeton";
 "Create an API key" = "Créer une clé API";
+"Create an API key with your provider, or start the server on this computer." = "Créez une clé API chez votre fournisseur, ou lancez le serveur sur cet ordinateur.";
 "Create the Slack app" = "Créer l’app Slack";
 "Dark" = "Sombre";
 "Data flows" = "Flux de données";
@@ -187,6 +185,7 @@
 "Found automatically" = "Trouvé automatiquement";
 "Frank requested changes on your PR." = "Frank a demandé des modifications sur votre PR.";
 "From anywhere: %@" = "Depuis n’importe où : %@";
+"From your provider. Not needed for a server on this computer." = "Chez votre fournisseur. Inutile pour un serveur sur cet ordinateur.";
 "General" = "Général";
 "GitHub returned no data." = "GitHub n’a renvoyé aucune donnée.";
 "GitHub, GitLab, Slack or Linear. Remora only reads, and only talks to the tools you allow." = "GitHub, GitLab, Slack ou Linear. Remora ne fait que lire, et ne parle qu’aux outils autorisés.";
@@ -212,7 +211,7 @@
 "Install Claude Code with Anthropic’s installer (recommended: it doesn’t need Node.js), then sign in once by running `claude` in a terminal." = "Installez Claude Code avec l’installeur d’Anthropic (conseillé : il n’a pas besoin de Node.js), puis connectez-vous une fois en lançant `claude` dans un terminal.";
 "Install and relaunch" = "Installer et relancer";
 "Issues assigned to you, and the mentions and comments waiting in your Linear inbox." = "Les tickets qui vous sont assignés, et les mentions et commentaires de votre boîte Linear.";
-"Items from a tool that's off never reach Claude: not in the brief, summaries or triage." = "Les éléments d’un outil désactivé ne parviennent jamais à Claude : ni dans le brief, ni dans les résumés, ni dans le tri.";
+"Items from a tool that's off never reach the assistant: not in the brief, summaries or triage." = "Les éléments d’un outil désactivé ne parviennent jamais à l’assistant : ni dans le brief, ni dans les résumés, ni dans le tri.";
 "Items you mark as done show up here until they change." = "Les éléments terminés apparaissent ici jusqu’à leur prochaine activité.";
 "Its token is deleted from the Keychain and its items leave the inbox." = "Son jeton est supprimé du trousseau et ses éléments quittent la boîte.";
 "It’s small (%@) and checks are green." = "C’est petit (%@) et les tests passent.";
@@ -248,6 +247,7 @@
 "Migrations" = "Migrations";
 "Model for bundle summaries" = "Modèle pour les résumés de groupe";
 "Model for the brief" = "Modèle pour le brief";
+"Model id from your provider" = "Identifiant du modèle chez votre fournisseur";
 "Move between items" = "Passer d’un élément à l’autre";
 "Move to %@" = "Déplacer à %@";
 "Move to inbox" = "Remettre dans la boîte";
@@ -302,6 +302,7 @@
 "Once a day, Remora asks GitHub whether a new version is out. Nothing about you or your inbox is sent. A new version is installed only when you choose, and only if it is signed by Remora’s release key." = "Une fois par jour, Remora demande à GitHub si une nouvelle version est sortie. Rien sur vous ni sur votre boîte n’est envoyé. Une nouvelle version n’est installée que quand vous le choisissez, et seulement si elle est signée par la clé de publication de Remora.";
 "One counter per source" = "Un compteur par source";
 "One inbox for your work" = "Une seule boîte pour votre travail";
+"Only a server on this computer can use http: use https." = "Seul un serveur sur cet ordinateur peut utiliser http : utilisez https.";
 "Only if Claude Code is installed somewhere unusual (run `where.exe claude` in a terminal)." = "Seulement si Claude Code est installé à un endroit inhabituel (lancez `where.exe claude` dans un terminal).";
 "Only if Claude Code is installed somewhere unusual (run `which claude` in Terminal)." = "Seulement si Claude Code est installé ailleurs que d’habitude (lancez `which claude` dans le Terminal).";
 "Only needed with an internal connection, to find your tasks." = "Seulement avec une connexion interne, pour trouver vos tâches.";
@@ -323,6 +324,7 @@
 "Overdue" = "En retard";
 "Pair it with something easy" = "Associez-le à quelque chose de facile";
 "Paste the links of your task databases. No sharing needed: the token sees what you see." = "Collez les liens de vos bases de tâches. Aucun partage nécessaire : le jeton voit ce que vous voyez.";
+"Paste the server address, the key and the model id below." = "Collez ci-dessous l’adresse du serveur, la clé et l’identifiant du modèle.";
 "Path to claude" = "Chemin de claude";
 "Personal API key" = "Clé API personnelle";
 "Personal access token" = "Jeton d’accès personnel";
@@ -366,6 +368,7 @@
 "Running" = "En cours";
 "Runs Claude Code on this Mac, which sends the titles, contexts, authors and statuses of inbox items to Anthropic." = "Lance Claude Code sur ce Mac, qui envoie à Anthropic les titres, contextes, auteurs et statuts des éléments.";
 "Runs Claude Code on this computer, which sends the titles, contexts, authors and statuses of inbox items to Anthropic." = "Lance Claude Code sur cet ordinateur, qui envoie à Anthropic les titres, contextes, auteurs et statuts des éléments de la boîte.";
+"Same as the brief" = "Le même que pour le brief";
 "Same time for all" = "Même heure pour tous";
 "Save" = "Enregistrer";
 "Search" = "Rechercher";
@@ -373,6 +376,8 @@
 "Searches your recent mentions and direct messages in Slack." = "Recherche vos mentions et messages directs récents dans Slack.";
 "Send to the assistant" = "Envoyer à l’assistant";
 "Sends the titles, contexts, authors and statuses of inbox items to Anthropic." = "Envoie à Anthropic les titres, contextes, auteurs et statuts des éléments.";
+"Sends the titles, contexts, authors and statuses of inbox items to the server you set." = "Envoie au serveur choisi les titres, contextes, auteurs et statuts des éléments.";
+"Server" = "Serveur";
 "Set an expiration, click “Generate token” and paste it below." = "Choisissez une expiration, cliquez sur « Generate token » et collez-le ci-dessous.";
 "Settings" = "Réglages";
 "Settings…" = "Réglages…";
@@ -420,7 +425,17 @@
 "Task overdue" = "Tâche en retard";
 "Tells accounts apart, e.g. “Work” or “Side project”." = "Pour distinguer vos comptes, par ex. « Travail » ou « Perso ».";
 "Text size" = "Taille du texte";
+"The API's address, up to /v1. A server on this computer can use http, e.g. http://localhost:11434/v1." = "L’adresse de l’API, jusqu’à /v1. Un serveur sur cet ordinateur peut utiliser http, par exemple http://localhost:11434/v1.";
 "The Keychain refused the change (error %@)." = "Le trousseau a refusé la modification (erreur %@).";
+"The assistant declined this request." = "L’assistant a refusé cette demande.";
+"The assistant is looking at your snoozed items…" = "L’assistant examine vos éléments reportés…";
+"The assistant is reading your inbox…" = "L’assistant lit votre boîte…";
+"The assistant returned an unexpected answer." = "L’assistant a renvoyé une réponse inattendue.";
+"The assistant sends the titles, contexts, authors and statuses of inbox items to its provider: Anthropic for Claude, or the server you set. When off, only a server on this computer can write the brief, summaries and triage." = "L’assistant envoie à son fournisseur les titres, contextes, auteurs et statuts des éléments : Anthropic pour Claude, ou le serveur que vous avez choisi. Désactivé, seul un serveur sur cet ordinateur peut écrire le brief, les résumés et le tri.";
+"The assistant took too long to answer. Try again later." = "L’assistant a mis trop de temps à répondre. Réessayez plus tard.";
+"The assistant’s answer was cut off. Try again, or with fewer items." = "La réponse de l’assistant a été coupée. Réessayez, ou avec moins d’éléments.";
+"The assistant’s suggestions" = "Suggestions de l’assistant";
+"The brief through OpenAI, Azure OpenAI, Mistral or a server on this computer. Item titles and context are sent to that server." = "Le brief via OpenAI, Azure OpenAI, Mistral ou un serveur sur cet ordinateur. Les titres et le contexte des éléments sont envoyés à ce serveur.";
 "The brief through an Anthropic API key. Item titles and context are sent to Anthropic." = "Le brief via une clé API Anthropic. Les titres et le contexte des éléments sont envoyés à Anthropic.";
 "The brief through the Claude Code signed in on this Mac, on your Claude plan. No API key." = "Le brief via le Claude Code connecté sur ce Mac, avec votre abonnement Claude. Sans clé API.";
 "The brief through the Claude Code signed in on this computer, on your Claude plan. No API key." = "Le brief par le Claude Code connecté sur cet ordinateur, avec votre abonnement Claude. Sans clé d’API.";
@@ -460,7 +475,7 @@
 "Too many requests: Remora waits until %@." = "Trop de requêtes : Remora attend jusqu’à %@.";
 "Tray icon" = "Icône de notification";
 "Triage" = "Tri";
-"Triage with Claude" = "Trier avec Claude";
+"Triage with the assistant" = "Trier avec l’assistant";
 "Two reviews are blocking teammates and one of your PRs needs changes. Bob is waiting on you for Friday's rollout." = "Deux relectures bloquent des collègues et une de vos PR doit être modifiée. Bob attend votre réponse pour le déploiement de vendredi.";
 "Type what to remember." = "Tapez ce dont il faut se souvenir.";
 "Under Personal API keys, create a key named Remora (read access is enough) and paste it below." = "Dans Clés API personnelles, créez une clé nommée Remora (la lecture suffit) et collez-la ci-dessous.";
@@ -488,7 +503,7 @@
 "What to remember?" = "Que faut-il retenir ?";
 "What’s new" = "Nouveautés";
 "When" = "Quand";
-"While fresh, Remora shows it again instead of asking Claude." = "Tant qu’il est récent, Remora le réaffiche au lieu de redemander à Claude.";
+"While fresh, Remora shows it again instead of asking the assistant." = "Tant qu’il est récent, Remora le réaffiche au lieu de redemander à l’assistant.";
 "Whole-inbox brief" = "Brief de toute la boîte";
 "Why? (optional)" = "Pourquoi ? (facultatif)";
 "Work, Client…" = "Boulot, Client…";
@@ -504,6 +519,8 @@
 "Your brief" = "Votre brief";
 "Your merge requests" = "Vos merge requests";
 "Your merge requests waiting on reviewers show up here." = "Vos merge requests en attente de relecture apparaissent ici.";
+"Your organization doesn’t allow an AI server on this computer." = "Votre organisation n’autorise pas de serveur d’IA sur cet ordinateur.";
+"Your organization doesn’t allow this AI server." = "Votre organisation n’autorise pas ce serveur d’IA.";
 "Your organization installs new versions of Remora." = "Votre organisation installe les nouvelles versions de Remora.";
 "Your organization’s policy has values Remora can’t read: %@. They are applied as strictly as possible; ask your IT team to check them." = "La politique de votre organisation contient des valeurs que Remora ne sait pas lire : %@. Elles sont appliquées de la façon la plus stricte ; demandez à votre service informatique de les vérifier.";
 "You’re not waiting on anyone." = "Vous n’attendez personne.";

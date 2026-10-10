@@ -13,6 +13,7 @@ public enum PluginRegistry {
     public static let assistants: [any AssistantPlugin.Type] = [
         ClaudeCodePlugin.self,
         ClaudePlugin.self,
+        OpenAIPlugin.self,
     ]
 
     public static var manifests: [PluginManifest] { sources.map { $0.manifest } }

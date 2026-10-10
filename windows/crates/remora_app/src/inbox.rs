@@ -5,7 +5,7 @@ use remora_core::{
     Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder, Mark, Notice,
     NoticeKind, PersonalRanker, PluginManifest, ReviewPace, ReviewPrep, ReviewTiming, Snooze, SnoozeAdvisor,
     SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion,
-    VerbClassifier, WaitingAssistant, WaitingHelp,
+    VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
 };
 use remora_plugins::{
     claude, links, registry, AssistantPlugin, GuardedHttpClient, HttpClient, PluginError, SourcePlugin, SourceSnapshot,
@@ -68,6 +68,8 @@ pub struct AccountInfo {
     pub hosts: Vec<String>,
     pub egress: String,
     pub allowed: bool,
+    /// Why it's blocked, when it is.
+    pub refusal: Option<String>,
     pub error: Option<String>,
     /// What fixes it: `auth` gets a Reconnect button.
     pub error_kind: Option<FailureKind>,
@@ -251,10 +253,13 @@ impl Inbox {
             .iter()
             .filter_map(|account| {
                 let manifest = any_manifest(&account.plugin_id)?;
+                let account = &self.with_policy_server(account);
+                let refusal = policy.account_refusal(&manifest, &account.settings);
                 Some(AccountInfo {
                     hosts: registry::allowed_hosts(account, &manifest),
                     egress: manifest.egress.description.clone(),
-                    allowed: policy.allows(&manifest),
+                    allowed: refusal.is_none(),
+                    refusal: refusal.map(str::to_string),
                     plugin_name: manifest.name,
                     error: self.errors.get(&account.id).map(|f| f.message.clone()),
                     error_kind: self.errors.get(&account.id).map(|f| f.kind),
@@ -633,10 +638,23 @@ impl Inbox {
         self.accounts
             .iter()
             .find(|a| {
-                claude::is_assistant(&a.plugin_id)
-                    && claude::assistant_manifests().iter().any(|m| m.id == a.plugin_id && policy.allows(m))
+                let a = self.with_policy_server(a);
+                claude::assistant_manifests()
+                    .iter()
+                    .any(|m| m.id == a.plugin_id && policy.account_refusal(m, &a.settings).is_none())
             })
             .cloned()
+    }
+
+    /// An account with the organization's `AIServer` in place of its own, for the OpenAI-compatible assistant.
+    fn with_policy_server(&self, account: &Account) -> Account {
+        let mut account = account.clone();
+        if account.plugin_id == AI_SERVER_PLUGIN {
+            if let Some(forced) = &self.policy().ai_server {
+                account.settings.insert("host".into(), forced.clone());
+            }
+        }
+        account
     }
 
     /// What the assistant may read: everything but the sources you keep from it.
@@ -655,7 +673,8 @@ impl Inbox {
             .into_iter()
             .find(|m| m.id == account.plugin_id)
             .ok_or("Unknown assistant.")?;
-        if let Some(refusal) = self.policy().refusal(&manifest) {
+        let account = &self.with_policy_server(account);
+        if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
             return Err(refusal.to_string());
         }
         let secrets = self.secrets()?.get(&account.id).cloned().unwrap_or_default();
@@ -1003,16 +1022,16 @@ impl Inbox {
             .into_iter()
             .find(|m| m.id == plugin_id)
             .ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
-        if let Some(refusal) = self.policy().refusal(&manifest) {
-            return Err(refusal.to_string());
-        }
-        let account = Account {
+        let account = self.with_policy_server(&Account {
             id: uuid::Uuid::new_v4().to_string(),
             plugin_id: plugin_id.into(),
             name: name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
             settings,
             identity: None,
-        };
+        });
+        if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
+            return Err(refusal.to_string());
+        }
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
         let defaults: HashMap<String, String> =
@@ -1269,7 +1288,7 @@ mod tests {
     use super::*;
     use crate::MemoryVault;
     use chrono::Duration;
-    use remora_core::Badge;
+    use remora_core::{Badge, EXTERNAL_AI_OFF, LOCAL_AI_NOT_ALLOWED, SERVER_NOT_ALLOWED};
     use remora_plugins::{Request, Response};
 
     struct NoNetwork;
@@ -1818,6 +1837,76 @@ mod tests {
         assert_eq!(inbox.review_timings.len(), 1);
         assert_eq!(inbox.review_timings[0].actual, 12);
         assert_eq!(inbox.review_pace(), 1.0, "not before five");
+    }
+
+    fn connect_openai(inbox: &Inbox, host: &str) -> Result<Account, String> {
+        let settings = HashMap::from([("host".to_string(), host.to_string()), ("model".to_string(), "m".to_string())]);
+        let secrets = HashMap::from([("token".to_string(), "sk".to_string())]);
+        inbox.prepare_assistant_connect("openai", None, settings, &secrets, Arc::new(NoNetwork), "en").map(|(a, _)| a)
+    }
+
+    /// AI-23: the organization's server replaces the user's, everywhere the account is used or shown.
+    #[test]
+    fn the_organizations_ai_server_is_locked_in() {
+        let mut inbox = inbox();
+        inbox.managed = Managed {
+            allow_external_ai: Some(true),
+            ai_server: Some("https://acme.openai.azure.com/openai/v1".into()),
+            ..Managed::default()
+        };
+        let account = connect_openai(&inbox, "https://evil.example/v1").unwrap();
+        assert_eq!(account.settings["host"], "https://acme.openai.azure.com/openai/v1");
+        inbox
+            .accounts
+            .push(Account { settings: HashMap::from([("host".into(), "https://evil.example/v1".into())]), ..account });
+        let info = inbox.account_infos().into_iter().find(|a| a.account.plugin_id == "openai").unwrap();
+        assert_eq!(info.hosts, ["acme.openai.azure.com"], "the user's old server is never reached");
+        assert!(info.allowed && inbox.assistant_account().is_some());
+
+        inbox.managed.allowed_ai_servers = Some(vec!["https://api.openai.com/v1".into()]);
+        assert_eq!(connect_openai(&inbox, "https://api.openai.com/v1").err().as_deref(), Some(SERVER_NOT_ALLOWED));
+        let info = inbox.account_infos().into_iter().find(|a| a.account.plugin_id == "openai").unwrap();
+        assert_eq!(info.refusal.as_deref(), Some(SERVER_NOT_ALLOWED));
+        assert!(inbox.assistant_account().is_none(), "a forced server outside the list turns the assistant off");
+    }
+
+    /// A server on this computer works with external AI off, unless the organization says otherwise.
+    #[test]
+    fn local_ai_servers_follow_the_policy() {
+        let mut inbox = inbox();
+        assert!(connect_openai(&inbox, "http://localhost:11434/v1").is_ok());
+        assert_eq!(connect_openai(&inbox, "https://api.openai.com/v1").err().as_deref(), Some(EXTERNAL_AI_OFF));
+        inbox.managed = Managed { allow_external_ai: Some(false), ..Managed::default() };
+        assert_eq!(connect_openai(&inbox, "http://localhost:11434/v1").err().as_deref(), Some(EXTERNAL_AI_OFF));
+        inbox.managed.allow_local_ai = Some(true);
+        assert!(connect_openai(&inbox, "http://localhost:11434/v1").is_ok());
+        inbox.managed = Managed { allow_external_ai: Some(true), allow_local_ai: Some(false), ..Managed::default() };
+        assert_eq!(connect_openai(&inbox, "http://127.0.0.1:1234/v1").err().as_deref(), Some(LOCAL_AI_NOT_ALLOWED));
+        assert!(connect_openai(&inbox, "https://api.openai.com/v1").is_ok());
+        assert_eq!(
+            connect_openai(&inbox, "http://llm.lan/v1").err().as_deref(),
+            Some("Only a server on this computer can use http: use https."),
+        );
+    }
+
+    /// `AllowedAIModels` keeps both of its models within the list; an empty summary model too.
+    #[test]
+    fn allowed_models_cover_both_openai_models() {
+        let manifest = remora_plugins::openai::manifest();
+        let defaults: HashMap<String, String> =
+            manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
+        let policy = AssistantPolicy::new(HashSet::new(), Some(vec!["gpt-a".into(), "gpt-b".into()]));
+        let set = |model: &str, digest: &str| {
+            HashMap::from([("model".to_string(), model.to_string()), ("digestModel".to_string(), digest.to_string())])
+        };
+        let kept = policy.constrained(&set("gpt-b", "gpt-a"), &defaults);
+        assert_eq!((kept["model"].as_str(), kept["digestModel"].as_str()), ("gpt-b", "gpt-a"));
+        // A refused brief model becomes the first allowed; the empty summary model follows it.
+        let fixed = policy.constrained(&set("gpt-x", ""), &defaults);
+        assert_eq!((fixed["model"].as_str(), fixed["digestModel"].as_str()), ("gpt-a", ""));
+        // An empty summary model follows an allowed brief model, and stays empty.
+        let same = policy.constrained(&set("gpt-b", ""), &defaults);
+        assert_eq!((same["model"].as_str(), same["digestModel"].as_str()), ("gpt-b", ""));
     }
 
     /// Without an allowed assistant, what it wrote goes.

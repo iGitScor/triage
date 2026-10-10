@@ -1,5 +1,5 @@
 <script lang="ts">
-// Claude's take on what to handle first, as on macOS: written when the card opens if there is none,
+// The assistant's take on what to handle first, as on macOS: written when the card opens if there is none,
 // again on request once the last one is no longer fresh.
 import { onMount } from 'svelte'
 import { api, type AssistantView, type Item } from './api'
@@ -46,7 +46,7 @@ const byId = $derived(new Map(items.map((i) => [i.id, i])))
     </ol>
     <p class="footer">{t('Written %@', ago(assistant.brief.createdAt))}</p>
   {:else}
-    <p>{t('Claude is reading your inbox…')}</p>
+    <p>{t('The assistant is reading your inbox…')}</p>
   {/if}
 </section>
 

@@ -240,13 +240,19 @@ private struct ConnectForm: View {
                         TextField(manifest.name, text: $name)
                     }
                     ForEach(manifest.fields) { field in
+                        let locked = forcedServer != nil && field.key == manifest.egress.serverField
                         self.field(
                             field.isOptional ? L("%@ (optional)", L(field.label)) : field.label, help: field.help
                         ) {
                             if field.isSecret {
                                 SecureField(L(field.placeholder), text: binding(field))
                             } else {
-                                TextField(L(field.placeholder), text: binding(field))
+                                // The organization's `AIServer`: shown, not editable.
+                                TextField(
+                                    L(field.placeholder), text: locked ? .constant(forcedServer ?? "") : binding(field)
+                                )
+                                .disabled(locked)
+                                .help(locked ? L("Managed by your organization") : "")
                             }
                         }
                     }
@@ -303,13 +309,19 @@ private struct ConnectForm: View {
 
     private var config: PluginConfig { PluginConfig(accountID: UUID(), values: values) }
 
+    /// The AI server the organization set, for a plugin whose server the user chooses.
+    private var forcedServer: String? {
+        manifest.egress.serverField == nil ? nil : ManagedPolicy.aiServer()
+    }
+
     private func binding(_ field: ConfigField) -> Binding<String> {
         Binding(get: { values[field.key] ?? "" }, set: { values[field.key] = $0 })
     }
 
     private func connect() {
         let secretKeys = Set(manifest.fields.filter(\.isSecret).map(\.key))
-        let settings = values.filter { !secretKeys.contains($0.key) }
+        var settings = values.filter { !secretKeys.contains($0.key) }
+        if let field = manifest.egress.serverField, let forcedServer { settings[field] = forcedServer }
         let secrets = values.filter { secretKeys.contains($0.key) }
         connecting = true
         error = nil
@@ -469,7 +481,7 @@ private struct GeneralPane: View {
                         Text($0 < 60 ? L("%d min", $0) : L("%d h", $0 / 60)).tag($0)
                     }
                 }
-                Text("While fresh, Remora shows it again instead of asking Claude.")
+                Text("While fresh, Remora shows it again instead of asking the assistant.")
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
             }
@@ -483,7 +495,7 @@ private struct GeneralPane: View {
             } header: {
                 Text("Send to the assistant")
             } footer: {
-                Text("Items from a tool that's off never reach Claude: not in the brief, summaries or triage.")
+                Text("Items from a tool that's off never reach the assistant: not in the brief, summaries or triage.")
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
             }

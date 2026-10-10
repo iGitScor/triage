@@ -2,18 +2,28 @@
 // The connect form, generated from the plugin's manifest: setup steps, the button to its token page,
 // its fields, and a name for the account. Secrets go to the Credential Manager, the rest to accounts.json.
 import { untrack } from 'svelte'
-import { api, type Account, type Manifest } from './api'
+import { api, type Account, type Managed, type Manifest } from './api'
 import { t, translateMessage } from './i18n'
 
 // With `account`, it reconnects that account: only the token is asked again, and the account keeps its
 // Done, snoozes and pins.
-let { manifest, account, ondone }: { manifest: Manifest; account?: Account; ondone: () => void } = $props()
+let {
+  manifest,
+  account,
+  managed,
+  ondone,
+}: { manifest: Manifest; account?: Account; managed?: Managed; ondone: () => void } = $props()
 const fields = $derived(account ? manifest.fields.filter((f) => f.isSecret) : manifest.fields)
+// The organization's AI server (AIServer): shown and locked; the app uses it whatever the form sends.
+const lockedServer = $derived(manifest.id === 'openai' ? managed?.aiServer || null : null)
 
 // Seeded once from the manifest: the form is created anew for each tool.
 let values: Record<string, string> = $state(
   untrack(() => Object.fromEntries(manifest.fields.map((f) => [f.key, f.defaultValue]))),
 )
+$effect(() => {
+  if (lockedServer) values.host = lockedServer
+})
 let name = $state('')
 let busy = $state(false)
 let error = $state('')
@@ -46,10 +56,11 @@ const ready = $derived(fields.every((f) => f.isOptional || values[f.key]?.trim()
     <button type="button" class="pill" onclick={() => api.openSetup(manifest.id, account?.settings.host ?? values.host).catch((e) => (error = t(String(e))))}>{t(manifest.setupLabel)}</button>
   {/if}
   {#each fields as field (field.key)}
+    {@const locked = field.key === 'host' && !!lockedServer}
     <label class="stack">
       {t(field.label)}
-      <input class="field" type={field.isSecret ? 'password' : 'text'} placeholder={field.placeholder} bind:value={values[field.key]} autocomplete="off" spellcheck="false" />
-      {#if field.help}<small>{t(field.help)}</small>{/if}
+      <input class="field" type={field.isSecret ? 'password' : 'text'} placeholder={t(field.placeholder)} bind:value={values[field.key]} disabled={locked} autocomplete="off" spellcheck="false" />
+      {#if locked}<small>{t('Managed by your organization')}</small>{:else if field.help}<small>{t(field.help)}</small>{/if}
     </label>
   {/each}
   {#if !account}

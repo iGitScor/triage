@@ -34,7 +34,9 @@ public struct AssistantPolicy: Equatable, Sendable {
         var settings = settings
         for key in Self.modelFields {
             let value = settings[key]?.trimmingCharacters(in: .whitespaces) ?? ""
-            let effective = value.isEmpty ? (defaults[key] ?? "") : value
+            var effective = value.isEmpty ? (defaults[key] ?? "") : value
+            // A summaries model left empty means the brief's (OpenAI-compatible): check that one.
+            if effective.isEmpty, key != "model" { effective = settings["model"] ?? defaults["model"] ?? "" }
             if !allowed.contains(effective) { settings[key] = first }
         }
         return settings

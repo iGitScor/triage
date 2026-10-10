@@ -182,7 +182,11 @@ impl AssistantPolicy {
         let Some(first) = allowed.first() else { return settings };
         for key in Self::MODEL_FIELDS {
             let value = settings.get(key).map(|v| v.trim().to_string()).unwrap_or_default();
-            let effective = if value.is_empty() { defaults.get(key).cloned().unwrap_or_default() } else { value };
+            let mut effective = if value.is_empty() { defaults.get(key).cloned().unwrap_or_default() } else { value };
+            // A summaries model left empty means the brief's (OpenAI-compatible): check that one, as on macOS.
+            if effective.is_empty() && key != "model" {
+                effective = settings.get("model").or_else(|| defaults.get("model")).cloned().unwrap_or_default();
+            }
             if !allowed.contains(&effective) {
                 settings.insert(key.to_string(), first.clone());
             }

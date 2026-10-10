@@ -7,6 +7,8 @@ use std::collections::HashSet;
 /// `HKCU\SOFTWARE\Policies\Remora` for user-scoped policies: a value set in HKLM wins.
 /// `AllowedPlugins` (REG_MULTI_SZ of plugin IDs), `AllowExternalAI` and `AllowRemoteImages` (REG_DWORD 0/1), and
 /// `AutomaticUpdates` (REG_DWORD 0/1): 1 checks every day, locked on; 0 turns updating off entirely, Check now included.
+/// For the OpenAI-compatible assistant (AI-23): `AllowedAIServers` (REG_MULTI_SZ of URL prefixes), `AIServer`
+/// (REG_SZ, the server, locked in Settings) and `AllowLocalAI` (REG_DWORD 0/1, a server on this computer).
 /// A key that is set wins over the user's own choice.
 ///
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -19,12 +21,25 @@ pub struct Managed {
     pub allow_external_ai: Option<bool>,
     pub allow_remote_images: Option<bool>,
     pub automatic_updates: Option<bool>,
+    /// URL prefixes the OpenAI-compatible assistant may use. Empty: none (an unreadable value).
+    pub allowed_ai_servers: Option<Vec<String>>,
+    /// The OpenAI-compatible assistant's server. Empty: unreadable, so the assistant is refused.
+    pub ai_server: Option<String>,
+    pub allow_local_ai: Option<bool>,
     /// Names of the values that were present but unreadable, applied as "deny".
     pub unreadable: Vec<String>,
 }
 
 pub const POLICY_KEY: &str = r"SOFTWARE\Policies\Remora";
-pub const VALUES: [&str; 4] = ["AllowedPlugins", "AllowExternalAI", "AllowRemoteImages", "AutomaticUpdates"];
+pub const VALUES: [&str; 7] = [
+    "AllowedPlugins",
+    "AllowExternalAI",
+    "AllowRemoteImages",
+    "AutomaticUpdates",
+    "AllowedAIServers",
+    "AIServer",
+    "AllowLocalAI",
+];
 
 /// A registry value as found, before interpretation.
 #[derive(Clone, Debug, PartialEq)]
@@ -46,6 +61,28 @@ fn plugin_list(raw: RawValue) -> Result<Option<Vec<String>>, ()> {
         RawValue::Number(_) | RawValue::Other => return Err(()),
     };
     Ok(Some(ids.iter().map(|id| id.trim().to_lowercase()).filter(|id| !id.is_empty()).collect()))
+}
+
+/// `AllowedAIServers`: REG_MULTI_SZ, or a REG_SZ separated by commas, semicolons or spaces. Paths keep their case;
+/// a list of blanks is no list.
+fn server_list(raw: RawValue) -> Result<Option<Vec<String>>, ()> {
+    let urls: Vec<String> = match raw {
+        RawValue::Missing => return Ok(None),
+        RawValue::MultiString(items) => items,
+        RawValue::String(text) => text.split([',', ';', ' ', '\n', '\t']).map(str::to_string).collect(),
+        RawValue::Number(_) | RawValue::Other => return Err(()),
+    };
+    let urls: Vec<String> = urls.iter().map(|u| u.trim().to_string()).filter(|u| !u.is_empty()).collect();
+    Ok((!urls.is_empty()).then_some(urls))
+}
+
+/// `AIServer`: one REG_SZ URL. Blank is unset.
+fn text(raw: RawValue) -> Result<Option<String>, ()> {
+    match raw {
+        RawValue::Missing => Ok(None),
+        RawValue::String(text) => Ok(Some(text.trim().to_string()).filter(|t| !t.is_empty())),
+        RawValue::MultiString(_) | RawValue::Number(_) | RawValue::Other => Err(()),
+    }
 }
 
 /// A switch: REG_DWORD or REG_QWORD 0 / non-zero, or a REG_SZ "0", "1", "true", "false".
@@ -129,6 +166,20 @@ impl Managed {
                 Some(vec![])
             }
         };
+        let allowed_ai_servers = match server_list(value("AllowedAIServers")) {
+            Ok(list) => list,
+            Err(()) => {
+                unreadable.push("AllowedAIServers".to_string());
+                Some(vec![])
+            }
+        };
+        let ai_server = match text(value("AIServer")) {
+            Ok(server) => server,
+            Err(()) => {
+                unreadable.push("AIServer".to_string());
+                Some(String::new())
+            }
+        };
         let mut flag = |name: &str| match switch(value(name)) {
             Ok(on) => on,
             Err(()) => {
@@ -140,7 +191,17 @@ impl Managed {
         let allow_remote_images = flag("AllowRemoteImages");
         // Unreadable means off: an update the organization didn't plan is the riskier side.
         let automatic_updates = flag("AutomaticUpdates");
-        Managed { allowed_plugins, allow_external_ai, allow_remote_images, automatic_updates, unreadable }
+        let allow_local_ai = flag("AllowLocalAI");
+        Managed {
+            allowed_plugins,
+            allow_external_ai,
+            allow_remote_images,
+            automatic_updates,
+            allowed_ai_servers,
+            ai_server,
+            allow_local_ai,
+            unreadable,
+        }
     }
 
     /// False when the organization turned updating off: no check at all, not even Check now.
@@ -155,7 +216,12 @@ impl Managed {
 
     /// True when the organization set at least one key: the Privacy settings are then read-only.
     pub fn is_managed(&self) -> bool {
-        self.allowed_plugins.is_some() || self.allow_external_ai.is_some() || self.allow_remote_images.is_some()
+        self.allowed_plugins.is_some()
+            || self.allow_external_ai.is_some()
+            || self.allow_remote_images.is_some()
+            || self.allowed_ai_servers.is_some()
+            || self.ai_server.is_some()
+            || self.allow_local_ai.is_some()
     }
 
     pub fn policy(&self, preferences: &Preferences) -> CompliancePolicy {
@@ -164,6 +230,10 @@ impl Managed {
             allowed_plugins: allowed.map(|ids| ids.iter().cloned().collect::<HashSet<_>>()),
             allow_external_ai: self.allow_external_ai.unwrap_or(preferences.allow_external_ai),
             allow_remote_images: self.allow_remote_images.unwrap_or(preferences.allow_remote_images),
+            allowed_ai_servers: self.allowed_ai_servers.clone(),
+            ai_server: self.ai_server.clone(),
+            allow_local_ai: self.allow_local_ai,
+            external_ai_managed_off: self.allow_external_ai == Some(false),
         }
     }
 }
@@ -187,7 +257,7 @@ mod tests {
             allow_external_ai: Some(false),
             allow_remote_images: None,
             automatic_updates: None,
-            unreadable: vec![],
+            ..Managed::default()
         };
         let policy = it.policy(&user);
         assert!(it.is_managed());
@@ -278,5 +348,53 @@ mod tests {
 
         let forced = Managed::from_values(values(&[("AutomaticUpdates", RawValue::Number(1))]));
         assert!(forced.updates_allowed() && forced.checks_for_updates(&Preferences::default()));
+    }
+
+    /// AI-23: the OpenAI-compatible assistant's keys, read and failed closed like the others.
+    #[test]
+    fn ai_server_keys_are_read_and_fail_closed() {
+        let it = Managed::from_values(values(&[
+            (
+                "AllowedAIServers",
+                RawValue::MultiString(vec![" https://acme.openai.azure.com/OpenAI/ ".into(), String::new()]),
+            ),
+            ("AIServer", RawValue::String("https://acme.openai.azure.com/OpenAI/v1".into())),
+            ("AllowLocalAI", RawValue::Number(1)),
+        ]));
+        assert_eq!(
+            it.allowed_ai_servers,
+            Some(vec!["https://acme.openai.azure.com/OpenAI/".to_string()]),
+            "paths keep their case"
+        );
+        assert_eq!(it.ai_server.as_deref(), Some("https://acme.openai.azure.com/OpenAI/v1"));
+        assert_eq!(it.allow_local_ai, Some(true));
+        assert!(it.is_managed() && it.unreadable.is_empty());
+        let policy = it.policy(&Preferences::default());
+        assert_eq!(policy.ai_server.as_deref(), Some("https://acme.openai.azure.com/OpenAI/v1"));
+        assert_eq!(policy.allow_local_ai, Some(true));
+
+        let blanks = Managed::from_values(values(&[
+            ("AllowedAIServers", RawValue::String(" , ".into())),
+            ("AIServer", RawValue::String("  ".into())),
+        ]));
+        assert_eq!((blanks.allowed_ai_servers, blanks.ai_server), (None, None), "blank means unset");
+
+        let broken = Managed::from_values(values(&[
+            ("AllowedAIServers", RawValue::Number(1)),
+            ("AIServer", RawValue::MultiString(vec!["https://x".into()])),
+            ("AllowLocalAI", RawValue::String("maybe".into())),
+        ]));
+        assert_eq!(broken.unreadable, ["AllowedAIServers", "AIServer", "AllowLocalAI"]);
+        assert_eq!(broken.allowed_ai_servers, Some(vec![]), "no server allowed");
+        assert_eq!(broken.ai_server.as_deref(), Some(""), "a server that can't be used");
+        assert_eq!(broken.allow_local_ai, Some(false));
+
+        let off = Managed::from_values(values(&[("AllowExternalAI", RawValue::Number(0))]));
+        assert!(off.policy(&Preferences::default()).external_ai_managed_off);
+        assert!(
+            !Managed::default()
+                .policy(&Preferences { allow_external_ai: false, ..Preferences::default() })
+                .external_ai_managed_off
+        );
     }
 }

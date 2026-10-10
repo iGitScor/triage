@@ -119,6 +119,7 @@ onMount(() => {
                 <span class="grow">
                   <strong>{account.name ?? account.identity ?? source.manifest.name}</strong>
                   {#if account.name && account.identity}<span class="muted"> · {account.identity}</span>{/if}
+                  {#if account.refusal && !source.refusal}<span class="error"> · {t(account.refusal)}</span>{/if}
                   {#if account.error}<span class={account.errorKind === 'offline' || account.errorKind === 'rateLimited' ? 'muted' : 'error'}> · {translateMessage(account.error)}</span>{/if}
                   {#if account.errorKind === 'auth'}<button type="button" class="link" onclick={() => (reconnecting = account.id)}>{t('Reconnect…')}</button>{/if}
                   {#each account.remarks as remark (remark)}<span class="remark muted">{translateMessage(remark)}</span>{/each}
@@ -135,11 +136,11 @@ onMount(() => {
               </div>
             {/if}
             {#if reconnecting === account.id}
-              <ConnectForm manifest={source.manifest} {account} ondone={async () => { reconnecting = null; await load() }} />
+              <ConnectForm manifest={source.manifest} {account} managed={settings?.managed} ondone={async () => { reconnecting = null; await load() }} />
             {/if}
           {/each}
           {#if connecting === source.manifest.id}
-            <ConnectForm manifest={source.manifest} ondone={async () => { connecting = null; await load() }} />
+            <ConnectForm manifest={source.manifest} managed={settings?.managed} ondone={async () => { connecting = null; await load() }} />
           {/if}
         </section>
       {/each}
@@ -194,12 +195,12 @@ onMount(() => {
             {#each [5, 15, 30, 60, 120] as m}<option value={m}>{m < 60 ? t('%d min', m) : t('%d h', m / 60)}</option>{/each}
           </select>
         </label>
-        <p class="help">{t('While fresh, Remora shows it again instead of asking Claude.')}</p>
+        <p class="help">{t('While fresh, Remora shows it again instead of asking the assistant.')}</p>
         <h3 class="subsection">{t('Send to the assistant')}</h3>
         {#each notifying as source (source.id)}
           <label class="toggle"><input type="checkbox" checked={!p.assistantExcludedSources.includes(source.id)} onchange={(e) => setSent(source.id, e.currentTarget.checked)} />{source.name}</label>
         {/each}
-        <p class="help">{t("Items from a tool that's off never reach Claude: not in the brief, summaries or triage.")}</p>
+        <p class="help">{t("Items from a tool that's off never reach the assistant: not in the brief, summaries or triage.")}</p>
       {/if}
 
       <h2 class="section-title">{t('Appearance')}</h2>
@@ -254,6 +255,13 @@ onMount(() => {
         {t('Load avatars from allowed tools')}
       </label>
 
+      <h2 class="section-title">{t('External AI')}</h2>
+      <label class="toggle">
+        <input type="checkbox" checked={settings.managed.allowExternalAi ?? settings.preferences.allowExternalAi} disabled={settings.managed.allowExternalAi != null} onchange={(e) => save({ allowExternalAi: e.currentTarget.checked })} />
+        {t('Allow external AI')}
+      </label>
+      <p class="help">{t('The assistant sends the titles, contexts, authors and statuses of inbox items to its provider: Anthropic for Claude, or the server you set. When off, only a server on this computer can write the brief, summaries and triage.')}</p>
+
       <h2 class="section-title">{t('Data flows')}</h2>
       {#if !accounts.length}<p class="muted">{t('Nothing connected.')}</p>{/if}
       {#each accounts as account (account.id)}
@@ -264,6 +272,7 @@ onMount(() => {
             <span class="spacer"></span>
             {#if !account.allowed}<span class="chip negative">{t('Blocked')}</span>{/if}
           </div>
+          {#if account.refusal}<p class="notice">{t(account.refusal)}</p>{/if}
           <p class="muted">{t(account.egress)}</p>
           <p class="hosts">{account.hosts.join(', ')}</p>
         </div>

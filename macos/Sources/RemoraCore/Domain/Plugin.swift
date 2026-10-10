@@ -113,12 +113,18 @@ public struct PluginConfig: Sendable {
         }
         switch url.scheme?.lowercased() {
         case "https": return url
-        case "http" where Self.loopback.contains(host): return url
+        case "http" where Self.isLoopback(host): return url
         default: throw PluginError.insecureField(key)
         }
     }
 
-    static let loopback: Set<String> = ["localhost", "127.0.0.1", "::1"]
+    /// This computer: `localhost`, `127.0.0.0/8` or `::1`. Nothing sent there leaves the machine through Remora.
+    public static func isLoopback(_ host: String) -> Bool {
+        let host = host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        if host == "localhost" || host == "::1" { return true }
+        let parts = host.split(separator: ".", omittingEmptySubsequences: false)
+        return parts.count == 4 && parts[0] == "127" && parts.allSatisfy { UInt8($0) != nil }
+    }
 }
 
 /// What a source returns on each refresh.

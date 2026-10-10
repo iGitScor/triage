@@ -36,8 +36,9 @@ struct ComplianceTests {
         for manifest in PluginRegistry.manifests + PluginRegistry.assistantManifests {
             #expect(!manifest.egress.description.isEmpty, "\(manifest.id)")
             #expect(
-                !manifest.egress.hosts.isEmpty || manifest.id == "claude-code" || manifest.id == "gitlab",
-                "\(manifest.id) must declare hosts")
+                !manifest.egress.hosts.isEmpty || manifest.id == "claude-code" || manifest.id == "gitlab"
+                    || manifest.egress.serverField != nil,
+                "\(manifest.id) must declare hosts, or the setting that holds its server")
         }
     }
 

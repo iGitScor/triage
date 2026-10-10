@@ -19,9 +19,9 @@ use remora_core::{Account, PluginManifest};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// The assistants, Claude Code first, as in the macOS app.
+/// The assistants, Claude Code first, as in the macOS app; then any OpenAI-compatible server (AI-23).
 pub fn assistant_manifests() -> Vec<PluginManifest> {
-    vec![code::manifest(), api::manifest()]
+    vec![code::manifest(), api::manifest(), crate::openai::manifest()]
 }
 
 pub fn is_assistant(id: &str) -> bool {
@@ -42,6 +42,7 @@ pub fn make_assistant(
     Ok(match account.plugin_id.as_str() {
         code::ID => Box::new(ClaudeCodePlugin::new(&config, language)),
         api::ID => Box::new(ClaudePlugin::new(&config, http, language)?),
+        crate::openai::ID => Box::new(crate::openai::OpenAIPlugin::new(&config, http, language)?),
         other => return Err(PluginError::UnknownPlugin(other.into())),
     })
 }
@@ -58,16 +59,24 @@ mod tests {
     #[test]
     fn both_assistants_declare_where_their_data_goes() {
         let manifests = assistant_manifests();
-        assert_eq!(manifests.iter().map(|m| m.id.as_str()).collect::<Vec<_>>(), ["claude-code", "claude"]);
+        assert_eq!(manifests.iter().map(|m| m.id.as_str()).collect::<Vec<_>>(), ["claude-code", "claude", "openai"]);
         for manifest in &manifests {
             assert!(manifest.egress.external_ai, "{}", manifest.id);
             assert!(!manifest.egress.description.is_empty());
             assert!(
-                !manifest.egress.hosts.is_empty() || manifest.id == "claude-code",
+                // Claude Code runs a local program; the OpenAI-compatible server is the account's own.
+                !manifest.egress.hosts.is_empty() || ["claude-code", "openai"].contains(&manifest.id.as_str()),
                 "{} must declare hosts",
                 manifest.id
             );
-            assert!(!remora_core::CompliancePolicy::default().allows(manifest), "external AI is off by default");
+            let policy = remora_core::CompliancePolicy::default();
+            if manifest.id == "openai" {
+                // Connectable for a server on this computer; a cloud one is refused per account.
+                let cloud = HashMap::from([("host".to_string(), "https://api.openai.com/v1".to_string())]);
+                assert!(policy.account_refusal(manifest, &cloud).is_some(), "external AI is off by default");
+            } else {
+                assert!(!policy.allows(manifest), "external AI is off by default");
+            }
         }
         assert!(is_assistant("claude-code") && !is_assistant("github"));
     }
@@ -82,6 +91,9 @@ mod tests {
             Some(PluginError::MissingField("token".into()))
         );
         assert!(make_assistant(&account("claude-code"), &HashMap::new(), http.clone(), "fr").is_ok());
+        let mut openai = account("openai");
+        openai.settings.insert("model".into(), "gpt-x".into());
+        assert!(make_assistant(&openai, &secrets, http.clone(), "en").is_ok());
         assert_eq!(
             make_assistant(&account("github"), &HashMap::new(), http, "en").err(),
             Some(PluginError::UnknownPlugin("github".into()))

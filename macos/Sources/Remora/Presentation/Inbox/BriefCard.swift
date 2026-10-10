@@ -53,7 +53,8 @@ struct BriefCard: View {
                     .font(Myna.font(10.5))
                     .foregroundStyle(Myna.onDark(opacity: 0.5))
             } else {
-                Text("Claude is reading your inbox…").font(Myna.font(12.5)).foregroundStyle(Myna.onDark(opacity: 0.7))
+                Text("The assistant is reading your inbox…").font(Myna.font(12.5)).foregroundStyle(
+                    Myna.onDark(opacity: 0.7))
             }
         }
         .foregroundStyle(Myna.onDark)

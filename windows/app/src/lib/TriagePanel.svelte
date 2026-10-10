@@ -1,5 +1,5 @@
 <script lang="ts">
-// Claude's proposal for each snoozed item: nothing changes until you tick and apply.
+// The assistant's proposal for each snoozed item: nothing changes until you tick and apply.
 import { api, type AssistantView, type Item, type TriageSuggestion } from './api'
 import { selection } from './assistant'
 import { t, translateMessage } from './i18n'

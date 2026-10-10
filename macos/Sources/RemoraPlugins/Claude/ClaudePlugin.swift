@@ -79,34 +79,9 @@ public struct ClaudePlugin: AssistantPlugin {
         var headers = ["x-api-key": apiKey, "anthropic-version": "2023-06-01"]
         if body.fallbacks != nil { headers["anthropic-beta"] = "server-side-fallback-2026-07-01" }
         let request = try URLRequest.post(endpoint, json: body, headers: headers, timeout: Self.timeout)
-        var attempt = 0
-        while true {
-            do {
-                return try await http.decode(Response.self, from: request)
-            } catch let error as URLError where error.code == .timedOut {
-                throw HTTPError.api(L("Claude took too long to answer. Try again later."))
-            } catch {
-                guard let delay = Self.retryDelay(after: error, attempt: attempt) else { throw error }
-                attempt += 1
-                try await sleep(delay)
-            }
-        }
-    }
-
-    /// Retries an overloaded or rate-limited answer up to twice (AI-04): 429, 408, 409 and 5xx (529 is "overloaded").
-    /// A rate limit waits as long as `retry-after` says, up to a minute; beyond that, or without it, 2 s then 4 s.
-    /// Nil: give up and show the error. Same rule on Windows (`claude/api.rs`).
-    static func retryDelay(after error: Error, attempt: Int, now: Date = .now) -> TimeInterval? {
-        guard attempt < 2 else { return nil }
-        let backoff = TimeInterval(2 << attempt)
-        switch error as? HTTPError {
-        case .rateLimited(let until?):
-            let wait = until.timeIntervalSince(now)
-            return wait > 60 ? nil : max(wait, 0)
-        case .rateLimited(nil): return backoff
-        case .status(let code) where [408, 409].contains(code) || code >= 500: return backoff
-        default: return nil
-        }
+        return try await AssistantRetry.decode(
+            Response.self, from: request, http: http,
+            tooSlow: L("Claude took too long to answer. Try again later."), sleep: sleep)
     }
 
     static func body(items: [InboxItem], model: String, now: Date) -> Request {

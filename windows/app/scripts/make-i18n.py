@@ -39,6 +39,7 @@ rust = [
     re.compile(r'\.notifying\("([^"]+)"\)'),
     re.compile(r'Self::of\("[^"]*",\s*"([^"]+)"'),
     re.compile(r'label:\s*"([^"]+)"'),
+    re.compile(r'placeholder:\s*"([^"]+)"\.into\(\)'),
     re.compile(r'Some\("((?:Not allowed|External AI)[^"]+)"\)'),
     re.compile(r'(?:summary|setup_label|description):\s*"([^"]+)"\.into\(\)'),
     re.compile(r'ConfigField::(?:token|new)\(\s*"([^"]+)",\s*"([^"]+)"'),

@@ -5,7 +5,9 @@ import RemoraCore
 ///
 /// Managed keys, in the `fr.igitscor.remora` preference domain:
 /// `AllowedPlugins` (array of plugin IDs), `AllowExternalAI` (Bool), `AllowRemoteImages` (Bool),
-/// `AIExcludedSources` (array of plugin IDs, or "reminders"), `AllowedAIModels` (array of model IDs).
+/// `AIExcludedSources` (array of plugin IDs, or "reminders"), `AllowedAIModels` (array of model IDs),
+/// `AllowedAIServers` (array of URL prefixes), `AllowLocalAI` (Bool). `AIServer` (String URL) sets and locks the
+/// OpenAI-compatible assistant's server.
 /// Settings: `HiddenContentSources` (array of plugin IDs, or "reminders", added to the user's),
 /// `RefreshMinutes` (Int, 1 to 60), `OpenInApps` (Bool), `ClaudeCodePath` (String).
 /// Updates: `AutomaticUpdates` (Bool). True checks every day, locked on; false turns updating off entirely,
@@ -20,6 +22,9 @@ enum ManagedPolicy {
     static let refreshMinutesKey = "RefreshMinutes"
     static let openInAppsKey = "OpenInApps"
     static let claudeCodePathKey = "ClaudeCodePath"
+    static let allowedAIServersKey = "AllowedAIServers"
+    static let aiServerKey = "AIServer"
+    static let allowLocalAIKey = "AllowLocalAI"
     static let automaticUpdatesKey = "AutomaticUpdates"
 
     /// What Remora acts on: your preferences with the organization's settings in place. Hiding message content can only
@@ -53,6 +58,13 @@ enum ManagedPolicy {
         }
     }
 
+    /// The AI server the organization chose, which wins over the one in the account (AI-23).
+    static func aiServer(_ managed: ManagedValues = ManagedDefaults()) -> String? {
+        (managed.forced(aiServerKey) as? String).flatMap {
+            $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0.trimmingCharacters(in: .whitespaces)
+        }
+    }
+
     /// Whether a setting is the organization's: its control is then locked in Settings.
     static func isForced(_ key: String, _ managed: ManagedValues = ManagedDefaults()) -> Bool {
         managed.forced(key) != nil
@@ -65,8 +77,11 @@ enum ManagedPolicy {
 
     /// True when the organization set at least one key: the Privacy settings are then read-only.
     static func isManaged(_ managed: ManagedValues = ManagedDefaults()) -> Bool {
-        [allowedPluginsKey, externalAIKey, remoteImagesKey, aiExcludedSourcesKey, allowedAIModelsKey]
-            .contains { managed.forced($0) != nil }
+        [
+            allowedPluginsKey, externalAIKey, remoteImagesKey, aiExcludedSourcesKey, allowedAIModelsKey,
+            allowedAIServersKey, allowLocalAIKey,
+        ]
+        .contains { managed.forced($0) != nil }
     }
 
     /// Sources the organization keeps away from the assistant: locked off in Settings.
@@ -101,6 +116,13 @@ enum ManagedPolicy {
         if let value = managed.forced(remoteImagesKey) {
             policy.allowRemoteImages = bool(value)
         }
+        // An empty list restricts nothing; a value of another type allows no server at all.
+        if let value = managed.forced(allowedAIServersKey) {
+            let servers = (value as? [String])?.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            policy.allowedAIServers = servers.map { $0.isEmpty ? nil : $0 } ?? []
+        }
+        policy.allowLocalAI = managed.forced(allowLocalAIKey).map(bool)
+        policy.externalAIManaged = managed.forced(externalAIKey) != nil
         return policy
     }
 

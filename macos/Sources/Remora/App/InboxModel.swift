@@ -246,12 +246,25 @@ final class InboxModel {
 
     var sourceAccounts: [Account] { accounts.filter { !PluginRegistry.isAssistant($0.pluginID) } }
 
-    /// The connected assistant, only when the privacy policy allows it.
+    /// The connected assistant, only when the privacy policy allows it, its AI server included.
     var assistantAccount: Account? {
-        accounts.first { account in
-            PluginRegistry.isAssistant(account.pluginID)
-                && PluginRegistry.manifest(account.pluginID).map(policy.allows) == true
-        }
+        accounts.first { PluginRegistry.isAssistant($0.pluginID) && refusal(for: $0) == nil }
+    }
+
+    /// The account as Remora uses it: the organization's `AIServer` replaces the server the user typed.
+    func effective(_ account: Account) -> Account {
+        guard let field = PluginRegistry.manifest(account.pluginID)?.egress.serverField,
+            let server = ManagedPolicy.aiServer(environment.managed)
+        else { return account }
+        var account = account
+        account.settings[field] = server
+        return account
+    }
+
+    /// Why the privacy policy blocks an account: its tool, or for an assistant its AI server. Nil when allowed.
+    func refusal(for account: Account) -> String? {
+        guard let manifest = PluginRegistry.manifest(account.pluginID) else { return nil }
+        return policy.refusal(for: manifest, settings: effective(account).settings)
     }
 
     // MARK: Privacy
@@ -275,8 +288,7 @@ final class InboxModel {
         let policy = policy
         var dropped = false
         for account in accounts {
-            guard let manifest = PluginRegistry.manifest(account.pluginID), let refusal = policy.refusal(for: manifest)
-            else { continue }
+            guard let refusal = refusal(for: account) else { continue }
             errors[account.id] = SourceFailure(
                 kind: .other, message: L("%@ Remove the account to delete its token.", refusal))
             if itemsByAccount[account.id] != nil {
@@ -302,6 +314,7 @@ final class InboxModel {
 
     /// Built with its model fields kept within the organization's allowed models, if any.
     private func assistantPlugin(_ account: Account, secrets: [String: String]) throws -> any AssistantPlugin {
+        let account = effective(account)
         var constrained = account
         let defaults = Dictionary(
             (PluginRegistry.manifest(account.pluginID)?.fields ?? []).map { ($0.key, $0.defaultValue) },
@@ -320,12 +333,15 @@ final class InboxModel {
         guard let manifest = PluginRegistry.manifest(account.pluginID) else {
             throw PluginError.unknownPlugin(account.pluginID)
         }
-        if let refusal = policy.refusal(for: manifest) { throw EgressError.blockedPlugin(refusal) }
+        if let refusal = refusal(for: account) { throw EgressError.blockedPlugin(refusal) }
         return GuardedHTTPClient(http, allowing: allowedHosts(for: account, manifest: manifest))
     }
 
     func allowedHosts(for account: Account, manifest: PluginManifest) -> [String] {
-        let own = account.settings["host"].flatMap { URL(string: $0.contains("://") ? $0 : "https://" + $0)?.host }
+        let settings = effective(account).settings
+        let own = (settings["host"] ?? manifest.server(in: settings)).flatMap {
+            URL(string: $0.contains("://") ? $0 : "https://" + $0)?.host
+        }
         return manifest.egress.hosts + [own].compactMap { $0 }
     }
 

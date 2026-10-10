@@ -100,15 +100,15 @@ struct ClaudePluginTests {
     @Test func retryWaitsWhatTheServerSaysUpToAMinute() {
         let now = Date.now
         #expect(
-            ClaudePlugin.retryDelay(after: HTTPError.rateLimited(now.addingTimeInterval(20)), attempt: 0, now: now)
+            AssistantRetry.delay(after: HTTPError.rateLimited(now.addingTimeInterval(20)), attempt: 0, now: now)
                 == 20)
         #expect(
-            ClaudePlugin.retryDelay(after: HTTPError.rateLimited(now.addingTimeInterval(600)), attempt: 0, now: now)
+            AssistantRetry.delay(after: HTTPError.rateLimited(now.addingTimeInterval(600)), attempt: 0, now: now)
                 == nil)
-        #expect(ClaudePlugin.retryDelay(after: HTTPError.rateLimited(nil), attempt: 1, now: now) == 4)
-        #expect(ClaudePlugin.retryDelay(after: HTTPError.status(500), attempt: 2, now: now) == nil)
-        #expect(ClaudePlugin.retryDelay(after: HTTPError.status(400), attempt: 0, now: now) == nil)
-        #expect(ClaudePlugin.retryDelay(after: HTTPError.unauthorized, attempt: 0, now: now) == nil)
+        #expect(AssistantRetry.delay(after: HTTPError.rateLimited(nil), attempt: 1, now: now) == 4)
+        #expect(AssistantRetry.delay(after: HTTPError.status(500), attempt: 2, now: now) == nil)
+        #expect(AssistantRetry.delay(after: HTTPError.status(400), attempt: 0, now: now) == nil)
+        #expect(AssistantRetry.delay(after: HTTPError.unauthorized, attempt: 0, now: now) == nil)
     }
 }
 

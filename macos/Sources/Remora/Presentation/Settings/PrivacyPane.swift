@@ -28,11 +28,11 @@ struct PrivacyPane: View {
             }
 
             Section(L("External AI")) {
-                Toggle(L("Allow external AI (Claude)"), isOn: $model.preferences.allowExternalAI)
+                Toggle(L("Allow external AI"), isOn: $model.preferences.allowExternalAI)
                     .disabled(managed)
                 Text(
                     L(
-                        "Claude plugins send the titles, contexts, authors and statuses of inbox items to Anthropic. When off, the brief, summaries and triage are unavailable."
+                        "The assistant sends the titles, contexts, authors and statuses of inbox items to its provider: Anthropic for Claude, or the server you set. When off, only a server on this computer can write the brief, summaries and triage."
                     )
                 )
                 .font(Myna.font(11.5))
@@ -59,7 +59,7 @@ struct PrivacyPane: View {
                 }
                 ForEach(model.accounts) { account in
                     if let manifest = PluginRegistry.manifest(account.pluginID) {
-                        let refusal = policy.refusal(for: manifest)
+                        let refusal = model.refusal(for: account)
                         VStack(alignment: .leading, spacing: 3) {
                             HStack {
                                 Text(account.name ?? manifest.name).font(Myna.font(13, .semibold))

@@ -1,5 +1,6 @@
 import Foundation
 import RemoraCore
+import RemoraPlugins
 import Testing
 
 @testable import Remora
@@ -90,6 +91,39 @@ struct PolicyEnforcementTests {
         await model.refresh(manual: true)
         #expect(model.allItems.count == 2, "back once allowed")
         #expect(model.errors[account.id] == nil)
+    }
+}
+
+/// AI-23: the organization's AI server replaces the user's, and decides whether the assistant runs.
+@MainActor
+struct AIServerTests {
+    @Test func theOrganizationsServerWins() {
+        var harness = Harness()
+        harness.managed.values = [
+            "AIServer": "https://acme.openai.azure.com/openai/v1",
+            "AllowedAIServers": ["https://acme.openai.azure.com/openai/"], "AllowExternalAI": true,
+        ]
+        let model = harness.model()
+        let account = Account(pluginID: "openai", name: nil, settings: ["host": "https://api.openai.com/v1"])
+        #expect(model.effective(account).settings["host"] == "https://acme.openai.azure.com/openai/v1")
+        #expect(model.refusal(for: account) == nil)
+        let manifest = OpenAIPlugin.manifest
+        #expect(model.allowedHosts(for: account, manifest: manifest) == ["acme.openai.azure.com"])
+
+        harness.managed.values["AIServer"] = "https://api.openai.com/v1"
+        #expect(
+            harness.model().refusal(for: account) == L("Your organization doesn’t allow this AI server."),
+            "a forced server outside the list")
+    }
+
+    @Test func aLocalServerWorksWithExternalAIOff() {
+        let harness = Harness()
+        let model = harness.model()
+        model.preferences.allowExternalAI = false
+        let local = Account(pluginID: "openai", name: nil, settings: ["host": "http://localhost:11434/v1"])
+        let cloud = Account(pluginID: "openai", name: nil, settings: ["host": "https://api.openai.com/v1"])
+        #expect(model.refusal(for: local) == nil)
+        #expect(model.refusal(for: cloud) != nil)
     }
 }
 

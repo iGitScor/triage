@@ -183,6 +183,8 @@ export interface Account {
   hosts: string[]
   egress: string
   allowed: boolean
+  /** Why it's blocked, when it is. */
+  refusal?: string | null
   error?: string | null
   errorKind?: FailureKind | null
   remarks: string[]
@@ -212,6 +214,11 @@ export interface Managed {
   allowExternalAi?: boolean | null
   allowRemoteImages?: boolean | null
   automaticUpdates?: boolean | null
+  /** AI-23: URL prefixes the OpenAI-compatible assistant may use. */
+  allowedAiServers?: string[] | null
+  /** AI-23: its server, set by the organization and locked in Settings. */
+  aiServer?: string | null
+  allowLocalAi?: boolean | null
   /** Policy values present but unreadable, applied as "deny". */
   unreadable: string[]
 }

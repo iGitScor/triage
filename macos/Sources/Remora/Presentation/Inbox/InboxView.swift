@@ -220,7 +220,7 @@ struct InboxView: View {
                             {
                                 HStack {
                                     Spacer()
-                                    ActionButton(label: "Triage with Claude", symbol: "sparkles") {
+                                    ActionButton(label: "Triage with the assistant", symbol: "sparkles") {
                                         Task { await model.triage() }
                                     }
                                 }

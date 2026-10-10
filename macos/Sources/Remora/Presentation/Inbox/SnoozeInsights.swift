@@ -142,7 +142,7 @@ struct TriagePanel: View {
 
     var body: some View {
         if model.isTriaging {
-            Label(L("Claude is looking at your snoozed items…"), systemImage: "sparkles")
+            Label(L("The assistant is looking at your snoozed items…"), systemImage: "sparkles")
                 .font(Myna.font(12))
                 .foregroundStyle(Myna.muted)
                 .padding(.horizontal, 2)
@@ -151,7 +151,7 @@ struct TriagePanel: View {
         } else if !model.triageSuggestions.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label(L("Claude’s suggestions"), systemImage: "sparkles")
+                    Label(L("The assistant’s suggestions"), systemImage: "sparkles")
                         .font(Myna.font(13, .semibold))
                     Spacer()
                     IconButton(symbol: "xmark", help: "Close", size: 22) { model.discardTriage() }

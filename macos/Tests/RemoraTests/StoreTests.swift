@@ -98,6 +98,28 @@ struct ManagedPolicyTests {
         #expect(ManagedPolicy.isManaged(managed))
     }
 
+    /// AI-23: the AI server keys.
+    @Test func aiServerKeys() {
+        var managed = ManagedDictionary(values: [
+            "AllowedAIServers": ["https://acme.openai.azure.com/openai/", " "], "AllowLocalAI": "true",
+            "AIServer": " https://acme.openai.azure.com/openai/v1 ",
+        ])
+        var policy = ManagedPolicy.policy(user: Preferences(), managed: managed)
+        #expect(policy.allowedAIServers == ["https://acme.openai.azure.com/openai/"])
+        #expect(policy.allowLocalAI == true && !policy.externalAIManaged)
+        #expect(ManagedPolicy.aiServer(managed) == "https://acme.openai.azure.com/openai/v1")
+        #expect(ManagedPolicy.isManaged(managed))
+
+        managed = ManagedDictionary(values: ["AllowedAIServers": [String](), "AllowExternalAI": false])
+        policy = ManagedPolicy.policy(user: Preferences(), managed: managed)
+        #expect(policy.allowedAIServers == nil, "an empty list restricts nothing")
+        #expect(policy.allowLocalAI == nil && policy.externalAIManaged)
+
+        managed = ManagedDictionary(values: ["AllowedAIServers": "https://api.openai.com"])
+        #expect(ManagedPolicy.policy(user: Preferences(), managed: managed).allowedAIServers == [], "fails closed")
+        #expect(!ManagedPolicy.isManaged(ManagedDictionary(values: ["AIServer": "https://x.io"])), "a setting")
+    }
+
     /// A value of the wrong type allows nothing, as before (the same rule as on Windows).
     @Test func aValueOfTheWrongTypeAllowsNothing() {
         let managed = ManagedDictionary(values: ["AllowedPlugins": "github", "AllowExternalAI": [true]])
