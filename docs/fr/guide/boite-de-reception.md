@@ -66,6 +66,10 @@ jamais plus que ce qu’on peut saisir d’un coup d’œil.
 - **Deux doigts sur le trackpad** : vers la droite pour terminer, vers la gauche pour reporter.
 - **Clic droit sur un élément** pour toutes les actions : Ouvrir, Ouvrir dans le navigateur, Copier le lien,
   Épingler, Reporter…, Marquer comme terminé.
+- **Clavier** : ↑ ↓ ou J K pour passer d’un élément à l’autre, ⏎ pour ouvrir (⌥⏎ dans le navigateur), E pour
+  terminer, S pour reporter, P pour épingler. ⌘F pour chercher (ou tapez directement), Échap pour quitter la
+  recherche, ⌘R pour actualiser, ⌘Z pour annuler. Le bouton clavier en bas les rappelle.
+- **VoiceOver** lit chaque élément comme un seul bouton ; le rotor des actions propose Marquer comme terminé,
 
 ## Notifications
 

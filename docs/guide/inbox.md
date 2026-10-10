@@ -64,6 +64,10 @@ take in at a glance.
 - **Search** filters every tab by title, context (repository, channel, issue key), author and preview.
 - **Two fingers on the trackpad**: swipe right to mark done, left to snooze.
 - **Right-click an item** for every action: Open, Open in browser, Copy link, Pin, Snooze…, Mark as done.
+- **Keyboard**: ↑ ↓ or J K move between items, ⏎ opens (⌥⏎ in the browser), E marks done, S snoozes, P pins.
+  ⌘F searches (or just start typing), Esc leaves the search, ⌘R refreshes, ⌘Z undoes. The keyboard button at the bottom lists
+  them.
+- **VoiceOver** reads each item as one button; the actions rotor has Mark as done, Snooze, Pin, Start and the
 
 ## Notifications
 
