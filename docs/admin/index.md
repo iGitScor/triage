@@ -48,6 +48,7 @@ flowchart LR
 
 ## Next
 
+- [Security overview](./security): the answers to a vendor security questionnaire, on one page.
 - [Data flows](./data-flows): every flow, what is sent, and what stays on the Mac.
 - [Managing the policy with MDM](./mdm): the keys and a ready-to-use configuration profile.
 - [Deploying Remora](./deployment): the DMG, signing, and updates.

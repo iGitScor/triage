@@ -36,4 +36,5 @@ In scope: the macOS app, the Windows app, and the website and documentation at
 Anthropic's services have their own programs.
 
 How Remora is meant to protect data, which a report can measure it against:
+[security overview](https://triage.iscor.me/docs/admin/security),
 [managing the policy](https://triage.iscor.me/docs/admin/mdm).

@@ -51,6 +51,7 @@ flowchart LR
 
 ## Ensuite
 
+- [Synthèse sécurité](./securite) : les réponses à un questionnaire sécurité fournisseur, sur une page.
 - [Flux de données](./flux-de-donnees) : chaque flux, ce qui est envoyé, et ce qui reste sur le Mac.
 - [Gérer la politique par MDM](./mdm) : les clés et un profil de configuration prêt à l’emploi.
 - [Déployer Remora](./deploiement) : le DMG, la signature, les mises à jour.
