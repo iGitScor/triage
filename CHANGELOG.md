@@ -25,6 +25,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 
 
+- Mac: the inbox is sorted again only when something changed, instead of three times a minute even while closed.
 - **Offline, an expired token and a rate limit no longer look the same.** Offline, the footer says so once, calmly,
   and Remora refreshes as soon as the connection is back (the Mac also stops asking the tools meanwhile). A rejected
   token says the account needs reconnecting, and **Reconnect…** replaces it while keeping Done, snoozes and pins (on
