@@ -14,6 +14,7 @@ la page qui donne le détail. Elle couvre l’app macOS et, quand elle diffère,
 |---|---|
 | De quoi s’agit-il ? | Une app de barre des menus (macOS) ou de zone de notification (Windows) qui lit les outils de travail de l’utilisateur et montre ce qui l’attend. |
 | Y a-t-il un serveur, un cloud ou un compte éditeur ? | Non. L’app parle directement aux outils que l’utilisateur connecte. Rien ne passe par un tiers. |
+| Télémétrie, statistiques, rapports de plantage, vérification de mises à jour ? | Aucun, sauf une vérification des mises à jour une fois que l’utilisateur ou la DSI les active. L’app n’ouvre aucune connexion en dehors de celles listées dans [Flux de données](./flux-de-donnees). |
 | Écrit-elle dans les outils ? | Non. Elle ne fait que lire. Une réponse préparée est copiée dans le presse-papiers, l’utilisateur la colle lui-même. |
 | Code source | Public, GPL-3.0-or-later : [github.com/iGitScor/triage](https://github.com/iGitScor/triage). |
 
@@ -60,6 +61,8 @@ la page qui donne le détail. Elle couvre l’app macOS et, quand elle diffère,
 |---|---|
 | Comment l’app est-elle distribuée ? | Par GitHub Releases : `Remora.dmg` et `Remora-Setup.exe`, à des URL fixes. Voir [Déployer Remora](./deploiement). |
 | Comment vérifier un téléchargement ? | Chaque fichier a son SHA-256, un SBOM CycloneDX et une provenance de build signée : `gh attestation verify Remora.dmg --repo iGitScor/triage` prouve qu’il a été construit par le workflow de publication à partir du source étiqueté. |
+| Signature du code | **Pas encore** : l’app Mac est signée ad hoc et non notarisée, et l’installeur Windows n’est pas signé. L’utilisateur confirme le premier lancement. Vous pouvez construire et signer votre propre copie avec votre Developer ID. Ce qui sera signé, et par qui : [Politique de signature du code](./signature-du-code). |
+| Mises à jour | Désactivées par défaut. Une fois activées (Réglages → Général, ou `AutomaticUpdates`), Remora interroge GitHub une fois par jour et installe une nouvelle version quand l’utilisateur le choisit. Chaque téléchargement doit porter la signature de la clé de publication pour cette version (Ed25519 sous macOS, minisign de Tauri sous Windows), et sous macOS la nouvelle app doit être signée par le même certificat. `AutomaticUpdates` à faux désactive entièrement les mises à jour, pour les parcs que vous redéployez vous-même. |
 | Dépendances | L’app macOS n’utilise aucun paquet tiers. Les crates Rust et paquets npm de l’app Windows sont figés par des fichiers de verrouillage, vérifiés chaque semaine (vulnérabilités et licences) et listés dans son SBOM. |
 | Tests | Chaque modification exécute en CI les tests des deux apps, dont les contrôles des destinations, des redirections, des liens et de la politique. |
 
@@ -74,5 +77,6 @@ publié. Seule la dernière version reçoit les correctifs de sécurité.
 
 - Pas de signature Developer ID d’Apple ni de notarisation, et pas d’installeur Windows signé : Gatekeeper et
   SmartScreen avertissent au premier lancement, et macOS redemande l’accès au trousseau après chaque mise à jour.
+- Mises à jour désactivées par défaut : tant que l’utilisateur ou la DSI ne les active pas, garder les postes à jour leur revient.
 - Sur Windows, les fichiers locaux sont du JSON en clair lisible par le compte de l’utilisateur et les
   administrateurs, et la politique couvre moins de réglages que sur macOS.

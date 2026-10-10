@@ -25,6 +25,9 @@ peut plus modifier la politique.
 | `RefreshMinutes` | Entier | La fréquence de vérification des outils, de 1 à 60 minutes (une autre valeur est ignorée). Verrouillé dans les Réglages | 5 |
 | `OpenInApps` | Booléen | Ouvrir les éléments Slack et Linear dans leur app quand elle est installée ; `false` ouvre toujours la page web | `true` |
 | `ClaudeCodePath` | Chaîne | Le `claude` que Remora exécute, à la place de celui trouvé ou saisi dans le compte. Il doit toujours s’appeler `claude`, appartenir à l’utilisateur ou à root, et répondre comme Claude Code | Trouvé automatiquement |
+| `AutomaticUpdates` | Booléen | `true` : interroge GitHub une fois par jour pour une nouvelle version, verrouillé. `false` : aucune vérification, même pas *Vérifier maintenant*, pour les parcs que vous redéployez vous-même | Désactivé ; l’utilisateur décide |
+
+Les cinq dernières sont des réglages, pas des règles de confidentialité : elles ne verrouillent pas Réglages → Confidentialité.
 
 Identifiants : `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (API Claude).
 Pour choisir entre Claude Code et l’API Claude, ne listez que l’un des deux dans `AllowedPlugins`.
@@ -101,6 +104,7 @@ L’app Windows lit les trois mêmes clés sous **`HKEY_LOCAL_MACHINE\SOFTWARE\P
 | `AllowedPlugins` | `REG_MULTI_SZ` | Les outils autorisés, un identifiant par ligne |
 | `AllowExternalAI` | `REG_DWORD` | `1` pour autoriser l’IA externe, `0` pour l’interdire |
 | `AllowRemoteImages` | `REG_DWORD` | `1` pour charger les avatars des outils autorisés, `0` sinon |
+| `AutomaticUpdates` | `REG_DWORD` | `1` pour vérifier les mises à jour chaque jour (verrouillé), `0` pour les désactiver |
 
 Déployez-les par une préférence de stratégie de groupe (Configuration ordinateur → Préférences → Paramètres Windows →
 Registre), un script de correction ou de configuration Intune, ou un fichier `.reg`. La même politique que le profil

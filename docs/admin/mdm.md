@@ -25,6 +25,9 @@ the policy.
 | `RefreshMinutes` | Integer | How often tools are checked, from 1 to 60 minutes (another value is ignored). Locked in Settings | 5 |
 | `OpenInApps` | Boolean | Open Slack and Linear items in their desktop app when installed; `false` always opens the web page | `true` |
 | `ClaudeCodePath` | String | The `claude` Remora runs, instead of the one found or entered in the account. It must still be named `claude`, belong to the user or root, and answer as Claude Code | Found automatically |
+| `AutomaticUpdates` | Boolean | `true`: check GitHub for a new version once a day, locked on. `false`: no update check at all, not even *Check now*, for fleets you redeploy yourself | Off; the user decides |
+
+The last five are settings, not privacy rules: they don’t make Settings → Privacy read-only.
 
 Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (Claude API).
 To choose between Claude Code and the Claude API, list only one of them in `AllowedPlugins`.
@@ -99,6 +102,7 @@ The Windows app reads the same three keys from **`HKEY_LOCAL_MACHINE\SOFTWARE\Po
 | `AllowedPlugins` | `REG_MULTI_SZ` | The allowed tools, one ID per line |
 | `AllowExternalAI` | `REG_DWORD` | `1` to allow external AI, `0` to forbid it |
 | `AllowRemoteImages` | `REG_DWORD` | `1` to load avatars from allowed tools, `0` not to |
+| `AutomaticUpdates` | `REG_DWORD` | `1` to check for updates daily (locked on), `0` to turn updating off |
 
 Deploy them with a Group Policy Preference (Computer Configuration → Preferences → Windows Settings → Registry), an
 Intune remediation or configuration script, or a `.reg` file. The same policy as the profile above, in PowerShell

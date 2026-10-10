@@ -76,8 +76,12 @@ de le déployer. La politique se règle dans le registre : voir [MDM](./mdm#wind
 
 ## Mises à jour
 
-Remora ne se met pas à jour toute seule et ne vérifie pas les mises à jour : rien n’appelle l’extérieur. Suivez les
-[versions](https://github.com/iGitScor/triage/releases) (GitHub → Watch → Custom → Releases) et redéployez.
+Désactivées par défaut : rien n’appelle l’extérieur. Un utilisateur peut activer *Rechercher les mises à jour
+automatiquement* (Réglages → Général) ; Remora interroge alors GitHub une fois par jour et installe une nouvelle
+version, signée par la clé de publication, quand il le choisit. Réglez `AutomaticUpdates` dans la
+[politique](./mdm) pour décider pour tous : vrai l’active et le verrouille, faux désactive entièrement les mises à
+jour (même *Vérifier maintenant*) si vous redéployez chaque version vous-même. Suivez les
+[versions](https://github.com/iGitScor/triage/releases) (GitHub → Watch → Custom → Releases) dans tous les cas.
 
 ## La désinstaller
 

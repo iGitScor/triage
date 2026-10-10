@@ -21,6 +21,13 @@ open it once, then System Settings → Privacy & Security → **Open Anyway**. m
 Remora keeps all your tokens in one Keychain item. macOS asks once per new version of an app that isn’t signed
 by a registered Apple developer. Choose **Always Allow** and it won’t ask again until the next update.
 
+## How do I get new versions?
+
+Turn on **Check for updates automatically** in Settings → General: once a day, Remora asks GitHub whether a new
+version is out, and installs it when you click **Install and relaunch**. It's off until you turn it on, and
+**Check now** works either way. Nothing about you or your inbox is sent. If your organization manages updates, the
+setting says so.
+
 ## An item I expected isn’t there
 
 - It may be in *Done* (it comes back on new activity), or *Snoozed*.

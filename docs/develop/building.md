@@ -73,6 +73,14 @@ and each release's notes say so.
   needs the secret `SIGNPATH_API_TOKEN`, the variable `SIGNPATH_ORGANIZATION_ID`, and in SignPath the project
   `remora`, the policy `release-signing` and the artifact configuration `exe`. See the
   [code signing policy](/admin/code-signing).
+- **Updates** (opt-in in the apps): each release publishes `latest.json`, listing the platforms whose file was
+  signed for updating. Mac: `swift scripts/updates/make-key.swift` writes the public key into `Info.plist` and the
+  private key to a folder for the `UPDATE_SIGNING_KEY` secret; the DMG is signed only when the release certificate
+  is also set, since the app installs an update only if it is signed like itself. Windows: `npx tauri signer
+  generate`, the public key in `tauri.conf.json` (`plugins.updater.pubkey`), the private key and its password as
+  `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; each signature is bound to its version.
+  Keep both private keys offline: whoever has one can ship an update to everyone who turned updates on, and a new
+  key means users update by hand once.
 
 ## Screenshots
 

@@ -21,9 +21,10 @@ guarded client, policy) with Windows equivalents: Credential Manager, `%LOCALAPP
 | Claude Code | Anthropic, through the local `claude` program | A few fields of each inbox item: see [What reaches Claude](#what-reaches-claude) | **Off** |
 | Claude API | `api.anthropic.com` | The API key, and the same fields as Claude Code | **Off** |
 | Avatars | Image hosts of allowed, connected tools only | An image request | Allowed |
+| Updates | `github.com`, and GitHub's download servers (`*.githubusercontent.com`) | A request for `latest.json` once a day, and the new version when the user installs it. No identifier, token or content | **Off** (`AutomaticUpdates`) |
 
 Data from the tools comes **back** to the Mac and stays there. There is **no telemetry, no analytics, no crash
-reporting**, no update check, and no other network access. Fonts and tool logos are bundled in the app, never
+reporting**, no update check unless updates are turned on, and no other network access. Fonts and tool logos are bundled in the app, never
 downloaded. Remora never writes to the tools: drafted messages are copied to the clipboard for the user to paste.
 
 ## What reaches Claude

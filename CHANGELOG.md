@@ -6,6 +6,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 ## Unreleased
 
 
+- **Updates**, off until you turn them on (Settings → General): Remora checks GitHub once a day and installs a new
+  version when you choose, only if it is signed with Remora's release key. **Check now** works either way. IT can
+  decide for everyone with `AutomaticUpdates`.
 - **In progress**: start an item or a reminder to keep it in front of you, with the time spent; the menu bar can
   show only that task while it runs.
 - **Hide message content** in notifications, per tool: they still say where something happened, not what was
@@ -71,6 +74,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
   Remora.dmg --repo iGitScor/triage`.
 
 
+- Mac: the refresh arrow kept spinning after a refresh had finished.
 - Mac: if the Keychain refuses (Deny), connecting a tool now fails and says so instead of losing the token at the
   next launch; removing an account or erasing says when the token is still there. A Keychain item Remora can't read
   is no longer replaced, so other accounts keep their tokens.

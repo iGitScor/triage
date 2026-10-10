@@ -1,32 +1,92 @@
 name: Release
 
-# Push a tag such as v0.2.0: tests, then a DMG and a Windows installer published as one GitHub release.
-# Both keep the same name in every release, so the website links to
+# Set the version first (`make version V=0.3.2`), commit, then push the tag v0.3.2. Both apps are checked and built
+# in parallel; the release is published only when both succeed, with every file at once, so a failure never leaves
+# a half-published release. Each build job also writes its app's SBOM (CycloneDX, from the lockfiles) and signs two
+# attestations for the file it built: where it was built from (provenance) and what is in it (the SBOM).
+# Anyone can check them: `gh attestation verify Remora.dmg --repo iGitScor/triage`. The files keep the same name in every release, so the website links to
 # https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg (and Remora-Setup.exe).
 on:
   push:
     tags: ["v*"]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: The tag matches the version in the source
+        run: python3 scripts/version.py --check "${GITHUB_REF_NAME#v}"
+
   macos:
+    needs: version
     runs-on: macos-latest
+    timeout-minutes: 45
+    outputs:
+      signed: ${{ steps.signing.outputs.identity != '' }}
+    permissions:
+      contents: read
+      id-token: write # signs the attestations (Sigstore, through GitHub's OIDC token)
+      attestations: write
     defaults:
       run:
         working-directory: macos
     steps:
       - uses: actions/checkout@v4
+      # From the source before anything is built: Swift packages (none today) and the files the app bundles.
+      - name: SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: macos
+          format: cyclonedx-json
+          output-file: macos/Remora.dmg.cdx.json
+          upload-artifact: false
+      - name: Every UI string has French
+        run: python3 scripts/make-strings.py --check
       - name: Test
         run: swift test
-      - name: Stamp the version from the tag
+      - name: Stamp the build number
+        run: /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Resources/Info.plist
+      # The same self-signed certificate for every release (from `scripts/make-signing-cert.sh --release`): the
+      # Keychain recognizes Remora by it, so users allow access once, not after each update. Without the secrets
+      # (forks), the app is signed ad hoc as before. Gatekeeper still asks until the app is notarized.
+      - name: Import the release signing certificate
+        id: signing
+        env:
+          P12: ${{ secrets.MACOS_SIGNING_P12 }}
+          PASSWORD: ${{ secrets.MACOS_SIGNING_PASSWORD }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" Resources/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Resources/Info.plist
-      - name: Build the app (Universal, signed ad hoc)
-        run: REMORA_UNIVERSAL=1 ./scripts/build-app.sh
+          if [ -z "$P12" ]; then
+            echo "::warning::No MACOS_SIGNING_P12 secret: the app is signed ad hoc, and the Keychain will ask again after this update."
+            exit 0
+          fi
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          echo "identity=Remora Release Signing" >> "$GITHUB_OUTPUT"
+      - name: Build the app (Universal)
+        env:
+          REMORA_SIGN_IDENTITY: ${{ steps.signing.outputs.identity }}
+        run: |
+          REMORA_UNIVERSAL=1 ./scripts/build-app.sh
+          codesign --verify --strict --verbose=2 build/Remora.app
+          # What the Keychain recognizes: with the release certificate, the same in every release.
+          codesign -d -r- build/Remora.app
       - name: Package the DMG
         run: |
           mkdir -p build/dmg
@@ -37,29 +97,69 @@ jobs:
           cp Resources/Outfit-OFL.txt build/dmg/
           hdiutil create -volname Remora -srcfolder build/dmg -ov -format UDZO build/Remora.dmg
           shasum -a 256 build/Remora.dmg | sed 's| build/| |' > build/Remora.dmg.sha256
+          # Next to the DMG, so the artifact keeps every file at the same level.
+          mv Remora.dmg.cdx.json build/
           cat build/Remora.dmg.sha256
-      - name: Publish the release
+      # The Ed25519 signature the app checks before installing an update (scripts/updates/make-key.swift).
+      # Only for an app signed with the release certificate: an update must match the installed app's signature.
+      - name: Sign the update
         env:
-          GH_TOKEN: ${{ github.token }}
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+          SIGNED: ${{ steps.signing.outputs.identity != '' }}
         run: |
-          cat > build/notes.md <<'EOF'
-          **Mac: [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)** (macOS 14 or later), open it and drag Remora to Applications. Remora isn't notarized yet: the first time, right-click Remora → Open (on macOS 15: System Settings → Privacy & Security → Open Anyway). macOS asks for Keychain access once after each update; choose Always Allow.
-
-          **Windows (preview): [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe)** (Windows 10 or 11), installs for your user only. The installer isn't signed yet: if Windows says it protected your PC, click More info → Run anyway.
-          EOF
-          gh release create "$GITHUB_REF_NAME" build/Remora.dmg build/Remora.dmg.sha256 \
-            --title "Remora ${GITHUB_REF_NAME#v}" --notes-file build/notes.md --generate-notes --verify-tag
+          if [ -z "$UPDATE_SIGNING_KEY" ] || [ "$SIGNED" != true ]; then
+            echo "::warning::No UPDATE_SIGNING_KEY secret or release certificate: Macs won't be offered this update."
+            exit 0
+          fi
+          swift scripts/updates/sign.swift build/Remora.dmg > build/Remora.dmg.update-sig
+      - name: Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: macos/build/Remora.dmg
+      - name: SBOM attestation
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: macos/build/Remora.dmg
+          sbom-path: macos/build/Remora.dmg.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: |
+            macos/build/Remora.dmg
+            macos/build/Remora.dmg.sha256
+            macos/build/Remora.dmg.cdx.json
+            macos/build/Remora.dmg.update-sig
+          if-no-files-found: error
 
   windows:
-    needs: macos
+    needs: version
     runs-on: windows-latest
+    # Signing waits for a maintainer to approve each request in SignPath.
+    timeout-minutes: 150
+    outputs:
+      signed: ${{ steps.signing.outputs.enabled == 'true' }}
+    permissions:
+      contents: read
+      id-token: write # signs the attestations (Sigstore, through GitHub's OIDC token)
+      attestations: write
     defaults:
       run:
         working-directory: windows
         shell: bash
     steps:
       - uses: actions/checkout@v4
+      # From the lockfiles before anything is installed or built: the Rust crates (Cargo.lock) and the interface's
+      # npm packages (app/package-lock.json).
+      - name: SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: windows
+          format: cyclonedx-json
+          output-file: windows/Remora-Setup.exe.cdx.json
+          upload-artifact: false
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: windows
@@ -70,16 +170,185 @@ jobs:
           cache-dependency-path: windows/app/package-lock.json
       - run: npm ci
         working-directory: windows/app
-      - name: Test
-        run: npm run build --prefix app && cargo test --workspace
-      - name: Build the installer, versioned from the tag
+      # The same checks as windows.yml: a release never skips what CI runs.
+      - name: French strings are up to date
+        run: python scripts/make-i18n.py --check
         working-directory: windows/app
-        run: npx tauri build --config "{\"version\":\"${GITHUB_REF_NAME#v}\"}"
-      - name: Attach it to the release
+      - name: Type-check, test and build the interface
+        run: npm run check && npm test && npm run build
+        working-directory: windows/app
+      - name: Lint
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --workspace
+      - name: Build the app and the installer
+        run: npx tauri build
+        working-directory: windows/app
+      # Signed by SignPath with the SignPath Foundation certificate for open-source projects (see
+      # docs/admin/code-signing.md). The app first, then the installer rebuilt around the signed app: the build
+      # above already wrote the bundle type into the app, so the second bundling must not patch it again. Each
+      # request waits for a maintainer's approval in SignPath. Without the secret (forks), both stay unsigned.
+      # SignPath's artifact configuration "exe": <zip-file><pe-file path="*.exe"><authenticode-sign/></pe-file></zip-file>
+      - name: Is signing set up
+        id: signing
         env:
-          GH_TOKEN: ${{ github.token }}
+          TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
         run: |
-          cp target/release/bundle/nsis/*-setup.exe Remora-Setup.exe
+          if [ -n "$TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No SIGNPATH_API_TOKEN secret: the installer is not signed."
+          fi
+      - name: Upload the app for signing
+        id: unsigned-app
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-app
+          path: windows/target/release/remora.exe
+          if-no-files-found: error
+      - name: Sign the app
+        if: steps.signing.outputs.enabled == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: remora
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: exe
+          github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: windows/target/release
+      - name: Rebuild the installer around the signed app
+        if: steps.signing.outputs.enabled == 'true'
+        run: |
+          rm -rf ../target/release/bundle/nsis
+          npx tauri bundle --bundles nsis --no-binary-patching
+        working-directory: windows/app
+      - name: Upload the installer for signing
+        id: unsigned-installer
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-installer
+          path: windows/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+      - name: Sign the installer
+        if: steps.signing.outputs.enabled == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: remora
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: exe
+          github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: windows/signed
+      - name: Name it for the release
+        env:
+          SIGNED: ${{ steps.signing.outputs.enabled }}
+        run: |
+          if [ "$SIGNED" = true ]; then
+            cp signed/*-setup.exe Remora-Setup.exe
+            # Both must carry a valid signature: the installer, and the app it installs.
+            for FILE in Remora-Setup.exe target/release/remora.exe; do
+              STATUS="$(pwsh -NoProfile -Command "(Get-AuthenticodeSignature '$FILE').Status")"
+              echo "$FILE: $STATUS"
+              [ "$STATUS" = Valid ] || exit 1
+            done
+          else
+            cp target/release/bundle/nsis/*-setup.exe Remora-Setup.exe
+          fi
           sha256sum Remora-Setup.exe > Remora-Setup.exe.sha256
           cat Remora-Setup.exe.sha256
-          gh release upload "$GITHUB_REF_NAME" Remora-Setup.exe Remora-Setup.exe.sha256 --clobber
+      # The updater's signature, over the final (Authenticode-signed) installer and bound to this version,
+      # so an old installer can't be passed off as a new one (`requireSignedVersion`). Key: `npx tauri signer generate`.
+      - name: Sign the update
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::warning::No TAURI_SIGNING_PRIVATE_KEY secret: Windows won't be offered this update."
+            exit 0
+          fi
+          app/node_modules/.bin/tauri signer sign --app-version "${GITHUB_REF_NAME#v}" Remora-Setup.exe
+      - name: Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: windows/Remora-Setup.exe
+      - name: SBOM attestation
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: windows/Remora-Setup.exe
+          sbom-path: windows/Remora-Setup.exe.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            windows/Remora-Setup.exe
+            windows/Remora-Setup.exe.sha256
+            windows/Remora-Setup.exe.cdx.json
+            windows/Remora-Setup.exe.sig
+          if-no-files-found: error
+
+  publish:
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish the release with every file
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAC_SIGNED: ${{ needs.macos.outputs.signed }}
+          WINDOWS_SIGNED: ${{ needs.windows.outputs.signed }}
+        run: |
+          ls -l dist
+          # The notes say what this release really is: signed or not depends on the secrets set.
+          if [ "$MAC_SIGNED" = true ]; then
+            KEYCHAIN="macOS may ask for Keychain access once more after this update; choose Always Allow and it won't ask again."
+          else
+            KEYCHAIN="macOS asks for Keychain access once after each update; choose Always Allow."
+          fi
+          if [ "$WINDOWS_SIGNED" = true ]; then
+            SMARTSCREEN="The installer is signed (publisher: SignPath Foundation, see the [code signing policy](https://triage.iscor.me/docs/admin/code-signing)). For a brand-new release, SmartScreen may still warn until it knows the file: More info → Run anyway."
+          else
+            SMARTSCREEN="The installer isn't signed yet: if Windows says it protected your PC, click More info → Run anyway."
+          fi
+          cat > notes.md <<EOF
+          **Mac: [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)** (macOS 14 or later), open it and drag Remora to Applications. Remora isn't notarized yet: the first time, right-click Remora → Open (on macOS 15: System Settings → Privacy & Security → Open Anyway). $KEYCHAIN
+
+          **Windows (preview): [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe)** (Windows 10 or 11), installs for your user only. $SMARTSCREEN
+
+          **Check a download**: each file has its SHA-256 and its SBOM (\`.cdx.json\`, CycloneDX) next to it, and a signed record of the workflow run and commit it was built from: \`gh attestation verify Remora.dmg --repo iGitScor/triage\`.
+          EOF
+          # latest.json, what the apps read when updates are on (Tauri's format; the Mac has its own key).
+          # Only platforms whose file was signed for updating are listed.
+          python3 - <<'PY'
+          import datetime, json, os, pathlib
+          tag, repo = os.environ["GITHUB_REF_NAME"], os.environ["GITHUB_REPOSITORY"]
+          base = f"https://github.com/{repo}/releases/download/{tag}"
+          files = {"macos-universal": ("Remora.dmg", "Remora.dmg.update-sig"), "windows-x86_64": ("Remora-Setup.exe", "Remora-Setup.exe.sig")}
+          platforms = {key: {"url": f"{base}/{name}", "signature": pathlib.Path("dist", sig).read_text().strip()}
+                       for key, (name, sig) in files.items() if pathlib.Path("dist", sig).exists()}
+          if platforms:
+              pathlib.Path("dist/latest.json").write_text(json.dumps({
+                  "version": tag.removeprefix("v"),
+                  "notes": f"https://github.com/{repo}/releases/tag/{tag}",
+                  "pub_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                  "platforms": platforms,
+              }, indent=2))
+          print("latest.json:", ", ".join(platforms) or "none (no update signature)")
+          PY
+          EXTRA=()
+          [ -f dist/latest.json ] && EXTRA=(dist/latest.json)
+          gh release create "$GITHUB_REF_NAME" dist/Remora.dmg dist/Remora.dmg.sha256 dist/Remora.dmg.cdx.json \
+            dist/Remora-Setup.exe dist/Remora-Setup.exe.sha256 dist/Remora-Setup.exe.cdx.json "${EXTRA[@]}" \
+            --repo "$GITHUB_REPOSITORY" --title "Remora ${GITHUB_REF_NAME#v}" --notes-file notes.md --generate-notes --verify-tag

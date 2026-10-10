@@ -73,8 +73,11 @@ certificate before deploying. The policy is set in the registry: see [MDM](./mdm
 
 ## Updates
 
-Remora doesn’t update itself and doesn’t check for updates: nothing calls home. Watch the
-[releases](https://github.com/iGitScor/triage/releases) (GitHub → Watch → Custom → Releases) and redeploy.
+Off by default: nothing calls home. A user can turn on *Check for updates automatically* (Settings → General);
+Remora then asks GitHub once a day and installs a new version, signed with the release key, when they choose. Set
+`AutomaticUpdates` in the [policy](./mdm) to decide for everyone: true turns it on and locks it, false turns updating
+off entirely (not even *Check now*) when you redeploy each version yourself. Watch the
+[releases](https://github.com/iGitScor/triage/releases) (GitHub → Watch → Custom → Releases) either way.
 
 ## Removing it
 

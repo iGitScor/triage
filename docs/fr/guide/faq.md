@@ -23,6 +23,13 @@ Remora garde tous vos jetons dans un seul élément du trousseau. macOS le deman
 app qui n’est pas signée par un développeur Apple enregistré. Choisissez **Toujours autoriser** : il ne redemandera
 pas avant la prochaine mise à jour.
 
+## Comment obtenir les nouvelles versions ?
+
+Activez **Rechercher les mises à jour automatiquement** dans Réglages → Général : une fois par jour, Remora demande à
+GitHub si une nouvelle version est sortie, et l’installe quand vous cliquez sur **Installer et relancer**. C’est
+désactivé tant que vous ne l’activez pas, et **Vérifier maintenant** fonctionne dans tous les cas. Rien sur vous ni
+sur votre boîte n’est envoyé. Si votre organisation gère les mises à jour, le réglage l’indique.
+
 ## Un élément attendu n’est pas là
 
 - Il est peut-être dans *Terminés* (il revient s’il y a du nouveau) ou *Reportés*.

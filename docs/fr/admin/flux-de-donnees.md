@@ -21,9 +21,10 @@ politique sous `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe ou Intune).
 | Claude Code | Anthropic, via le programme local `claude` | Quelques champs de chaque élément : voir [Ce qui parvient à Claude](#ce-qui-parvient-a-claude) | **Désactivé** |
 | API Claude | `api.anthropic.com` | La clé d’API, et les mêmes champs que Claude Code | **Désactivé** |
 | Avatars | Les hébergeurs d’images des outils autorisés et connectés seulement | Une requête d’image | Autorisé |
+| Mises à jour | `github.com`, et les serveurs de téléchargement de GitHub (`*.githubusercontent.com`) | Une requête de `latest.json` par jour, et la nouvelle version quand l’utilisateur l’installe. Aucun identifiant, jeton ni contenu | **Désactivé** (`AutomaticUpdates`) |
 
 Les données des outils **reviennent** sur le Mac et y restent. **Pas de télémétrie, pas d’analytics, pas de rapports
-de plantage**, pas de vérification de mise à jour, aucun autre accès réseau. Polices et logos sont intégrés à l’app,
+de plantage**, pas de vérification de mise à jour sauf si elles sont activées, aucun autre accès réseau. Polices et logos sont intégrés à l’app,
 jamais téléchargés. Remora n’écrit jamais dans les outils : les messages rédigés sont copiés dans le presse-papiers.
 
 ## Ce qui parvient à Claude
