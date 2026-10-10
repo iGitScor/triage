@@ -21,11 +21,20 @@ tauri-plugin-autostart = "2.7.0"
 tauri-plugin-global-shortcut = "2.4.0"
 tauri-plugin-single-instance = "2.5.2"
 tauri-plugin-positioner = { version = "2.4.0", features = ["tray-icon"] }
+# Updates, opt-in: signed with the release key in tauri.conf.json.
+tauri-plugin-updater = "2.13.0"
+# Decodes the avatar URL in an avatar: request; already in the tree through url.
+percent-encoding = "2.3.2"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 chrono = "0.4.45"
 sys-locale = "0.3.2"
 tokio = { version = "1.53.2", features = ["time", "sync", "macros"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.60", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+# Toasts with a click handler (the notification plugin has none on desktop); the version the plugin already uses.
+tauri-winrt-notification = "0.8.1"
 
 [build-dependencies]
 tauri-build = { version = "2.7.1", features = [] }

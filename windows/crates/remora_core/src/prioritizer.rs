@@ -2,15 +2,24 @@ use crate::{InboxItem, Priority};
 use chrono::{DateTime, Local, Utc};
 use std::cmp::Ordering;
 
+/// How likely you are to handle an item quickly (log-odds, `PersonalRanker::score`).
+pub type PersonalScore<'a> = &'a dyn Fn(&InboxItem) -> f64;
+
 /// Orders a bundle by importance rather than recency: overdue or due today first, then priority,
-/// then the nearest due date, then the most recent activity.
-pub struct Prioritizer {
+/// then your habits (when learned), then the nearest due date, then the most recent activity.
+pub struct Prioritizer<'a> {
     pub now: DateTime<Utc>,
+    /// Breaks ties after explicit priority, never before it.
+    pub personal: Option<PersonalScore<'a>>,
 }
 
-impl Prioritizer {
+impl<'a> Prioritizer<'a> {
     pub fn new(now: DateTime<Utc>) -> Self {
-        Prioritizer { now }
+        Prioritizer { now, personal: None }
+    }
+
+    pub fn with_personal(now: DateTime<Utc>, personal: Option<PersonalScore<'a>>) -> Self {
+        Prioritizer { now, personal }
     }
 
     pub fn sort(&self, items: &mut [InboxItem]) {
@@ -26,7 +35,11 @@ impl Prioritizer {
             (None, Some(_)) => Ordering::Greater,
             (None, None) => Ordering::Equal,
         };
-        pressing.then(priority).then(due).then(b.date.cmp(&a.date))
+        let personal = self.personal.map_or(Ordering::Equal, |score| {
+            let (a, b) = (score(a), score(b));
+            if (a - b).abs() > 0.5 { b.partial_cmp(&a).unwrap_or(Ordering::Equal) } else { Ordering::Equal }
+        });
+        pressing.then(priority).then(personal).then(due).then(b.date.cmp(&a.date))
     }
 
     /// Overdue or due today, in local time.

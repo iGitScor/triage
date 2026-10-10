@@ -36,6 +36,9 @@ impl Demo {
             needs_action,
             priority: None,
             due: None,
+            expires: None,
+            changes: None,
+            suggested_people: None,
         });
     }
 }

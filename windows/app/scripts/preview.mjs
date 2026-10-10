@@ -27,7 +27,7 @@ function mock(data) {
     inbox: () => data.inbox,
     sources: () => data.sources,
     accounts: () => data.accounts,
-    settings: () => ({ preferences: data.preferences, managed: {}, isManaged: false, autostart: true, version: '0.2.1', dataDir: 'C:\\Users\\alice\\AppData\\Local\\Remora', shortcut: 'CommandOrControl+Alt+R' }),
+    settings: () => ({ preferences: data.preferences, managed: { unreadable: [] }, isManaged: false, autostart: true, version: '0.2.1', dataDir: 'C:\\Users\\alice\\AppData\\Local\\Remora', shortcut: 'CommandOrControl+Alt+R' }),
     presets: () => [{ label: 'Later today', date: at(180) }, { label: 'This evening', date: at(480) }, { label: 'Tomorrow', date: at(1260) }, { label: 'Next week', date: at(5000) }],
     slider_date: ({ progress, from }) => new Date((from ? Date.parse(from) : Date.now()) + steps[Math.round(progress * 18)] * 60_000).toISOString(),
     'plugin:event|listen': () => 1,

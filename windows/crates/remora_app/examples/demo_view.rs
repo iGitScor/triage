@@ -8,7 +8,7 @@ fn main() {
     let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
     demo::load(&mut inbox, chrono::Utc::now());
     let output = serde_json::json!({
-        "inbox": view::inbox_view(&inbox, "", true),
+        "inbox": view::inbox_view(&inbox, "", true, &|key| key.to_string()),
         "sources": inbox.sources(),
         "accounts": inbox.account_infos(),
         "preferences": inbox.preferences,

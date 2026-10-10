@@ -6,12 +6,18 @@
   import { t } from './i18n'
   import { when } from './time'
 
-  let { confirm, showMode = true, onpick }: { confirm: string; showMode?: boolean; onpick: (date: string, mode: SnoozeMode) => void } = $props()
+  // `date` is bindable: the quick reminder saves with it when Enter is pressed in its title.
+  let {
+    confirm,
+    showMode = true,
+    onpick,
+    date = $bindable(''),
+    start = null,
+  }: { confirm: string; showMode?: boolean; onpick: (date: string, mode: SnoozeMode) => void; date?: string; start?: string | null } = $props()
 
   let presets: Preset[] = $state([])
   let base: string | null = $state(null)
   let progress = $state(6 / 18)
-  let date = $state('')
   let mode: SnoozeMode = $state('hide')
 
   async function update() {
@@ -26,7 +32,12 @@
 
   onMount(async () => {
     presets = await api.presets()
-    await update()
+    if (!start) await update()
+  })
+
+  // A suggested return (a snooze reason): the slider then counts from it, as from a preset.
+  $effect(() => {
+    if (start) choose({ label: '', date: start })
   })
 </script>
 

@@ -24,6 +24,9 @@ pub fn item(id: &str, bundle: InboxBundle) -> InboxItem {
         needs_action: false,
         priority: None,
         due: None,
+        expires: None,
+        changes: None,
+        suggested_people: None,
     }
 }
 

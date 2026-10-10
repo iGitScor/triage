@@ -89,7 +89,7 @@ button {
 .scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 0 14px 14px;
+  padding: 0 18px 14px;
 }
 
 .row {
@@ -271,7 +271,55 @@ label.stack small,
   font-size: 13px;
 }
 
+.notice.warn {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--ink);
+}
+
 .error {
   color: var(--danger);
   font-size: 13px;
+}
+
+/* A token to reconnect: something to do, not a breakdown. */
+.warn {
+  color: var(--warn);
+  font-size: 13px;
+}
+
+/* Windows' "Animation effects" off (Accessibility → Visual effects): nothing spins, slides or fades. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Contrast themes replace the colours that drew pills, chips and cards: give them borders, and show what's
+   selected or primary with the system's highlight. */
+@media (forced-colors: active) {
+  .pill,
+  .chip,
+  .card,
+  .notice,
+  .toast {
+    border: 1px solid CanvasText;
+  }
+  .pill.selected,
+  .pill.primary {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+  .item.reminded {
+    outline-color: Highlight;
+  }
+  :focus-visible {
+    outline: 2px solid Highlight;
+  }
 }

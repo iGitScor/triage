@@ -65,6 +65,7 @@
     "connected": true,
     "counts": {
       "done": 0,
+      "inProgress": 0,
       "myTurn": 7,
       "snoozed": 4,
       "waiting": 2
@@ -74,6 +75,7 @@
     "lastRefresh": "2026-10-08T18:33:49.488369Z",
     "layout": {
       "done": [],
+      "inProgress": [],
       "myTurn": [
         {
           "bundle": {
@@ -684,6 +686,8 @@
     "allowRemoteImages": true,
     "allowedPlugins": null,
     "appearance": "system",
+    "focusWhileInProgress": true,
+    "hiddenContentPlugins": [],
     "notifyArrivals": true,
     "notifyStatusChanges": true,
     "openInApps": true,

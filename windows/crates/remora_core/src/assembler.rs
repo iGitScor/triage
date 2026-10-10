@@ -1,10 +1,11 @@
-use crate::{InboxBundle, InboxItem, ItemState, Prioritizer, SnoozeMode};
+use crate::{InboxBundle, InboxItem, ItemState, PersonalScore, Prioritizer, SnoozeMode};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Placement {
+    InProgress,
     Inbox,
     Snoozed,
     Done,
@@ -17,10 +18,12 @@ pub struct Group {
     pub items: Vec<InboxItem>,
 }
 
-/// What the UI shows: pinned items, your turn, waiting on others, snoozed, done.
+/// What the UI shows: what you're on, pinned items, your turn, waiting on others, snoozed, done.
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InboxLayout {
+    /// Started by the user and not finished yet. Kept out of every other section.
+    pub in_progress: Vec<InboxItem>,
     pub pinned: Vec<InboxItem>,
     pub my_turn: Vec<Group>,
     pub waiting: Vec<Group>,
@@ -62,7 +65,14 @@ pub struct InboxAssembler {
 
 impl InboxAssembler {
     pub fn placement(&self, item: &InboxItem, state: Option<&ItemState>, now: DateTime<Utc>) -> Placement {
+        let kept = state.is_some_and(|s| s.started_at.is_some() || s.pinned);
+        if item.expires.is_some_and(|expires| expires <= now) && !kept {
+            return Placement::Cleared;
+        }
         let Some(state) = state else { return Placement::Inbox };
+        if state.started_at.is_some() {
+            return Placement::InProgress;
+        }
         if let Some(snooze) = &state.snooze {
             if snooze.mode == SnoozeMode::Hide && snooze.until > now {
                 let untouched = snooze.fingerprint == item.fingerprint();
@@ -90,6 +100,18 @@ impl InboxAssembler {
     }
 
     pub fn layout(&self, items: &[InboxItem], states: &HashMap<String, ItemState>, now: DateTime<Utc>, query: &str) -> InboxLayout {
+        self.layout_ranked(items, states, now, query, None)
+    }
+
+    /// The layout with your habits breaking ties inside each group (`PersonalRanker`).
+    pub fn layout_ranked(
+        &self,
+        items: &[InboxItem],
+        states: &HashMap<String, ItemState>,
+        now: DateTime<Utc>,
+        query: &str,
+        personal: Option<PersonalScore>,
+    ) -> InboxLayout {
         let mut layout = InboxLayout::default();
         let mut mine: HashMap<InboxBundle, Vec<InboxItem>> = HashMap::new();
         let mut theirs: HashMap<InboxBundle, Vec<InboxItem>> = HashMap::new();
@@ -99,6 +121,7 @@ impl InboxAssembler {
         for item in matching {
             let state = states.get(&item.id);
             match self.placement(item, state, now) {
+                Placement::InProgress => layout.in_progress.push(item.clone()),
                 Placement::Snoozed => layout.snoozed.push(item.clone()),
                 Placement::Done => layout.done.push(item.clone()),
                 Placement::Cleared => {}
@@ -107,8 +130,10 @@ impl InboxAssembler {
                 Placement::Inbox => theirs.entry(item.bundle.clone()).or_default().push(item.clone()),
             }
         }
-        layout.my_turn = groups(mine, now);
-        layout.waiting = groups(theirs, now);
+        layout.my_turn = groups(mine, now, personal);
+        layout.waiting = groups(theirs, now, personal);
+        let started = |i: &InboxItem| states.get(&i.id).and_then(|s| s.started_at).unwrap_or(now);
+        layout.in_progress.sort_by_key(started);
         let until = |i: &InboxItem| states.get(&i.id).and_then(|s| s.snooze.as_ref()).map(|s| s.until).unwrap_or(now);
         layout.snoozed.sort_by_key(until);
         let done_at = |i: &InboxItem| states.get(&i.id).and_then(|s| s.done.as_ref()).map(|d| d.at).unwrap_or(now);
@@ -117,8 +142,8 @@ impl InboxAssembler {
     }
 }
 
-fn groups(items: HashMap<InboxBundle, Vec<InboxItem>>, now: DateTime<Utc>) -> Vec<Group> {
-    let prioritizer = Prioritizer::new(now);
+fn groups(items: HashMap<InboxBundle, Vec<InboxItem>>, now: DateTime<Utc>, personal: Option<PersonalScore>) -> Vec<Group> {
+    let prioritizer = Prioritizer::with_personal(now, personal);
     let mut groups: Vec<Group> = items
         .into_iter()
         .map(|(bundle, mut items)| {
@@ -195,6 +220,18 @@ mod tests {
         let mut news = stale.clone();
         news.snooze.as_mut().unwrap().until_news = Some(true);
         assert_eq!(off.placement(&item, Some(&news), now()), Placement::Inbox);
+    }
+
+    #[test]
+    fn started_items_leave_every_other_section() {
+        let mut items: Vec<InboxItem> = ["1", "2", "3"].iter().map(|id| item(id, InboxBundle::reviews())).collect();
+        items.iter_mut().for_each(|i| i.needs_action = true);
+        let started = |minutes| ItemState { started_at: Some(now() - Duration::minutes(minutes)), ..Default::default() };
+        let states = HashMap::from([("1".to_string(), started(1)), ("3".to_string(), started(10))]);
+        let layout = assembler().layout(&items, &states, now(), "");
+        assert_eq!(layout.in_progress.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(), ["3", "1"]);
+        assert_eq!(layout.my_turn_items().map(|i| i.id.as_str()).collect::<Vec<_>>(), ["2"]);
+        assert_eq!(layout.action_count(), 1);
     }
 
     #[test]

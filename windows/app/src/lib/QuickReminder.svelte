@@ -7,6 +7,8 @@
   let { onclose, shortcut }: { onclose: () => void; shortcut: string } = $props()
   let title = $state('')
   let error = $state('')
+  /// The time selected in the picker: Enter in the title saves with it.
+  let date = $state('')
   let input: HTMLInputElement | undefined = $state()
 
   $effect(() => input?.focus())
@@ -27,8 +29,10 @@
     <h1>{t('New reminder')}</h1>
   </header>
   <div class="scroll body">
-    <input class="field" bind:this={input} bind:value={title} placeholder={t('What to remember?')} />
-    <TimePicker confirm={t('Remind me')} showMode={false} onpick={add} />
+    <form onsubmit={(e) => { e.preventDefault(); if (title.trim() && date) add(date) }}>
+      <input class="field" bind:this={input} bind:value={title} placeholder={t('What to remember?')} aria-label={t('What to remember?')} />
+    </form>
+    <TimePicker confirm={t('Remind me')} showMode={false} onpick={add} bind:date />
     {#if error}<p class="error">{error}</p>{/if}
     <p class="help">{t('From anywhere: %@', shortcut.replace('CommandOrControl', 'Ctrl'))}</p>
   </div>

@@ -32,6 +32,48 @@ pub struct InboxItem {
     pub priority: Option<Priority>,
     #[serde(default)]
     pub due: Option<DateTime<Utc>>,
+    /// When it stops being worth showing (an app's reminder of an event that has started): it then leaves the
+    /// inbox as if cleared, unless you pinned or started it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expires: Option<DateTime<Utc>>,
+    /// The changed files' paths and line counts (never the code), for review prep.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub changes: Option<ChangeSet>,
+    /// People the tool suggests as reviewers, for the waiting assistant.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub suggested_people: Option<Vec<Person>>,
+}
+
+/// What a pull or merge request changes: paths and line counts only.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangeSet {
+    pub files: Vec<ChangedFile>,
+    /// The total the tool gives, which can be more than the files listed.
+    pub file_count: usize,
+}
+
+impl ChangeSet {
+    pub fn new(files: Vec<ChangedFile>, file_count: Option<usize>) -> Self {
+        let file_count = file_count.unwrap_or(files.len()).max(files.len());
+        ChangeSet { files, file_count }
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangedFile {
+    pub path: String,
+    #[serde(default)]
+    pub additions: Option<u32>,
+    #[serde(default)]
+    pub deletions: Option<u32>,
+}
+
+impl ChangedFile {
+    pub fn lines(&self) -> u32 {
+        self.additions.unwrap_or(0) + self.deletions.unwrap_or(0)
+    }
 }
 
 impl InboxItem {
@@ -159,11 +201,14 @@ pub struct ItemState {
     pub done: Option<Mark>,
     pub snooze: Option<Snooze>,
     pub reminded_at: Option<DateTime<Utc>>,
+    /// Set while the user is working on it: the item leaves the inbox for the In progress view.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub started_at: Option<DateTime<Utc>>,
 }
 
 impl ItemState {
     pub fn is_empty(&self) -> bool {
-        !self.pinned && self.done.is_none() && self.snooze.is_none() && self.reminded_at.is_none()
+        !self.pinned && self.done.is_none() && self.snooze.is_none() && self.reminded_at.is_none() && self.started_at.is_none()
     }
 }
 
@@ -206,6 +251,12 @@ pub enum SnoozeReason {
     Focus,
     NotUrgent,
     Motivation,
+}
+
+impl SnoozeReason {
+    /// In the order the snooze sheet shows them, as on macOS.
+    pub const ALL: [SnoozeReason; 5] =
+        [SnoozeReason::Waiting, SnoozeReason::NoTime, SnoozeReason::Focus, SnoozeReason::NotUrgent, SnoozeReason::Motivation];
 }
 
 /// One connected instance of a plugin. Secrets live in the credential store, never here.

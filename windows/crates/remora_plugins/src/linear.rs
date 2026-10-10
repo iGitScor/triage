@@ -42,6 +42,7 @@ const ISSUES_QUERY: &str = r#"query {
     name
     assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
       nodes { id identifier title url priority dueDate updatedAt state { name type } }
+      pageInfo { hasNextPage }
     }
   }
 }"#;
@@ -62,7 +63,13 @@ impl LinearPlugin {
             .header("Authorization", self.token.clone());
         let response: GraphQl<T> = decode(self.http.as_ref(), request).await?;
         response.data.ok_or_else(|| {
-            PluginError::Api(format!("Linear: {}", response.errors.and_then(|e| e.into_iter().next()).map(|e| e.message).unwrap_or_else(|| "the request failed.".into())))
+            let message = response.errors.and_then(|e| e.into_iter().next()).map(|e| e.message).unwrap_or_else(|| "the request failed.".into());
+            // "Authentication required, not authenticated": a key Linear no longer accepts.
+            if message.to_lowercase().contains("authenticat") {
+                PluginError::Unauthorized
+            } else {
+                PluginError::Api(format!("Linear: {message}"))
+            }
         })
     }
 
@@ -87,7 +94,8 @@ impl SourcePlugin for LinearPlugin {
                 .filter(|n| n.read_at.is_none() && n.created_at > now - Duration::days(7) && n.is_actionable())
                 .map(|n| n.item(&self.account_id)),
         );
-        Ok(SourceSnapshot { identity: issues.viewer.name, items })
+        let cut = issues.viewer.assigned_issues.page_info.as_ref().is_some_and(|p| p.has_next_page);
+        Ok(SourceSnapshot { identity: issues.viewer.name, items, remarks: if cut { vec![crate::truncated("Linear")] } else { vec![] } })
     }
 }
 
@@ -105,6 +113,14 @@ struct Message {
 #[derive(Deserialize)]
 struct Nodes<T> {
     nodes: Vec<T>,
+    #[serde(rename = "pageInfo", default)]
+    page_info: Option<PageInfo>,
+}
+
+#[derive(Deserialize)]
+struct PageInfo {
+    #[serde(rename = "hasNextPage")]
+    has_next_page: bool,
 }
 
 #[derive(Deserialize)]
@@ -175,7 +191,7 @@ impl Issue {
             account_id: account_id.into(),
             plugin_id: "linear".into(),
             bundle: InboxBundle::tasks(),
-            title: self.title.clone(),
+            title: remora_core::text::readable(&self.title),
             context: self.identifier.clone(),
             preview: None,
             url: self.url.clone(),
@@ -187,12 +203,15 @@ impl Issue {
             needs_action: priority != Priority::Low,
             priority: Some(priority),
             due,
+            expires: None,
+            changes: None,
+            suggested_people: None,
         }
     }
 }
 
-/// "2026-10-09" (a day, at local midnight) or a full timestamp.
-fn due_date(raw: &str) -> Option<DateTime<Utc>> {
+/// "2026-10-09" (a day, at local midnight) or a full timestamp. Notion dates too.
+pub(crate) fn due_date(raw: &str) -> Option<DateTime<Utc>> {
     if let Ok(date) = DateTime::parse_from_rfc3339(raw) {
         return Some(date.with_timezone(&Utc));
     }
@@ -200,8 +219,8 @@ fn due_date(raw: &str) -> Option<DateTime<Utc>> {
     Local.from_local_datetime(&day.and_hms_opt(0, 0, 0)?).earliest().map(|d| d.with_timezone(&Utc))
 }
 
-/// Overdue and due-today notify once; later dates are a quiet chip.
-fn due_badge(due: DateTime<Utc>) -> Badge {
+/// Overdue and due-today notify once; later dates are a quiet chip. Shared with Notion, as on macOS.
+pub(crate) fn due_badge(due: DateTime<Utc>) -> Badge {
     let today = Local::now().date_naive();
     let day = due.with_timezone(&Local).date_naive();
     if day < today {
@@ -250,7 +269,7 @@ impl Notification {
             account_id: account_id.into(),
             plugin_id: "linear".into(),
             bundle: InboxBundle::mentions(),
-            title: self.title.clone().unwrap_or_else(|| "New comment".into()),
+            title: self.title.as_deref().map_or_else(|| "New comment".into(), remora_core::text::readable),
             context: "Linear".into(),
             preview: None,
             url: self.url.clone(),
@@ -262,6 +281,9 @@ impl Notification {
             needs_action: true,
             priority: None,
             due: None,
+            expires: None,
+            changes: None,
+            suggested_people: None,
         }
     }
 }
@@ -321,6 +343,6 @@ mod tests {
         let rejected = r#"{"errors": [{"message": "Authentication required"}]}"#;
         let http = StubHttp::bodies(&[("query", rejected)]);
         let result = LinearPlugin::new(&config(&[("token", "k")]), Arc::new(http)).unwrap().fetch().await;
-        assert_eq!(result.err(), Some(PluginError::Api("Linear: Authentication required".into())));
+        assert_eq!(result.err(), Some(PluginError::Unauthorized), "a rejected key is reconnected");
     }
 }

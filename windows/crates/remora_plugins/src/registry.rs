@@ -1,11 +1,11 @@
-use crate::{github, gitlab, linear, slack, HttpClient, PluginConfig, PluginError, SourcePlugin};
+use crate::{github, gitlab, linear, notion, slack, HttpClient, PluginConfig, PluginError, SourcePlugin};
 use remora_core::{Account, PluginManifest};
 use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Every source the Windows app knows about. Adding an integration means adding it here.
 pub fn manifests() -> Vec<PluginManifest> {
-    vec![github::manifest(), gitlab::manifest(), slack::manifest(), linear::manifest()]
+    vec![github::manifest(), gitlab::manifest(), slack::manifest(), linear::manifest(), notion::manifest()]
 }
 
 pub fn manifest(id: &str) -> Option<PluginManifest> {
@@ -34,6 +34,7 @@ pub fn make(account: &Account, secrets: &HashMap<String, String>, http: Arc<dyn 
         "gitlab" => Box::new(gitlab::GitLabPlugin::new(&config, http)?),
         "slack" => Box::new(slack::SlackPlugin::new(&config, http)?),
         "linear" => Box::new(linear::LinearPlugin::new(&config, http)?),
+        "notion" => Box::new(notion::NotionPlugin::new(&config, http)?),
         other => return Err(PluginError::UnknownPlugin(other.into())),
     })
 }

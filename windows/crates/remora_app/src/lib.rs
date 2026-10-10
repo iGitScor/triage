@@ -7,6 +7,7 @@ pub mod managed;
 pub mod paths;
 pub mod preferences;
 pub mod store;
+pub mod tray;
 pub mod vault;
 pub mod view;
 

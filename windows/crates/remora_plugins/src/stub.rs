@@ -39,3 +39,28 @@ impl HttpClient for StubHttp {
 pub fn config(values: &[(&str, &str)]) -> PluginConfig {
     PluginConfig { account_id: "acc".into(), values: values.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<HashMap<_, _>>() }
 }
+
+/// Records the paths a plugin requests, then answers with `base`.
+pub struct Recording {
+    base: StubHttp,
+    paths: std::sync::Mutex<Vec<String>>,
+}
+
+impl Recording {
+    pub fn new(base: StubHttp) -> Self {
+        Recording { base, paths: std::sync::Mutex::new(vec![]) }
+    }
+
+    pub fn paths(&self) -> Vec<String> {
+        self.paths.lock().unwrap().clone()
+    }
+}
+
+#[async_trait]
+impl HttpClient for Recording {
+    async fn send(&self, request: Request) -> Result<Response, PluginError> {
+        let path = reqwest::Url::parse(&request.url).map(|u| u.path().to_string()).unwrap_or_default();
+        self.paths.lock().unwrap().push(path);
+        self.base.send(request).await
+    }
+}
