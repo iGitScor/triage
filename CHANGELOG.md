@@ -14,6 +14,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - **Keyboard** (Mac): ↑ ↓ or J K to move, ⏎ to open, E done, S snooze, P pin, ⌘F search, ⌘R refresh. The keyboard
   button at the bottom of the inbox lists them.
 - **VoiceOver** (Mac): each item reads as one button with its actions, and the menu bar item says how many items
+  need you.
+- Windows: clicking a notification opens its item, and an action that fails says why instead of doing nothing.
 - **Send to the assistant** (Mac, Settings → General): keep a tool's items away from Claude entirely. IT can do the
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 

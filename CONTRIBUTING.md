@@ -45,6 +45,9 @@ keep working; on Windows without `make`, run those directly.
   and its tests); tokens go only to the Keychain or the Credential Manager; no telemetry, analytics or crash
   reporting; nothing is sent to an AI unless external AI is allowed.
 
+- **Dependencies**: a new Rust crate needs a licence listed in `windows/deny.toml` (`make deps-check`, with
+  `cargo-deny`); Dependabot proposes updates every week.
+
 Commit messages follow the history: `feat(macos): …`, `fix(windows): …`, `docs: …`, `ci: …`, `i18n: …`.
 
 ## Releases and the website

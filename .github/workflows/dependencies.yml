@@ -1,0 +1,54 @@
+name: Dependencies
+
+# Known vulnerabilities and licences. Also weekly: a new advisory can appear without any change here.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+  push:
+    paths:
+      - "windows/Cargo.lock"
+      - "windows/deny.toml"
+      - "windows/app/package-lock.json"
+      - "docs/package-lock.json"
+      - ".github/workflows/dependencies.yml"
+  pull_request:
+    paths:
+      - "windows/Cargo.lock"
+      - "windows/deny.toml"
+      - "windows/app/package-lock.json"
+      - "docs/package-lock.json"
+      - ".github/workflows/dependencies.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Advisories, licences, sources (windows/deny.toml)
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: windows/Cargo.toml
+          command: check advisories licenses sources bans
+
+  npm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # What ships in the Windows app: any high or critical advisory fails.
+      - name: Windows interface
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: windows/app
+      # The docs are built, not installed: their dev server's known issues (no fix in VitePress 1) are
+      # reported here, and only a critical one fails.
+      - name: Documentation
+        run: npm audit --audit-level=critical
+        working-directory: docs
