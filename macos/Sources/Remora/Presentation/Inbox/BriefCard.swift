@@ -38,7 +38,7 @@ struct BriefCard: View {
             } else if let brief = model.brief {
                 Text(brief.summary)
                     .font(Myna.font(13))
-                    .foregroundStyle(Myna.onDark.opacity(0.85))
+                    .foregroundStyle(Myna.onDark(opacity: 0.85))
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(Array(brief.focus.enumerated()), id: \.element.id) { index, focus in
                     if let item = model.item(focus.id) {
@@ -47,9 +47,9 @@ struct BriefCard: View {
                 }
                 Text(footer(for: brief))
                     .font(Myna.font(10.5))
-                    .foregroundStyle(Myna.onDark.opacity(0.5))
+                    .foregroundStyle(Myna.onDark(opacity: 0.5))
             } else {
-                Text("Claude is reading your inbox…").font(Myna.font(12.5)).foregroundStyle(Myna.onDark.opacity(0.7))
+                Text("Claude is reading your inbox…").font(Myna.font(12.5)).foregroundStyle(Myna.onDark(opacity: 0.7))
             }
         }
         .foregroundStyle(Myna.onDark)
@@ -84,7 +84,7 @@ private struct FocusRow: View {
                 .background(Myna.accent, in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title).font(Myna.font(12.5, .medium)).lineLimit(1)
-                Text(reason).font(Myna.font(11.5)).foregroundStyle(Myna.onDark.opacity(0.6)).lineLimit(2)
+                Text(reason).font(Myna.font(11.5)).foregroundStyle(Myna.onDark(opacity: 0.6)).lineLimit(2)
             }
             Spacer(minLength: 0)
         }

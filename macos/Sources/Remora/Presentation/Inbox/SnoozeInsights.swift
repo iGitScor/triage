@@ -150,7 +150,7 @@ struct TriagePanel: View {
                 if model.triageSuggestions.contains(where: { $0.action == .done || $0.action == .now }) {
                     Text(L("“Let it go” and “Do it now” are yours to tick."))
                         .font(Myna.font(11))
-                        .foregroundStyle(Myna.onDark.opacity(0.6))
+                        .foregroundStyle(Myna.onDark(opacity: 0.6))
                 }
                 let selected = TriageSuggestion.selection(model.triageSuggestions, toggled: toggled)
                 Button { withAnimation(.snappy) { model.apply(selected) } } label: {
@@ -173,12 +173,12 @@ struct TriagePanel: View {
         } label: {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: included ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(included ? Myna.accent : Myna.onDark.opacity(0.4))
+                    .foregroundStyle(included ? Myna.accent : Myna.onDark(opacity: 0.4))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.title).font(Myna.font(12.5, .medium)).lineLimit(1)
                     Text("\(label(suggestion)) · \(suggestion.reason)")
                         .font(Myna.font(11.5))
-                        .foregroundStyle(Myna.onDark.opacity(0.65))
+                        .foregroundStyle(Myna.onDark(opacity: 0.65))
                         .lineLimit(2)
                 }
                 Spacer(minLength: 0)

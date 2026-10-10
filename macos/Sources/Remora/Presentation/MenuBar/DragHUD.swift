@@ -7,18 +7,18 @@ final class DragHUD {
     private static let size = NSSize(width: 230, height: 54)
     private static let barWidth: CGFloat = 200
 
-    /// Myna tokens for one appearance.
+    /// Myna tokens for one appearance, high-contrast variants included.
     private struct Palette {
         var background, border, text, icon, track, fill: NSColor
 
-        static let light = Palette(
-            background: NSColor(hex: 0xF7F7F1), border: NSColor(hex: 0xD0D0C8), text: NSColor(hex: 0x111111),
-            icon: NSColor(hex: 0x356509), track: NSColor(hex: 0x111111, alpha: 0.1), fill: NSColor(hex: 0x9DE049)
-        )
-        static let dark = Palette(
-            background: NSColor(hex: 0x111111), border: NSColor(hex: 0x2A2A3A), text: NSColor(hex: 0xF0F0E8),
-            icon: NSColor(hex: 0xB9FF66), track: NSColor(hex: 0xF0F0E8, alpha: 0.15), fill: NSColor(hex: 0xB9FF66)
-        )
+        @MainActor init(dark: Bool, contrast: Bool) {
+            background = (dark ? Myna.dark : Myna.surface).resolved(dark: false)
+            border = Myna.border.resolved(dark: dark)
+            text = (dark ? Myna.onDark : Myna.ink).resolved(dark: false)
+            icon = Myna.accentText.resolved(dark: dark)
+            track = text.withAlphaComponent(contrast ? 0.35 : dark ? 0.15 : 0.1)
+            fill = (dark ? Myna.accent : Myna.accentDeep).resolved(dark: false)
+        }
     }
 
     private let panel = FloatingPanel(interactive: false)
@@ -27,7 +27,7 @@ final class DragHUD {
     private let label = NSTextField(labelWithString: "")
     private let track = CALayer()
     private let fill = CALayer()
-    private var isDark: Bool?
+    private var applied: (dark: Bool, contrast: Bool)?
 
     init() {
         background.wantsLayer = true
@@ -68,9 +68,10 @@ final class DragHUD {
     }
 
     private func apply(dark: Bool) {
-        guard dark != isDark else { return }
-        isDark = dark
-        let palette = dark ? Palette.dark : .light
+        let contrast = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+        if let applied, applied == (dark, contrast) { return }
+        applied = (dark, contrast)
+        let palette = Palette(dark: dark, contrast: contrast)
         background.layer?.backgroundColor = palette.background.cgColor
         background.layer?.borderColor = palette.border.cgColor
         label.textColor = palette.text

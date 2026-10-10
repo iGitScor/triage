@@ -38,6 +38,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
   are read too.
 - Mac: counts read right in English and French ("1 file", "1 élément marqué comme terminé"), and reminders say
   "Rappel" in French. A long task title no longer widens the menu bar menu.
+- Mac: with Increase Contrast, text, borders and dividers are stronger.
 - Mac: review estimates leave out lockfiles and generated files (a lockfile-only update is no longer "~60 min"),
   risky-area chips no longer fire on lookalike words ("author", "latest"), and after five timed reviews the
   estimate follows your pace.

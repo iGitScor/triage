@@ -52,7 +52,7 @@ struct ItemRow: View {
         .background(background, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
         .overlay {
             if selected {
-                RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous).strokeBorder(Myna.ink.opacity(0.6), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous).strokeBorder(Myna.selection, lineWidth: 1.5)
             }
         }
         .overlay(alignment: .topTrailing) { if showsActions { actions } }
