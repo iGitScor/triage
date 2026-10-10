@@ -15,7 +15,9 @@ public struct LinearPlugin: SourcePlugin {
         ],
         setupLabel: "Create an API key",
         setupURL: { _ in URL(string: "https://linear.app/settings/account/security") },
-        egress: Egress(hosts: ["api.linear.app", "public.linear.app"], description: "Reads issues assigned to you and your Linear inbox."),
+        egress: Egress(
+            hosts: ["api.linear.app", "public.linear.app"],
+            description: "Reads issues assigned to you and your Linear inbox."),
         logo: "linear"
     )
 
@@ -44,11 +46,14 @@ public struct LinearPlugin: SourcePlugin {
     static func snapshot(viewer: Viewer, notifications: [Notification], accountID: UUID, now: Date) -> SourceSnapshot {
         let issues = viewer.assignedIssues.nodes.map { $0.item(accountID: accountID) }
         let weekAgo = now.addingTimeInterval(-7 * 86_400)
-        let mentions = notifications
+        let mentions =
+            notifications
             .filter { $0.readAt == nil && $0.createdAt > weekAgo && $0.isActionable }
             .map { $0.item(accountID: accountID) }
         let truncated = viewer.assignedIssues.pageInfo?.hasNextPage == true
-        return SourceSnapshot(identity: viewer.name, items: issues + mentions, remarks: truncated ? [SourceSnapshot.truncated("Linear")] : [])
+        return SourceSnapshot(
+            identity: viewer.name, items: issues + mentions,
+            remarks: truncated ? [SourceSnapshot.truncated("Linear")] : [])
     }
 
     /// https://linear.app/acme/issue/ENG-42/slug → linear://acme/issue/ENG-42/slug, opened by the desktop app.
@@ -70,24 +75,24 @@ public struct LinearPlugin: SourcePlugin {
     }
 
     static let issuesQuery = """
-    query {
-      viewer {
-        name
-        assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
-          nodes { id identifier title url priority dueDate updatedAt state { name type } }
-          pageInfo { hasNextPage }
+        query {
+          viewer {
+            name
+            assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
+              nodes { id identifier title url priority dueDate updatedAt state { name type } }
+              pageInfo { hasNextPage }
+            }
+          }
         }
-      }
-    }
-    """
+        """
 
     static let notificationsQuery = """
-    query {
-      notifications(first: 50) {
-        nodes { id type title url readAt createdAt actor { name avatarUrl } }
-      }
-    }
-    """
+        query {
+          notifications(first: 50) {
+            nodes { id type title url readAt createdAt actor { name avatarUrl } }
+          }
+        }
+        """
 }
 
 // MARK: - Wire format
@@ -114,7 +119,10 @@ extension LinearPlugin {
     }
 
     struct Issue: Decodable {
-        struct State: Decodable { var name: String; var type: String? }
+        struct State: Decodable {
+            var name: String
+            var type: String?
+        }
 
         var id: String
         var identifier: String
@@ -128,9 +136,13 @@ extension LinearPlugin {
         func item(accountID: UUID) -> InboxItem {
             var badges: [Badge] = []
             switch priority {
-            case 1: badges.append(Badge(id: "priority.urgent", label: L("Urgent"), symbol: "exclamationmark.3", tone: .negative,
-                                        notify: .init(title: L("Urgent issue"))))
-            case 2: badges.append(Badge(id: "priority.high", label: L("High"), symbol: "exclamationmark.2", tone: .warning))
+            case 1:
+                badges.append(
+                    Badge(
+                        id: "priority.urgent", label: L("Urgent"), symbol: "exclamationmark.3", tone: .negative,
+                        notify: .init(title: L("Urgent issue"))))
+            case 2:
+                badges.append(Badge(id: "priority.high", label: L("High"), symbol: "exclamationmark.2", tone: .warning))
             default: break
             }
             let due = DueDate.parse(dueDate)
@@ -156,19 +168,23 @@ extension LinearPlugin {
 
         /// Linear's 1 urgent … 4 low (0 = none). Backlog counts as low unless urgent or high.
         var itemPriority: Priority {
-            let mapped: Priority = switch priority {
-            case 1: .urgent
-            case 2: .high
-            case 4: .low
-            default: .normal
-            }
+            let mapped: Priority =
+                switch priority {
+                case 1: .urgent
+                case 2: .high
+                case 4: .low
+                default: .normal
+                }
             if state?.type == "backlog", mapped < .high { return .low }
             return mapped
         }
     }
 
     struct Notification: Decodable {
-        struct Actor: Decodable { var name: String; var avatarUrl: String? }
+        struct Actor: Decodable {
+            var name: String
+            var avatarUrl: String?
+        }
 
         var id: String
         var type: String

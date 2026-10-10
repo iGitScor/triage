@@ -12,7 +12,8 @@ pub struct Preset {
 pub struct SnoozeClock;
 
 impl SnoozeClock {
-    pub const STEPS_MINUTES: [i64; 19] = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1_440, 2_880, 4_320, 7_200, 10_080];
+    pub const STEPS_MINUTES: [i64; 19] =
+        [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1_440, 2_880, 4_320, 7_200, 10_080];
 
     /// Drag position (0…1) → seconds. Small moves give minutes, long ones give days.
     pub fn duration_at(progress: f64) -> i64 {
@@ -72,7 +73,11 @@ fn at<Tz: TimeZone>(day: &DateTime<Tz>, days_after: i64, hour: u32) -> DateTime<
 
 fn round_up_quarter<Tz: TimeZone>(date: DateTime<Tz>) -> DateTime<Tz> {
     let past = (date.minute() % 15) as i64 * 60 + date.second() as i64;
-    if past == 0 { date } else { date + Duration::seconds(15 * 60 - past) }
+    if past == 0 {
+        date
+    } else {
+        date + Duration::seconds(15 * 60 - past)
+    }
 }
 
 #[cfg(test)]

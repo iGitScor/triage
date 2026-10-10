@@ -36,14 +36,16 @@ public enum ChangeDetector {
         return current.flatMap { item -> [Notice] in
             guard let old = before[item.id] else {
                 guard item.needsAction else { return [] }
-                return [Notice(
-                    kind: .arrival,
-                    itemID: item.id,
-                    title: L(item.bundle.title),
-                    subtitle: item.context,
-                    body: item.title,
-                    url: item.url
-                )]
+                return [
+                    Notice(
+                        kind: .arrival,
+                        itemID: item.id,
+                        title: L(item.bundle.title),
+                        subtitle: item.context,
+                        body: item.title,
+                        url: item.url
+                    )
+                ]
             }
             return item.badges
                 .filter { $0.notify != nil && !old.hasBadge($0.id) }

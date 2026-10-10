@@ -29,8 +29,13 @@ const UNEXPECTED: &str = "Claude returned an unexpected answer.";
 /// The same words as the macOS app, which the shared French dictionary translates.
 pub fn manifest() -> PluginManifest {
     let model = |key: &str, label: &str, default: &str| ConfigField {
-        key: key.into(), label: label.into(), placeholder: String::new(), default_value: default.into(),
-        is_secret: false, is_optional: false, help: None,
+        key: key.into(),
+        label: label.into(),
+        placeholder: String::new(),
+        default_value: default.into(),
+        is_secret: false,
+        is_optional: false,
+        help: None,
     };
     PluginManifest {
         id: ID.into(),
@@ -123,7 +128,9 @@ pub struct Block {
 
 impl ClaudePlugin {
     pub fn new(config: &PluginConfig, http: Arc<dyn HttpClient>, language: &str) -> Result<Self, PluginError> {
-        let or = |key: &str, default: &str| Some(config.get(key)).filter(|v| !v.is_empty()).unwrap_or_else(|| default.into());
+        let or = |key: &str, default: &str| {
+            Some(config.get(key)).filter(|v| !v.is_empty()).unwrap_or_else(|| default.into())
+        };
         Ok(ClaudePlugin {
             api_key: config.required("token")?,
             model: or("model", DEFAULT_MODEL),
@@ -146,7 +153,13 @@ impl ClaudePlugin {
         if body.fallbacks.is_some() {
             request = request.header("anthropic-beta", "server-side-fallback-2026-07-01");
         }
-        decode(self.http.as_ref(), request).await.map_err(|e| if e == PluginError::TimedOut { PluginError::Api(TOO_SLOW.into()) } else { e })
+        decode(self.http.as_ref(), request).await.map_err(|e| {
+            if e == PluginError::TimedOut {
+                PluginError::Api(TOO_SLOW.into())
+            } else {
+                e
+            }
+        })
     }
 
     /// A brief from the API's answer, without the items Claude may have made up.
@@ -175,13 +188,25 @@ impl AssistantPlugin for ClaudePlugin {
 
     async fn digest(&self, items: &[InboxItem], topic: &str, now: DateTime<Utc>) -> Result<String, PluginError> {
         let body = ApiRequest::new(
-            &self.digest_model, 2_000, prompt::digest_system(&self.language), prompt::digest_message(items, topic, now), Schema::digest(), false,
+            &self.digest_model,
+            2_000,
+            prompt::digest_system(&self.language),
+            prompt::digest_message(items, topic, now),
+            Schema::digest(),
+            false,
         );
         output::<prompt::DigestOutput>(self.send(&body).await?).map(|o| o.summary)
     }
 
     async fn triage(&self, items: &[SnoozedItem], now: DateTime<Utc>) -> Result<Vec<TriageSuggestion>, PluginError> {
-        let body = ApiRequest::new(&self.model, 8_000, prompt::triage_system(&self.language), prompt::triage_message(items, now), Schema::triage(), true);
+        let body = ApiRequest::new(
+            &self.model,
+            8_000,
+            prompt::triage_system(&self.language),
+            prompt::triage_message(items, now),
+            Schema::triage(),
+            true,
+        );
         let output: prompt::TriageOutput = output(self.send(&body).await?)?;
         Ok(output.suggestions(&prompt::snoozed_ids(items), now))
     }
@@ -264,7 +289,11 @@ mod tests {
     #[tokio::test]
     async fn digest_uses_the_lighter_model_without_fallbacks() {
         let recorder = Recorder::new(200, Ok(&answer(r#"{"summary": "Two reviews wait."}"#, "end_turn")));
-        let summary = ClaudePlugin::new(&config(&[("token", "k")]), recorder.clone(), "fr").unwrap().digest(&[item("a")], "To review", now()).await.unwrap();
+        let summary = ClaudePlugin::new(&config(&[("token", "k")]), recorder.clone(), "fr")
+            .unwrap()
+            .digest(&[item("a")], "To review", now())
+            .await
+            .unwrap();
         assert_eq!(summary, "Two reviews wait.");
         let request = recorder.request();
         let body: serde_json::Value = serde_json::from_str(request.body.as_deref().unwrap()).unwrap();
@@ -279,7 +308,9 @@ mod tests {
     #[tokio::test]
     async fn triage_keeps_known_items_only() {
         let later = prompt::iso8601(now() + chrono::Duration::days(1));
-        let text = format!(r#"{{"suggestions": [{{"id": "a", "action": "reschedule", "until": "{later}", "reason": "r"}}, {{"id": "x", "action": "done", "until": "", "reason": "?"}}]}}"#);
+        let text = format!(
+            r#"{{"suggestions": [{{"id": "a", "action": "reschedule", "until": "{later}", "reason": "r"}}, {{"id": "x", "action": "done", "until": "", "reason": "?"}}]}}"#
+        );
         let recorder = Recorder::new(200, Ok(&answer(&text, "end_turn")));
         let suggestions = plugin(ArcClient(recorder.clone())).triage(&[snoozed(item("a"), 1)], now()).await.unwrap();
         assert_eq!(suggestions.iter().map(|s| s.id.as_str()).collect::<Vec<_>>(), ["a"]);
@@ -321,16 +352,18 @@ mod tests {
 
     #[test]
     fn a_key_is_required_and_models_have_defaults() {
-        assert_eq!(ClaudePlugin::new(&config(&[]), Arc::new(StubHttp::paths(&[])), "en").err(), Some(PluginError::MissingField("token".into())));
+        assert_eq!(
+            ClaudePlugin::new(&config(&[]), Arc::new(StubHttp::paths(&[])), "en").err(),
+            Some(PluginError::MissingField("token".into()))
+        );
         let manifest = manifest();
         assert_eq!(manifest.id, "claude");
         assert_eq!(manifest.egress.hosts, ["api.anthropic.com"]);
         assert!(manifest.egress.external_ai);
-        assert_eq!(manifest.fields.iter().map(|f| (f.key.as_str(), f.default_value.as_str())).collect::<Vec<_>>(), [
-            ("token", ""),
-            ("model", "claude-opus-5-5"),
-            ("digestModel", "claude-haiku-5-5"),
-        ]);
+        assert_eq!(
+            manifest.fields.iter().map(|f| (f.key.as_str(), f.default_value.as_str())).collect::<Vec<_>>(),
+            [("token", ""), ("model", "claude-opus-5-5"), ("digestModel", "claude-haiku-5-5"),]
+        );
     }
 
     /// An `Arc<Recorder>` the plugin can own while the test keeps reading it.

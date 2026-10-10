@@ -1,44 +1,50 @@
 <script lang="ts">
-  // Presets (Later today, This evening, Tomorrow, Next week) and a slider that counts from the preset
-  // picked, or from now: minutes first, then hours, then days (SnoozeClock in remora_core).
-  import { onMount } from 'svelte'
-  import { api, type Preset, type SnoozeMode } from './api'
-  import { t } from './i18n'
-  import { when } from './time'
+// Presets (Later today, This evening, Tomorrow, Next week) and a slider that counts from the preset
+// picked, or from now: minutes first, then hours, then days (SnoozeClock in remora_core).
+import { onMount } from 'svelte'
+import { api, type Preset, type SnoozeMode } from './api'
+import { t } from './i18n'
+import { when } from './time'
 
-  // `date` is bindable: the quick reminder saves with it when Enter is pressed in its title.
-  let {
-    confirm,
-    showMode = true,
-    onpick,
-    date = $bindable(''),
-    start = null,
-  }: { confirm: string; showMode?: boolean; onpick: (date: string, mode: SnoozeMode) => void; date?: string; start?: string | null } = $props()
+// `date` is bindable: the quick reminder saves with it when Enter is pressed in its title.
+let {
+  confirm,
+  showMode = true,
+  onpick,
+  date = $bindable(''),
+  start = null,
+}: {
+  confirm: string
+  showMode?: boolean
+  onpick: (date: string, mode: SnoozeMode) => void
+  date?: string
+  start?: string | null
+} = $props()
 
-  let presets: Preset[] = $state([])
-  let base: string | null = $state(null)
-  let progress = $state(6 / 18)
-  let mode: SnoozeMode = $state('hide')
+let presets: Preset[] = $state([])
+let base: string | null = $state(null)
+let progress = $state(6 / 18)
+let mode: SnoozeMode = $state('hide')
 
-  async function update() {
-    date = await api.sliderDate(progress, base)
-  }
+async function update() {
+  date = await api.sliderDate(progress, base)
+}
 
-  function choose(preset: Preset) {
-    base = preset.date
-    progress = 0
-    date = preset.date
-  }
+function choose(preset: Preset) {
+  base = preset.date
+  progress = 0
+  date = preset.date
+}
 
-  onMount(async () => {
-    presets = await api.presets()
-    if (!start) await update()
-  })
+onMount(async () => {
+  presets = await api.presets()
+  if (!start) await update()
+})
 
-  // A suggested return (a snooze reason): the slider then counts from it, as from a preset.
-  $effect(() => {
-    if (start) choose({ label: '', date: start })
-  })
+// A suggested return (a snooze reason): the slider then counts from it, as from a preset.
+$effect(() => {
+  if (start) choose({ label: '', date: start })
+})
 </script>
 
 <div class="picker">

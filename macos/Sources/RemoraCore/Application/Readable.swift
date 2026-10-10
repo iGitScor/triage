@@ -24,7 +24,8 @@ public enum Readable {
         var last = text.startIndex
         for match in pattern.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
             guard let whole = Range(match.range, in: text), let name = Range(match.range(at: 1), in: text),
-                  let symbol = Emoji.table[String(text[name])] else { continue }
+                let symbol = Emoji.table[String(text[name])]
+            else { continue }
             result += text[last..<whole.lowerBound] + symbol
             last = whole.upperBound
         }

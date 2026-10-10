@@ -35,7 +35,8 @@ public struct InboxLayout: Equatable, Sendable {
             counts[item.pluginID, default: 0] += 1
             mostPressing[item.pluginID] = min(mostPressing[item.pluginID] ?? .max, item.bundle.rank)
         }
-        return counts
+        return
+            counts
             .sorted { (mostPressing[$0.key]!, -$0.value, $0.key) < (mostPressing[$1.key]!, -$1.value, $1.key) }
             .map { ($0.key, $0.value) }
     }
@@ -55,7 +56,9 @@ public struct InboxAssembler: Sendable {
     }
 
     public func placement(of item: InboxItem, state: ItemState?, now: Date) -> Placement {
-        if let expires = item.expires, expires <= now, state?.startedAt == nil, state?.pinned != true { return .cleared }
+        if let expires = item.expires, expires <= now, state?.startedAt == nil, state?.pinned != true {
+            return .cleared
+        }
         guard let state else { return .inbox }
         if state.startedAt != nil { return .inProgress }
         if let snooze = state.snooze, snooze.mode == .hide, snooze.until > now {
@@ -110,7 +113,9 @@ public struct InboxAssembler: Sendable {
 
     private func groups(_ items: [InboxBundle: [InboxItem]], now: Date) -> [InboxLayout.Group] {
         items
-            .map { InboxLayout.Group(bundle: $0.key, items: Prioritizer(now: now, personal: personal).sorted($0.value)) }
+            .map {
+                InboxLayout.Group(bundle: $0.key, items: Prioritizer(now: now, personal: personal).sorted($0.value))
+            }
             .sorted { ($0.bundle.rank, $0.bundle.title) < ($1.bundle.rank, $1.bundle.title) }
     }
 }

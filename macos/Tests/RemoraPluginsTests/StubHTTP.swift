@@ -10,7 +10,9 @@ struct StubHTTP: HTTPClient {
         guard let body = routes.first(where: { path.hasSuffix($0.key) })?.value else {
             return (Data(), HTTPURLResponse(url: request.url!, statusCode: 404, httpVersion: nil, headerFields: nil)!)
         }
-        return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        return (
+            Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        )
     }
 }
 

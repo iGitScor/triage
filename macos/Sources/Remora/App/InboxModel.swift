@@ -62,10 +62,14 @@ final class InboxModel {
             persist(preferencesStore, preferences)
             if oldValue.wakeOnActivity != preferences.wakeOnActivity { layoutChanged() }
             Myna.textScale = preferences.textSize.scale
-            if oldValue.allowedPlugins != preferences.allowedPlugins || oldValue.allowExternalAI != preferences.allowExternalAI {
+            if oldValue.allowedPlugins != preferences.allowedPlugins
+                || oldValue.allowExternalAI != preferences.allowExternalAI
+            {
                 enforcePolicy()
             }
-            if ManagedPolicy.effective(oldValue, managed: environment.managed).refreshMinutes != effectivePreferences.refreshMinutes {
+            if ManagedPolicy.effective(oldValue, managed: environment.managed).refreshMinutes
+                != effectivePreferences.refreshMinutes
+            {
                 startPolling()
             }
             if oldValue.checkForUpdates != preferences.checkForUpdates { scheduleUpdates() }
@@ -76,7 +80,9 @@ final class InboxModel {
     let updater: Updater
     @ObservationIgnored private let http: HTTPClient
     /// Keywords, then on-device sentence embeddings. Slow on first sight of a message, so it runs off the main thread.
-    @ObservationIgnored private let classifier = VerbClassifier([KeywordIntentClassifier(), EmbeddingIntentClassifier()])
+    @ObservationIgnored private let classifier = VerbClassifier([
+        KeywordIntentClassifier(), EmbeddingIntentClassifier(),
+    ])
     @ObservationIgnored private let accountsStore: JSONStore<[Account]>
     @ObservationIgnored private let statesStore: JSONStore<[String: ItemState]>
     @ObservationIgnored private let cacheStore: JSONStore<[UUID: [InboxItem]]>
@@ -119,7 +125,8 @@ final class InboxModel {
             do {
                 return try store.read()
             } catch {
-                issues.append(StorageIssue(file: store.url.lastPathComponent, corrupt: true, message: error.localizedDescription))
+                issues.append(
+                    StorageIssue(file: store.url.lastPathComponent, corrupt: true, message: error.localizedDescription))
                 return nil
             }
         }
@@ -225,7 +232,9 @@ final class InboxModel {
 
     /// The account's name, shown on items only when several accounts of the same plugin are connected.
     func accountLabel(for item: InboxItem) -> String? {
-        guard accounts.filter({ $0.pluginID == item.pluginID }).count > 1, let account = account(item.accountID) else { return nil }
+        guard accounts.filter({ $0.pluginID == item.pluginID }).count > 1, let account = account(item.accountID) else {
+            return nil
+        }
         return account.name ?? account.identity
     }
 
@@ -247,7 +256,9 @@ final class InboxModel {
     var effectivePreferences: Preferences { ManagedPolicy.effective(preferences, managed: environment.managed) }
 
     /// What the assistant may read and which models it may use.
-    var assistantPolicy: AssistantPolicy { ManagedPolicy.assistantPolicy(user: preferences, managed: environment.managed) }
+    var assistantPolicy: AssistantPolicy {
+        ManagedPolicy.assistantPolicy(user: preferences, managed: environment.managed)
+    }
 
     /// What the privacy policy refuses leaves the screen and the disk at once, not at the next successful
     /// refresh: a refused tool's cached items, its notifications and the AI summaries that may quote them. Its account
@@ -258,8 +269,10 @@ final class InboxModel {
         let policy = policy
         var dropped = false
         for account in accounts {
-            guard let manifest = PluginRegistry.manifest(account.pluginID), let refusal = policy.refusal(for: manifest) else { continue }
-            errors[account.id] = SourceFailure(kind: .other, message: L("%@ Remove the account to delete its token.", refusal))
+            guard let manifest = PluginRegistry.manifest(account.pluginID), let refusal = policy.refusal(for: manifest)
+            else { continue }
+            errors[account.id] = SourceFailure(
+                kind: .other, message: L("%@ Remove the account to delete its token.", refusal))
             if itemsByAccount[account.id] != nil {
                 itemsByAccount[account.id] = nil
                 syncedAccounts.remove(account.id)
@@ -289,14 +302,18 @@ final class InboxModel {
             uniquingKeysWith: { first, _ in first }
         )
         constrained.settings = assistantPolicy.constrained(account.settings, defaults: defaults)
-        if account.pluginID == ClaudeCodePlugin.manifest.id, let path = ManagedPolicy.claudeCodePath(environment.managed) {
+        if account.pluginID == ClaudeCodePlugin.manifest.id,
+            let path = ManagedPolicy.claudeCodePath(environment.managed)
+        {
             constrained.settings["path"] = path
         }
         return try PluginRegistry.makeAssistant(constrained, secrets: secrets, http: guardedClient(for: account))
     }
 
     private func guardedClient(for account: Account) throws -> HTTPClient {
-        guard let manifest = PluginRegistry.manifest(account.pluginID) else { throw PluginError.unknownPlugin(account.pluginID) }
+        guard let manifest = PluginRegistry.manifest(account.pluginID) else {
+            throw PluginError.unknownPlugin(account.pluginID)
+        }
         if let refusal = policy.refusal(for: manifest) { throw EgressError.blockedPlugin(refusal) }
         return GuardedHTTPClient(http, allowing: allowedHosts(for: account, manifest: manifest))
     }
@@ -310,7 +327,9 @@ final class InboxModel {
     func allowsImage(_ url: URL?) -> Bool {
         guard policy.allowRemoteImages, let host = url?.host?.lowercased() else { return false }
         return sourceAccounts.contains { account in
-            guard let manifest = PluginRegistry.manifest(account.pluginID), policy.allows(manifest) else { return false }
+            guard let manifest = PluginRegistry.manifest(account.pluginID), policy.allows(manifest) else {
+                return false
+            }
             return GuardedHTTPClient.matches(host, allowedHosts(for: account, manifest: manifest))
         }
     }
@@ -337,7 +356,9 @@ final class InboxModel {
     func summarize(key: String, topic: String, items: [InboxItem]) async {
         let items = assistantPolicy.items(items)
         guard let account = assistantAccount, !items.isEmpty, !summarizing.contains(key) else { return }
-        if bundleSummaries[key]?.isFresh(for: items, cacheMinutes: preferences.briefCacheMinutes, now: .now) == true { return }
+        if bundleSummaries[key]?.isFresh(for: items, cacheMinutes: preferences.briefCacheMinutes, now: .now) == true {
+            return
+        }
         summarizing.insert(key)
         bundleSummaryErrors[key] = nil
         defer { summarizing.remove(key) }
@@ -462,7 +483,9 @@ final class InboxModel {
         guard !isOffline else { return }
         enforcePolicy()
         let policy = policy
-        let due = sourceAccounts.filter { account in PluginRegistry.manifest(account.pluginID).map(policy.allows) == true }.filter { !(backoff[$0.id]?.waits(at: now, manual: manual) ?? false) }
+        let due = sourceAccounts.filter { account in
+            PluginRegistry.manifest(account.pluginID).map(policy.allows) == true
+        }.filter { !(backoff[$0.id]?.waits(at: now, manual: manual) ?? false) }
         let jobs = due.map { account in
             (account.id, Result { try sourcePlugin(account, secrets: environment.secrets.secrets(for: account.id)) })
         }
@@ -491,7 +514,9 @@ final class InboxModel {
                     if failure.kind == .offline { continue }
                     var next = backoff[id] ?? Backoff()
                     if case HTTPError.rateLimited(let until) = error {
-                        next.failed(at: .now, interval: interval, rateLimitedUntil: until ?? Date.now.addingTimeInterval(interval))
+                        next.failed(
+                            at: .now, interval: interval,
+                            rateLimitedUntil: until ?? Date.now.addingTimeInterval(interval))
                     } else {
                         next.failed(at: .now, interval: interval)
                     }
@@ -513,7 +538,8 @@ final class InboxModel {
         remarks[accountID] = snapshot.remarks.isEmpty ? nil : snapshot.remarks
         itemsByAccount[accountID] = snapshot.items
 
-        if let index = accounts.firstIndex(where: { $0.id == accountID }), accounts[index].identity != snapshot.identity {
+        if let index = accounts.firstIndex(where: { $0.id == accountID }), accounts[index].identity != snapshot.identity
+        {
             accounts[index].identity = snapshot.identity
             persist(accountsStore, accounts)
         }
@@ -528,7 +554,8 @@ final class InboxModel {
     private func wakeSnoozedItems(touchedIn items: [InboxItem]) {
         guard preferences.wakeOnActivity else { return }
         for item in items {
-            guard let snooze = states[item.id]?.snooze, snooze.mode == .hide, snooze.fingerprint != item.fingerprint else { continue }
+            guard let snooze = states[item.id]?.snooze, snooze.mode == .hide, snooze.fingerprint != item.fingerprint
+            else { continue }
             update(item) { $0.snooze = nil }
             environment.notifications.cancel(item.id)
         }
@@ -554,7 +581,9 @@ final class InboxModel {
 
     /// Whether moving the layout's time from `old` to `new` changes the layout: an item expired in between (a Slack
     /// event reminder once the event starts), or a new day began (what's due today).
-    static func layoutTimeChanged(from old: Date, to new: Date, items: [InboxItem], calendar: Calendar = .current) -> Bool {
+    static func layoutTimeChanged(from old: Date, to new: Date, items: [InboxItem], calendar: Calendar = .current)
+        -> Bool
+    {
         if !calendar.isDate(old, inSameDayAs: new) { return true }
         return items.contains { item in item.expires.map { $0 > old && $0 <= new } ?? false }
     }
@@ -572,7 +601,8 @@ final class InboxModel {
     /// `inBrowser` forces the web page (⌥-click), e.g. for the exact Slack message.
     func open(_ item: InboxItem, inBrowser: Bool = false) {
         if !inBrowser, effectivePreferences.openInApps, let app = item.appURL, LinkPolicy.isAppLink(app),
-           environment.canOpen(app), environment.open(app) {
+            environment.canOpen(app), environment.open(app)
+        {
             // Opened in the app.
         } else if let url = webLink(for: item) {
             _ = environment.open(url)
@@ -595,7 +625,9 @@ final class InboxModel {
     /// Reviewer suggestions or a nudge for one of your MRs that's waiting.
     func waitingHelp(_ item: InboxItem) -> WaitingAssistant.Help? {
         // Reviewers come from the same repo: only its items, not the whole inbox per row.
-        waitingAssistant.help(for: item, among: itemIndex.byPlace[item.context.contextKey] ?? [], me: account(item.accountID)?.identity, now: .now)
+        waitingAssistant.help(
+            for: item, among: itemIndex.byPlace[item.context.contextKey] ?? [], me: account(item.accountID)?.identity,
+            now: .now)
     }
 
     /// Why an item ranks higher than its priority alone would put it.
@@ -627,7 +659,8 @@ final class InboxModel {
     private(set) var undoPoint: UndoPoint?
 
     private func remember(_ message: String) {
-        undoPoint = UndoPoint(message: message, states: states, reminders: reminders, history: snoozeHistory, records: actionRecords)
+        undoPoint = UndoPoint(
+            message: message, states: states, reminders: reminders, history: snoozeHistory, records: actionRecords)
     }
 
     /// Puts back what the last undoable action changed, and the snoozes' return notifications it cancelled.
@@ -668,7 +701,9 @@ final class InboxModel {
             return
         }
         let markingDone = state(of: item).done == nil
-        if markingDone, item.bundle == .reviews, let started = state(of: item).startedAt { learnReviewTime(item, startedAt: started) }
+        if markingDone, item.bundle == .reviews, let started = state(of: item).startedAt {
+            learnReviewTime(item, startedAt: started)
+        }
         update(item) { state in
             state.done = markingDone ? .init(at: .now, fingerprint: item.fingerprint) : nil
             state.remindedAt = nil
@@ -774,14 +809,16 @@ final class InboxModel {
 
     private func scheduleReturn(of item: InboxItem, at date: Date, note: String?) {
         environment.notifications.cancel(item.id)
-        environment.notifications.schedule(respectingPrivacy(Notice(
-            kind: .reminder,
-            itemID: item.id,
-            title: L(item.bundle == .reminders ? "Reminder" : "Back in your inbox"),
-            subtitle: item.context,
-            body: [item.title, note].compactMap { $0 }.joined(separator: "\n"),
-            url: item.url
-        ), from: item.pluginID), at: date)
+        environment.notifications.schedule(
+            respectingPrivacy(
+                Notice(
+                    kind: .reminder,
+                    itemID: item.id,
+                    title: L(item.bundle == .reminders ? "Reminder" : "Back in your inbox"),
+                    subtitle: item.context,
+                    body: [item.title, note].compactMap { $0 }.joined(separator: "\n"),
+                    url: item.url
+                ), from: item.pluginID), at: date)
     }
 
     /// Hides what was written when the user doesn't want that integration's content on screen.
@@ -835,7 +872,9 @@ final class InboxModel {
         insightsGeneration &+= 1
         let generation = insightsGeneration
         insightsTask = Task {
-            let insights = await Task.detached { advisor.insights(snoozed: snoozed, states: states, history: history, now: .now) }.value
+            let insights = await Task.detached {
+                advisor.insights(snoozed: snoozed, states: states, history: history, now: .now)
+            }.value
             guard generation == self.insightsGeneration else { return }
             self.insights = insights
         }
@@ -859,7 +898,7 @@ final class InboxModel {
     /// Brings every item back at the earliest of their return times.
     func alignReturns(_ items: [InboxItem]) {
         guard let earliest = items.compactMap({ state(of: $0).snooze?.until }).min() else { return }
-        items.forEach { reschedule($0, to: earliest) }
+        for item in items { reschedule(item, to: earliest) }
     }
 
     /// Asks the assistant what to do with each snoozed item, reusing a fresh answer for the same pile.
@@ -868,7 +907,8 @@ final class InboxModel {
         let snoozed = layout.snoozed
         let ids = snoozed.map(\.id).sorted()
         if let key = triageKey, key.ids == ids,
-           key.at.addingTimeInterval(Double(preferences.briefCacheMinutes) * 60) > .now, !triageSuggestions.isEmpty {
+            key.at.addingTimeInterval(Double(preferences.briefCacheMinutes) * 60) > .now, !triageSuggestions.isEmpty
+        {
             return
         }
         let items = assistantPolicy.items(snoozed).compactMap { item in
@@ -1044,8 +1084,10 @@ final class InboxModel {
         insights = []
         syncedAccounts = []
         preferences = Preferences()
-        if let files = try? FileManager.default.contentsOfDirectory(at: environment.folder, includingPropertiesForKeys: nil) {
-            files.forEach { try? FileManager.default.removeItem(at: $0) }
+        if let files = try? FileManager.default.contentsOfDirectory(
+            at: environment.folder, includingPropertiesForKeys: nil)
+        {
+            for file in files { try? FileManager.default.removeItem(at: file) }
         }
         environment.removeURLCaches()
         try keychain.get()
@@ -1099,10 +1141,14 @@ extension String {
 extension Account {
     /// The same person on the same tool and server: what connecting twice would duplicate.
     func isSame(as other: Account, identity: String) -> Bool {
-        guard pluginID == other.pluginID, !identity.isEmpty, self.identity?.lowercased() == identity.lowercased() else { return false }
+        guard pluginID == other.pluginID, !identity.isEmpty, self.identity?.lowercased() == identity.lowercased() else {
+            return false
+        }
         // "gitlab.acme.io", "https://gitlab.acme.io/" and an empty field (the default host) compare by host.
         let host = { (account: Account) -> String? in
-            guard let value = account.settings["host"]?.trimmingCharacters(in: .whitespaces), !value.isEmpty else { return nil }
+            guard let value = account.settings["host"]?.trimmingCharacters(in: .whitespaces), !value.isEmpty else {
+                return nil
+            }
             return URL(string: value.contains("://") ? value : "https://" + value)?.host?.lowercased()
         }
         return host(self) == host(other)

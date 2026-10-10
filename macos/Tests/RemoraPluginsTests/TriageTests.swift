@@ -1,27 +1,33 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import RemoraPlugins
 
 struct TriageTests {
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     var items: [SnoozedItem] {
         ["a", "b", "c"].map { id in
-            let item = InboxItem(id: id, accountID: UUID(), pluginID: "github", bundle: .reviews, title: "Item \(id)", context: "acme/app", date: now)
-            return SnoozedItem(item: item, snooze: Snooze(until: now + 3_600, mode: .hide, fingerprint: item.fingerprint, reason: .motivation), times: 3)
+            let item = InboxItem(
+                id: id, accountID: UUID(), pluginID: "github", bundle: .reviews, title: "Item \(id)",
+                context: "acme/app", date: now)
+            return SnoozedItem(
+                item: item,
+                snooze: Snooze(until: now + 3_600, mode: .hide, fingerprint: item.fingerprint, reason: .motivation),
+                times: 3)
         }
     }
 
     @Test func parsesSuggestionsAndDropsInvalidOnes() async throws {
         let later = (now + 86_400).ISO8601Format()
         let output = """
-        {"is_error": false, "structured_output": {"suggestions": [
-          {"id": "a", "action": "reschedule", "until": "\(later)", "reason": "After Erin's review"},
-          {"id": "b", "action": "done", "until": "", "reason": "Merged elsewhere"},
-          {"id": "c", "action": "reschedule", "until": "yesterday", "reason": "bad date"},
-          {"id": "ghost", "action": "now", "until": "", "reason": "unknown item"}
-        ]}}
-        """
+            {"is_error": false, "structured_output": {"suggestions": [
+              {"id": "a", "action": "reschedule", "until": "\(later)", "reason": "After Erin's review"},
+              {"id": "b", "action": "done", "until": "", "reason": "Merged elsewhere"},
+              {"id": "c", "action": "reschedule", "until": "yesterday", "reason": "bad date"},
+              {"id": "ghost", "action": "now", "until": "", "reason": "unknown item"}
+            ]}}
+            """
         let runner = RecordingRunner(output: output)
         let plugin = try ClaudeCodePlugin(config: config(["path": fakeClaude()]), runner: runner)
         let suggestions = try await plugin.triage(items, now: now)
@@ -32,7 +38,9 @@ struct TriageTests {
         let arguments = await runner.arguments
         let message = String(decoding: await runner.input ?? Data(), as: UTF8.self)
         #expect(message.contains(#""timesSnoozed":3"#) && message.contains(#""reason":"motivation""#))
-        #expect(arguments[arguments.firstIndex(of: "--json-schema")! + 1].contains(#""enum":["keep","reschedule","done","now"]"#))
+        #expect(
+            arguments[arguments.firstIndex(of: "--json-schema")! + 1].contains(
+                #""enum":["keep","reschedule","done","now"]"#))
     }
 
     /// Real Claude Code. Opt in with REMORA_LIVE_CLAUDE=1.

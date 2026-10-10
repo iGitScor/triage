@@ -5,10 +5,15 @@ const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabi
 
 export function modal(node: HTMLElement, close: () => void) {
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
-  const focusable = () => [...node.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => !el.hasAttribute('disabled'))
+  const focusable = () =>
+    [...node.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => !el.hasAttribute('disabled'))
   // The first choice rather than Cancel: what you most likely came to do.
   const items = focusable()
-  ;(node.querySelector<HTMLElement>('[data-autofocus]') ?? items.find((el) => !el.classList.contains('link')) ?? items[0])?.focus()
+  ;(
+    node.querySelector<HTMLElement>('[data-autofocus]') ??
+    items.find((el) => !el.classList.contains('link')) ??
+    items[0]
+  )?.focus()
 
   function onKey(event: KeyboardEvent) {
     if (event.key === 'Escape') {

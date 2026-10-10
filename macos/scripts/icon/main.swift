@@ -8,9 +8,10 @@ try? FileManager.default.removeItem(at: iconset)
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
 
 func render(_ size: Int) -> Data {
-    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: size, pixelsHigh: size, bitsPerSample: 8,
-                               samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
-                               bytesPerRow: 0, bitsPerPixel: 0)!
+    let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil, pixelsWide: size, pixelsHigh: size, bitsPerSample: 8,
+        samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+        bytesPerRow: 0, bitsPerPixel: 0)!
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
     let s = CGFloat(size)
@@ -21,8 +22,9 @@ func render(_ size: Int) -> Data {
     NSColor(srgbRed: 0xB9 / 255, green: 1, blue: 0x66 / 255, alpha: 1).setFill()
     NSBezierPath(ovalIn: disc).fill()
     if let context = NSGraphicsContext.current?.cgContext {
-        RemoraArt.draw(in: disc.insetBy(dx: disc.width * 0.05, dy: disc.height * 0.05),
-                       color: NSColor(srgbRed: 0x11 / 255, green: 0x11 / 255, blue: 0x11 / 255, alpha: 1), context: context)
+        RemoraArt.draw(
+            in: disc.insetBy(dx: disc.width * 0.05, dy: disc.height * 0.05),
+            color: NSColor(srgbRed: 0x11 / 255, green: 0x11 / 255, blue: 0x11 / 255, alpha: 1), context: context)
     }
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!

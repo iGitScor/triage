@@ -9,7 +9,9 @@ public struct Account: Identifiable, Hashable, Codable, Sendable {
     public var settings: [String: String]
     public var identity: String?
 
-    public init(id: UUID = UUID(), pluginID: String, name: String? = nil, settings: [String: String], identity: String? = nil) {
+    public init(
+        id: UUID = UUID(), pluginID: String, name: String? = nil, settings: [String: String], identity: String? = nil
+    ) {
         self.id = id
         self.pluginID = pluginID
         self.name = name

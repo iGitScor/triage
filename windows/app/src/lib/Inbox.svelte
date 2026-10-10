@@ -1,72 +1,88 @@
 <script lang="ts">
-  import { listen } from '@tauri-apps/api/event'
-  import { onMount } from 'svelte'
-  import { api, type InboxView, type Item } from './api'
-  import Fish from './Fish.svelte'
-  import Group from './Group.svelte'
-  import Icon from './Icon.svelte'
-  import ItemRow from './ItemRow.svelte'
-  import SnoozeSheet from './SnoozeSheet.svelte'
-  import DraftPanel from './DraftPanel.svelte'
-  import BriefCard from './BriefCard.svelte'
-  import InsightCard from './InsightCard.svelte'
-  import TriagePanel from './TriagePanel.svelte'
-  import ReviewSession from './ReviewSession.svelte'
-  import { offer } from './failures'
-  import { t, translateMessage } from './i18n'
-  import { tablist } from './tablist'
-  import { ago } from './time'
+import { listen } from '@tauri-apps/api/event'
+import { onMount } from 'svelte'
+import { api, type InboxView, type Item } from './api'
+import Fish from './Fish.svelte'
+import Group from './Group.svelte'
+import Icon from './Icon.svelte'
+import ItemRow from './ItemRow.svelte'
+import SnoozeSheet from './SnoozeSheet.svelte'
+import DraftPanel from './DraftPanel.svelte'
+import BriefCard from './BriefCard.svelte'
+import InsightCard from './InsightCard.svelte'
+import TriagePanel from './TriagePanel.svelte'
+import ReviewSession from './ReviewSession.svelte'
+import { offer } from './failures'
+import { t, translateMessage } from './i18n'
+import { tablist } from './tablist'
+import { ago } from './time'
 
-  type Tab = 'inProgress' | 'myTurn' | 'waiting' | 'snoozed' | 'done'
-  let { view, query = $bindable(), onsettings, onreminder }: { view: InboxView | null; query: string; onsettings: () => void; onreminder: () => void } = $props()
+type Tab = 'inProgress' | 'myTurn' | 'waiting' | 'snoozed' | 'done'
+let {
+  view,
+  query = $bindable(),
+  onsettings,
+  onreminder,
+}: { view: InboxView | null; query: string; onsettings: () => void; onreminder: () => void } = $props()
 
-  let tab: Tab = $state('myTurn')
-  const running = $derived(view?.counts.inProgress ?? 0)
-  // Starts on In progress when something runs, and leaves it once the last task stops.
-  let landed = false
-  $effect(() => {
-    if (running > 0 && !landed && view) {
-      tab = 'inProgress'
-      landed = true
-    } else if (running === 0 && tab === 'inProgress') {
-      tab = 'myTurn'
-    }
-  })
-
-  onMount(() => {
-    const unlisten = listen('opened', () => (tab = running > 0 ? 'inProgress' : 'myTurn'))
-    return () => unlisten.then((f) => f())
-  })
-  let snoozing: Item | null = $state(null)
-  /// A message the waiting assistant wrote, to copy.
-  let drafting: { item: Item; text: string } | null = $state(null)
-  const ondraft = (item: Item, text: string) => (drafting = { item, text })
-  let refreshing = $state(false)
-  /// The brief card (when an assistant is connected) and the review session.
-  let showBrief = $state(false)
-  let reviewing = $state(false)
-  const allItems = $derived(view ? [...view.layout.inProgress, ...view.layout.pinned, ...view.layout.myTurn.flatMap((g) => g.items), ...view.layout.waiting.flatMap((g) => g.items), ...view.layout.snoozed] : [])
-
-  async function refresh() {
-    refreshing = true
-    await api.refresh()
-    setTimeout(() => (refreshing = false), 1200)
+let tab: Tab = $state('myTurn')
+const running = $derived(view?.counts.inProgress ?? 0)
+// Starts on In progress when something runs, and leaves it once the last task stops.
+let landed = false
+$effect(() => {
+  if (running > 0 && !landed && view) {
+    tab = 'inProgress'
+    landed = true
+  } else if (running === 0 && tab === 'inProgress') {
+    tab = 'myTurn'
   }
+})
 
-  // Shown with t(): scripts/make-i18n.py reads `t-keys` objects.
-  const empty: Record<Tab, string> = { // t-keys
-    inProgress: 'Nothing in progress',
-    myTurn: 'Nothing needs you right now.',
-    waiting: 'You’re not waiting on anyone.',
-    snoozed: 'Nothing snoozed.',
-    done: 'Nothing done yet.',
-  }
+onMount(() => {
+  const unlisten = listen('opened', () => (tab = running > 0 ? 'inProgress' : 'myTurn'))
+  return () => unlisten.then((f) => f())
+})
+let snoozing: Item | null = $state(null)
+/// A message the waiting assistant wrote, to copy.
+let drafting: { item: Item; text: string } | null = $state(null)
+const ondraft = (item: Item, text: string) => (drafting = { item, text })
+let refreshing = $state(false)
+/// The brief card (when an assistant is connected) and the review session.
+let showBrief = $state(false)
+let reviewing = $state(false)
+const allItems = $derived(
+  view
+    ? [
+        ...view.layout.inProgress,
+        ...view.layout.pinned,
+        ...view.layout.myTurn.flatMap((g) => g.items),
+        ...view.layout.waiting.flatMap((g) => g.items),
+        ...view.layout.snoozed,
+      ]
+    : [],
+)
 
-  /** Clear all, with Undo for a few seconds. */
-  async function clearAll() {
-    await api.clearDone()
-    offer(t('Done items cleared'), t('Undo'), api.undo)
-  }
+async function refresh() {
+  refreshing = true
+  await api.refresh()
+  setTimeout(() => (refreshing = false), 1200)
+}
+
+// Shown with t(): scripts/make-i18n.py reads `t-keys` objects.
+const empty: Record<Tab, string> = {
+  // t-keys
+  inProgress: 'Nothing in progress',
+  myTurn: 'Nothing needs you right now.',
+  waiting: 'You’re not waiting on anyone.',
+  snoozed: 'Nothing snoozed.',
+  done: 'Nothing done yet.',
+}
+
+/** Clear all, with Undo for a few seconds. */
+async function clearAll() {
+  await api.clearDone()
+  offer(t('Done items cleared'), t('Undo'), api.undo)
+}
 </script>
 
 <div class="screen">

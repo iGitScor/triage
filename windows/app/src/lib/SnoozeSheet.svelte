@@ -1,29 +1,29 @@
 <script lang="ts">
-  // Snoozing with a reason, as on macOS: the reason suggests when to come back, from your habits; the one
-  // you usually give in this repo or channel is picked for you. "Until there's news" for an answer you wait for.
-  import { onMount } from 'svelte'
-  import { api, type Item, type SnoozeAdvice, type SnoozeReason } from './api'
-  import TimePicker from './TimePicker.svelte'
-  import { t } from './i18n'
-  import { modal } from './modal'
-  import { REASONS } from './reasons'
+// Snoozing with a reason, as on macOS: the reason suggests when to come back, from your habits; the one
+// you usually give in this repo or channel is picked for you. "Until there's news" for an answer you wait for.
+import { onMount } from 'svelte'
+import { api, type Item, type SnoozeAdvice, type SnoozeReason } from './api'
+import TimePicker from './TimePicker.svelte'
+import { t } from './i18n'
+import { modal } from './modal'
+import { REASONS } from './reasons'
 
-  let { item, onclose }: { item: Item; onclose: () => void } = $props()
+let { item, onclose }: { item: Item; onclose: () => void } = $props()
 
-  let advice: SnoozeAdvice | null = $state(null)
-  let reason: SnoozeReason | null = $state(null)
-  let untilNews = $state(true)
-  let start: string | null = $state(null)
+let advice: SnoozeAdvice | null = $state(null)
+let reason: SnoozeReason | null = $state(null)
+let untilNews = $state(true)
+let start: string | null = $state(null)
 
-  function pick(value: SnoozeReason) {
-    reason = reason === value ? null : value
-    if (reason && advice) start = advice.returns[reason]
-  }
+function pick(value: SnoozeReason) {
+  reason = reason === value ? null : value
+  if (reason && advice) start = advice.returns[reason]
+}
 
-  onMount(async () => {
-    advice = await api.snoozeAdvice(item.id)
-    if (advice.usual) pick(advice.usual)
-  })
+onMount(async () => {
+  advice = await api.snoozeAdvice(item.id)
+  if (advice.usual) pick(advice.usual)
+})
 </script>
 
 <div class="sheet" role="dialog" aria-modal="true" aria-label={t('Snooze')} use:modal={onclose}>

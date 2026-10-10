@@ -96,7 +96,8 @@ pub async fn check(app: &AppHandle) {
     };
     let status = match result {
         Ok(Some(update)) => {
-            let status = UpdateStatus::Available { version: update.version.clone(), notes: release_page(&update.version) };
+            let status =
+                UpdateStatus::Available { version: update.version.clone(), notes: release_page(&update.version) };
             *state.updates.pending.lock().await = Some(update);
             status
         }

@@ -20,7 +20,9 @@ struct InsightCard: View {
                     Text(title(insight)).font(Myna.font(13.5, .semibold)).foregroundStyle(Myna.ink)
                     Spacer()
                     if insights.count > 1 {
-                        Button { index += 1 } label: {
+                        Button {
+                            index += 1
+                        } label: {
                             Label("\(index % insights.count + 1)/\(insights.count)", systemImage: "chevron.right")
                                 .labelStyle(.titleAndIcon)
                                 .font(Myna.font(11, .semibold))
@@ -74,7 +76,8 @@ struct InsightCard: View {
         switch insight {
         case .loop(_, let times): L("Snoozed %d times", times)
         case .avoidance(let context, _, _): L("You often put off %@", context)
-        case .pileUp(let at, let items): L("%d items come back %@", items.count, at.formatted(.dateTime.weekday(.abbreviated).hour().minute()))
+        case .pileUp(let at, let items):
+            L("%d items come back %@", items.count, at.formatted(.dateTime.weekday(.abbreviated).hour().minute()))
         case .cluster(let items): L("%d items on the same topic", items.count)
         case .stale(let items): L("%d snoozed item went quiet", plural: "%d snoozed items went quiet", items.count)
         }
@@ -99,21 +102,32 @@ struct InsightCard: View {
         switch insight {
         case .loop(let item, _):
             [
-                Action(label: "Do it now", symbol: "bolt", prominent: true) { model.unsnooze(item); model.open(item) },
+                Action(label: "Do it now", symbol: "bolt", prominent: true) {
+                    model.unsnooze(item)
+                    model.open(item)
+                },
                 Action(label: "Let it go", symbol: "checkmark") { model.toggleDone(item) },
             ]
         case .avoidance(_, _, let items):
-            [Action(label: "Plan a short slot", symbol: "calendar.badge.clock", prominent: true) {
-                model.snoozeMany(items, until: model.suggestedReturn(for: .motivation), reason: .motivation)
-                model.dismiss(insight)
-            }]
+            [
+                Action(label: "Plan a short slot", symbol: "calendar.badge.clock", prominent: true) {
+                    model.snoozeMany(items, until: model.suggestedReturn(for: .motivation), reason: .motivation)
+                    model.dismiss(insight)
+                }
+            ]
         case .pileUp(let at, let items):
-            [Action(label: "Spread them", symbol: "arrow.left.and.right", prominent: true) { model.spread(items, from: at) }]
+            [
+                Action(label: "Spread them", symbol: "arrow.left.and.right", prominent: true) {
+                    model.spread(items, from: at)
+                }
+            ]
         case .cluster(let items):
-            [Action(label: "Same time for all", symbol: "clock", prominent: true) {
-                model.alignReturns(items)
-                model.dismiss(insight)
-            }]
+            [
+                Action(label: "Same time for all", symbol: "clock", prominent: true) {
+                    model.alignReturns(items)
+                    model.dismiss(insight)
+                }
+            ]
         case .stale(let items):
             [Action(label: "Let them go", symbol: "checkmark", prominent: true) { model.sweep(items) }]
         }
@@ -153,7 +167,9 @@ struct TriagePanel: View {
                         .foregroundStyle(Myna.onDark(opacity: 0.6))
                 }
                 let selected = TriageSuggestion.selection(model.triageSuggestions, toggled: toggled)
-                Button { withAnimation(.snappy) { model.apply(selected) } } label: {
+                Button {
+                    withAnimation(.snappy) { model.apply(selected) }
+                } label: {
                     Text(L("Apply %d change", plural: "Apply %d changes", selected.count)).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PillButtonStyle())
@@ -191,7 +207,8 @@ struct TriagePanel: View {
     private func label(_ suggestion: TriageSuggestion) -> String {
         switch suggestion.action {
         case .keep: L("Keep")
-        case .reschedule: L("Move to %@", suggestion.until?.formatted(.dateTime.weekday(.abbreviated).hour().minute()) ?? "")
+        case .reschedule:
+            L("Move to %@", suggestion.until?.formatted(.dateTime.weekday(.abbreviated).hour().minute()) ?? "")
         case .done: L("Let it go")
         case .now: L("Do it now")
         }

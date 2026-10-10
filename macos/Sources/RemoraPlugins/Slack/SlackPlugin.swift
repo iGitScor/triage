@@ -9,7 +9,11 @@ public struct SlackPlugin: SourcePlugin {
         symbol: "number",
         summary: "Mentions, direct messages and replies in your threads from the last few days.",
         fields: [
-            .token("User OAuth token", help: "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies."),
+            .token(
+                "User OAuth token",
+                help:
+                    "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies."
+            ),
             ConfigField(key: "days", label: "Look back (days)", placeholder: "3", defaultValue: "3"),
         ],
         setupSteps: [
@@ -19,16 +23,22 @@ public struct SlackPlugin: SourcePlugin {
         ],
         setupLabel: "Create the Slack app",
         setupURL: { _ in appManifestURL },
-        egress: Egress(hosts: ["slack.com"], description: "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in."),
+        egress: Egress(
+            hosts: ["slack.com"],
+            description:
+                "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in."),
         logo: "slack"
     )
 
     /// Opens Slack's "create app" flow pre-filled with the read-only scopes Remora needs: search, and the channels'
     /// history for replies in your threads.
     static let appManifestURL: URL? = {
-        let manifest = #"{"display_information":{"name":"Remora","description":"Mentions and DMs in your menu bar"},"oauth_config":{"scopes":{"user":["search:read","channels:history","groups:history"]}},"settings":{"org_deploy_enabled":false,"socket_mode_enabled":false,"token_rotation_enabled":false}}"#
+        let manifest =
+            #"{"display_information":{"name":"Remora","description":"Mentions and DMs in your menu bar"},"oauth_config":{"scopes":{"user":["search:read","channels:history","groups:history"]}},"settings":{"org_deploy_enabled":false,"socket_mode_enabled":false,"token_rotation_enabled":false}}"#
         var components = URLComponents(string: "https://api.slack.com/apps")!
-        components.queryItems = [URLQueryItem(name: "new_app", value: "1"), URLQueryItem(name: "manifest_json", value: manifest)]
+        components.queryItems = [
+            URLQueryItem(name: "new_app", value: "1"), URLQueryItem(name: "manifest_json", value: manifest),
+        ]
         return components.url
     }()
 
@@ -60,7 +70,8 @@ public struct SlackPlugin: SourcePlugin {
             teamID: auth.teamId,
             accountID: accountID
         )
-        let threads = await threadReplies(mine: await mine?.messages.matches ?? [], me: auth.userId, teamID: auth.teamId)
+        let threads = await threadReplies(
+            mine: await mine?.messages.matches ?? [], me: auth.userId, teamID: auth.teamId)
         snapshot.items += threads.items
         snapshot.remarks += threads.remarks
         return snapshot
@@ -81,25 +92,42 @@ public struct SlackPlugin: SourcePlugin {
         for mineLast in threads {
             let replies: Replies
             do {
-                replies = try await call("conversations.replies", [
-                    "channel": mineLast.channel.id, "ts": mineLast.threadTS, "oldest": mineLast.ts, "limit": "50",
-                ])
+                replies = try await call(
+                    "conversations.replies",
+                    [
+                        "channel": mineLast.channel.id, "ts": mineLast.threadTS, "oldest": mineLast.ts, "limit": "50",
+                    ])
             } catch HTTPError.api(let message) where message.hasSuffix("missing_scope") {
-                return (items, [L("Slack: replies in your threads need the channels:history and groups:history permissions. Add them to the Remora app in Slack, reinstall it, and paste the new token.")])
+                return (
+                    items,
+                    [
+                        L(
+                            "Slack: replies in your threads need the channels:history and groups:history permissions. Add them to the Remora app in Slack, reinstall it, and paste the new token."
+                        )
+                    ]
+                )
             } catch {
                 continue
             }
-            let others = replies.messages.filter { $0.ts != mineLast.ts && $0.user != me && $0.botId == nil && !$0.text.contains("<@\(me)>") }
+            let others = replies.messages.filter {
+                $0.ts != mineLast.ts && $0.user != me && $0.botId == nil && !$0.text.contains("<@\(me)>")
+            }
             guard let reply = others.max(by: { $0.date < $1.date }) else { continue }
             items.append(reply.item(in: mineLast, accountID: accountID, me: me, teamID: teamID))
         }
         return (items, [])
     }
 
-    static func snapshot(mentions: [Match], direct: [Match], identity: String, me: String, teamID: String? = nil, accountID: UUID) -> SourceSnapshot {
-        let mentionItems = mentions
+    static func snapshot(
+        mentions: [Match], direct: [Match], identity: String, me: String, teamID: String? = nil, accountID: UUID
+    ) -> SourceSnapshot {
+        let mentionItems =
+            mentions
             .filter { !$0.channel.isDirect }
-            .map { $0.item(accountID: accountID, bundle: .mentions, id: "\($0.channel.id)/\($0.ts)", me: me, teamID: teamID) }
+            .map {
+                $0.item(
+                    accountID: accountID, bundle: .mentions, id: "\($0.channel.id)/\($0.ts)", me: me, teamID: teamID)
+            }
         let latestPerConversation = Dictionary(grouping: direct.filter(\.channel.isDirect), by: \.channel.id)
             .compactMap { $0.value.max { $0.date < $1.date } }
             .map { $0.item(accountID: accountID, bundle: .directMessages, id: $0.channel.id, me: me, teamID: teamID) }
@@ -111,11 +139,13 @@ public struct SlackPlugin: SourcePlugin {
         if method == "search.messages" {
             parameters.merge(["sort": "timestamp", "sort_dir": "desc", "count": "40"]) { $1 }
         }
-        let request = URLRequest.get(api.appending(path: method, query: parameters), headers: ["Authorization": "Bearer \(token)"])
+        let request = URLRequest.get(
+            api.appending(path: method, query: parameters), headers: ["Authorization": "Bearer \(token)"])
         let envelope = try await http.decode(Envelope<T>.self, from: request, using: .api(snakeCase: true))
         guard envelope.ok, let value = envelope.value else {
             // A token that no longer works, whatever Slack calls it: the user reconnects.
-            throw ["invalid_auth", "not_authed", "token_revoked", "token_expired", "account_inactive"].contains(envelope.error ?? "")
+            throw ["invalid_auth", "not_authed", "token_revoked", "token_expired", "account_inactive"].contains(
+                envelope.error ?? "")
                 ? HTTPError.unauthorized
                 : HTTPError.api("Slack: \(envelope.error ?? "unknown error")")
         }
@@ -156,7 +186,10 @@ extension SlackPlugin {
     /// A thread's messages from `conversations.replies`, the root first.
     struct Replies: Decodable {
         struct Message: Decodable {
-            struct Profile: Decodable { var displayName: String?; var realName: String? }
+            struct Profile: Decodable {
+                var displayName: String?
+                var realName: String?
+            }
             var ts: String
             var text: String = ""
             var user: String?
@@ -223,7 +256,8 @@ extension SlackPlugin {
             var text: String?
 
             var words: String {
-                let parts = [pretext, title, text].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+                let parts = [pretext, title, text].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
                 return parts.isEmpty ? (fallback ?? "") : parts.joined(separator: "\n")
             }
         }
@@ -251,7 +285,9 @@ extension SlackPlugin {
             blocks = try? container.decodeIfPresent(TextLeaves.self, forKey: .blocks)
         }
 
-        enum CodingKeys: String, CodingKey { case ts, text, permalink, username, channel, botId, subtype, attachments, blocks }
+        enum CodingKeys: String, CodingKey {
+            case ts, text, permalink, username, channel, botId, subtype, attachments, blocks
+        }
 
         /// Apps (Google Calendar, Jira, GitHub…) post with a bot id, or with an empty `text` and their content in
         /// attachments or blocks. They inform; nobody waits for a reply.
@@ -279,7 +315,9 @@ extension SlackPlugin {
         func appURL(teamID: String?) -> URL? {
             guard let teamID else { return nil }
             var components = URLComponents(string: "slack://channel")!
-            components.queryItems = [URLQueryItem(name: "team", value: teamID), URLQueryItem(name: "id", value: channel.id)]
+            components.queryItems = [
+                URLQueryItem(name: "team", value: teamID), URLQueryItem(name: "id", value: channel.id),
+            ]
             return components.url
         }
 
@@ -336,7 +374,10 @@ struct TextLeaves: Decodable {
             }
         } else if var array = try? decoder.unkeyedContainer() {
             while !array.isAtEnd {
-                guard let nested = try? array.decode(TextLeaves.self) else { _ = try? array.decode(Skip.self); continue }
+                guard let nested = try? array.decode(TextLeaves.self) else {
+                    _ = try? array.decode(Skip.self)
+                    continue
+                }
                 strings += nested.strings
             }
         }
@@ -377,10 +418,11 @@ enum SlackText {
         for (pattern, template) in replacements {
             result = result.replacingOccurrences(of: pattern, with: template, options: .regularExpression)
         }
-        return Readable.text(result
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
-            .replacingOccurrences(of: "&amp;", with: "&"))
+        return Readable.text(
+            result
+                .replacingOccurrences(of: "&lt;", with: "<")
+                .replacingOccurrences(of: "&gt;", with: ">")
+                .replacingOccurrences(of: "&amp;", with: "&"))
     }
 
     /// `<!date^seconds^format|fallback>` and `<!date^seconds^format^link|fallback>`.
@@ -398,10 +440,12 @@ enum SlackText {
         var last = text.startIndex
         for match in dateTag.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
             guard let whole = Range(match.range, in: text), let seconds = Range(match.range(at: 1), in: text),
-                  let format = Range(match.range(at: 2), in: text), let time = Double(text[seconds]) else { continue }
+                let format = Range(match.range(at: 2), in: text), let time = Double(text[seconds])
+            else { continue }
             let fallback = Range(match.range(at: 3), in: text).map { String(text[$0]) }
             result += text[last..<whole.lowerBound]
-            result += formatted(Date(timeIntervalSince1970: time), String(text[format]), fallback: fallback, style: style)
+            result += formatted(
+                Date(timeIntervalSince1970: time), String(text[format]), fallback: fallback, style: style)
             last = whole.upperBound
         }
         return result + text[last...]
@@ -413,7 +457,9 @@ enum SlackText {
         var result = ""
         var last = format.startIndex
         for match in tokens.matches(in: format, range: NSRange(format.startIndex..., in: format)) {
-            guard let whole = Range(match.range, in: format), let name = Range(match.range(at: 1), in: format) else { continue }
+            guard let whole = Range(match.range, in: format), let name = Range(match.range(at: 1), in: format) else {
+                continue
+            }
             guard let value = token(String(format[name]), date, style) else { return fallback ?? "" }
             result += format[last..<whole.lowerBound] + value
             last = whole.upperBound
@@ -444,7 +490,10 @@ enum SlackText {
         if name.hasSuffix("_pretty") {
             var calendar = Calendar(identifier: .gregorian)
             calendar.timeZone = style.timeZone
-            let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: style.now), to: calendar.startOfDay(for: date)).day ?? 0
+            let days =
+                calendar.dateComponents(
+                    [.day], from: calendar.startOfDay(for: style.now), to: calendar.startOfDay(for: date)
+                ).day ?? 0
             if (-1...1).contains(days), let day = calendar.date(byAdding: .day, value: days, to: .now) {
                 formatter.doesRelativeDateFormatting = true
                 return formatter.string(from: day)

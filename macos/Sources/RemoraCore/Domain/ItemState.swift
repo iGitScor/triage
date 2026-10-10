@@ -9,7 +9,9 @@ public struct ItemState: Hashable, Codable, Sendable {
     /// Set while the user is working on it: the item leaves the inbox for the In progress view.
     public var startedAt: Date?
 
-    public init(pinned: Bool = false, done: Mark? = nil, snooze: Snooze? = nil, remindedAt: Date? = nil, startedAt: Date? = nil) {
+    public init(
+        pinned: Bool = false, done: Mark? = nil, snooze: Snooze? = nil, remindedAt: Date? = nil, startedAt: Date? = nil
+    ) {
         self.pinned = pinned
         self.done = done
         self.snooze = snooze

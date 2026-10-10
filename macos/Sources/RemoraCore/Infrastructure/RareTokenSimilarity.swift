@@ -20,9 +20,10 @@ public final class RareTokenSimilarity: SimilarityModel, @unchecked Sendable {
             .split { !($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" || $0 == ".") }
             .map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: "-_.")) }
             .filter { $0.count >= 4 && $0.contains(where: \.isLetter) && !KeywordSimilarity.stopWords.contains($0) }
-        return Set(tokens.filter { token in
-            token.contains { $0.isNumber || $0 == "-" || $0 == "_" }
-                || !vocabularies.contains { $0.contains(token) }
-        })
+        return Set(
+            tokens.filter { token in
+                token.contains { $0.isNumber || $0 == "-" || $0 == "_" }
+                    || !vocabularies.contains { $0.contains(token) }
+            })
     }
 }

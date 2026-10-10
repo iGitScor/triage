@@ -8,6 +8,7 @@ crates' dependencies on each other, and Cargo.lock), and the Windows interface's
 
 The build number (CFBundleVersion) is not here: the release workflow stamps it from the run number.
 """
+
 import json
 import pathlib
 import re
@@ -26,7 +27,7 @@ WORKSPACE_PACKAGES = ("remora", "remora_core", "remora_plugins", "remora_app")
 PLIST_RE = re.compile(r"(<key>CFBundleShortVersionString</key>\s*<string>)([^<]*)(</string>)")
 WORKSPACE_RE = re.compile(r'(\[workspace\.package\]\s*\nversion = ")([^"]*)(")')
 DEPENDENCY_RE = re.compile(r'(remora_\w+ = \{ version = ")([^"]*)(", path)')
-LOCK_RE = re.compile(r'(\[\[package\]\]\nname = "(?:%s)"\nversion = ")([^"]*)(")' % "|".join(WORKSPACE_PACKAGES))
+LOCK_RE = re.compile(r'(\[\[package\]\]\nname = "(?:' + "|".join(WORKSPACE_PACKAGES) + r')"\nversion = ")([^"]*)(")')
 
 
 def read() -> dict[str, list[str]]:
@@ -80,8 +81,10 @@ def main() -> None:
         expected = args[1].removeprefix("v")
         versions = report(read())
         if versions != {expected}:
-            sys.exit(f"The tag says {expected}, the source says {', '.join(sorted(versions))}. "
-                     f"Run `make version V={expected}`, commit, then tag again.")
+            sys.exit(
+                f"The tag says {expected}, the source says {', '.join(sorted(versions))}. "
+                f"Run `make version V={expected}`, commit, then tag again."
+            )
         print(f"Every place says {expected}.")
     elif len(args) == 1 and SEMVER.match(args[0].removeprefix("v")):
         version = args[0].removeprefix("v")

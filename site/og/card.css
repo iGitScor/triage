@@ -1,16 +1,77 @@
-body { margin: 0; background: var(--backdrop); }
-.card-og { position: relative; width: 1200px; height: 630px; overflow: hidden; display: flex; gap: 40px; padding: 64px 0 0 72px; box-sizing: border-box;
-  background: radial-gradient(90% 120% at 100% 0%, var(--accent-soft), transparent 60%), var(--backdrop); }
-.og-text { width: 620px; }
-.og-text .brand-disc { width: 52px; height: 52px; }
-.og-text .brand-disc svg { width: 38px; }
-.og-text .brand-name { font-size: 40px; }
-.og-text h1 { margin: 44px 0 18px; font-size: 76px; line-height: 1.02; letter-spacing: -0.03em; }
-.og-text p { margin: 0; font-size: 28px; line-height: 1.35; color: var(--ink-soft); }
-.og-logos { display: flex; gap: 22px; margin-top: 34px; font-size: 34px; color: var(--ink); }
-.og-shot { position: absolute; right: 64px; top: 64px; width: 400px; }
-.og-shot img { display: block; width: 100%; border: 1px solid var(--border); border-radius: 22px; box-shadow: 0 30px 60px -20px rgba(17, 17, 17, 0.4); }
-.icon-og { display: none; width: 180px; height: 180px; place-items: center; background: var(--accent); color: var(--on-accent); }
-.icon-og svg { width: 136px; }
-body.icon .card-og { display: none; }
-body.icon .icon-og { display: grid; }
+body {
+  margin: 0;
+  background: var(--backdrop);
+}
+.card-og {
+  position: relative;
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+  display: flex;
+  gap: 40px;
+  padding: 64px 0 0 72px;
+  box-sizing: border-box;
+  background: radial-gradient(90% 120% at 100% 0%, var(--accent-soft), transparent 60%), var(--backdrop);
+}
+.og-text {
+  width: 620px;
+}
+.og-text .brand-disc {
+  width: 52px;
+  height: 52px;
+}
+.og-text .brand-disc svg {
+  width: 38px;
+}
+.og-text .brand-name {
+  font-size: 40px;
+}
+.og-text h1 {
+  margin: 44px 0 18px;
+  font-size: 76px;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+.og-text p {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+.og-logos {
+  display: flex;
+  gap: 22px;
+  margin-top: 34px;
+  font-size: 34px;
+  color: var(--ink);
+}
+.og-shot {
+  position: absolute;
+  right: 64px;
+  top: 64px;
+  width: 400px;
+}
+.og-shot img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 30px 60px -20px rgba(17, 17, 17, 0.4);
+}
+.icon-og {
+  display: none;
+  width: 180px;
+  height: 180px;
+  place-items: center;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.icon-og svg {
+  width: 136px;
+}
+body.icon .card-og {
+  display: none;
+}
+body.icon .icon-og {
+  display: grid;
+}

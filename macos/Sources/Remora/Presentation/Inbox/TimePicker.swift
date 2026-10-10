@@ -297,18 +297,27 @@ private struct Scrubber: View {
                 }
                 .frame(maxHeight: .infinity)
                 .contentShape(Rectangle())
-                .gesture(DragGesture(minimumDistance: 0).onChanged { value in
-                    let position = min(max((value.location.x - knob / 2) / (geometry.size.width - knob), 0), 1)
-                    date = Date.now.addingTimeInterval(clock.duration(at: position))
-                })
+                .gesture(
+                    DragGesture(minimumDistance: 0).onChanged { value in
+                        let position = min(max((value.location.x - knob / 2) / (geometry.size.width - knob), 0), 1)
+                        date = Date.now.addingTimeInterval(clock.duration(at: position))
+                    })
             }
             .frame(height: 24)
             // Not only a drag: ← → from the keyboard, swipe up or down with VoiceOver, which reads the time.
             .focusable()
             .focused($focused)
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Myna.accent, lineWidth: focused ? 2 : 0).padding(-3))
-            .onKeyPress(.rightArrow) { step(1); return .handled }
-            .onKeyPress(.leftArrow) { step(-1); return .handled }
+            .overlay(
+                RoundedRectangle(cornerRadius: 12).strokeBorder(Myna.accent, lineWidth: focused ? 2 : 0).padding(-3)
+            )
+            .onKeyPress(.rightArrow) {
+                step(1)
+                return .handled
+            }
+            .onKeyPress(.leftArrow) {
+                step(-1)
+                return .handled
+            }
             .accessibilityElement()
             .accessibilityLabel(L("When"))
             .accessibilityValue(clock.describe(date))
@@ -327,10 +336,12 @@ private struct Scrubber: View {
             .font(Myna.font(10))
             .foregroundStyle(Myna.muted)
             // An exact date and time, by keyboard too, and beyond a week.
-            DatePicker(L("Exact date"), selection: $date, in: Date.now..., displayedComponents: [.date, .hourAndMinute])
-                .datePickerStyle(.compact)
-                .font(Myna.font(11.5))
-                .foregroundStyle(Myna.muted)
+            DatePicker(
+                L("Exact date"), selection: $date, in: Date.now..., displayedComponents: [.date, .hourAndMinute]
+            )
+            .datePickerStyle(.compact)
+            .font(Myna.font(11.5))
+            .foregroundStyle(Myna.muted)
         }
     }
 }

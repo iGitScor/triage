@@ -24,7 +24,11 @@ impl Translator {
 
     /// The language chosen, for the interface to use the same one.
     pub fn lang(&self) -> &'static str {
-        if self.dictionary.is_some() { "fr" } else { "en" }
+        if self.dictionary.is_some() {
+            "fr"
+        } else {
+            "en"
+        }
     }
 
     pub fn t(&self, text: &str) -> String {
@@ -34,8 +38,18 @@ impl Translator {
 
 /// The strings the tray and its menu show, each translated in fr.json.
 pub const TRAY_STRINGS: &[&str] = &[
-    "Nothing needs you", "%d need you", "%d in progress", "%d min", "%d h",
-    "Done", "Stop", "Open Remora", "Refresh", "New reminder", "Settings", "Quit",
+    "Nothing needs you",
+    "%d need you",
+    "%d in progress",
+    "%d min",
+    "%d h",
+    "Done",
+    "Stop",
+    "Open Remora",
+    "Refresh",
+    "New reminder",
+    "Settings",
+    "Quit",
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -108,14 +122,22 @@ pub fn running_text(running: usize, since: Option<DateTime<Utc>>, now: DateTime<
         t.t("%d min").replace("%d", &minutes.to_string())
     } else {
         let hours = t.t("%d h").replace("%d", &(minutes / 60).to_string());
-        if minutes % 60 == 0 { hours } else { format!("{hours} {:02}", minutes % 60) }
+        if minutes % 60 == 0 {
+            hours
+        } else {
+            format!("{hours} {:02}", minutes % 60)
+        }
     };
     format!("{text} ({elapsed})")
 }
 
 /// A notification's title and its two lines: where (the subtitle), then what (the body), translated.
 pub fn notification_text(notice: &Notice, t: &Translator) -> (String, String, String) {
-    let body = [notice.subtitle.as_str(), notice.body.as_str()].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n");
+    let body = [notice.subtitle.as_str(), notice.body.as_str()]
+        .into_iter()
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n");
     let body = t.t(&body);
     let mut lines = body.splitn(2, '\n');
     let first = lines.next().unwrap_or_default().to_string();
@@ -138,7 +160,10 @@ mod tests {
 
     fn inbox_with_reminders(titles: &[&str]) -> (Inbox, Vec<String>) {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
-        let ids = titles.iter().map(|t| inbox.add_reminder(t, now() - Duration::minutes(1), now() - Duration::hours(1)).unwrap()).collect();
+        let ids = titles
+            .iter()
+            .map(|t| inbox.add_reminder(t, now() - Duration::minutes(1), now() - Duration::hours(1)).unwrap())
+            .collect();
         inbox.tick(now());
         (inbox, ids)
     }
@@ -224,7 +249,10 @@ mod tests {
             url: None,
         };
         let english = Translator::english();
-        assert_eq!(notification_text(&notice("acme/app #1", "Fix login"), &english), ("New review".into(), "acme/app #1".into(), "Fix login".into()));
+        assert_eq!(
+            notification_text(&notice("acme/app #1", "Fix login"), &english),
+            ("New review".into(), "acme/app #1".into(), "Fix login".into())
+        );
         assert_eq!(notification_text(&notice("", "Fix login"), &english).1, "Fix login");
     }
 }

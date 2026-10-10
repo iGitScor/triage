@@ -166,17 +166,39 @@ impl InboxBundle {
         InboxBundle { id: id.into(), title: title.into(), rank }
     }
 
-    pub fn reminders() -> Self { Self::of("reminders", "Reminders", 0) }
-    pub fn reply() -> Self { Self::of("verb.reply", "To reply", 1) }
-    pub fn reviews() -> Self { Self::of("code.review", "To review", 2) }
-    pub fn fix() -> Self { Self::of("verb.fix", "To fix", 3) }
-    pub fn merge() -> Self { Self::of("verb.merge", "Ready to merge", 4) }
-    pub fn tasks() -> Self { Self::of("docs.tasks", "To do", 5) }
-    pub fn read() -> Self { Self::of("verb.read", "To read", 8) }
-    pub fn awaiting() -> Self { Self::of("verb.awaiting", "Waiting on others", 9) }
-    pub fn mentions() -> Self { Self::of("chat.mentions", "Mentions", 6) }
-    pub fn direct_messages() -> Self { Self::of("chat.direct", "Direct messages", 7) }
-    pub fn authored() -> Self { Self::of("code.authored", "Your merge requests", 9) }
+    pub fn reminders() -> Self {
+        Self::of("reminders", "Reminders", 0)
+    }
+    pub fn reply() -> Self {
+        Self::of("verb.reply", "To reply", 1)
+    }
+    pub fn reviews() -> Self {
+        Self::of("code.review", "To review", 2)
+    }
+    pub fn fix() -> Self {
+        Self::of("verb.fix", "To fix", 3)
+    }
+    pub fn merge() -> Self {
+        Self::of("verb.merge", "Ready to merge", 4)
+    }
+    pub fn tasks() -> Self {
+        Self::of("docs.tasks", "To do", 5)
+    }
+    pub fn read() -> Self {
+        Self::of("verb.read", "To read", 8)
+    }
+    pub fn awaiting() -> Self {
+        Self::of("verb.awaiting", "Waiting on others", 9)
+    }
+    pub fn mentions() -> Self {
+        Self::of("chat.mentions", "Mentions", 6)
+    }
+    pub fn direct_messages() -> Self {
+        Self::of("chat.direct", "Direct messages", 7)
+    }
+    pub fn authored() -> Self {
+        Self::of("code.authored", "Your merge requests", 9)
+    }
 
     /// Whose turn the bundle is, when the bundle alone tells. Kinds leave it to `needs_action`.
     pub fn is_mine(&self) -> Option<bool> {
@@ -208,7 +230,11 @@ pub struct ItemState {
 
 impl ItemState {
     pub fn is_empty(&self) -> bool {
-        !self.pinned && self.done.is_none() && self.snooze.is_none() && self.reminded_at.is_none() && self.started_at.is_none()
+        !self.pinned
+            && self.done.is_none()
+            && self.snooze.is_none()
+            && self.reminded_at.is_none()
+            && self.started_at.is_none()
     }
 }
 
@@ -255,8 +281,13 @@ pub enum SnoozeReason {
 
 impl SnoozeReason {
     /// In the order the snooze sheet shows them, as on macOS.
-    pub const ALL: [SnoozeReason; 5] =
-        [SnoozeReason::Waiting, SnoozeReason::NoTime, SnoozeReason::Focus, SnoozeReason::NotUrgent, SnoozeReason::Motivation];
+    pub const ALL: [SnoozeReason; 5] = [
+        SnoozeReason::Waiting,
+        SnoozeReason::NoTime,
+        SnoozeReason::Focus,
+        SnoozeReason::NotUrgent,
+        SnoozeReason::Motivation,
+    ];
 }
 
 /// One connected instance of a plugin. Secrets live in the credential store, never here.
@@ -297,15 +328,25 @@ pub struct ConfigField {
 impl ConfigField {
     pub fn token(label: &str, help: &str) -> Self {
         ConfigField {
-            key: "token".into(), label: label.into(), placeholder: String::new(), default_value: String::new(),
-            is_secret: true, is_optional: false, help: Some(help.into()),
+            key: "token".into(),
+            label: label.into(),
+            placeholder: String::new(),
+            default_value: String::new(),
+            is_secret: true,
+            is_optional: false,
+            help: Some(help.into()),
         }
     }
 
     pub fn host(default: &str) -> Self {
         ConfigField {
-            key: "host".into(), label: "Host".into(), placeholder: default.into(), default_value: default.into(),
-            is_secret: false, is_optional: false, help: None,
+            key: "host".into(),
+            label: "Host".into(),
+            placeholder: default.into(),
+            default_value: default.into(),
+            is_secret: false,
+            is_optional: false,
+            help: None,
         }
     }
 }

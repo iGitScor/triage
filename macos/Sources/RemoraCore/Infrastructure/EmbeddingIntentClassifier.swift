@@ -73,8 +73,9 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     private func classify(_ text: String) -> TextIntent? {
         let language = Self.language(of: text)
         guard let embedding = embedding(for: language),
-              let examples = vectors(of: language, in: embedding),
-              let message = embedding.vector(for: text) else { return nil }
+            let examples = vectors(of: language, in: embedding),
+            let message = embedding.vector(for: text)
+        else { return nil }
 
         func distance(to intent: TextIntent) -> Double {
             let nearest = (examples[intent] ?? []).map { Self.cosineDistance(message, $0) }.sorted().prefix(neighbors)
@@ -98,7 +99,9 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     /// the distance between the two vectors scaled to length 1, from 0 to 2. Same scale, so `margin` keeps its meaning.
     static func cosineDistance(_ a: [Double], _ b: [Double]) -> Double {
         guard a.count == b.count, !a.isEmpty else { return .infinity }
-        var dot = 0.0, normA = 0.0, normB = 0.0
+        var dot = 0.0
+        var normA = 0.0
+        var normB = 0.0
         for i in a.indices {
             dot += a[i] * b[i]
             normA += a[i] * a[i]

@@ -1,55 +1,55 @@
 <script lang="ts">
-  import { api, type Item, type ItemExtras, type ItemState } from './api'
-  import Icon from './Icon.svelte'
-  import Logo from './Logo.svelte'
-  import { offer } from './failures'
-  import { avatarSrc, describe, mark, shown } from './people'
-  import { reasonLabel } from './reasons'
-  import { t, translateMessage } from './i18n'
-  import { ago, when } from './time'
+import { api, type Item, type ItemExtras, type ItemState } from './api'
+import Icon from './Icon.svelte'
+import Logo from './Logo.svelte'
+import { offer } from './failures'
+import { avatarSrc, describe, mark, shown } from './people'
+import { reasonLabel } from './reasons'
+import { t, translateMessage } from './i18n'
+import { ago, when } from './time'
 
-  let {
-    item,
-    state: itemState,
-    account,
-    extras,
-    onsnooze,
-    ondraft,
-  }: {
-    item: Item
-    state?: ItemState
-    account?: string
-    extras?: ItemExtras
-    onsnooze: (item: Item) => void
-    ondraft?: (item: Item, text: string) => void
-  } = $props()
-  let expanded = $state(false)
-  // t-keys
-  const DRAFT_LABELS = {
-    suggestReviewers: 'Ask for review',
-    nudge: 'Draft a nudge',
-  }
+let {
+  item,
+  state: itemState,
+  account,
+  extras,
+  onsnooze,
+  ondraft,
+}: {
+  item: Item
+  state?: ItemState
+  account?: string
+  extras?: ItemExtras
+  onsnooze: (item: Item) => void
+  ondraft?: (item: Item, text: string) => void
+} = $props()
+let expanded = $state(false)
+// t-keys
+const DRAFT_LABELS = {
+  suggestReviewers: 'Ask for review',
+  nudge: 'Draft a nudge',
+}
 
-  async function draft() {
-    const text = await api.waitingDraft(item.id)
-    if (text) ondraft?.(item, text)
-  }
+async function draft() {
+  const text = await api.waitingDraft(item.id)
+  if (text) ondraft?.(item, text)
+}
 
-  const initial = (name: string) => name.trim().charAt(0).toUpperCase() || '·'
-  const done = $derived(Boolean(itemState?.done))
-  const snoozed = $derived(itemState?.snooze?.until)
-  const reviewers = $derived(shown(item.participants ?? []))
+const initial = (name: string) => name.trim().charAt(0).toUpperCase() || '·'
+const done = $derived(Boolean(itemState?.done))
+const snoozed = $derived(itemState?.snooze?.until)
+const reviewers = $derived(shown(item.participants ?? []))
 
-  /** Done, with Undo for a few seconds. Moving an item back to the inbox needs none. */
-  async function markDone() {
-    const marking = !done
-    await api.toggleDone(item.id)
-    if (marking) offer(t('Marked as done'), t('Undo'), api.undo)
-  }
+/** Done, with Undo for a few seconds. Moving an item back to the inbox needs none. */
+async function markDone() {
+  const marking = !done
+  await api.toggleDone(item.id)
+  if (marking) offer(t('Marked as done'), t('Undo'), api.undo)
+}
 
-  function open(event: MouseEvent) {
-    api.openItem(item.id, event.shiftKey)
-  }
+function open(event: MouseEvent) {
+  api.openItem(item.id, event.shiftKey)
+}
 </script>
 
 <article class="item card" class:reminded={itemState?.remindedAt || itemState?.startedAt}>

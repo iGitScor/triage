@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import RemoraPlugins
 
 /// Answers Linear's two queries by looking at the request body.
@@ -12,7 +13,10 @@ struct LinearStub: HTTPClient {
         let body = String(data: request.httpBody ?? Data(), encoding: .utf8) ?? ""
         let response = body.contains("notifications") ? notifications : issues
         #expect(request.value(forHTTPHeaderField: "Authorization") == "lin_api_key", "personal keys go without Bearer")
-        return (Data(response.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        return (
+            Data(response.utf8),
+            HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        )
     }
 }
 
@@ -36,22 +40,25 @@ struct LinearPluginTests {
     @Test func saysWhenIssuesAreCut() async throws {
         let more = issues.replacingOccurrences(of: "]}}}}", with: #"], "pageInfo": {"hasNextPage": true}}}}}"#)
         let empty = #"{"data": {"notifications": {"nodes": []}}}"#
-        let plugin = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: more, notifications: empty))
+        let plugin = try LinearPlugin(
+            config: config(["token": "lin_api_key"]), http: LinearStub(issues: more, notifications: empty))
         #expect(try await plugin.fetch().remarks == [SourceSnapshot.truncated("Linear")])
-        let all = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: issues, notifications: empty))
+        let all = try LinearPlugin(
+            config: config(["token": "lin_api_key"]), http: LinearStub(issues: issues, notifications: empty))
         #expect(try await all.fetch().remarks.isEmpty)
     }
 
     @Test func issuesAndActionableNotifications() async throws {
         let notifications = """
-        {"data": {"notifications": {"nodes": [
-          {"id": "n1", "type": "issueCommentMention", "title": "Erin mentioned you in ENG-40", "url": "https://linear.app/x", "readAt": null, "createdAt": "\(recent)", "actor": {"name": "Erin"}},
-          {"id": "n2", "type": "issueAssignedToYou", "title": "Assigned", "readAt": null, "createdAt": "\(recent)"},
-          {"id": "n3", "type": "issueNewComment", "title": "Frank commented", "readAt": "\(recent)", "createdAt": "\(recent)"},
-          {"id": "n4", "type": "issueMention", "title": "Old mention", "readAt": null, "createdAt": "\(old)"}
-        ]}}}
-        """
-        let plugin = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: issues, notifications: notifications))
+            {"data": {"notifications": {"nodes": [
+              {"id": "n1", "type": "issueCommentMention", "title": "Erin mentioned you in ENG-40", "url": "https://linear.app/x", "readAt": null, "createdAt": "\(recent)", "actor": {"name": "Erin"}},
+              {"id": "n2", "type": "issueAssignedToYou", "title": "Assigned", "readAt": null, "createdAt": "\(recent)"},
+              {"id": "n3", "type": "issueNewComment", "title": "Frank commented", "readAt": "\(recent)", "createdAt": "\(recent)"},
+              {"id": "n4", "type": "issueMention", "title": "Old mention", "readAt": null, "createdAt": "\(old)"}
+            ]}}}
+            """
+        let plugin = try LinearPlugin(
+            config: config(["token": "lin_api_key"]), http: LinearStub(issues: issues, notifications: notifications))
         let snapshot = try await plugin.fetch()
 
         #expect(snapshot.identity == "Alice")
@@ -69,14 +76,16 @@ struct LinearPluginTests {
 
     @Test func issuesSurviveANotificationsSchemaChange() async throws {
         let broken = #"{"errors": [{"message": "Cannot query field \"title\" on type \"Notification\"."}]}"#
-        let plugin = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: issues, notifications: broken))
+        let plugin = try LinearPlugin(
+            config: config(["token": "lin_api_key"]), http: LinearStub(issues: issues, notifications: broken))
         let snapshot = try await plugin.fetch()
         #expect(snapshot.items.count == 4)
     }
 
     @Test func rejectedKeyIsReported() async throws {
         let rejected = #"{"errors": [{"message": "Authentication required"}]}"#
-        let plugin = try LinearPlugin(config: config(["token": "lin_api_key"]), http: LinearStub(issues: rejected, notifications: rejected))
+        let plugin = try LinearPlugin(
+            config: config(["token": "lin_api_key"]), http: LinearStub(issues: rejected, notifications: rejected))
         // A rejected key: the account asks for reconnecting.
         await #expect(throws: HTTPError.unauthorized) { try await plugin.fetch() }
     }

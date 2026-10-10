@@ -11,7 +11,13 @@ const out = process.argv[2] ?? join(root, 'preview')
 mkdirSync(out, { recursive: true })
 const fixture = JSON.parse(readFileSync(join(root, 'src/fixtures/demo.json'), 'utf8'))
 
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' }
+const types = {
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.woff2': 'font/woff2',
+  '.svg': 'image/svg+xml',
+}
 const server = createServer((req, res) => {
   const path = join(root, 'dist', req.url === '/' ? 'index.html' : decodeURIComponent(req.url.split('?')[0]))
   if (!existsSync(path)) return res.writeHead(404).end()
@@ -27,9 +33,23 @@ function mock(data) {
     inbox: () => data.inbox,
     sources: () => data.sources,
     accounts: () => data.accounts,
-    settings: () => ({ preferences: data.preferences, managed: { unreadable: [] }, isManaged: false, autostart: true, version: '0.2.1', dataDir: 'C:\\Users\\alice\\AppData\\Local\\Remora', shortcut: 'CommandOrControl+Alt+R' }),
-    presets: () => [{ label: 'Later today', date: at(180) }, { label: 'This evening', date: at(480) }, { label: 'Tomorrow', date: at(1260) }, { label: 'Next week', date: at(5000) }],
-    slider_date: ({ progress, from }) => new Date((from ? Date.parse(from) : Date.now()) + steps[Math.round(progress * 18)] * 60_000).toISOString(),
+    settings: () => ({
+      preferences: data.preferences,
+      managed: { unreadable: [] },
+      isManaged: false,
+      autostart: true,
+      version: '0.2.1',
+      dataDir: 'C:\\Users\\alice\\AppData\\Local\\Remora',
+      shortcut: 'CommandOrControl+Alt+R',
+    }),
+    presets: () => [
+      { label: 'Later today', date: at(180) },
+      { label: 'This evening', date: at(480) },
+      { label: 'Tomorrow', date: at(1260) },
+      { label: 'Next week', date: at(5000) },
+    ],
+    slider_date: ({ progress, from }) =>
+      new Date((from ? Date.parse(from) : Date.now()) + steps[Math.round(progress * 18)] * 60_000).toISOString(),
     'plugin:event|listen': () => 1,
   }
   window.__TAURI_INTERNALS__ = {
@@ -43,28 +63,69 @@ const shots = [
   ['myturn', async () => {}],
   ['waiting', (p) => p.getByRole('button', { name: /^(Waiting|En attente)/ }).click()],
   ['snoozed', (p) => p.getByRole('button', { name: /^(Snoozed|Reportés)/ }).click()],
-  ['snooze-sheet', async (p) => { await p.locator('.item').first().hover(); await p.locator('.action').filter({ hasText: /Snooze…|Reporter…/ }).first().click() }],
+  [
+    'snooze-sheet',
+    async (p) => {
+      await p.locator('.item').first().hover()
+      await p
+        .locator('.action')
+        .filter({ hasText: /Snooze…|Reporter…/ })
+        .first()
+        .click()
+    },
+  ],
   ['hover', (p) => p.locator('.item').nth(2).hover()],
   ['reminder', (p) => p.getByRole('button', { name: /^(Reminder|Rappel)$/ }).click()],
   ['sources', (p) => p.getByRole('button', { name: /^(Settings|Réglages)$/ }).click()],
-  ['general', async (p) => { await p.getByRole('button', { name: /^(Settings|Réglages)$/ }).click(); await p.getByRole('button', { name: /^(General|Général)$/ }).click() }],
-  ['privacy', async (p) => { await p.getByRole('button', { name: /^(Settings|Réglages)$/ }).click(); await p.getByRole('button', { name: /^(Privacy|Confidentialité)$/ }).click() }],
+  [
+    'general',
+    async (p) => {
+      await p.getByRole('button', { name: /^(Settings|Réglages)$/ }).click()
+      await p.getByRole('button', { name: /^(General|Général)$/ }).click()
+    },
+  ],
+  [
+    'privacy',
+    async (p) => {
+      await p.getByRole('button', { name: /^(Settings|Réglages)$/ }).click()
+      await p.getByRole('button', { name: /^(Privacy|Confidentialité)$/ }).click()
+    },
+  ],
 ]
 
 const browser = await chromium.launch()
 let problems = 0
 for (const locale of ['en', 'fr']) {
   for (const scheme of ['light', 'dark']) {
-    const context = await browser.newContext({ viewport: { width: 400, height: 640 }, deviceScaleFactor: 2, locale, colorScheme: scheme })
+    const context = await browser.newContext({
+      viewport: { width: 400, height: 640 },
+      deviceScaleFactor: 2,
+      locale,
+      colorScheme: scheme,
+    })
     await context.addInitScript(mock, fixture)
     for (const [name, action] of shots) {
       const page = await context.newPage()
-      page.on('pageerror', (e) => { problems++; console.log(`${locale} ${scheme} ${name}: ${e.message}`) })
+      page.on('pageerror', (e) => {
+        problems++
+        console.log(`${locale} ${scheme} ${name}: ${e.message}`)
+      })
       await page.goto('http://localhost:4174/', { waitUntil: 'networkidle' })
       await action(page)
       await page.waitForTimeout(150)
-      const overflow = await page.evaluate(() => [...document.querySelectorAll('*')].filter((el) => el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX === 'visible' && el.clientWidth > 0).map((el) => el.className).slice(0, 3))
-      if (overflow.length) { problems++; console.log(`${locale} ${scheme} ${name}: overflow in ${overflow.join(', ')}`) }
+      const overflow = await page.evaluate(() =>
+        [...document.querySelectorAll('*')]
+          .filter(
+            (el) =>
+              el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX === 'visible' && el.clientWidth > 0,
+          )
+          .map((el) => el.className)
+          .slice(0, 3),
+      )
+      if (overflow.length) {
+        problems++
+        console.log(`${locale} ${scheme} ${name}: overflow in ${overflow.join(', ')}`)
+      }
       await page.screenshot({ path: join(out, `${name}.${locale}.${scheme}.png`) })
       await page.close()
     }
@@ -73,5 +134,7 @@ for (const locale of ['en', 'fr']) {
 }
 await browser.close()
 server.close()
-console.log(`${problems ? '✗' : '✓'} ${shots.length * 4} screens in ${out}${problems ? `, ${problems} problem(s)` : ''}`)
+console.log(
+  `${problems ? '✗' : '✓'} ${shots.length * 4} screens in ${out}${problems ? `, ${problems} problem(s)` : ''}`,
+)
 process.exit(problems ? 1 : 0)

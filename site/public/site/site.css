@@ -6,8 +6,8 @@
 */
 
 @font-face {
-  font-family: 'Outfit Variable';
-  src: url('/site/outfit.woff2') format('woff2');
+  font-family: "Outfit Variable";
+  src: url("/site/outfit.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -44,7 +44,7 @@ body {
   font-family: var(--font);
   font-size: 17px;
   line-height: 1.55;
-  font-feature-settings: 'ss01';
+  font-feature-settings: "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -223,7 +223,7 @@ kbd {
 }
 
 .eyebrow::before {
-  content: '';
+  content: "";
   width: 18px;
   height: 2px;
   border-radius: 2px;
@@ -388,7 +388,7 @@ kbd {
   color: var(--ink);
 }
 
-.site-nav a[aria-current='page'] {
+.site-nav a[aria-current="page"] {
   color: var(--ink);
   background: var(--card);
 }
@@ -427,7 +427,7 @@ kbd {
   color: var(--ink);
 }
 
-.lang-switch a[aria-current='true'] {
+.lang-switch a[aria-current="true"] {
   background: var(--ink);
   color: var(--backdrop);
 }
@@ -527,7 +527,7 @@ kbd {
 }
 
 .link-arrow::after {
-  content: '→';
+  content: "→";
   transition: transform 0.15s ease;
 }
 
@@ -628,7 +628,7 @@ kbd {
 }
 
 .demo-script .file::before {
-  content: '';
+  content: "";
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -978,7 +978,7 @@ kbd {
 }
 
 .ticks li::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 2px;
   top: 0.55em;
@@ -1092,7 +1092,7 @@ kbd {
 }
 
 .steps > li::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 19px;
   top: 48px;
@@ -1723,7 +1723,7 @@ td {
 }
 
 .faq summary::after {
-  content: '';
+  content: "";
   flex: none;
   width: 28px;
   height: 28px;
@@ -2291,7 +2291,7 @@ td {
   border-color: var(--on-dark-muted);
 }
 
-.listen-group button[aria-pressed='true'] {
+.listen-group button[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent);
@@ -2363,7 +2363,7 @@ td {
   font-size: 15px;
 }
 
-.disk input[type='radio'] {
+.disk input[type="radio"] {
   accent-color: var(--ink);
 }
 

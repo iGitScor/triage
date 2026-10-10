@@ -1,56 +1,65 @@
 <script lang="ts">
-  import { api, type AssistantView, type Group, type Item, type ItemExtras, type ItemState } from './api'
-  import Icon from './Icon.svelte'
-  import ItemRow from './ItemRow.svelte'
-  import { t, translateMessage } from './i18n'
+import { api, type AssistantView, type Group, type Item, type ItemExtras, type ItemState } from './api'
+import Icon from './Icon.svelte'
+import ItemRow from './ItemRow.svelte'
+import { t, translateMessage } from './i18n'
 
-  let {
-    group,
-    states,
-    accounts,
-    extras = {},
-    assistant = null,
-    onsnooze,
-    ondraft,
-    onreview,
-  }: {
-    group: Group
-    states: Record<string, ItemState>
-    accounts: Record<string, string>
-    extras?: Record<string, ItemExtras>
-    onsnooze: (item: Item) => void
-    ondraft?: (item: Item, text: string) => void
-    assistant?: AssistantView | null
-    onreview?: () => void
-  } = $props()
-  /// A short summary of the group by the assistant, shown on request.
-  let showSummary = $state(false)
-  let summarizing = $state(false)
-  let summaryError = $state('')
-  async function summarize() {
-    showSummary = !showSummary
-    if (!showSummary || assistant?.summaries[group.bundle.id]) return
-    summarizing = true
-    summaryError = ''
-    try {
-      await api.summarize(group.bundle.id, t(group.bundle.title))
-    } catch (e) {
-      summaryError = translateMessage(e instanceof Error ? e.message : String(e))
-    } finally {
-      summarizing = false
-    }
+let {
+  group,
+  states,
+  accounts,
+  extras = {},
+  assistant = null,
+  onsnooze,
+  ondraft,
+  onreview,
+}: {
+  group: Group
+  states: Record<string, ItemState>
+  accounts: Record<string, string>
+  extras?: Record<string, ItemExtras>
+  onsnooze: (item: Item) => void
+  ondraft?: (item: Item, text: string) => void
+  assistant?: AssistantView | null
+  onreview?: () => void
+} = $props()
+/// A short summary of the group by the assistant, shown on request.
+let showSummary = $state(false)
+let summarizing = $state(false)
+let summaryError = $state('')
+async function summarize() {
+  showSummary = !showSummary
+  if (!showSummary || assistant?.summaries[group.bundle.id]) return
+  summarizing = true
+  summaryError = ''
+  try {
+    await api.summarize(group.bundle.id, t(group.bundle.title))
+  } catch (e) {
+    summaryError = translateMessage(e instanceof Error ? e.message : String(e))
+  } finally {
+    summarizing = false
   }
+}
 
-  const icons: Record<string, string> = {
-    reminders: 'bell', 'verb.reply': 'reply', 'code.review': 'review', 'verb.fix': 'fix', 'verb.merge': 'merge',
-    'docs.tasks': 'todo', 'verb.read': 'read', 'verb.awaiting': 'hourglass', 'chat.mentions': 'at', 'chat.direct': 'chat', 'code.authored': 'pull',
-  }
-  /** Five at a time: never more than can be taken in at a glance. */
-  const LIMIT = 5
-  let open = $state(true)
-  let all = $state(false)
-  const shown = $derived(all ? group.items : group.items.slice(0, LIMIT))
-  const quiet = $derived(group.bundle.id === 'verb.read' || group.bundle.id === 'verb.awaiting')
+const icons: Record<string, string> = {
+  reminders: 'bell',
+  'verb.reply': 'reply',
+  'code.review': 'review',
+  'verb.fix': 'fix',
+  'verb.merge': 'merge',
+  'docs.tasks': 'todo',
+  'verb.read': 'read',
+  'verb.awaiting': 'hourglass',
+  'chat.mentions': 'at',
+  'chat.direct': 'chat',
+  'code.authored': 'pull',
+}
+/** Five at a time: never more than can be taken in at a glance. */
+const LIMIT = 5
+let open = $state(true)
+let all = $state(false)
+const shown = $derived(all ? group.items : group.items.slice(0, LIMIT))
+const quiet = $derived(group.bundle.id === 'verb.read' || group.bundle.id === 'verb.awaiting')
 </script>
 
 <section class="group">

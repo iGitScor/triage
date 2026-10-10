@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { size = 32 }: { size?: number } = $props()
+let { size = 32 }: { size?: number } = $props()
 </script>
 
 <span class="disc" style:width="{size}px" style:height="{size}px">

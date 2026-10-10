@@ -1,4 +1,5 @@
 import Testing
+
 @testable import RemoraCore
 
 struct ChangeDetectorTests {
@@ -25,7 +26,8 @@ struct ChangeDetectorTests {
     }
 
     @Test func redactedNoticeKeepsWhereButNotWhat() {
-        let notice = Notice(kind: .arrival, itemID: "1", title: "Mentions", subtitle: "#general", body: "Salary review moved", url: nil)
+        let notice = Notice(
+            kind: .arrival, itemID: "1", title: "Mentions", subtitle: "#general", body: "Salary review moved", url: nil)
         let redacted = notice.redacted()
         #expect(redacted.title == "Mentions")
         #expect(redacted.subtitle == "#general")

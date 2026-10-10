@@ -26,7 +26,9 @@ public enum PluginRegistry {
         assistants.contains { $0.manifest.id == id }
     }
 
-    public static func makeAssistant(_ account: Account, secrets: [String: String], http: HTTPClient) throws -> any AssistantPlugin {
+    public static func makeAssistant(_ account: Account, secrets: [String: String], http: HTTPClient) throws
+        -> any AssistantPlugin
+    {
         guard let type = assistants.first(where: { $0.manifest.id == account.pluginID }) else {
             throw PluginError.unknownPlugin(account.pluginID)
         }
@@ -38,7 +40,8 @@ public enum PluginRegistry {
         sources.first { $0.manifest.id == id }
     }
 
-    public static func make(_ account: Account, secrets: [String: String], http: HTTPClient) throws -> any SourcePlugin {
+    public static func make(_ account: Account, secrets: [String: String], http: HTTPClient) throws -> any SourcePlugin
+    {
         guard let type = source(account.pluginID) else { throw PluginError.unknownPlugin(account.pluginID) }
         let values = account.settings.merging(secrets) { _, secret in secret }
         return try type.init(config: PluginConfig(accountID: account.id, values: values), http: http)

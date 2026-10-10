@@ -37,30 +37,19 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "nsis"
-    ],
+    "targets": ["nsis"],
     "publisher": "Remora",
     "copyright": "GPL-3.0-or-later",
     "category": "Productivity",
     "shortDescription": "One inbox for code reviews, merge requests, Slack and Linear.",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "resources": {
       "../../../LICENSE": "LICENSE.txt"
     },
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": [
-          "English",
-          "French"
-        ],
+        "languages": ["English", "French"],
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon.ico"
       }

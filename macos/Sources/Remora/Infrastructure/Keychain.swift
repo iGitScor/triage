@@ -21,7 +21,9 @@ enum KeychainError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .unreadable:
-            L("Remora can’t read its Keychain item, so it leaves it unchanged. Quit and reopen Remora, or use Erase local data in Settings → Privacy to start again.")
+            L(
+                "Remora can’t read its Keychain item, so it leaves it unchanged. Quit and reopen Remora, or use Erase local data in Settings → Privacy to start again."
+            )
         case .status(errSecUserCanceled), .status(errSecAuthFailed), .status(errSecInteractionNotAllowed):
             L("Keychain access was refused. Try again and choose Always Allow.")
         case .status(let status):
@@ -109,7 +111,8 @@ final class Keychain: SecretStore {
         }
         for legacy in Self.legacyVaultServices {
             guard let data = try? items.read(service: legacy, account: Self.vaultAccount),
-                  let loaded = try? JSONDecoder().decode([String: [String: String]].self, from: data) else { continue }
+                let loaded = try? JSONDecoder().decode([String: [String: String]].self, from: data)
+            else { continue }
             try write(loaded)
             try? items.delete(service: legacy, account: Self.vaultAccount)
             return loaded
@@ -127,7 +130,8 @@ final class Keychain: SecretStore {
     private func legacySecrets(for account: UUID) -> [String: String]? {
         for service in Self.legacyServices {
             if let data = try? items.read(service: service, account: account.uuidString),
-               let secrets = try? JSONDecoder().decode([String: String].self, from: data) {
+                let secrets = try? JSONDecoder().decode([String: String].self, from: data)
+            {
                 return secrets
             }
         }

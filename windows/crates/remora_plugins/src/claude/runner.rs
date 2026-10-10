@@ -21,7 +21,9 @@ impl fmt::Display for CommandError {
         match self {
             CommandError::NotFound(name) => write!(f, "{}", NOT_FOUND.replace("%@", name)),
             CommandError::TimedOut => write!(f, "The command took too long and was stopped."),
-            CommandError::Failed(status, message) if message.is_empty() => write!(f, "{}", FAILED.replace("%d", &status.to_string())),
+            CommandError::Failed(status, message) if message.is_empty() => {
+                write!(f, "{}", FAILED.replace("%d", &status.to_string()))
+            }
             CommandError::Failed(_, message) => write!(f, "{message}"),
         }
     }
@@ -37,7 +39,13 @@ pub trait CommandRunner: Send + Sync {
     /// `environment` replaces the program's environment; None keeps Remora's. `input` goes to the program's standard
     /// input: what other processes mustn't see goes there, never in `arguments`, which any process of the user can
     /// read.
-    async fn run(&self, program: &Path, arguments: &[String], environment: Option<&HashMap<String, String>>, input: Option<&[u8]>) -> Result<Vec<u8>, CommandError>;
+    async fn run(
+        &self,
+        program: &Path,
+        arguments: &[String],
+        environment: Option<&HashMap<String, String>>,
+        input: Option<&[u8]>,
+    ) -> Result<Vec<u8>, CommandError>;
 }
 
 /// The real thing, through `tokio::process`.
@@ -66,7 +74,13 @@ async fn read_all(pipe: Option<impl AsyncRead + Unpin>) -> Vec<u8> {
 
 #[async_trait]
 impl CommandRunner for ProcessCommandRunner {
-    async fn run(&self, program: &Path, arguments: &[String], environment: Option<&HashMap<String, String>>, input: Option<&[u8]>) -> Result<Vec<u8>, CommandError> {
+    async fn run(
+        &self,
+        program: &Path,
+        arguments: &[String],
+        environment: Option<&HashMap<String, String>>,
+        input: Option<&[u8]>,
+    ) -> Result<Vec<u8>, CommandError> {
         let mut command = tokio::process::Command::new(program);
         command
             .args(arguments)
@@ -161,14 +175,21 @@ mod tests {
         /// Stderr read by nobody blocks a program past the pipe's buffer, until the timeout.
         #[tokio::test]
         async fn lots_of_error_output_does_not_block() {
-            let data = runner().run(&shell(), &args("head -c 300000 /dev/zero | tr '\\0' x >&2; echo done"), None, None).await.unwrap();
+            let data = runner()
+                .run(&shell(), &args("head -c 300000 /dev/zero | tr '\\0' x >&2; echo done"), None, None)
+                .await
+                .unwrap();
             assert_eq!(data, b"done\n");
         }
 
         #[tokio::test]
         async fn the_environment_is_passed() {
-            let environment = HashMap::from([("REMORA_TEST".to_string(), "yes".to_string()), ("PATH".to_string(), "/usr/bin:/bin".to_string())]);
-            let data = runner().run(&shell(), &args("printf %s \"$REMORA_TEST\""), Some(&environment), None).await.unwrap();
+            let environment = HashMap::from([
+                ("REMORA_TEST".to_string(), "yes".to_string()),
+                ("PATH".to_string(), "/usr/bin:/bin".to_string()),
+            ]);
+            let data =
+                runner().run(&shell(), &args("printf %s \"$REMORA_TEST\""), Some(&environment), None).await.unwrap();
             assert_eq!(data, b"yes");
         }
 
@@ -199,7 +220,10 @@ mod tests {
         #[tokio::test]
         async fn a_missing_program_is_not_found() {
             let missing = Path::new("/nowhere/claude");
-            assert_eq!(runner().run(missing, &[], None, None).await, Err(CommandError::NotFound("/nowhere/claude".into())));
+            assert_eq!(
+                runner().run(missing, &[], None, None).await,
+                Err(CommandError::NotFound("/nowhere/claude".into()))
+            );
         }
     }
 
@@ -209,7 +233,15 @@ mod tests {
 
         #[tokio::test]
         async fn input_goes_to_standard_input() {
-            let data = runner().run(Path::new("cmd.exe"), &["/C".into(), "sort".into()], None, Some(b"Fix the CSV export for Alice\r\n")).await.unwrap();
+            let data = runner()
+                .run(
+                    Path::new("cmd.exe"),
+                    &["/C".into(), "sort".into()],
+                    None,
+                    Some(b"Fix the CSV export for Alice\r\n"),
+                )
+                .await
+                .unwrap();
             assert_eq!(String::from_utf8_lossy(&data).trim(), "Fix the CSV export for Alice");
         }
 

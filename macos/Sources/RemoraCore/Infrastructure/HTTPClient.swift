@@ -43,8 +43,11 @@ final class SameHostRedirects: NSObject, URLSessionTaskDelegate, @unchecked Send
 public enum RedirectPolicy {
     /// Same host (case-insensitive), and never from https to http.
     public static func allows(from: URL?, to: URL?) -> Bool {
-        guard let fromHost = from?.host?.lowercased(), let toHost = to?.host?.lowercased(), fromHost == toHost else { return false }
-        let fromScheme = from?.scheme?.lowercased(), toScheme = to?.scheme?.lowercased()
+        guard let fromHost = from?.host?.lowercased(), let toHost = to?.host?.lowercased(), fromHost == toHost else {
+            return false
+        }
+        let fromScheme = from?.scheme?.lowercased()
+        let toScheme = to?.scheme?.lowercased()
         return toScheme == "https" || (toScheme == "http" && fromScheme == "http")
     }
 }
@@ -52,11 +55,12 @@ public enum RedirectPolicy {
 public enum HTTPError: LocalizedError, Equatable {
     /// What a failed status means for you, with its code for a bug report. Same text on Windows (`http.rs`).
     public static func describe(_ code: Int) -> String {
-        let text = switch code {
-        case 404: L("The server couldn’t find what Remora asked for: check the address and what the token can see.")
-        case 500...: L("The server had a problem: Remora tries again at the next refresh.")
-        default: L("The server refused the request.")
-        }
+        let text =
+            switch code {
+            case 404: L("The server couldn’t find what Remora asked for: check the address and what the token can see.")
+            case 500...: L("The server had a problem: Remora tries again at the next refresh.")
+            default: L("The server refused the request.")
+            }
         return "\(text) (HTTP \(code))"
     }
 
@@ -72,7 +76,8 @@ public enum HTTPError: LocalizedError, Equatable {
         switch self {
         case .invalidResponse: L("The server sent an invalid response.")
         case .unauthorized: L("The token was rejected. Check it and its scopes.")
-        case .rateLimited(let until?): L("Too many requests: Remora waits until %@.", until.formatted(date: .omitted, time: .shortened))
+        case .rateLimited(let until?):
+            L("Too many requests: Remora waits until %@.", until.formatted(date: .omitted, time: .shortened))
         case .rateLimited(nil): L("Too many requests: Remora waits a little before trying again.")
         case .status(let code): Self.describe(code)
         case .api(let message): message
@@ -92,12 +97,17 @@ extension HTTPClient {
             return try decoder.decode(T.self, from: data)
         case 429:
             throw HTTPError.rateLimited(Self.resumeDate(response))
-        case 403 where ["x-ratelimit-remaining", "ratelimit-remaining"].contains { response.value(forHTTPHeaderField: $0) == "0" }:
+        case 403
+        where ["x-ratelimit-remaining", "ratelimit-remaining"].contains {
+            response.value(forHTTPHeaderField: $0) == "0"
+        }:
             throw HTTPError.rateLimited(Self.resumeDate(response))
         case 401, 403:
             throw HTTPError.unauthorized
         case 300..<400:
-            let target = response.value(forHTTPHeaderField: "Location").flatMap { URL(string: $0, relativeTo: response.url)?.host }
+            let target = response.value(forHTTPHeaderField: "Location").flatMap {
+                URL(string: $0, relativeTo: response.url)?.host
+            }
             throw EgressError.blockedRedirect(target ?? "?")
         default:
             throw HTTPError.status(response.statusCode)
@@ -110,7 +120,9 @@ extension HTTPClient {
     /// GitHub (`x-ratelimit-reset`) and GitLab (`RateLimit-Reset`) give in seconds since 1970.
     static func resumeDate(_ response: HTTPURLResponse, now: Date = .now) -> Date? {
         if let retry = response.value(forHTTPHeaderField: "Retry-After") {
-            if let seconds = TimeInterval(retry.trimmingCharacters(in: .whitespaces)) { return now.addingTimeInterval(seconds) }
+            if let seconds = TimeInterval(retry.trimmingCharacters(in: .whitespaces)) {
+                return now.addingTimeInterval(seconds)
+            }
             let formatter = DateFormatter()
             formatter.locale = Locale(identifier: "en_US_POSIX")
             formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
@@ -130,7 +142,7 @@ extension URLRequest {
     /// so a call that generates text (Claude) needs far more than the 30 s that suit the tools' APIs.
     public static func get(_ url: URL, headers: [String: String] = [:], timeout: TimeInterval = 30) -> URLRequest {
         var request = URLRequest(url: url, timeoutInterval: timeout)
-        headers.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        for (field, value) in headers { request.setValue(value, forHTTPHeaderField: field) }
         request.setValue("Remora", forHTTPHeaderField: "User-Agent")
         return request
     }

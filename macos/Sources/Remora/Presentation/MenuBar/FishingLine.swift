@@ -63,7 +63,9 @@ private final class LineView: NSView {
         let hook = NSBezierPath()
         hook.move(to: tip)
         hook.line(to: NSPoint(x: tip.x, y: tip.y - 9))
-        hook.appendArc(withCenter: NSPoint(x: tip.x - 4.5, y: tip.y - 9), radius: 4.5, startAngle: 0, endAngle: 180, clockwise: true)
+        hook.appendArc(
+            withCenter: NSPoint(x: tip.x - 4.5, y: tip.y - 9), radius: 4.5, startAngle: 0, endAngle: 180,
+            clockwise: true)
         hook.line(to: NSPoint(x: tip.x - 9, y: tip.y - 6))
         hook.lineWidth = 1.8
         hook.lineCapStyle = .round

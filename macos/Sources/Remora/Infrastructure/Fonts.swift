@@ -8,11 +8,12 @@ enum Fonts {
     /// font descriptor is immutable, so sharing it is safe.
     nonisolated(unsafe) private static let descriptor: CTFontDescriptor? = {
         guard let url = Bundle.main.url(forResource: "Outfit", withExtension: "woff2"),
-              let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor] else { return nil }
+            let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor]
+        else { return nil }
         CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         return descriptors.first
     }()
-    private static let weightAxis = 0x7767_6874 // "wght"
+    private static let weightAxis = 0x7767_6874  // "wght"
 
     static var hasOutfit: Bool { descriptor != nil }
 
@@ -29,7 +30,8 @@ enum Fonts {
         guard let descriptor else { return nil }
         let variation = [weightAxis: value(of: weight)] as CFDictionary
         let attributes = [kCTFontVariationAttribute: variation] as CFDictionary
-        return CTFontCreateWithFontDescriptor(CTFontDescriptorCreateCopyWithAttributes(descriptor, attributes), size, nil) as NSFont
+        return CTFontCreateWithFontDescriptor(
+            CTFontDescriptorCreateCopyWithAttributes(descriptor, attributes), size, nil) as NSFont
     }
 
     private static func value(of weight: Font.Weight) -> Double {

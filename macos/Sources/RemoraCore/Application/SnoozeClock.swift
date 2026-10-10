@@ -78,7 +78,8 @@ public struct SnoozeClock: Sendable {
             relative = minutes == 0 ? L("in %d h", hours) : L("in %d h %02d", hours, minutes)
         default: relative = L("in %d d", Int((seconds / 86_400).rounded()))
         }
-        let style: Date.FormatStyle = calendar.isDate(date, inSameDayAs: now)
+        let style: Date.FormatStyle =
+            calendar.isDate(date, inSameDayAs: now)
             ? .dateTime.hour().minute()
             : .dateTime.weekday(.abbreviated).hour().minute()
         return "\(relative) · \(date.formatted(style))"
@@ -95,6 +96,7 @@ public struct SnoozeClock: Sendable {
     /// Next quarter hour.
     public func roundedUp(_ date: Date) -> Date {
         let quarter: TimeInterval = 15 * 60
-        return Date(timeIntervalSinceReferenceDate: (date.timeIntervalSinceReferenceDate / quarter).rounded(.up) * quarter)
+        return Date(
+            timeIntervalSinceReferenceDate: (date.timeIntervalSinceReferenceDate / quarter).rounded(.up) * quarter)
     }
 }

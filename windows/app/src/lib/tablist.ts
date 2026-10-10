@@ -12,7 +12,17 @@ export function tablist(node: HTMLElement) {
     event.preventDefault()
     const last = tabs.length - 1
     const next =
-      event.key === 'Home' ? 0 : event.key === 'End' ? last : event.key === 'ArrowLeft' ? (current === 0 ? last : current - 1) : current === last ? 0 : current + 1
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? last
+          : event.key === 'ArrowLeft'
+            ? current === 0
+              ? last
+              : current - 1
+            : current === last
+              ? 0
+              : current + 1
     tabs[next].focus()
     tabs[next].click()
   }

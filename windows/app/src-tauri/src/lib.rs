@@ -77,7 +77,13 @@ pub fn run() {
     if demo_mode {
         demo::load(&mut inbox, chrono::Utc::now());
     }
-    let state = AppState { inbox: Mutex::new(inbox), http: Arc::new(ReqwestClient::new()), refresh_now: Notify::new(), demo: demo_mode, updates: Default::default() };
+    let state = AppState {
+        inbox: Mutex::new(inbox),
+        http: Arc::new(ReqwestClient::new()),
+        refresh_now: Notify::new(),
+        demo: demo_mode,
+        updates: Default::default(),
+    };
 
     tauri::Builder::default()
         // The interface speaks the tray's language: the system locale Rust read, not the webview's own.
@@ -452,7 +458,11 @@ mod command_permissions {
         let source = include_str!("lib.rs");
         let start = source.find("generate_handler![").expect("the handler");
         let end = start + source[start..].find("])").expect("its end");
-        source[start..end].split("commands::").skip(1).map(|rest| rest.split(|c: char| !(c.is_alphanumeric() || c == '_')).next().unwrap_or_default().to_string()).collect()
+        source[start..end]
+            .split("commands::")
+            .skip(1)
+            .map(|rest| rest.split(|c: char| !(c.is_alphanumeric() || c == '_')).next().unwrap_or_default().to_string())
+            .collect()
     }
 
     #[test]
@@ -463,7 +473,10 @@ mod command_permissions {
         let capability = include_str!("../capabilities/default.json");
         for command in &commands {
             assert!(declared.contains(&format!("\"{command}\"")), "{command} is not declared in build.rs");
-            assert!(capability.contains(&format!("\"allow-{}\"", command.replace('_', "-"))), "{command} is not granted in capabilities/default.json");
+            assert!(
+                capability.contains(&format!("\"allow-{}\"", command.replace('_', "-"))),
+                "{command} is not granted in capabilities/default.json"
+            );
         }
     }
 }

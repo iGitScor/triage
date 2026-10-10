@@ -1,12 +1,14 @@
 import CryptoKit
 import Foundation
-import Security
 import RemoraCore
+import Security
+
 @testable import Remora
 
 /// A fresh temporary folder per test, never Application Support.
 func temporaryFolder() -> URL {
-    let folder = FileManager.default.temporaryDirectory.appending(path: "RemoraTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+    let folder = FileManager.default.temporaryDirectory.appending(
+        path: "RemoraTests-\(UUID().uuidString)", directoryHint: .isDirectory)
     try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     return folder
 }
@@ -87,8 +89,14 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
         requests += 1
         let url = request.url!
         if offline { throw URLError(.notConnectedToInternet) }
-        if let status { return (Data("{}".utf8), HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!) }
-        if failing { return (Data("{}".utf8), HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)!) }
+        if let status {
+            return (
+                Data("{}".utf8), HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!
+            )
+        }
+        if failing {
+            return (Data("{}".utf8), HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)!)
+        }
         let body = String(data: request.httpBody ?? Data(), encoding: .utf8) ?? ""
         let answer = body.contains("notifications") ? Self.notifications : Self.issues
         return (Data(answer.utf8), HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
@@ -97,13 +105,13 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
     static var issues: String {
         let recent = Date.now.addingTimeInterval(-3_600).ISO8601Format()
         return """
-        {"data": {"viewer": {"name": "Alice", "assignedIssues": {"nodes": [
-          {"id": "i1", "identifier": "ENG-42", "title": "Fix CSV export", "url": "https://linear.app/x/issue/ENG-42",
-           "priority": 1, "updatedAt": "\(recent)", "state": {"name": "In Progress"}},
-          {"id": "i2", "identifier": "ENG-43", "title": "Polish onboarding", "url": "https://linear.app/x/issue/ENG-43",
-           "priority": 2, "updatedAt": "\(recent)"}
-        ]}}}}
-        """
+            {"data": {"viewer": {"name": "Alice", "assignedIssues": {"nodes": [
+              {"id": "i1", "identifier": "ENG-42", "title": "Fix CSV export", "url": "https://linear.app/x/issue/ENG-42",
+               "priority": 1, "updatedAt": "\(recent)", "state": {"name": "In Progress"}},
+              {"id": "i2", "identifier": "ENG-43", "title": "Polish onboarding", "url": "https://linear.app/x/issue/ENG-43",
+               "priority": 2, "updatedAt": "\(recent)"}
+            ]}}}}
+            """
     }
 
     static let notifications = #"{"data": {"notifications": {"nodes": []}}}"#
@@ -136,19 +144,23 @@ struct Harness {
 
     func model() -> InboxModel {
         let outside = outside
-        return InboxModel(environment: AppEnvironment(
-            folder: folder,
-            secrets: secrets,
-            managed: managed,
-            notifications: notifier,
-            http: server,
-            canOpen: { _ in outside.installedApps },
-            open: { url in outside.opened.append(url); return true },
-            demo: demo,
-            removeURLCaches: { outside.cachesRemoved += 1 },
-            updates: updates,
-            network: network
-        ))
+        return InboxModel(
+            environment: AppEnvironment(
+                folder: folder,
+                secrets: secrets,
+                managed: managed,
+                notifications: notifier,
+                http: server,
+                canOpen: { _ in outside.installedApps },
+                open: { url in
+                    outside.opened.append(url)
+                    return true
+                },
+                demo: demo,
+                removeURLCaches: { outside.cachesRemoved += 1 },
+                updates: updates,
+                network: network
+            ))
     }
 
     /// A model with a Linear account connected through the stand-in server.
@@ -183,8 +195,8 @@ final class StandInUpdates: UpdateSystem {
         manifestRequests += 1
         let signature = try Self.key.signature(for: signedFile ?? file).base64EncodedString()
         let json = """
-        {"version": "\(published)", "platforms": {"macos-universal": {"url": "https://github.com/iGitScor/triage/releases/download/v\(published)/Remora.dmg", "signature": "\(signature)"}}}
-        """
+            {"version": "\(published)", "platforms": {"macos-universal": {"url": "https://github.com/iGitScor/triage/releases/download/v\(published)/Remora.dmg", "signature": "\(signature)"}}}
+            """
         return try JSONDecoder().decode(UpdateManifest.self, from: Data(json.utf8))
     }
 

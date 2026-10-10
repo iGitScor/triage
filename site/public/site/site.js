@@ -1,10 +1,10 @@
-;(function () {
-  var KEY = 'remora-site-lang'
+;(() => {
+  const KEY = 'remora-site-lang'
 
   function load() {
     try {
       return window.localStorage.getItem(KEY)
-    } catch (e) {
+    } catch {
       return null
     }
   }
@@ -12,28 +12,28 @@
   function save(lang) {
     try {
       window.localStorage.setItem(KEY, lang)
-    } catch (e) {}
+    } catch {}
   }
 
-  document.addEventListener('click', function (event) {
-    var link = event.target && event.target.closest ? event.target.closest('a[data-lang]') : null
+  document.addEventListener('click', (event) => {
+    const link = event.target?.closest?.('a[data-lang]')
     if (link) save(link.getAttribute('data-lang'))
   })
 
   if (!document.documentElement.hasAttribute('data-lang-picker')) return
 
-  var lang = load()
+  let lang = load()
   if (lang !== 'fr' && lang !== 'en') {
     lang = 'en'
-    var prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']
-    for (var i = 0; i < prefs.length; i++) {
-      var code = String(prefs[i]).toLowerCase()
-      if (code.indexOf('fr') === 0) {
+    const prefs = navigator.languages?.length ? navigator.languages : [navigator.language || '']
+    for (const pref of prefs) {
+      const code = String(pref).toLowerCase()
+      if (code.startsWith('fr')) {
         lang = 'fr'
         break
       }
-      if (code.indexOf('en') === 0) break
+      if (code.startsWith('en')) break
     }
   }
-  window.location.replace('/' + lang + '/')
+  window.location.replace(`/${lang}/`)
 })()

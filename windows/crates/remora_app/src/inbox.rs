@@ -1,12 +1,15 @@
 use crate::{JsonStore, Managed, Preferences, Secrets, Vault};
 use chrono::{DateTime, Utc};
 use remora_core::{
-    notices, Account, CompliancePolicy, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, Mark, Notice, NoticeKind,
-    ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief, BundleSummary, SnoozedItem, TriageAction, TriageSuggestion, Failure, FailureKind, LinkFinder, PersonalRanker, PluginManifest, ReviewPace,
-    ReviewPrep, ReviewTiming, WaitingAssistant, WaitingHelp, Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord,
-    SourcesHealth, VerbClassifier,
+    notices, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief, BundleSummary, CompliancePolicy,
+    Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder, Mark, Notice,
+    NoticeKind, PersonalRanker, PluginManifest, ReviewPace, ReviewPrep, ReviewTiming, Snooze, SnoozeAdvisor,
+    SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion,
+    VerbClassifier, WaitingAssistant, WaitingHelp,
 };
-use remora_plugins::{claude, links, registry, AssistantPlugin, GuardedHttpClient, HttpClient, PluginError, SourcePlugin, SourceSnapshot};
+use remora_plugins::{
+    claude, links, registry, AssistantPlugin, GuardedHttpClient, HttpClient, PluginError, SourcePlugin, SourceSnapshot,
+};
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -36,7 +39,8 @@ pub type FetchResult = (String, Result<SourceSnapshot, PluginError>);
 
 /// Runs fetches concurrently.
 pub async fn run(jobs: Vec<FetchJob>) -> Vec<FetchResult> {
-    futures::future::join_all(jobs.into_iter().map(|job| async move { (job.account_id, job.plugin.fetch().await) })).await
+    futures::future::join_all(jobs.into_iter().map(|job| async move { (job.account_id, job.plugin.fetch().await) }))
+        .await
 }
 
 /// A source as the Settings screen lists it: its manifest, and why it can't be used, if it can't.
@@ -121,7 +125,10 @@ impl Inbox {
         let mut inbox = Inbox {
             preferences: store.load(PREFERENCES).unwrap_or_default(),
             accounts: store.load(ACCOUNTS).unwrap_or_default(),
-            items: items.into_iter().map(|(id, items)| (id, items.into_iter().map(VerbClassifier::classify).collect())).collect(),
+            items: items
+                .into_iter()
+                .map(|(id, items)| (id, items.into_iter().map(VerbClassifier::classify).collect()))
+                .collect(),
             states: store.load(STATES).unwrap_or_default(),
             reminders: store.load(REMINDERS).unwrap_or_default(),
             snooze_history: store.load(HISTORY).unwrap_or_default(),
@@ -215,14 +222,27 @@ impl Inbox {
     pub fn layout(&self, now: DateTime<Utc>, query: &str) -> InboxLayout {
         // Your habits break ties inside each group, once there are enough of them.
         let score = |item: &InboxItem| self.ranker.score(item);
-        InboxAssembler { wake_on_activity: self.preferences.wake_on_activity }.layout_ranked(&self.all_items(), &self.states, now, query, Some(&score))
+        InboxAssembler { wake_on_activity: self.preferences.wake_on_activity }.layout_ranked(
+            &self.all_items(),
+            &self.states,
+            now,
+            query,
+            Some(&score),
+        )
     }
 
     pub fn sources(&self) -> Vec<SourceInfo> {
         let policy = self.policy();
         let sources = registry::manifests().into_iter().map(|m| (m, false));
         let assistants = claude::assistant_manifests().into_iter().map(|m| (m, true));
-        sources.chain(assistants).map(|(m, assistant)| SourceInfo { refusal: policy.refusal(&m).map(str::to_string), manifest: m, assistant }).collect()
+        sources
+            .chain(assistants)
+            .map(|(m, assistant)| SourceInfo {
+                refusal: policy.refusal(&m).map(str::to_string),
+                manifest: m,
+                assistant,
+            })
+            .collect()
     }
 
     pub fn account_infos(&self) -> Vec<AccountInfo> {
@@ -292,7 +312,8 @@ impl Inbox {
                 self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, refusal));
                 continue;
             }
-            let guarded: Arc<dyn HttpClient> = Arc::new(GuardedHttpClient::new(http.clone(), registry::allowed_hosts(&account, &manifest)));
+            let guarded: Arc<dyn HttpClient> =
+                Arc::new(GuardedHttpClient::new(http.clone(), registry::allowed_hosts(&account, &manifest)));
             match registry::make(&account, secrets.get(&account.id).unwrap_or(&HashMap::new()), guarded) {
                 Ok(plugin) => jobs.push(FetchJob { account_id: account.id.clone(), plugin }),
                 Err(error) => {
@@ -308,7 +329,8 @@ impl Inbox {
     pub fn apply(&mut self, results: Vec<FetchResult>, now: DateTime<Utc>) -> Vec<Notice> {
         // Fetches run without the lock: an account disconnected, or everything erased, while they ran must not come
         // back. A reconnected account has a new id, so its old results are dropped too.
-        let results: Vec<FetchResult> = results.into_iter().filter(|(id, _)| self.accounts.iter().any(|a| &a.id == id)).collect();
+        let results: Vec<FetchResult> =
+            results.into_iter().filter(|(id, _)| self.accounts.iter().any(|a| &a.id == id)).collect();
         self.last_refresh = Some(now);
         if results.is_empty() {
             // Nothing to store: in particular, nothing written back after Erase.
@@ -318,7 +340,8 @@ impl Inbox {
         let interval = chrono::Duration::minutes(i64::from(self.preferences.refresh_minutes.max(1)));
         // Every source failed to connect: that's the network, not the tools. Said once, and no slow-down for it. With a
         // single source, an unreachable server and no network look the same: it says it can't reach the server.
-        let offline = results.len() > 1 && results.iter().all(|(_, result)| matches!(result, Err(e) if e.kind() == FailureKind::Unreachable));
+        let offline = results.len() > 1
+            && results.iter().all(|(_, result)| matches!(result, Err(e) if e.kind() == FailureKind::Unreachable));
         for (account_id, result) in results {
             match result {
                 Err(error) => {
@@ -329,7 +352,9 @@ impl Inbox {
                     }
                     let resume = match error {
                         // No reset time given: wait at least one refresh.
-                        PluginError::RateLimited(at) => Some(at.and_then(|s| DateTime::from_timestamp(s, 0)).unwrap_or(now + interval)),
+                        PluginError::RateLimited(at) => {
+                            Some(at.and_then(|s| DateTime::from_timestamp(s, 0)).unwrap_or(now + interval))
+                        }
                         _ => None,
                     };
                     self.backoff.entry(account_id.clone()).or_default().failed(now, interval, resume);
@@ -344,10 +369,17 @@ impl Inbox {
                         self.remarks.insert(account_id.clone(), snapshot.remarks.clone());
                     }
                     let items: Vec<InboxItem> = snapshot.items.into_iter().map(VerbClassifier::classify).collect();
-                    let previous = self.synced.contains(&account_id).then(|| self.items.get(&account_id).cloned().unwrap_or_default());
+                    let previous = self
+                        .synced
+                        .contains(&account_id)
+                        .then(|| self.items.get(&account_id).cloned().unwrap_or_default());
                     let plugin_id = self.accounts.iter().find(|a| a.id == account_id).map(|a| a.plugin_id.clone());
                     for notice in notices(previous.as_deref(), &items) {
-                        let wanted = if notice.kind == NoticeKind::Arrival { self.preferences.notify_arrivals } else { self.preferences.notify_status_changes };
+                        let wanted = if notice.kind == NoticeKind::Arrival {
+                            self.preferences.notify_arrivals
+                        } else {
+                            self.preferences.notify_status_changes
+                        };
                         if wanted {
                             out.push(self.respecting_privacy(notice, plugin_id.as_deref()));
                         }
@@ -376,7 +408,11 @@ impl Inbox {
         }
         for item in items {
             if let Some(state) = self.states.get_mut(&item.id) {
-                if state.snooze.as_ref().is_some_and(|s| s.mode == SnoozeMode::Hide && s.fingerprint != item.fingerprint()) {
+                if state
+                    .snooze
+                    .as_ref()
+                    .is_some_and(|s| s.mode == SnoozeMode::Hide && s.fingerprint != item.fingerprint())
+                {
                     state.snooze = None;
                 }
             }
@@ -474,7 +510,8 @@ impl Inbox {
         }
         // The snooze that ended in Done: when you finally do things teaches your best hour.
         if marking {
-            if let Some(record) = self.snooze_history.iter_mut().rev().find(|r| r.item_id == id && r.done_at.is_none()) {
+            if let Some(record) = self.snooze_history.iter_mut().rev().find(|r| r.item_id == id && r.done_at.is_none())
+            {
                 record.done_at = Some(now);
                 self.persist(HISTORY, &self.snooze_history);
             }
@@ -511,11 +548,19 @@ impl Inbox {
         self.update(id, |s| s.pinned = !s.pinned);
     }
 
-    pub fn snooze(&mut self, id: &str, until: DateTime<Utc>, mode: SnoozeMode, reason: Option<SnoozeReason>, until_news: bool) {
+    pub fn snooze(
+        &mut self,
+        id: &str,
+        until: DateTime<Utc>,
+        mode: SnoozeMode,
+        reason: Option<SnoozeReason>,
+        until_news: bool,
+    ) {
         let Some(item) = self.item(id) else { return };
         let fingerprint = item.fingerprint();
         self.update(id, |s| {
-            s.snooze = Some(Snooze { until, mode, note: None, fingerprint, reason, until_news: until_news.then_some(true) });
+            s.snooze =
+                Some(Snooze { until, mode, note: None, fingerprint, reason, until_news: until_news.then_some(true) });
             s.done = None;
             s.reminded_at = None;
             s.started_at = None;
@@ -548,7 +593,8 @@ impl Inbox {
     /// A review started then done: its real duration against the plain estimate, the last 50 kept.
     fn learn_review_time(&mut self, item: &InboxItem, started: DateTime<Utc>, now: DateTime<Utc>) {
         let Some(prep) = ReviewPrep::new(item, 1.0) else { return };
-        self.review_timings.push(ReviewTiming { estimated: i64::from(prep.estimated_minutes), actual: (now - started).num_minutes() });
+        self.review_timings
+            .push(ReviewTiming { estimated: i64::from(prep.estimated_minutes), actual: (now - started).num_minutes() });
         let excess = self.review_timings.len().saturating_sub(50);
         self.review_timings.drain(..excess);
         self.persist(REVIEW_TIMES, &self.review_timings);
@@ -561,7 +607,10 @@ impl Inbox {
         let policy = self.policy();
         self.accounts
             .iter()
-            .find(|a| claude::is_assistant(&a.plugin_id) && claude::assistant_manifests().iter().any(|m| m.id == a.plugin_id && policy.allows(m)))
+            .find(|a| {
+                claude::is_assistant(&a.plugin_id)
+                    && claude::assistant_manifests().iter().any(|m| m.id == a.plugin_id && policy.allows(m))
+            })
             .cloned()
     }
 
@@ -571,21 +620,35 @@ impl Inbox {
     }
 
     /// The assistant for an account, through a client limited to its declared hosts.
-    fn assistant_for(&mut self, account: &Account, http: Arc<dyn HttpClient>, language: &str) -> Result<Box<dyn AssistantPlugin>, String> {
-        let manifest = claude::assistant_manifests().into_iter().find(|m| m.id == account.plugin_id).ok_or("Unknown assistant.")?;
+    fn assistant_for(
+        &mut self,
+        account: &Account,
+        http: Arc<dyn HttpClient>,
+        language: &str,
+    ) -> Result<Box<dyn AssistantPlugin>, String> {
+        let manifest = claude::assistant_manifests()
+            .into_iter()
+            .find(|m| m.id == account.plugin_id)
+            .ok_or("Unknown assistant.")?;
         if let Some(refusal) = self.policy().refusal(&manifest) {
             return Err(refusal.to_string());
         }
         let secrets = self.secrets()?.get(&account.id).cloned().unwrap_or_default();
-        let guarded: Arc<dyn HttpClient> = Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
-        let defaults: HashMap<String, String> = manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
+        let guarded: Arc<dyn HttpClient> =
+            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
+        let defaults: HashMap<String, String> =
+            manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
         let mut constrained = account.clone();
         constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
         claude::make_assistant(&constrained, &secrets, guarded, language).map_err(|e| e.to_string())
     }
 
     /// The assistant to ask now, or None when there is none or it isn't allowed.
-    pub fn assistant(&mut self, http: Arc<dyn HttpClient>, language: &str) -> Option<Result<Box<dyn AssistantPlugin>, String>> {
+    pub fn assistant(
+        &mut self,
+        http: Arc<dyn HttpClient>,
+        language: &str,
+    ) -> Option<Result<Box<dyn AssistantPlugin>, String>> {
         let account = self.assistant_account()?;
         Some(self.assistant_for(&account, http, language))
     }
@@ -593,7 +656,8 @@ impl Inbox {
     /// The whole inbox as the assistant may see it, for a brief.
     pub fn brief_items(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
         let layout = self.layout(now, "");
-        let items: Vec<InboxItem> = layout.pinned.into_iter().chain(layout.my_turn.into_iter().flat_map(|g| g.items)).collect();
+        let items: Vec<InboxItem> =
+            layout.pinned.into_iter().chain(layout.my_turn.into_iter().flat_map(|g| g.items)).collect();
         self.assistant_policy().items(&items)
     }
 
@@ -609,10 +673,18 @@ impl Inbox {
     /// A group's items as the assistant may see them, and whether its summary is still fresh.
     pub fn bundle_items(&self, bundle_id: &str, now: DateTime<Utc>) -> (Vec<InboxItem>, bool) {
         let layout = self.layout(now, "");
-        let items: Vec<InboxItem> =
-            layout.my_turn.into_iter().chain(layout.waiting).filter(|g| g.bundle.id == bundle_id).flat_map(|g| g.items).collect();
+        let items: Vec<InboxItem> = layout
+            .my_turn
+            .into_iter()
+            .chain(layout.waiting)
+            .filter(|g| g.bundle.id == bundle_id)
+            .flat_map(|g| g.items)
+            .collect();
         let items = self.assistant_policy().items(&items);
-        let fresh = self.bundle_summaries.get(bundle_id).is_some_and(|s| s.is_fresh(&items, self.preferences.brief_cache_minutes, now));
+        let fresh = self
+            .bundle_summaries
+            .get(bundle_id)
+            .is_some_and(|s| s.is_fresh(&items, self.preferences.brief_cache_minutes, now));
         (items, fresh)
     }
 
@@ -663,7 +735,9 @@ impl Inbox {
 
     /// Without an allowed assistant, nothing it wrote is kept or shown.
     pub fn enforce_ai_policy(&mut self) {
-        if self.assistant_account().is_none() && (self.brief.is_some() || !self.bundle_summaries.is_empty() || !self.triage.is_empty()) {
+        if self.assistant_account().is_none()
+            && (self.brief.is_some() || !self.bundle_summaries.is_empty() || !self.triage.is_empty())
+        {
             self.store_brief(None);
             self.bundle_summaries.clear();
             self.persist(SUMMARIES, &self.bundle_summaries);
@@ -709,8 +783,13 @@ impl Inbox {
 
     /// Reviews waiting for you, in session order: pressing first, then quick wins, then whoever waited longest.
     pub fn review_queue(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
-        let reviews: Vec<InboxItem> =
-            self.layout(now, "").my_turn.into_iter().filter(|g| g.bundle == InboxBundle::reviews()).flat_map(|g| g.items).collect();
+        let reviews: Vec<InboxItem> = self
+            .layout(now, "")
+            .my_turn
+            .into_iter()
+            .filter(|g| g.bundle == InboxBundle::reviews())
+            .flat_map(|g| g.items)
+            .collect();
         remora_core::ReviewQueue::order(&reviews, now)
     }
 
@@ -776,7 +855,9 @@ impl Inbox {
 
     /// Every item back at the earliest of their return times.
     pub fn align_returns(&mut self, ids: &[String]) {
-        let Some(earliest) = ids.iter().filter_map(|id| self.states.get(id).and_then(|s| s.snooze.as_ref()).map(|s| s.until)).min() else {
+        let Some(earliest) =
+            ids.iter().filter_map(|id| self.states.get(id).and_then(|s| s.snooze.as_ref()).map(|s| s.until)).min()
+        else {
             return;
         };
         for id in ids {
@@ -876,7 +957,8 @@ impl Inbox {
             settings,
             identity: None,
         };
-        let guarded: Arc<dyn HttpClient> = Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
+        let guarded: Arc<dyn HttpClient> =
+            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
         let plugin = registry::make(&account, secrets, guarded).map_err(|e| e.to_string())?;
         Ok((account, plugin))
     }
@@ -892,7 +974,10 @@ impl Inbox {
         http: Arc<dyn HttpClient>,
         language: &str,
     ) -> Result<(Account, Box<dyn AssistantPlugin>), String> {
-        let manifest = claude::assistant_manifests().into_iter().find(|m| m.id == plugin_id).ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
+        let manifest = claude::assistant_manifests()
+            .into_iter()
+            .find(|m| m.id == plugin_id)
+            .ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
         if let Some(refusal) = self.policy().refusal(&manifest) {
             return Err(refusal.to_string());
         }
@@ -903,8 +988,10 @@ impl Inbox {
             settings,
             identity: None,
         };
-        let guarded: Arc<dyn HttpClient> = Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
-        let defaults: HashMap<String, String> = manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
+        let guarded: Arc<dyn HttpClient> =
+            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
+        let defaults: HashMap<String, String> =
+            manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
         let mut constrained = account.clone();
         constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
         let plugin = claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.to_string())?;
@@ -912,8 +999,13 @@ impl Inbox {
     }
 
     /// One assistant at a time: a new one replaces the previous one, and its token.
-    pub fn finish_assistant_connect(&mut self, account: Account, secrets: HashMap<String, String>) -> Result<(), String> {
-        let previous: Vec<String> = self.accounts.iter().filter(|a| claude::is_assistant(&a.plugin_id)).map(|a| a.id.clone()).collect();
+    pub fn finish_assistant_connect(
+        &mut self,
+        account: Account,
+        secrets: HashMap<String, String>,
+    ) -> Result<(), String> {
+        let previous: Vec<String> =
+            self.accounts.iter().filter(|a| claude::is_assistant(&a.plugin_id)).map(|a| a.id.clone()).collect();
         let mut all = self.secrets()?.clone();
         for id in &previous {
             all.remove(id);
@@ -953,7 +1045,13 @@ impl Inbox {
     }
 
     /// Saves an account whose first fetch worked. Its items arrive silently.
-    pub fn finish_connect(&mut self, mut account: Account, secrets: HashMap<String, String>, snapshot: SourceSnapshot, now: DateTime<Utc>) -> Result<(), String> {
+    pub fn finish_connect(
+        &mut self,
+        mut account: Account,
+        secrets: HashMap<String, String>,
+        snapshot: SourceSnapshot,
+        now: DateTime<Utc>,
+    ) -> Result<(), String> {
         let mut all = self.secrets()?.clone();
         all.insert(account.id.clone(), secrets);
         self.vault.save(&all)?;
@@ -973,17 +1071,26 @@ impl Inbox {
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
     ) -> Result<Box<dyn SourcePlugin>, String> {
-        let account = self.accounts.iter().find(|a| a.id == account_id).ok_or("This account is no longer connected.")?;
-        let manifest = registry::manifest(&account.plugin_id).ok_or_else(|| format!("Unknown plugin “{}”.", account.plugin_id))?;
+        let account =
+            self.accounts.iter().find(|a| a.id == account_id).ok_or("This account is no longer connected.")?;
+        let manifest =
+            registry::manifest(&account.plugin_id).ok_or_else(|| format!("Unknown plugin “{}”.", account.plugin_id))?;
         if let Some(refusal) = self.policy().refusal(&manifest) {
             return Err(refusal.to_string());
         }
-        let guarded: Arc<dyn HttpClient> = Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
+        let guarded: Arc<dyn HttpClient> =
+            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
         registry::make(account, secrets, guarded).map_err(|e| e.to_string())
     }
 
     /// Saves the new token of an account whose fetch worked with it, and its items.
-    pub fn finish_reconnect(&mut self, account_id: &str, secrets: HashMap<String, String>, snapshot: SourceSnapshot, now: DateTime<Utc>) -> Result<(), String> {
+    pub fn finish_reconnect(
+        &mut self,
+        account_id: &str,
+        secrets: HashMap<String, String>,
+        snapshot: SourceSnapshot,
+        now: DateTime<Utc>,
+    ) -> Result<(), String> {
         if !self.accounts.iter().any(|a| a.id == account_id) {
             return Err("This account is no longer connected.".into());
         }
@@ -1061,9 +1168,17 @@ impl Inbox {
     }
 
     /// Demo items, as if an account had synced: see `demo.rs`.
-    pub fn load_demo(&mut self, accounts: Vec<Account>, items: HashMap<String, Vec<InboxItem>>, states: HashMap<String, ItemState>) {
+    pub fn load_demo(
+        &mut self,
+        accounts: Vec<Account>,
+        items: HashMap<String, Vec<InboxItem>>,
+        states: HashMap<String, ItemState>,
+    ) {
         self.accounts = accounts;
-        self.items = items.into_iter().map(|(id, items)| (id, items.into_iter().map(VerbClassifier::classify).collect())).collect();
+        self.items = items
+            .into_iter()
+            .map(|(id, items)| (id, items.into_iter().map(VerbClassifier::classify).collect()))
+            .collect();
         self.synced = self.items.keys().cloned().collect();
         self.states = states;
         self.last_refresh = Some(Utc::now());
@@ -1117,7 +1232,13 @@ mod tests {
 
     fn inbox() -> Inbox {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
-        inbox.accounts = vec![Account { id: "a1".into(), plugin_id: "github".into(), name: None, settings: HashMap::new(), identity: None }];
+        inbox.accounts = vec![Account {
+            id: "a1".into(),
+            plugin_id: "github".into(),
+            name: None,
+            settings: HashMap::new(),
+            identity: None,
+        }];
         inbox
     }
 
@@ -1172,7 +1293,8 @@ mod tests {
     fn done_and_clear_all_can_be_undone() {
         let mut inbox = inbox();
         inbox.apply(snapshot(vec![item("1", InboxBundle::reviews()), item("2", InboxBundle::reviews())]), now());
-        let reminder = inbox.add_reminder("Call the bank", now() - Duration::minutes(1), now() - Duration::hours(1)).unwrap();
+        let reminder =
+            inbox.add_reminder("Call the bank", now() - Duration::minutes(1), now() - Duration::hours(1)).unwrap();
         inbox.tick(now());
         assert!(!inbox.undo(), "nothing to undo yet");
 
@@ -1232,7 +1354,16 @@ mod tests {
         assert_eq!(notices.iter().map(|n| n.kind).collect::<Vec<_>>(), [NoticeKind::StatusChange, NoticeKind::Arrival]);
 
         inbox.preferences.notify_arrivals = false;
-        assert!(inbox.apply(snapshot(vec![item("1", InboxBundle::authored()), item("2", InboxBundle::reviews()), item("3", InboxBundle::reviews())]), now()).is_empty());
+        assert!(inbox
+            .apply(
+                snapshot(vec![
+                    item("1", InboxBundle::authored()),
+                    item("2", InboxBundle::reviews()),
+                    item("3", InboxBundle::reviews())
+                ]),
+                now()
+            )
+            .is_empty());
     }
 
     #[test]
@@ -1326,12 +1457,21 @@ mod tests {
         let vault = Arc::new(MemoryVault::default());
         let mut inbox = Inbox::in_memory(vault.clone(), Managed::default());
         let secrets = HashMap::from([("token".to_string(), "lin_api_k".to_string())]);
-        let (account, plugin) = inbox.prepare_connect("linear", Some(" Work ".into()), HashMap::new(), &secrets, Arc::new(NoNetwork)).unwrap();
+        let (account, plugin) = inbox
+            .prepare_connect("linear", Some(" Work ".into()), HashMap::new(), &secrets, Arc::new(NoNetwork))
+            .unwrap();
         assert_eq!(account.name.as_deref(), Some("Work"));
         assert!(plugin.fetch().await.is_err(), "fetches go through the client we gave");
 
         let id = account.id.clone();
-        inbox.finish_connect(account, secrets, SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] }, now()).unwrap();
+        inbox
+            .finish_connect(
+                account,
+                secrets,
+                SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] },
+                now(),
+            )
+            .unwrap();
         assert_eq!(vault.load().unwrap()[&id]["token"], "lin_api_k");
         assert_eq!(inbox.account_infos()[0].hosts, ["api.linear.app", "public.linear.app"]);
 
@@ -1396,13 +1536,22 @@ mod tests {
     fn failing_and_rate_limited_accounts_sit_refreshes_out() {
         let mut inbox = inbox();
         inbox.accounts[0].settings.insert("host".into(), "https://github.com".into());
-        inbox.vault.save(&HashMap::from([("a1".to_string(), HashMap::from([("token".to_string(), "t".to_string())]))])).unwrap();
-        let jobs = |inbox: &mut Inbox, at: DateTime<Utc>, manual: bool| inbox.fetch_jobs(Arc::new(NoNetwork), at, manual).len();
+        inbox
+            .vault
+            .save(&HashMap::from([("a1".to_string(), HashMap::from([("token".to_string(), "t".to_string())]))]))
+            .unwrap();
+        let jobs = |inbox: &mut Inbox, at: DateTime<Utc>, manual: bool| {
+            inbox.fetch_jobs(Arc::new(NoNetwork), at, manual).len()
+        };
         assert_eq!(jobs(&mut inbox, now(), false), 1);
 
         let failure = || vec![("a1".to_string(), Err(PluginError::Network("down".into())))];
         inbox.apply(failure(), now());
-        assert_eq!(jobs(&mut inbox, now() + Duration::minutes(5), false), 1, "one failure: the next refresh tries again");
+        assert_eq!(
+            jobs(&mut inbox, now() + Duration::minutes(5), false),
+            1,
+            "one failure: the next refresh tries again"
+        );
         inbox.apply(failure(), now());
         assert_eq!(jobs(&mut inbox, now() + Duration::minutes(5), false), 0, "two: skips a refresh");
         assert_eq!(jobs(&mut inbox, now() + Duration::minutes(5), true), 1, "unless the user asks");
@@ -1416,7 +1565,13 @@ mod tests {
 
     fn two_accounts() -> Inbox {
         let mut inbox = inbox();
-        inbox.accounts.push(Account { id: "a2".into(), plugin_id: "linear".into(), name: None, settings: HashMap::new(), identity: None });
+        inbox.accounts.push(Account {
+            id: "a2".into(),
+            plugin_id: "linear".into(),
+            name: None,
+            settings: HashMap::new(),
+            identity: None,
+        });
         inbox
     }
 
@@ -1431,7 +1586,10 @@ mod tests {
         assert_eq!(inbox.errors(), vec![remora_core::OFFLINE.to_string(); 2]);
 
         inbox.apply(snapshot(vec![]), now());
-        inbox.apply(vec![("a2".into(), Ok(SourceSnapshot { identity: "bob".into(), items: vec![], remarks: vec![] }))], now());
+        inbox.apply(
+            vec![("a2".into(), Ok(SourceSnapshot { identity: "bob".into(), items: vec![], remarks: vec![] }))],
+            now(),
+        );
         assert_eq!(inbox.health(), SourcesHealth::Fine);
     }
 
@@ -1458,8 +1616,14 @@ mod tests {
         assert_eq!(inbox.account_infos()[0].error_kind, Some(FailureKind::Auth));
 
         let token = HashMap::from([("token".to_string(), "new".to_string())]);
-        if let Err(e) = inbox.prepare_reconnect("a1", &token, Arc::new(NoNetwork)) { panic!("{e}") }
-        let fetched = SourceSnapshot { identity: "alice".into(), items: vec![item("x", InboxBundle::reviews())], remarks: vec![] };
+        if let Err(e) = inbox.prepare_reconnect("a1", &token, Arc::new(NoNetwork)) {
+            panic!("{e}")
+        }
+        let fetched = SourceSnapshot {
+            identity: "alice".into(),
+            items: vec![item("x", InboxBundle::reviews())],
+            remarks: vec![],
+        };
         inbox.finish_reconnect("a1", token, fetched, now()).unwrap();
         assert_eq!(inbox.accounts.len(), 1, "the same account");
         assert_eq!(inbox.health(), SourcesHealth::Fine);
@@ -1467,7 +1631,6 @@ mod tests {
         assert_eq!(inbox.secrets().unwrap().get("a1").and_then(|s| s.get("token")).map(String::as_str), Some("new"));
         assert!(inbox.prepare_reconnect("gone", &HashMap::new(), Arc::new(NoNetwork)).is_err());
     }
-
 
     // MARK: What snoozes teach
 
@@ -1503,7 +1666,10 @@ mod tests {
     fn a_timed_review_is_remembered() {
         let mut inbox = inbox();
         let mut review = item("r", InboxBundle::reviews());
-        review.changes = Some(remora_core::ChangeSet::new(vec![remora_core::ChangedFile { path: "src/retry.ts".into(), additions: Some(40), deletions: Some(0) }], None));
+        review.changes = Some(remora_core::ChangeSet::new(
+            vec![remora_core::ChangedFile { path: "src/retry.ts".into(), additions: Some(40), deletions: Some(0) }],
+            None,
+        ));
         inbox.apply(snapshot(vec![review]), now());
         assert!(inbox.review_prep(&inbox.item("r").unwrap()).is_some());
         inbox.start("r", Utc::now() - Duration::minutes(12));
@@ -1518,7 +1684,8 @@ mod tests {
     fn assistant_output_goes_without_an_assistant() {
         let mut inbox = inbox();
         inbox.store_brief(Some(Brief::new("Two reviews wait.", vec![], Utc::now())));
-        inbox.triage = vec![TriageSuggestion { id: "x".into(), action: TriageAction::Done, until: None, reason: "old".into() }];
+        inbox.triage =
+            vec![TriageSuggestion { id: "x".into(), action: TriageAction::Done, until: None, reason: "old".into() }];
         inbox.enforce_ai_policy();
         assert!(inbox.brief.is_none() && inbox.triage.is_empty());
     }
@@ -1527,13 +1694,25 @@ mod tests {
     #[test]
     fn triage_applies_what_was_ticked() {
         let mut inbox = inbox();
-        inbox.apply(snapshot(vec![item("a", InboxBundle::reviews()), item("b", InboxBundle::reviews()), item("c", InboxBundle::reviews())]), now());
+        inbox.apply(
+            snapshot(vec![
+                item("a", InboxBundle::reviews()),
+                item("b", InboxBundle::reviews()),
+                item("c", InboxBundle::reviews()),
+            ]),
+            now(),
+        );
         for id in ["a", "b", "c"] {
             inbox.snooze(id, Utc::now() + Duration::days(1), SnoozeMode::Hide, None, false);
         }
         let later = Utc::now() + Duration::days(3);
         let selected = vec![
-            TriageSuggestion { id: "a".into(), action: TriageAction::Reschedule, until: Some(later), reason: String::new() },
+            TriageSuggestion {
+                id: "a".into(),
+                action: TriageAction::Reschedule,
+                until: Some(later),
+                reason: String::new(),
+            },
             TriageSuggestion { id: "b".into(), action: TriageAction::Done, until: None, reason: String::new() },
             TriageSuggestion { id: "c".into(), action: TriageAction::Now, until: None, reason: String::new() },
         ];
@@ -1557,8 +1736,13 @@ mod tests {
         ticket.plugin_id = "linear".into();
         ticket.title = "Fix CSV export".into();
         ticket.context = "ENG-42".into();
-        inbox.apply(vec![("a1".into(), Ok(SourceSnapshot { identity: "alice".into(), items: vec![pr], remarks: vec![] })),
-            ("a2".into(), Ok(SourceSnapshot { identity: "alice".into(), items: vec![ticket], remarks: vec![] }))], now());
+        inbox.apply(
+            vec![
+                ("a1".into(), Ok(SourceSnapshot { identity: "alice".into(), items: vec![pr], remarks: vec![] })),
+                ("a2".into(), Ok(SourceSnapshot { identity: "alice".into(), items: vec![ticket], remarks: vec![] })),
+            ],
+            now(),
+        );
         assert_eq!(inbox.linked("pr").iter().map(|i| i.id.as_str()).collect::<Vec<_>>(), ["t"]);
     }
 
@@ -1573,5 +1757,4 @@ mod tests {
         let draft = inbox.waiting_draft("m", Utc::now(), &|key| key.to_string()).expect("a nudge");
         assert!(draft.contains("@erin") && draft.contains("3 days"), "{draft}");
     }
-
 }

@@ -8,5 +8,6 @@ static TRANSLATOR: OnceLock<Translator> = OnceLock::new();
 
 /// English text → the system's language, read once.
 pub fn translator() -> &'static Translator {
-    TRANSLATOR.get_or_init(|| Translator::new(sys_locale::get_locale().as_deref(), include_str!("../../src/i18n/fr.json")))
+    TRANSLATOR
+        .get_or_init(|| Translator::new(sys_locale::get_locale().as_deref(), include_str!("../../src/i18n/fr.json")))
 }

@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
+
 @testable import Remora
 
 /// UI-04: tokens follow Increase Contrast.
@@ -34,12 +35,16 @@ struct ThemeTests {
     func increaseContrastStrengthensTextAndBorders(dark: Bool) {
         let surface = resolve(Myna.surface, dark: dark, contrast: false)
         let strong = resolve(Myna.surface, dark: dark, contrast: true)
-        for token in [Myna.ink, Myna.inkSoft, Myna.muted, Myna.border, Myna.accentText, Myna.ok, Myna.warn, Myna.danger] {
+        for token in [
+            Myna.ink, Myna.inkSoft, Myna.muted, Myna.border, Myna.accentText, Myna.ok, Myna.warn, Myna.danger,
+        ] {
             let regular = ratio(resolve(token, dark: dark, contrast: false), surface)
             let high = ratio(resolve(token, dark: dark, contrast: true), strong)
             #expect(high >= regular)
         }
-        #expect(resolve(Myna.line, dark: dark, contrast: true).alphaComponent > resolve(Myna.line, dark: dark, contrast: false).alphaComponent)
+        #expect(
+            resolve(Myna.line, dark: dark, contrast: true).alphaComponent
+                > resolve(Myna.line, dark: dark, contrast: false).alphaComponent)
         #expect(resolve(Myna.onDark(opacity: 0.5), dark: dark, contrast: true).alphaComponent >= 0.9)
     }
 }

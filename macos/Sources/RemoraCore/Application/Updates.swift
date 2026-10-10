@@ -53,8 +53,9 @@ public struct UpdateOffer: Equatable, Sendable {
     /// Nil when the manifest has no Mac file, isn't newer, or points anywhere but a GitHub https download.
     public static func from(_ manifest: UpdateManifest, current: AppVersion) -> UpdateOffer? {
         guard let version = AppVersion(manifest.version), version > current,
-              let mac = manifest.platforms[UpdateManifest.macPlatform],
-              mac.url.scheme == "https", UpdateHosts.allows(mac.url) else { return nil }
+            let mac = manifest.platforms[UpdateManifest.macPlatform],
+            mac.url.scheme == "https", UpdateHosts.allows(mac.url)
+        else { return nil }
         return UpdateOffer(version: version, url: mac.url, signature: mac.signature, notes: manifest.notes)
     }
 }
@@ -76,8 +77,9 @@ public enum UpdateSignature {
     /// `publicKey` is the base64 raw 32-byte key from the app's Info.plist (`RemoraUpdatePublicKey`).
     public static func isValid(_ data: Data, signature: String, publicKey: String) -> Bool {
         guard let keyData = Data(base64Encoded: publicKey),
-              let key = try? Curve25519.Signing.PublicKey(rawRepresentation: keyData),
-              let signatureData = Data(base64Encoded: signature.trimmingCharacters(in: .whitespacesAndNewlines)) else { return false }
+            let key = try? Curve25519.Signing.PublicKey(rawRepresentation: keyData),
+            let signatureData = Data(base64Encoded: signature.trimmingCharacters(in: .whitespacesAndNewlines))
+        else { return false }
         return key.isValidSignature(signatureData, for: data)
     }
 }

@@ -1,22 +1,22 @@
 <script lang="ts">
-  // A message the waiting assistant wrote: copied, never sent. Paste it where your team talks.
-  import { api, type Item } from './api'
-  import { t } from './i18n'
-  import { modal } from './modal'
+// A message the waiting assistant wrote: copied, never sent. Paste it where your team talks.
+import { api, type Item } from './api'
+import { t } from './i18n'
+import { modal } from './modal'
 
-  let { item, text, onclose }: { item: Item; text: string; onclose: () => void } = $props()
-  let copied = $state(false)
-  let area: HTMLTextAreaElement | undefined = $state()
+let { item, text, onclose }: { item: Item; text: string; onclose: () => void } = $props()
+let copied = $state(false)
+let area: HTMLTextAreaElement | undefined = $state()
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(area?.value ?? text)
-    } catch {
-      area?.select()
-      document.execCommand('copy')
-    }
-    copied = true
+async function copy() {
+  try {
+    await navigator.clipboard.writeText(area?.value ?? text)
+  } catch {
+    area?.select()
+    document.execCommand('copy')
   }
+  copied = true
+}
 </script>
 
 <div class="sheet" role="dialog" aria-modal="true" aria-label={t('Draft')} use:modal={onclose}>

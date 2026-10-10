@@ -18,9 +18,11 @@ public struct GitHubPlugin: SourcePlugin {
         ],
         setupURL: { config in
             let host = (try? config.url("host")) ?? URL(string: "https://github.com")!
-            return host.appending(path: "settings/tokens/new", query: [
-                "scopes": "repo,read:org", "description": "Remora",
-            ])
+            return host.appending(
+                path: "settings/tokens/new",
+                query: [
+                    "scopes": "repo,read:org", "description": "Remora",
+                ])
         },
         egress: Egress(
             hosts: ["api.github.com", "github.com", "avatars.githubusercontent.com"],
@@ -37,7 +39,8 @@ public struct GitHubPlugin: SourcePlugin {
     public init(config: PluginConfig, http: HTTPClient) throws {
         let host = try config.url("host")
         accountID = config.accountID
-        endpoint = host.host == "github.com"
+        endpoint =
+            host.host == "github.com"
             ? URL(string: "https://api.github.com/graphql")!
             : host.appending(path: "api/graphql")
         token = try config.required("token")
@@ -45,10 +48,12 @@ public struct GitHubPlugin: SourcePlugin {
     }
 
     public func fetch() async throws -> SourceSnapshot {
-        let body = GraphQLRequest(query: Self.query, variables: [
-            "authored": "is:pr is:open archived:false author:@me sort:updated-desc",
-            "reviewing": "is:pr is:open archived:false review-requested:@me sort:updated-desc",
-        ])
+        let body = GraphQLRequest(
+            query: Self.query,
+            variables: [
+                "authored": "is:pr is:open archived:false author:@me sort:updated-desc",
+                "reviewing": "is:pr is:open archived:false review-requested:@me sort:updated-desc",
+            ])
         let request = try URLRequest.post(endpoint, json: body, headers: ["Authorization": "bearer \(token)"])
         let response = try await http.decode(GraphQLResponse.self, from: request)
         return try Self.snapshot(from: response, accountID: accountID)
@@ -75,26 +80,26 @@ public struct GitHubPlugin: SourcePlugin {
     }
 
     static let query = """
-    query($authored: String!, $reviewing: String!) {
-      viewer { login }
-      authored: search(query: $authored, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
-      reviewing: search(query: $reviewing, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
-    }
-    fragment PR on PullRequest {
-      id number title url isDraft updatedAt additions deletions mergeable reviewDecision
-      repository { nameWithOwner }
-      author { login avatarUrl }
-      comments { totalCount }
-      latestOpinionatedReviews(first: 20) { nodes { state author { login avatarUrl } } }
-      reviewRequests(first: 20) {
-        nodes { requestedReviewer { ... on User { login avatarUrl } ... on Team { name avatarUrl } } }
-      }
-      commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
-      suggestedReviewers { reviewer { login avatarUrl } }
-      changedFiles
-      files(first: 50) { nodes { path additions deletions } }
-    }
-    """
+        query($authored: String!, $reviewing: String!) {
+          viewer { login }
+          authored: search(query: $authored, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
+          reviewing: search(query: $reviewing, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
+        }
+        fragment PR on PullRequest {
+          id number title url isDraft updatedAt additions deletions mergeable reviewDecision
+          repository { nameWithOwner }
+          author { login avatarUrl }
+          comments { totalCount }
+          latestOpinionatedReviews(first: 20) { nodes { state author { login avatarUrl } } }
+          reviewRequests(first: 20) {
+            nodes { requestedReviewer { ... on User { login avatarUrl } ... on Team { name avatarUrl } } }
+          }
+          commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
+          suggestedReviewers { reviewer { login avatarUrl } }
+          changedFiles
+          files(first: 50) { nodes { path additions deletions } }
+        }
+        """
 }
 
 // MARK: - Wire format
@@ -136,7 +141,10 @@ struct PullRequest: Decodable {
         var person: Person { Person(name: login ?? name ?? "?", avatarURL: URL(lenient: avatarUrl)) }
     }
 
-    struct Review: Decodable { var state: String; var author: Actor? }
+    struct Review: Decodable {
+        var state: String
+        var author: Actor?
+    }
     struct Request: Decodable { var requestedReviewer: Actor? }
     struct Commit: Decodable { var commit: Rollup }
     struct Rollup: Decodable { var statusCheckRollup: State? }
@@ -163,7 +171,11 @@ struct PullRequest: Decodable {
     var suggestedReviewers: [Suggested?]?
     var changedFiles: Int?
     var files: Connection<File>?
-    struct File: Decodable { var path: String; var additions: Int?; var deletions: Int? }
+    struct File: Decodable {
+        var path: String
+        var additions: Int?
+        var deletions: Int?
+    }
     struct Suggested: Decodable { var reviewer: Actor? }
 
     func item(accountID: UUID, bundle: InboxBundle, authored: Bool) -> InboxItem {
@@ -217,13 +229,16 @@ struct PullRequest: Decodable {
     private func participants(reviews: [Review]) -> [Person] {
         var people = reviews.compactMap { review -> Person? in
             guard var person = review.author?.person else { return nil }
-            person.tone = review.state == "APPROVED" ? ReviewerTone.approved
+            person.tone =
+                review.state == "APPROVED"
+                ? ReviewerTone.approved
                 : review.state == "CHANGES_REQUESTED" ? ReviewerTone.changes : ReviewerTone.waiting
             return person
         }
         for request in reviewRequests?.all ?? [] {
             guard let person = request.requestedReviewer?.person,
-                  !people.contains(where: { $0.name == person.name }) else { continue }
+                !people.contains(where: { $0.name == person.name })
+            else { continue }
             people.append(person)
         }
         return people

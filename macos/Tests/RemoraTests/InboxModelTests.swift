@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import Remora
 
 /// The inbox model on a temporary folder: never your data, tokens or notifications.
@@ -42,7 +43,9 @@ struct InboxModelTests {
         var saved = Account(pluginID: "gitlab", name: nil, settings: ["host": "gitlab.acme.io"])
         saved.identity = "alice"
         #expect(saved.isSame(as: one, identity: "Alice"))
-        #expect(!saved.isSame(as: Account(pluginID: "gitlab", name: nil, settings: ["host": "gitlab.other.io"]), identity: "alice"))
+        #expect(
+            !saved.isSame(
+                as: Account(pluginID: "gitlab", name: nil, settings: ["host": "gitlab.other.io"]), identity: "alice"))
         #expect(!saved.isSame(as: one, identity: "bob"))
         #expect(!saved.isSame(as: one, identity: ""))
     }
@@ -225,7 +228,8 @@ struct InboxModelTests {
         #expect(model.errors[account.id]?.kind == .auth)
 
         harness.server.status = nil
-        try await model.connect(pluginID: "linear", name: nil, settings: account.settings, secrets: ["token": "lin_new_key"])
+        try await model.connect(
+            pluginID: "linear", name: nil, settings: account.settings, secrets: ["token": "lin_new_key"])
         #expect(model.accounts.map(\.id) == [account.id], "the same account")
         #expect(model.sourcesHealth == .fine)
     }

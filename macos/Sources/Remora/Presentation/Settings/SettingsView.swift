@@ -54,10 +54,14 @@ private struct SourcesPane: View {
             ForEach(manifests, id: \.id) { manifest in
                 // What the policy refuses can't be started, and says why, before any form is filled in.
                 let refusal = model.policy.refusal(for: manifest)
-                Button { adding = manifest } label: { PluginTile(manifest: manifest, refusal: refusal) }
-                    .buttonStyle(.plain)
-                    .disabled(manifest.isComingSoon || refusal != nil)
-                    .accessibilityHint(refusal ?? "")
+                Button {
+                    adding = manifest
+                } label: {
+                    PluginTile(manifest: manifest, refusal: refusal)
+                }
+                .buttonStyle(.plain)
+                .disabled(manifest.isComingSoon || refusal != nil)
+                .accessibilityHint(refusal ?? "")
             }
         }
     }
@@ -115,7 +119,9 @@ private struct AccountRow: View {
                         Button(L("Reconnect…")) { reconnecting = true }
                             .controlSize(.small)
                             .sheet(isPresented: $reconnecting) {
-                                if let manifest { ConnectForm(manifest: manifest, account: account) { reconnecting = false } }
+                                if let manifest {
+                                    ConnectForm(manifest: manifest, account: account) { reconnecting = false }
+                                }
                             }
                     }
                 } else {
@@ -133,7 +139,9 @@ private struct AccountRow: View {
                 .buttonStyle(PillButtonStyle(prominent: false))
                 // The token is deleted from the Keychain: no undo, so it asks first.
                 .confirmationDialog(
-                    L("Remove %@?", account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID),
+                    L(
+                        "Remove %@?",
+                        account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID),
                     isPresented: $confirmingRemove
                 ) {
                     Button(L("Remove"), role: .destructive) { model.disconnect(account) }
@@ -199,7 +207,10 @@ private struct PluginTile: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
-        .background(hovering && available ? Myna.card2 : Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        .background(
+            hovering && available ? Myna.card2 : Myna.card,
+            in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous)
+        )
         .opacity(available ? 1 : 0.6)
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
@@ -229,7 +240,9 @@ private struct ConnectForm: View {
                         TextField(manifest.name, text: $name)
                     }
                     ForEach(manifest.fields) { field in
-                        self.field(field.isOptional ? L("%@ (optional)", L(field.label)) : field.label, help: field.help) {
+                        self.field(
+                            field.isOptional ? L("%@ (optional)", L(field.label)) : field.label, help: field.help
+                        ) {
                             if field.isSecret {
                                 SecureField(L(field.placeholder), text: binding(field))
                             } else {
@@ -378,22 +391,29 @@ private struct GeneralPane: View {
                         ForEach([1, 2, 5, 10, 15, 30], id: \.self) { Text("\($0) min").tag($0) }
                     }
                 }
-                Toggle("Open in desktop apps when installed", isOn: Binding(
-                    get: { model.effectivePreferences.openInApps },
-                    set: { model.preferences.openInApps = $0 }
-                ))
+                Toggle(
+                    "Open in desktop apps when installed",
+                    isOn: Binding(
+                        get: { model.effectivePreferences.openInApps },
+                        set: { model.preferences.openInApps = $0 }
+                    )
+                )
                 .managedByOrganization(ManagedPolicy.isForced(ManagedPolicy.openInAppsKey))
                 Text(L("Slack and Linear open in their app; ⌥-click opens the web page instead."))
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
-                Toggle("Open at login", isOn: Binding(
-                    get: { loginStatus == .enabled || loginStatus == .requiresApproval },
-                    // A closure, not the method itself: Swift 6.2 crashes converting that method.
-                    set: { setOpenAtLogin($0) }
-                ))
+                Toggle(
+                    "Open at login",
+                    isOn: Binding(
+                        get: { loginStatus == .enabled || loginStatus == .requiresApproval },
+                        // A closure, not the method itself: Swift 6.2 crashes converting that method.
+                        set: { setOpenAtLogin($0) }
+                    ))
                 if loginStatus == .requiresApproval {
-                    hint(L("macOS needs your approval: allow Remora in System Settings → General → Login Items."),
-                         action: L("Open Login Items")) { SMAppService.openSystemSettingsLoginItems() }
+                    hint(
+                        L("macOS needs your approval: allow Remora in System Settings → General → Login Items."),
+                        action: L("Open Login Items")
+                    ) { SMAppService.openSystemSettingsLoginItems() }
                 }
                 if let loginError {
                     Text(L("Couldn’t change it: %@", loginError)).font(Myna.font(11.5)).foregroundStyle(Myna.danger)
@@ -411,11 +431,17 @@ private struct GeneralPane: View {
             }
             Section("Notifications") {
                 if notificationsDenied {
-                    hint(L("Notifications are off for Remora in System Settings: these choices apply once you allow them."),
-                         action: L("Open Notifications")) { Notifier.openSystemSettings() }
+                    hint(
+                        L(
+                            "Notifications are off for Remora in System Settings: these choices apply once you allow them."
+                        ),
+                        action: L("Open Notifications")
+                    ) { Notifier.openSystemSettings() }
                 }
                 Toggle("New items that need me (reviews, mentions…)", isOn: $model.preferences.notifyArrivals)
-                Toggle("Status changes (approved, changes requested, checks failed)", isOn: $model.preferences.notifyStatusChanges)
+                Toggle(
+                    "Status changes (approved, changes requested, checks failed)",
+                    isOn: $model.preferences.notifyStatusChanges)
             }
             Section {
                 ForEach(notifyingSources, id: \.id) { source in
@@ -426,9 +452,11 @@ private struct GeneralPane: View {
             } header: {
                 Text("Hide message content")
             } footer: {
-                Text("Notifications still say where something happened (mention, channel, repository), not what was written.")
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                Text(
+                    "Notifications still say where something happened (mention, channel, repository), not what was written."
+                )
+                .font(Myna.font(11.5))
+                .foregroundStyle(Myna.muted)
             }
             Section("Assistant") {
                 Toggle("Whole-inbox brief", isOn: $model.preferences.wholeInboxBrief)
@@ -437,7 +465,9 @@ private struct GeneralPane: View {
                     .foregroundStyle(Myna.muted)
                 Picker("Reuse a brief or summary for", selection: $model.preferences.briefCacheMinutes) {
                     Text("Always write a new one").tag(0)
-                    ForEach([5, 15, 30, 60, 120], id: \.self) { Text($0 < 60 ? L("%d min", $0) : L("%d h", $0 / 60)).tag($0) }
+                    ForEach([5, 15, 30, 60, 120], id: \.self) {
+                        Text($0 < 60 ? L("%d min", $0) : L("%d h", $0 / 60)).tag($0)
+                    }
                 }
                 Text("While fresh, Remora shows it again instead of asking Claude.")
                     .font(Myna.font(11.5))
@@ -562,13 +592,18 @@ private struct UpdatesSection: View {
                 Text(L("This copy of Remora doesn’t update itself: download new versions from the releases page."))
                     .font(Myna.font(11.5)).foregroundStyle(Myna.muted)
             } else if !model.updatesAllowed {
-                Text(L("Your organization installs new versions of Remora.")).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
-                    .help(L("Managed by your organization"))
+                Text(L("Your organization installs new versions of Remora.")).font(Myna.font(11.5)).foregroundStyle(
+                    Myna.muted
+                )
+                .help(L("Managed by your organization"))
             } else {
-                Toggle("Check for updates automatically", isOn: Binding(
-                    get: { model.effectivePreferences.checkForUpdates },
-                    set: { model.preferences.checkForUpdates = $0 }
-                ))
+                Toggle(
+                    "Check for updates automatically",
+                    isOn: Binding(
+                        get: { model.effectivePreferences.checkForUpdates },
+                        set: { model.preferences.checkForUpdates = $0 }
+                    )
+                )
                 .managedByOrganization(ManagedPolicy.isForced(ManagedPolicy.automaticUpdatesKey))
                 status(updater)
             }
@@ -576,9 +611,11 @@ private struct UpdatesSection: View {
             Text("Updates")
         } footer: {
             if updater.isSupported, model.updatesAllowed {
-                Text("Once a day, Remora asks GitHub whether a new version is out. Nothing about you or your inbox is sent. A new version is installed only when you choose, and only if it is signed by Remora’s release key.")
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                Text(
+                    "Once a day, Remora asks GitHub whether a new version is out. Nothing about you or your inbox is sent. A new version is installed only when you choose, and only if it is signed by Remora’s release key."
+                )
+                .font(Myna.font(11.5))
+                .foregroundStyle(Myna.muted)
             }
         }
     }
@@ -608,7 +645,8 @@ private struct UpdatesSection: View {
                 case .upToDate:
                     Text(L("Remora is up to date.")).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
                 case .failed(let message):
-                    Text(message).font(Myna.font(11.5)).foregroundStyle(Myna.danger).fixedSize(horizontal: false, vertical: true)
+                    Text(message).font(Myna.font(11.5)).foregroundStyle(Myna.danger).fixedSize(
+                        horizontal: false, vertical: true)
                 default:
                     EmptyView()
                 }

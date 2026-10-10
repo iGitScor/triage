@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use crate::Inbox;
+use chrono::{DateTime, Utc};
 use remora_core::{host_matches, InboxItem, InboxLayout, ItemState, ReviewSize, SnoozeInsight, WaitingHelp};
 use remora_plugins::registry;
 use serde::Serialize;
@@ -144,10 +144,19 @@ fn extras(inbox: &Inbox, item: &InboxItem, now: DateTime<Utc>, tr: &dyn Fn(&str)
         linked: inbox
             .linked(&item.id)
             .into_iter()
-            .map(|other| LinkedView { id: other.id, title: other.title, context: other.context, plugin_id: other.plugin_id })
+            .map(|other| LinkedView {
+                id: other.id,
+                title: other.title,
+                context: other.context,
+                plugin_id: other.plugin_id,
+            })
             .collect(),
         ranking: inbox.ranking_reason(item, tr),
-        snoozed_times: if inbox.states.get(&item.id).and_then(|s| s.snooze.as_ref()).is_some() { inbox.snooze_count(&item.id, now) } else { 0 },
+        snoozed_times: if inbox.states.get(&item.id).and_then(|s| s.snooze.as_ref()).is_some() {
+            inbox.snooze_count(&item.id, now)
+        } else {
+            0
+        },
     }
 }
 
@@ -166,7 +175,9 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
     let strip = |item: &mut InboxItem| {
         let allowed = images.get(&item.account_id);
         let keep = |url: &Option<String>| {
-            url.as_deref().map(|u| remora_plugins::Request::get(u).host()).is_some_and(|host| allowed.is_some_and(|hosts| host_matches(&host, hosts)))
+            url.as_deref()
+                .map(|u| remora_plugins::Request::get(u).host())
+                .is_some_and(|host| allowed.is_some_and(|hosts| host_matches(&host, hosts)))
         };
         if let Some(author) = item.author.as_mut() {
             if !keep(&author.avatar_url) {
@@ -200,13 +211,22 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
         remora_core::SourcesHealth::Reconnect { accounts } => accounts
             .iter()
             .filter_map(|id| inbox.accounts.iter().find(|a| &a.id == id))
-            .map(|a| a.name.clone().or_else(|| registry::manifest(&a.plugin_id).map(|m| m.name)).unwrap_or_else(|| a.plugin_id.clone()))
+            .map(|a| {
+                a.name
+                    .clone()
+                    .or_else(|| registry::manifest(&a.plugin_id).map(|m| m.name))
+                    .unwrap_or_else(|| a.plugin_id.clone())
+            })
             .collect(),
         _ => vec![],
     };
 
     let now = Utc::now();
-    let shown = layout.in_progress.iter().chain(&layout.pinned).chain(layout.my_turn.iter().chain(&layout.waiting).flat_map(|g| &g.items))
+    let shown = layout
+        .in_progress
+        .iter()
+        .chain(&layout.pinned)
+        .chain(layout.my_turn.iter().chain(&layout.waiting).flat_map(|g| &g.items))
         .chain(&layout.snoozed);
     let extras = shown.map(|item| (item.id.clone(), extras(inbox, item, now, tr))).collect();
     InboxView {
@@ -216,7 +236,9 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
             .into_iter()
             .map(|insight| {
                 let nudge = match &insight {
-                    SnoozeInsight::Avoidance { items, .. } => items.first().map(|item| remora_core::SnoozeAdvisor::new().nudge(item)),
+                    SnoozeInsight::Avoidance { items, .. } => {
+                        items.first().map(|item| remora_core::SnoozeAdvisor::new().nudge(item))
+                    }
                     _ => None,
                 };
                 InsightView { id: insight.id(), nudge, insight }
@@ -225,7 +247,11 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
         review_pace: inbox.review_pace(),
         assistant: inbox.assistant_account().map(|account| AssistantView {
             name: account.name.clone().unwrap_or_else(|| {
-                remora_plugins::claude::assistant_manifests().into_iter().find(|m| m.id == account.plugin_id).map(|m| m.name).unwrap_or_default()
+                remora_plugins::claude::assistant_manifests()
+                    .into_iter()
+                    .find(|m| m.id == account.plugin_id)
+                    .map(|m| m.name)
+                    .unwrap_or_default()
             }),
             whole_inbox: inbox.preferences.whole_inbox_brief,
             brief: inbox.brief.clone(),
@@ -257,7 +283,9 @@ fn image_hosts(inbox: &Inbox) -> HashMap<String, Vec<String>> {
         .iter()
         .filter_map(|a| {
             let mut hosts = registry::allowed_hosts(a, &registry::manifest(&a.plugin_id)?);
-            hosts.extend(IMAGE_ONLY_HOSTS.iter().filter(|(plugin, _)| *plugin == a.plugin_id).map(|(_, host)| host.to_string()));
+            hosts.extend(
+                IMAGE_ONLY_HOSTS.iter().filter(|(plugin, _)| *plugin == a.plugin_id).map(|(_, host)| host.to_string()),
+            );
             Some((a.id.clone(), hosts))
         })
         .collect()
@@ -287,7 +315,8 @@ mod tests {
     fn inbox(plugin: &str, settings: &[(&str, &str)]) -> Inbox {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
         let settings = settings.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
-        inbox.accounts = vec![Account { id: "a1".into(), plugin_id: plugin.into(), name: None, settings, identity: None }];
+        inbox.accounts =
+            vec![Account { id: "a1".into(), plugin_id: plugin.into(), name: None, settings, identity: None }];
         inbox
     }
 

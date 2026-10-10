@@ -37,8 +37,8 @@
   --r-xl: 34px;
   --r-lg: 26px;
   --r-md: 18px;
-  --font: 'Outfit Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --font: "Outfit Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
   color-scheme: light;
 }
 

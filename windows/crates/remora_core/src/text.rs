@@ -10,7 +10,8 @@ use regex::{Captures, Regex};
 use crate::emoji;
 
 static EMOJI: LazyLock<HashMap<&str, &str>> = LazyLock::new(|| emoji::TABLE.iter().copied().collect());
-static CODE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r":([a-z0-9_+\-]*[a-z][a-z0-9_+\-]*):").expect("valid pattern"));
+static CODE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r":([a-z0-9_+\-]*[a-z][a-z0-9_+\-]*):").expect("valid pattern"));
 static SKIN_TONE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r":skin-tone-[2-6]:").expect("valid pattern"));
 static FENCE: LazyLock<Regex> = LazyLock::new(|| Regex::new("```\n?").expect("valid pattern"));
 static INLINE_CODE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"`([^`\n]+)`").expect("valid pattern"));
@@ -20,7 +21,10 @@ static QUOTE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^>[ \t]?").exp
 static MARKS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     [r"\*\*", "__", "~~", r"\*", "_", "~"]
         .iter()
-        .map(|mark| Regex::new(&format!(r"(^|[^\p{{L}}\p{{N}}]){mark}(\S(?:[^\n]*?\S)??){mark}($|[^\p{{L}}\p{{N}}])")).expect("valid pattern"))
+        .map(|mark| {
+            Regex::new(&format!(r"(^|[^\p{{L}}\p{{N}}]){mark}(\S(?:[^\n]*?\S)??){mark}($|[^\p{{L}}\p{{N}}])"))
+                .expect("valid pattern")
+        })
         .collect()
 });
 
@@ -48,7 +52,8 @@ pub fn emoji(text: &str) -> String {
         return text.to_string();
     }
     let text = SKIN_TONE.replace_all(text, "");
-    CODE.replace_all(&text, |c: &Captures| EMOJI.get(&c[1]).map_or_else(|| c[0].to_string(), |e| e.to_string())).into_owned()
+    CODE.replace_all(&text, |c: &Captures| EMOJI.get(&c[1]).map_or_else(|| c[0].to_string(), |e| e.to_string()))
+        .into_owned()
 }
 
 #[cfg(test)]

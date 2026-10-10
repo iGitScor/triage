@@ -1,6 +1,7 @@
 import Foundation
 import NaturalLanguage
 import Testing
+
 @testable import RemoraCore
 
 struct SnoozeAdvisorTests {
@@ -13,14 +14,19 @@ struct SnoozeAdvisorTests {
     /// Thursday 8 October 2026, 10:00 in Paris.
     var morning: Date { calendar.date(from: DateComponents(year: 2026, month: 10, day: 8, hour: 10))! }
 
-    func record(_ item: InboxItem, reason: SnoozeReason? = nil, at: Date, hours: Double, doneHour: Int? = nil) -> SnoozeRecord {
+    func record(_ item: InboxItem, reason: SnoozeReason? = nil, at: Date, hours: Double, doneHour: Int? = nil)
+        -> SnoozeRecord
+    {
         var record = SnoozeRecord(item: item, reason: reason, at: at, until: at.addingTimeInterval(hours * 3_600))
         if let doneHour { record.doneAt = calendar.date(bySettingHour: doneHour, minute: 10, second: 0, of: at) }
         return record
     }
 
     func snoozed(_ items: [InboxItem], until: Date) -> [String: ItemState] {
-        Dictionary(uniqueKeysWithValues: items.map { ($0.id, ItemState(snooze: Snooze(until: until, mode: .hide, fingerprint: $0.fingerprint))) })
+        Dictionary(
+            uniqueKeysWithValues: items.map {
+                ($0.id, ItemState(snooze: Snooze(until: until, mode: .hide, fingerprint: $0.fingerprint)))
+            })
     }
 
     // MARK: Reasons
@@ -42,7 +48,9 @@ struct SnoozeAdvisorTests {
     @Test func returnsSkipTheWeekend() {
         func weekday(_ date: Date) -> Int { calendar.component(.weekday, from: date) }
         let friday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 18))!
-        #expect(weekday(advisor.suggestedReturn(for: .noTime, history: [], now: friday)) == 2, "Friday evening: Monday, not Saturday")
+        #expect(
+            weekday(advisor.suggestedReturn(for: .noTime, history: [], now: friday)) == 2,
+            "Friday evening: Monday, not Saturday")
         #expect(weekday(advisor.suggestedReturn(for: .focus, history: [], now: friday)) == 2)
         let saturday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 10, hour: 10))!
         let later = advisor.suggestedReturn(for: .noTime, history: [], now: saturday)
@@ -51,9 +59,13 @@ struct SnoozeAdvisorTests {
 
     @Test func motivationAimsForYourBestHour() {
         let item = makeItem("x")
-        let history = (0..<6).map { record(item, at: morning.addingTimeInterval(Double(-$0) * 86_400), hours: 1, doneHour: 15) }
+        let history = (0..<6).map {
+            record(item, at: morning.addingTimeInterval(Double(-$0) * 86_400), hours: 1, doneHour: 15)
+        }
         #expect(advisor.bestHour(history: history) == 15)
-        #expect(calendar.component(.hour, from: advisor.suggestedReturn(for: .motivation, history: history, now: morning)) == 15)
+        #expect(
+            calendar.component(.hour, from: advisor.suggestedReturn(for: .motivation, history: history, now: morning))
+                == 15)
         #expect(advisor.bestHour(history: Array(history.prefix(2))) == 9, "not enough data: default 9:00")
     }
 
@@ -90,22 +102,28 @@ struct SnoozeAdvisorTests {
     @Test func loopsComeFirst() {
         let item = makeItem("1", date: morning)
         let history = (0..<3).map { record(item, at: morning.addingTimeInterval(Double(-$0) * 86_400), hours: 24) }
-        let insights = advisor.insights(snoozed: [item], states: snoozed([item], until: morning + 3_600), history: history, now: morning)
+        let insights = advisor.insights(
+            snoozed: [item], states: snoozed([item], until: morning + 3_600), history: history, now: morning)
         #expect(insights.first == .loop(item, times: 3))
     }
 
     @Test func avoidanceNeedsThreeNotFeelingItSnoozes() {
         let item = makeItem("1", date: morning)
         let history = (0..<3).map { record(makeItem("9\($0)"), reason: .motivation, at: morning, hours: 24) }
-        let insights = advisor.insights(snoozed: [item], states: snoozed([item], until: morning + 3_600), history: history, now: morning)
+        let insights = advisor.insights(
+            snoozed: [item], states: snoozed([item], until: morning + 3_600), history: history, now: morning)
         #expect(insights.contains { if case .avoidance(_, 3, [item]) = $0 { true } else { false } })
     }
 
     @Test func pileUpsAreDetectedAndSpread() {
         let items = (1...4).map { makeItem("\($0)", date: morning) }
         let monday = morning + 4 * 86_400
-        let insights = advisor.insights(snoozed: items, states: snoozed(items, until: monday), history: [], now: morning)
-        guard case .pileUp(let at, let pile) = insights.first else { Issue.record("no pile-up"); return }
+        let insights = advisor.insights(
+            snoozed: items, states: snoozed(items, until: monday), history: [], now: morning)
+        guard case .pileUp(let at, let pile) = insights.first else {
+            Issue.record("no pile-up")
+            return
+        }
         #expect(pile.count == 4)
         let spread = advisor.spread(pile, from: at)
         #expect(Set(spread.values).count == 4)
@@ -119,7 +137,8 @@ struct SnoozeAdvisorTests {
         b.title = "Follow-up on WEB-42"
         var old = makeItem("3", date: morning - 30 * 86_400)
         old.title = "Update the README badges"
-        let insights = advisor.insights(snoozed: [a, b, old], states: snoozed([a, b, old], until: morning + 86_400), history: [], now: morning)
+        let insights = advisor.insights(
+            snoozed: [a, b, old], states: snoozed([a, b, old], until: morning + 86_400), history: [], now: morning)
         #expect(insights.contains(.cluster([a, b])))
         #expect(insights.contains(.stale([old])))
     }

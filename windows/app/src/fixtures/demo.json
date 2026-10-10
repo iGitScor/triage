@@ -4,11 +4,7 @@
       "allowed": true,
       "egress": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
       "error": null,
-      "hosts": [
-        "api.github.com",
-        "github.com",
-        "avatars.githubusercontent.com"
-      ],
+      "hosts": ["api.github.com", "github.com", "avatars.githubusercontent.com"],
       "id": "github",
       "identity": "you",
       "name": null,
@@ -20,9 +16,7 @@
       "allowed": true,
       "egress": "Reads your merge requests, approvals and pipelines from your GitLab host.",
       "error": null,
-      "hosts": [
-        "gitlab.com"
-      ],
+      "hosts": ["gitlab.com"],
       "id": "gitlab",
       "identity": "you",
       "name": null,
@@ -34,9 +28,7 @@
       "allowed": true,
       "egress": "Searches your recent mentions and direct messages in Slack.",
       "error": null,
-      "hosts": [
-        "slack.com"
-      ],
+      "hosts": ["slack.com"],
       "id": "slack",
       "identity": "you",
       "name": null,
@@ -48,10 +40,7 @@
       "allowed": true,
       "egress": "Reads issues assigned to you and your Linear inbox.",
       "error": null,
-      "hosts": [
-        "api.linear.app",
-        "public.linear.app"
-      ],
+      "hosts": ["api.linear.app", "public.linear.app"],
       "id": "linear",
       "identity": "you",
       "name": null,
@@ -701,11 +690,7 @@
         "egress": {
           "description": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
           "externalAi": false,
-          "hosts": [
-            "api.github.com",
-            "github.com",
-            "avatars.githubusercontent.com"
-          ]
+          "hosts": ["api.github.com", "github.com", "avatars.githubusercontent.com"]
         },
         "fields": [
           {
@@ -745,9 +730,7 @@
         "egress": {
           "description": "Reads your merge requests, approvals and pipelines from your GitLab host.",
           "externalAi": false,
-          "hosts": [
-            "gitlab.com"
-          ]
+          "hosts": ["gitlab.com"]
         },
         "fields": [
           {
@@ -788,9 +771,7 @@
         "egress": {
           "description": "Searches your recent mentions and direct messages in Slack.",
           "externalAi": false,
-          "hosts": [
-            "slack.com"
-          ]
+          "hosts": ["slack.com"]
         },
         "fields": [
           {
@@ -831,10 +812,7 @@
         "egress": {
           "description": "Reads issues assigned to you and your Linear inbox.",
           "externalAi": false,
-          "hosts": [
-            "api.linear.app",
-            "public.linear.app"
-          ]
+          "hosts": ["api.linear.app", "public.linear.app"]
         },
         "fields": [
           {

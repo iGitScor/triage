@@ -64,25 +64,25 @@
 }
 
 .logo-github {
-  --logo: url('/site/logos/github.svg');
+  --logo: url("/site/logos/github.svg");
 }
 .logo-gitlab {
-  --logo: url('/site/logos/gitlab.svg');
+  --logo: url("/site/logos/gitlab.svg");
 }
 .logo-slack {
-  --logo: url('/site/logos/slack.svg');
+  --logo: url("/site/logos/slack.svg");
 }
 .logo-linear {
-  --logo: url('/site/logos/linear.svg');
+  --logo: url("/site/logos/linear.svg");
 }
 .logo-notion {
-  --logo: url('/site/logos/notion.svg');
+  --logo: url("/site/logos/notion.svg");
 }
 .logo-claude {
-  --logo: url('/site/logos/claude.svg');
+  --logo: url("/site/logos/claude.svg");
 }
 .logo-fish {
-  --logo: url('/site/fish.svg');
+  --logo: url("/site/fish.svg");
   width: 2.2em;
 }
 
@@ -161,7 +161,7 @@
 }
 
 .popover::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -7px;
   right: 150px;

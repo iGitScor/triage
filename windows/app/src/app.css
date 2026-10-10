@@ -1,7 +1,7 @@
 /* Remora for Windows. Colours and type come from the shared Myna tokens (site/public/site/tokens.css),
    which follow the system scheme; Settings → General → Theme forces one with data-theme on <html>. */
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   --backdrop: #f0f0e8;
   --surface: #f7f7f1;
   --card: #e8e8df;
@@ -20,7 +20,7 @@
   color-scheme: light;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --backdrop: #0e0e14;
   --surface: #13131c;
   --card: #1a1a26;

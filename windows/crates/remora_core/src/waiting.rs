@@ -27,7 +27,13 @@ impl Default for WaitingAssistant {
 }
 
 impl WaitingAssistant {
-    pub fn help(&self, item: &InboxItem, items: &[InboxItem], me: Option<&str>, now: DateTime<Utc>) -> Option<WaitingHelp> {
+    pub fn help(
+        &self,
+        item: &InboxItem,
+        items: &[InboxItem],
+        me: Option<&str>,
+        now: DateTime<Utc>,
+    ) -> Option<WaitingHelp> {
         if item.bundle != InboxBundle::awaiting() || item.has_badge("draft") {
             return None;
         }
@@ -129,7 +135,8 @@ mod tests {
         item.author = Some(person("alice"));
         item.participants = participants;
         item.suggested_people = suggested;
-        item.badges = vec![Badge::new("diff", "+12 −3", Tone::Neutral), Badge::new("checks.passing", "Checks", Tone::Positive)];
+        item.badges =
+            vec![Badge::new("diff", "+12 −3", Tone::Neutral), Badge::new("checks.passing", "Checks", Tone::Positive)];
         item.url = Some(format!("https://github.com/acme/app/pull/{id}"));
         item
     }

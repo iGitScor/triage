@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import RemoraCore
 
 /// Offline, a rejected token and a rate limit don't look the same.
@@ -26,7 +27,9 @@ struct SourceFailureTests {
         let broken = SourceFailure(kind: .other, message: "")
         #expect(SourcesHealth(failures: [:], offline: false) == .fine)
         #expect(SourcesHealth(failures: [:], offline: true) == .offline)
-        #expect(SourcesHealth(failures: [a: offline, b: offline], offline: false) == .offline, "every source failed for lack of a network")
+        #expect(
+            SourcesHealth(failures: [a: offline, b: offline], offline: false) == .offline,
+            "every source failed for lack of a network")
         #expect(SourcesHealth(failures: [a: auth, b: broken], offline: false) == .reconnect([a]))
         #expect(SourcesHealth(failures: [a: limited], offline: false) == .fine, "a rate limit is only waited out")
         #expect(SourcesHealth(failures: [a: limited, b: broken, c: broken], offline: false) == .failing(2))

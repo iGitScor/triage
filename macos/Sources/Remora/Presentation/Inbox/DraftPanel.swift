@@ -37,14 +37,17 @@ struct DraftPanel: View {
                 .font(Myna.font(11))
                 .foregroundStyle(Myna.muted)
             HStack {
-                ActionButton(label: copied ? "Copied" : "Copy", symbol: copied ? "checkmark" : "doc.on.doc", action: copy)
+                ActionButton(
+                    label: copied ? "Copied" : "Copy", symbol: copied ? "checkmark" : "doc.on.doc", action: copy)
                 Spacer()
                 if let url = link {
                     Button {
                         copy()
                         NSWorkspace.shared.open(url)
                         dismiss()
-                    } label: { Text(L("Copy & open")) }
+                    } label: {
+                        Text(L("Copy & open"))
+                    }
                     .buttonStyle(PillButtonStyle())
                 }
             }

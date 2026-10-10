@@ -15,8 +15,11 @@ struct PrivacyPane: View {
         let policy = model.policy
         Form {
             Section {
-                Label(L("Remora only talks to the tools you allow. No analytics, no telemetry."), systemImage: "lock.shield")
-                    .font(Myna.font(12.5))
+                Label(
+                    L("Remora only talks to the tools you allow. No analytics, no telemetry."),
+                    systemImage: "lock.shield"
+                )
+                .font(Myna.font(12.5))
                 if managed {
                     Label(L("Managed by your organization"), systemImage: "building.columns")
                         .font(Myna.font(12.5, .semibold))
@@ -27,9 +30,13 @@ struct PrivacyPane: View {
             Section(L("External AI")) {
                 Toggle(L("Allow external AI (Claude)"), isOn: $model.preferences.allowExternalAI)
                     .disabled(managed)
-                Text(L("Claude plugins send the titles, contexts, authors and statuses of inbox items to Anthropic. When off, the brief, summaries and triage are unavailable."))
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                Text(
+                    L(
+                        "Claude plugins send the titles, contexts, authors and statuses of inbox items to Anthropic. When off, the brief, summaries and triage are unavailable."
+                    )
+                )
+                .font(Myna.font(11.5))
+                .foregroundStyle(Myna.muted)
             }
 
             Section(L("Allowed tools")) {
@@ -57,16 +64,19 @@ struct PrivacyPane: View {
                             HStack {
                                 Text(account.name ?? manifest.name).font(Myna.font(13, .semibold))
                                 Spacer()
-                                Label(refusal == nil ? L("Allowed") : L("Blocked"),
-                                      systemImage: refusal == nil ? "checkmark.circle.fill" : "nosign")
-                                    .font(Myna.font(11.5, .semibold))
-                                    .foregroundStyle(refusal == nil ? Myna.ok : Myna.danger)
+                                Label(
+                                    refusal == nil ? L("Allowed") : L("Blocked"),
+                                    systemImage: refusal == nil ? "checkmark.circle.fill" : "nosign"
+                                )
+                                .font(Myna.font(11.5, .semibold))
+                                .foregroundStyle(refusal == nil ? Myna.ok : Myna.danger)
                             }
                             let hosts = model.allowedHosts(for: account, manifest: manifest)
                             Text(hosts.isEmpty ? localProgram(account) : hosts.joined(separator: ", "))
                                 .font(Myna.font(11.5, .medium))
                                 .foregroundStyle(Myna.inkSoft)
-                            Text(refusal ?? L(manifest.egress.description)).font(Myna.font(11)).foregroundStyle(Myna.muted)
+                            Text(refusal ?? L(manifest.egress.description)).font(Myna.font(11)).foregroundStyle(
+                                Myna.muted)
                         }
                     }
                 }
@@ -74,7 +84,8 @@ struct PrivacyPane: View {
 
             Section(L("Data on this Mac")) {
                 Text(AppFolder.url.path).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
-                Text(L("Inbox cache, settings and snooze history. Tokens are in the Keychain.")).font(Myna.font(11)).foregroundStyle(Myna.muted)
+                Text(L("Inbox cache, settings and snooze history. Tokens are in the Keychain.")).font(Myna.font(11))
+                    .foregroundStyle(Myna.muted)
                 // A file Remora couldn't read (kept aside, never overwritten) or save.
                 ForEach(model.storageIssues) { issue in
                     Label(issue.message, systemImage: "exclamationmark.triangle.fill")
@@ -95,9 +106,15 @@ struct PrivacyPane: View {
                 do { try model.eraseLocalData() } catch { eraseError = error.localizedDescription }
             }
         } message: {
-            Text(L("Disconnects every account, deletes the cache, history, settings and notifications, and removes the tokens from the Keychain."))
+            Text(
+                L(
+                    "Disconnects every account, deletes the cache, history, settings and notifications, and removes the tokens from the Keychain."
+                ))
         }
-        .alert(L("The tokens are still in the Keychain"), isPresented: Binding(get: { eraseError != nil }, set: { if !$0 { eraseError = nil } })) {
+        .alert(
+            L("The tokens are still in the Keychain"),
+            isPresented: Binding(get: { eraseError != nil }, set: { if !$0 { eraseError = nil } })
+        ) {
             Button(L("OK")) { eraseError = nil }
         } message: {
             Text(eraseError ?? "")
@@ -108,8 +125,9 @@ struct PrivacyPane: View {
         Binding(
             get: { model.preferences.allowedPlugins?.contains(id) ?? true },
             set: { isOn in
-                var allowed = Set(model.preferences.allowedPlugins
-                    ?? (PluginRegistry.manifests + PluginRegistry.assistantManifests).map(\.id))
+                var allowed = Set(
+                    model.preferences.allowedPlugins
+                        ?? (PluginRegistry.manifests + PluginRegistry.assistantManifests).map(\.id))
                 if isOn { allowed.insert(id) } else { allowed.remove(id) }
                 model.preferences.allowedPlugins = allowed.sorted()
             }
@@ -119,7 +137,8 @@ struct PrivacyPane: View {
     /// For Claude Code, the program that runs: the user sees which `claude` gets their inbox.
     private func localProgram(_ account: Account) -> String {
         guard account.pluginID == ClaudeCodePlugin.manifest.id else { return L("Local program on this Mac") }
-        guard let program = ClaudeCodePlugin.locate(ManagedPolicy.claudeCodePath() ?? account.settings["path"] ?? "") else { return L("Claude Code not found on this Mac") }
+        guard let program = ClaudeCodePlugin.locate(ManagedPolicy.claudeCodePath() ?? account.settings["path"] ?? "")
+        else { return L("Claude Code not found on this Mac") }
         return L("Local program: %@", program.path)
     }
 }

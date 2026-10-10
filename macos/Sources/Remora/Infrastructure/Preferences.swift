@@ -75,19 +75,27 @@ struct Preferences: Codable, Equatable {
         menuBarCount = try container.decodeIfPresent(MenuBarCount.self, forKey: .menuBarCount) ?? defaults.menuBarCount
         countPerSource = try container.decodeIfPresent(Bool.self, forKey: .countPerSource) ?? defaults.countPerSource
         brandedMenuBar = try container.decodeIfPresent(Bool.self, forKey: .brandedMenuBar) ?? defaults.brandedMenuBar
-        focusWhileInProgress = try container.decodeIfPresent(Bool.self, forKey: .focusWhileInProgress) ?? defaults.focusWhileInProgress
+        focusWhileInProgress =
+            try container.decodeIfPresent(Bool.self, forKey: .focusWhileInProgress) ?? defaults.focusWhileInProgress
         notifyArrivals = try container.decodeIfPresent(Bool.self, forKey: .notifyArrivals) ?? defaults.notifyArrivals
-        notifyStatusChanges = try container.decodeIfPresent(Bool.self, forKey: .notifyStatusChanges) ?? defaults.notifyStatusChanges
-        hiddenContentPlugins = try container.decodeIfPresent(Set<String>.self, forKey: .hiddenContentPlugins) ?? defaults.hiddenContentPlugins
-        assistantExcludedSources = try container.decodeIfPresent(Set<String>.self, forKey: .assistantExcludedSources) ?? defaults.assistantExcludedSources
+        notifyStatusChanges =
+            try container.decodeIfPresent(Bool.self, forKey: .notifyStatusChanges) ?? defaults.notifyStatusChanges
+        hiddenContentPlugins =
+            try container.decodeIfPresent(Set<String>.self, forKey: .hiddenContentPlugins)
+            ?? defaults.hiddenContentPlugins
+        assistantExcludedSources =
+            try container.decodeIfPresent(Set<String>.self, forKey: .assistantExcludedSources)
+            ?? defaults.assistantExcludedSources
         wakeOnActivity = try container.decodeIfPresent(Bool.self, forKey: .wakeOnActivity) ?? defaults.wakeOnActivity
         appearance = try container.decodeIfPresent(Appearance.self, forKey: .appearance) ?? defaults.appearance
         textSize = try container.decodeIfPresent(TextSize.self, forKey: .textSize) ?? defaults.textSize
-        briefCacheMinutes = try container.decodeIfPresent(Int.self, forKey: .briefCacheMinutes) ?? defaults.briefCacheMinutes
+        briefCacheMinutes =
+            try container.decodeIfPresent(Int.self, forKey: .briefCacheMinutes) ?? defaults.briefCacheMinutes
         wholeInboxBrief = try container.decodeIfPresent(Bool.self, forKey: .wholeInboxBrief) ?? defaults.wholeInboxBrief
         allowedPlugins = try container.decodeIfPresent([String].self, forKey: .allowedPlugins)
         allowExternalAI = try container.decodeIfPresent(Bool.self, forKey: .allowExternalAI) ?? defaults.allowExternalAI
-        allowRemoteImages = try container.decodeIfPresent(Bool.self, forKey: .allowRemoteImages) ?? defaults.allowRemoteImages
+        allowRemoteImages =
+            try container.decodeIfPresent(Bool.self, forKey: .allowRemoteImages) ?? defaults.allowRemoteImages
         openInApps = try container.decodeIfPresent(Bool.self, forKey: .openInApps) ?? defaults.openInApps
         checkForUpdates = try container.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? defaults.checkForUpdates
     }

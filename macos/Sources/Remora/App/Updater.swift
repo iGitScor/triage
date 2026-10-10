@@ -118,9 +118,13 @@ enum UpdateError: LocalizedError, Equatable {
         case .wrongApp, .wrongVersion:
             L("The download doesn’t contain the expected version of Remora, so it wasn’t installed.")
         case .notSameDeveloper:
-            L("This copy of Remora can’t update itself (it isn’t signed like the releases). Download the new version from the releases page.")
+            L(
+                "This copy of Remora can’t update itself (it isn’t signed like the releases). Download the new version from the releases page."
+            )
         case .cannotReplace(let folder):
-            L("Remora can’t replace itself in %@. Move it to Applications, or download the new version from the releases page.", folder)
+            L(
+                "Remora can’t replace itself in %@. Move it to Applications, or download the new version from the releases page.",
+                folder)
         }
     }
 }

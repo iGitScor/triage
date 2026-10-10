@@ -59,7 +59,13 @@ mod tests {
     #[test]
     fn opens_only_web_pages_and_tool_apps() {
         assert!(is_web_link("https://github.com/acme/app/pull/1", &[]));
-        for url in ["file:///C:/Windows/System32/calc.exe", "\\\\evil\\share", "ms-settings:privacy", "javascript:alert(1)", "ftp://h/x"] {
+        for url in [
+            "file:///C:/Windows/System32/calc.exe",
+            "\\\\evil\\share",
+            "ms-settings:privacy",
+            "javascript:alert(1)",
+            "ftp://h/x",
+        ] {
             assert!(!is_web_link(url, &[]), "{url}");
         }
         assert!(is_app_link("slack://channel?team=T1&id=C1"));
@@ -71,7 +77,10 @@ mod tests {
     #[test]
     fn http_only_on_the_accounts_own_host() {
         let account = |host: &str| Account {
-            id: "a".into(), plugin_id: "gitlab".into(), name: None, identity: None,
+            id: "a".into(),
+            plugin_id: "gitlab".into(),
+            name: None,
+            identity: None,
             settings: HashMap::from([("host".to_string(), host.to_string())]),
         };
         let hosts = http_hosts(Some(&account("http://gitlab.lan")));
@@ -82,15 +91,24 @@ mod tests {
 
     #[test]
     fn setup_links_use_the_typed_host() {
-        assert_eq!(setup_url(&github::manifest(), None).as_deref(), Some("https://github.com/settings/tokens/new?scopes=repo,read:org&description=Remora"));
+        assert_eq!(
+            setup_url(&github::manifest(), None).as_deref(),
+            Some("https://github.com/settings/tokens/new?scopes=repo,read:org&description=Remora")
+        );
         assert_eq!(
             setup_url(&gitlab::manifest(), Some("gitlab.acme.io/")).as_deref(),
             Some("https://gitlab.acme.io/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api")
         );
-        assert_eq!(setup_url(&gitlab::manifest(), Some("  ")).as_deref(), Some("https://gitlab.com/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api"));
+        assert_eq!(
+            setup_url(&gitlab::manifest(), Some("  ")).as_deref(),
+            Some("https://gitlab.com/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api")
+        );
         assert_eq!(setup_url(&gitlab::manifest(), Some("http://gitlab.lan")), None);
         assert_eq!(setup_url(&gitlab::manifest(), Some("file:///C:/x")), None);
-        assert_eq!(setup_url(&linear::manifest(), Some("ignored")).as_deref(), Some("https://linear.app/settings/account/security"));
+        assert_eq!(
+            setup_url(&linear::manifest(), Some("ignored")).as_deref(),
+            Some("https://linear.app/settings/account/security")
+        );
         assert_eq!(setup_url(&notion::manifest(), None).as_deref(), Some("https://www.notion.so/developers/tokens"));
     }
 }

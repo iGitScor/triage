@@ -22,7 +22,8 @@ public struct LinkFinder: Sendable {
 
         for i in candidates.indices {
             for j in candidates.indices where j > i && candidates[i].pluginID != candidates[j].pluginID {
-                let a = candidates[i].id, b = candidates[j].id
+                let a = candidates[i].id
+                let b = candidates[j].id
                 if !keys[i].isDisjoint(with: keys[j]) {
                     strong[a, default: []].append(b)
                     strong[b, default: []].append(a)
@@ -41,7 +42,8 @@ public struct LinkFinder: Sendable {
 
     /// Ticket keys in the title, the context (a Linear identifier lives there) and the preview.
     static func keys(of item: InboxItem) -> Set<String> {
-        KeywordSimilarity.ticketKeys([item.title, item.context, item.preview ?? ""].joined(separator: " ").uppercased())
+        KeywordSimilarity.ticketKeys(
+            [item.title, item.context, item.preview ?? ""].joined(separator: " ").uppercased())
     }
 
     /// "[SOAK] chore(deps): Bump axios" → "Bump axios": tags and commit-style prefixes say nothing about the topic.
@@ -56,7 +58,7 @@ extension Priority {
     /// The highest of two optional priorities.
     public static func max(_ a: Priority?, _ b: Priority?) -> Priority? {
         switch (a, b) {
-        case let (a?, b?): Swift.max(a, b)
+        case (let a?, let b?): Swift.max(a, b)
         default: a ?? b
         }
     }

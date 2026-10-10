@@ -35,8 +35,12 @@ pub enum ReviewFlag {
 impl ReviewFlag {
     /// In display order, as Swift's `allCases`.
     pub const ALL: [ReviewFlag; 6] = [
-        ReviewFlag::Migrations, ReviewFlag::Auth, ReviewFlag::PersonalData, ReviewFlag::Infra,
-        ReviewFlag::Dependencies, ReviewFlag::LockfileOnly,
+        ReviewFlag::Migrations,
+        ReviewFlag::Auth,
+        ReviewFlag::PersonalData,
+        ReviewFlag::Infra,
+        ReviewFlag::Dependencies,
+        ReviewFlag::LockfileOnly,
     ];
 
     /// English key, translated by the UI.
@@ -69,11 +73,27 @@ impl ReviewFlag {
         match self {
             ReviewFlag::Migrations => &["migration", "migrations", "migrate", "db", "schema"],
             ReviewFlag::Auth => &[
-                "auth", "oauth", "authn", "authz", "authentication", "authorization", "login", "logout", "session",
-                "sessions", "permission", "permissions", "rbac", "sso", "saml", "jwt",
+                "auth",
+                "oauth",
+                "authn",
+                "authz",
+                "authentication",
+                "authorization",
+                "login",
+                "logout",
+                "session",
+                "sessions",
+                "permission",
+                "permissions",
+                "rbac",
+                "sso",
+                "saml",
+                "jwt",
             ],
             ReviewFlag::PersonalData => &["privacy", "gdpr", "consent", "pii", "personal"],
-            ReviewFlag::Infra => &["docker", "dockerfile", "terraform", "helm", "k8s", "kubernetes", "workflows", "env"],
+            ReviewFlag::Infra => {
+                &["docker", "dockerfile", "terraform", "helm", "k8s", "kubernetes", "workflows", "env"]
+            }
             ReviewFlag::Dependencies | ReviewFlag::LockfileOnly => &[],
         }
     }
@@ -81,13 +101,30 @@ impl ReviewFlag {
 
 /// Manifests, by file name.
 const MANIFESTS: &[&str] = &[
-    "package.json", "go.mod", "gemfile", "requirements.txt", "podfile", "cargo.toml", "pyproject.toml",
-    "package.swift", "build.gradle", "pom.xml",
+    "package.json",
+    "go.mod",
+    "gemfile",
+    "requirements.txt",
+    "podfile",
+    "cargo.toml",
+    "pyproject.toml",
+    "package.swift",
+    "build.gradle",
+    "pom.xml",
 ];
 const TEST_WORDS: &[&str] = &["test", "tests", "spec", "specs", "testing"];
 const LOCKFILES: &[&str] = &[
-    "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "go.sum", "gemfile.lock", "podfile.lock", "cargo.lock",
-    "poetry.lock", "package.resolved", "composer.lock", "flake.lock",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "go.sum",
+    "gemfile.lock",
+    "podfile.lock",
+    "cargo.lock",
+    "poetry.lock",
+    "package.resolved",
+    "composer.lock",
+    "flake.lock",
 ];
 /// Folders and suffixes of files nobody reviews line by line: they don't count in the estimate.
 const GENERATED_FOLDERS: &[&str] =
@@ -203,7 +240,11 @@ pub(crate) fn diff_size(item: &InboxItem) -> Option<u32> {
     let label = &item.badges.iter().find(|b| b.id == "diff")?.label;
     let numbers: Vec<u32> =
         label.split(|c: char| !c.is_numeric()).filter(|s| !s.is_empty()).filter_map(|s| s.parse().ok()).collect();
-    if numbers.is_empty() { None } else { Some(numbers.iter().sum()) }
+    if numbers.is_empty() {
+        None
+    } else {
+        Some(numbers.iter().sum())
+    }
 }
 
 /// A count with the right form: `singular` for one, `plural` otherwise. English rule; French also says "0 élément",
@@ -356,8 +397,11 @@ mod tests {
     #[test]
     fn flags_come_from_paths() {
         let p = prep(&[
-            ("db/migrations/2026_add_avatars.sql", 20), ("src/privacy/consent.ts", 50), ("src/auth/session.ts", 5),
-            (".github/workflows/ci.yml", 3), ("package.json", 1),
+            ("db/migrations/2026_add_avatars.sql", 20),
+            ("src/privacy/consent.ts", 50),
+            ("src/auth/session.ts", 5),
+            (".github/workflows/ci.yml", 3),
+            ("package.json", 1),
         ]);
         use ReviewFlag::*;
         assert_eq!(p.flags, [Migrations, Auth, PersonalData, Infra, Dependencies]);
@@ -406,9 +450,15 @@ mod tests {
         let lockfile_only = prep(&[("package-lock.json", 2_400)]);
         assert!(lockfile_only.estimated_minutes == 2 && lockfile_only.size == ReviewSize::Tiny, "not ~60 min");
         let mixed = prep(&[
-            ("src/api.ts", 40), ("yarn.lock", 900), ("dist/app.min.js", 3_000), ("src/__snapshots__/api.test.ts.snap", 200),
+            ("src/api.ts", 40),
+            ("yarn.lock", 900),
+            ("dist/app.min.js", 3_000),
+            ("src/__snapshots__/api.test.ts.snap", 200),
         ]);
-        assert!(mixed.lines == Some(40) && mixed.file_count == 4, "every file listed, only the reviewable ones counted");
+        assert!(
+            mixed.lines == Some(40) && mixed.file_count == 4,
+            "every file listed, only the reviewable ones counted"
+        );
         assert_eq!(mixed.estimated_minutes, 3);
         assert_eq!(mixed.top_files.iter().map(|f| f.path.as_str()).collect::<Vec<_>>(), ["src/api.ts"]);
     }
@@ -419,7 +469,10 @@ mod tests {
         let lookalikes = prep(&[("src/author/latest.ts", 10), ("src/personality.ts", 10), ("docs/environment.md", 5)]);
         assert!(lookalikes.flags.is_empty() && !lookalikes.tests_touched);
         let real = prep(&[
-            ("Sources/OAuthClient.swift", 10), ("Tests/RetryTests.swift", 10), (".env.example", 1), ("Package.swift", 1),
+            ("Sources/OAuthClient.swift", 10),
+            ("Tests/RetryTests.swift", 10),
+            (".env.example", 1),
+            ("Package.swift", 1),
         ]);
         assert_eq!(real.flags, [ReviewFlag::Auth, ReviewFlag::Infra, ReviewFlag::Dependencies]);
         assert!(real.tests_touched);

@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { api } from './api'
-  import Icon from './Icon.svelte'
-  import TimePicker from './TimePicker.svelte'
-  import { t } from './i18n'
+import { api } from './api'
+import Icon from './Icon.svelte'
+import TimePicker from './TimePicker.svelte'
+import { t } from './i18n'
 
-  let { onclose, shortcut }: { onclose: () => void; shortcut: string } = $props()
-  let title = $state('')
-  let error = $state('')
-  /// The time selected in the picker: Enter in the title saves with it.
-  let date = $state('')
-  let input: HTMLInputElement | undefined = $state()
+let { onclose, shortcut }: { onclose: () => void; shortcut: string } = $props()
+let title = $state('')
+let error = $state('')
+/// The time selected in the picker: Enter in the title saves with it.
+let date = $state('')
+let input: HTMLInputElement | undefined = $state()
 
-  $effect(() => input?.focus())
+$effect(() => input?.focus())
 
-  async function add(date: string) {
-    try {
-      await api.addReminder(title, date)
-      onclose()
-    } catch (e) {
-      error = t(String(e))
-    }
+async function add(date: string) {
+  try {
+    await api.addReminder(title, date)
+    onclose()
+  } catch (e) {
+    error = t(String(e))
   }
+}
 </script>
 
 <div class="screen">

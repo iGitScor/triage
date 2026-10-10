@@ -171,13 +171,17 @@ pub async fn connect(
         let language = crate::i18n::translator().lang();
         let (account, plugin, whole_inbox, items) = {
             let inbox = state.inbox.lock().await;
-            let (account, plugin) = inbox.prepare_assistant_connect(&plugin_id, name, settings, &secrets, state.http.clone(), language)?;
+            let (account, plugin) =
+                inbox.prepare_assistant_connect(&plugin_id, name, settings, &secrets, state.http.clone(), language)?;
             (account, plugin, inbox.preferences.whole_inbox_brief, inbox.brief_items(Utc::now()))
         };
         let brief = if whole_inbox {
             Some(plugin.brief(&items, Utc::now()).await.map_err(|e| e.to_string())?)
         } else {
-            plugin.digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now()).await.map_err(|e| e.to_string())?;
+            plugin
+                .digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now())
+                .await
+                .map_err(|e| e.to_string())?;
             None
         };
         let mut inbox = state.inbox.lock().await;
@@ -189,7 +193,8 @@ pub async fn connect(
         changed(&app).await;
         return Ok(());
     }
-    let (account, plugin) = state.inbox.lock().await.prepare_connect(&plugin_id, name, settings, &secrets, state.http.clone())?;
+    let (account, plugin) =
+        state.inbox.lock().await.prepare_connect(&plugin_id, name, settings, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await.map_err(|e| e.to_string())?;
     state.inbox.lock().await.finish_connect(account, secrets, snapshot, Utc::now())?;
     changed(&app).await;
@@ -198,7 +203,12 @@ pub async fn connect(
 
 /// Reconnect: the same account with a new token, checked with one fetch first.
 #[tauri::command]
-pub async fn reconnect(app: AppHandle, state: State<'_, AppState>, account_id: String, secrets: HashMap<String, String>) -> Result<()> {
+pub async fn reconnect(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    account_id: String,
+    secrets: HashMap<String, String>,
+) -> Result<()> {
     let plugin = state.inbox.lock().await.prepare_reconnect(&account_id, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await.map_err(|e| e.to_string())?;
     state.inbox.lock().await.finish_reconnect(&account_id, secrets, snapshot, Utc::now())?;
@@ -330,7 +340,12 @@ pub async fn snooze_advice(state: State<'_, AppState>, id: String) -> Result<Sno
     let now = Utc::now();
     let returns = SnoozeReason::ALL
         .iter()
-        .map(|reason| (serde_json::to_value(reason).ok().and_then(|v| v.as_str().map(str::to_string)).unwrap_or_default(), inbox.suggested_return(*reason, now)))
+        .map(|reason| {
+            (
+                serde_json::to_value(reason).ok().and_then(|v| v.as_str().map(str::to_string)).unwrap_or_default(),
+                inbox.suggested_return(*reason, now),
+            )
+        })
         .collect();
     let nudge = inbox.item(&id).map(|item| remora_core::SnoozeAdvisor::new().nudge(&item));
     Ok(SnoozeAdvice { returns, usual: inbox.usual_reason(&id), nudge })
@@ -358,7 +373,13 @@ pub async fn align_returns(app: AppHandle, state: State<'_, AppState>, ids: Vec<
 }
 
 #[tauri::command]
-pub async fn snooze_many(app: AppHandle, state: State<'_, AppState>, ids: Vec<String>, until: DateTime<Utc>, reason: Option<SnoozeReason>) -> Result<()> {
+pub async fn snooze_many(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    ids: Vec<String>,
+    until: DateTime<Utc>,
+    reason: Option<SnoozeReason>,
+) -> Result<()> {
     state.inbox.lock().await.snooze_many(&ids, until, reason);
     changed(&app).await;
     Ok(())
@@ -443,7 +464,11 @@ pub async fn triage(app: AppHandle, state: State<'_, AppState>) -> Result<()> {
 
 /// Applies the ticked suggestions; the first "Now" item opens.
 #[tauri::command]
-pub async fn apply_triage(app: AppHandle, state: State<'_, AppState>, selected: Vec<remora_core::TriageSuggestion>) -> Result<()> {
+pub async fn apply_triage(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    selected: Vec<remora_core::TriageSuggestion>,
+) -> Result<()> {
     let first_now = state.inbox.lock().await.apply_triage(&selected, Utc::now());
     if let Some(id) = first_now {
         let _ = open(&app, &id, false).await;

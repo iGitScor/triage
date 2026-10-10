@@ -23,7 +23,8 @@ public enum LinkPolicy {
     /// The hosts an account reaches over http: its own host, when the user entered an `http://` address.
     public static func httpHosts(of account: Account?) -> Set<String> {
         guard let raw = account?.settings["host"]?.trimmingCharacters(in: .whitespaces).lowercased(),
-              raw.hasPrefix("http://"), let host = URL(string: raw)?.host else { return [] }
+            raw.hasPrefix("http://"), let host = URL(string: raw)?.host
+        else { return [] }
         return [host]
     }
 }

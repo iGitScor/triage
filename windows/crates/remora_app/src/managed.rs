@@ -89,8 +89,12 @@ impl Managed {
                 Err(e) if e.kind() == ErrorKind::NotFound => RawValue::Missing,
                 Err(_) => RawValue::Other,
                 Ok(raw) => match raw.vtype {
-                    REG_MULTI_SZ => key.get_value::<Vec<String>, _>(name).map_or(RawValue::Other, RawValue::MultiString),
-                    REG_SZ | REG_EXPAND_SZ => key.get_value::<String, _>(name).map_or(RawValue::Other, RawValue::String),
+                    REG_MULTI_SZ => {
+                        key.get_value::<Vec<String>, _>(name).map_or(RawValue::Other, RawValue::MultiString)
+                    }
+                    REG_SZ | REG_EXPAND_SZ => {
+                        key.get_value::<String, _>(name).map_or(RawValue::Other, RawValue::String)
+                    }
                     REG_DWORD => key.get_value::<u32, _>(name).map_or(RawValue::Other, |n| RawValue::Number(n.into())),
                     REG_QWORD => key.get_value::<u64, _>(name).map_or(RawValue::Other, RawValue::Number),
                     _ => RawValue::Other,
@@ -101,7 +105,11 @@ impl Managed {
 
     /// The machine's value when it has one, else the user's: an administrator's setting always wins.
     pub fn layered(machine: RawValue, user: RawValue) -> RawValue {
-        if machine == RawValue::Missing { user } else { machine }
+        if machine == RawValue::Missing {
+            user
+        } else {
+            machine
+        }
     }
 
     /// No registry outside Windows: nothing is managed.
@@ -166,11 +174,21 @@ mod tests {
 
     #[test]
     fn managed_keys_win_over_the_user() {
-        let user = Preferences { allowed_plugins: Some(vec!["slack".into()]), allow_external_ai: true, ..Preferences::default() };
+        let user = Preferences {
+            allowed_plugins: Some(vec!["slack".into()]),
+            allow_external_ai: true,
+            ..Preferences::default()
+        };
         assert_eq!(Managed::default().policy(&user).allowed_plugins, Some(HashSet::from(["slack".to_string()])));
         assert!(!Managed::default().is_managed());
 
-        let it = Managed { allowed_plugins: Some(vec!["github".into()]), allow_external_ai: Some(false), allow_remote_images: None, automatic_updates: None, unreadable: vec![] };
+        let it = Managed {
+            allowed_plugins: Some(vec!["github".into()]),
+            allow_external_ai: Some(false),
+            allow_remote_images: None,
+            automatic_updates: None,
+            unreadable: vec![],
+        };
         let policy = it.policy(&user);
         assert!(it.is_managed());
         assert_eq!(policy.allowed_plugins, Some(HashSet::from(["github".to_string()])));
@@ -211,7 +229,12 @@ mod tests {
     /// A wrongly typed value used to read as "not set", which allowed everything.
     #[test]
     fn unreadable_values_fail_closed() {
-        let user = Preferences { allowed_plugins: None, allow_external_ai: true, allow_remote_images: true, ..Preferences::default() };
+        let user = Preferences {
+            allowed_plugins: None,
+            allow_external_ai: true,
+            allow_remote_images: true,
+            ..Preferences::default()
+        };
         let it = Managed::from_values(values(&[
             ("AllowedPlugins", RawValue::Number(1)),
             ("AllowExternalAI", RawValue::String("yes please".into())),
@@ -245,7 +268,9 @@ mod tests {
     fn the_organization_decides_updates() {
         let on = Preferences { check_for_updates: true, ..Preferences::default() };
         let none = Managed::default();
-        assert!(none.updates_allowed() && none.checks_for_updates(&on) && !none.checks_for_updates(&Preferences::default()));
+        assert!(
+            none.updates_allowed() && none.checks_for_updates(&on) && !none.checks_for_updates(&Preferences::default())
+        );
 
         let off = Managed::from_values(values(&[("AutomaticUpdates", RawValue::Number(0))]));
         assert!(!off.updates_allowed() && !off.checks_for_updates(&on));

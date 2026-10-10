@@ -16,10 +16,25 @@ pub fn now() -> DateTime<Utc> {
 
 pub fn item(id: &str) -> InboxItem {
     InboxItem {
-        id: id.into(), account_id: "acc".into(), plugin_id: "github".into(), bundle: InboxBundle::reviews(),
-        title: "Fix login".into(), context: "acme/app #9".into(), preview: None, url: None, app_url: None, author: None,
-        participants: vec![], badges: vec![], date: now(), needs_action: true, priority: None, due: None, expires: None,
-        changes: None, suggested_people: None,
+        id: id.into(),
+        account_id: "acc".into(),
+        plugin_id: "github".into(),
+        bundle: InboxBundle::reviews(),
+        title: "Fix login".into(),
+        context: "acme/app #9".into(),
+        preview: None,
+        url: None,
+        app_url: None,
+        author: None,
+        participants: vec![],
+        badges: vec![],
+        date: now(),
+        needs_action: true,
+        priority: None,
+        due: None,
+        expires: None,
+        changes: None,
+        suggested_people: None,
     }
 }
 
@@ -30,8 +45,12 @@ pub fn hostile() -> InboxItem {
 
 pub fn snoozed(item: InboxItem, times: u32) -> SnoozedItem {
     let snooze = Snooze {
-        until: now() + Duration::hours(1), mode: SnoozeMode::Hide, note: None, fingerprint: item.fingerprint(),
-        reason: Some(SnoozeReason::Motivation), until_news: None,
+        until: now() + Duration::hours(1),
+        mode: SnoozeMode::Hide,
+        note: None,
+        fingerprint: item.fingerprint(),
+        reason: Some(SnoozeReason::Motivation),
+        until_news: None,
     };
     SnoozedItem { item, snooze, times }
 }
@@ -39,7 +58,8 @@ pub fn snoozed(item: InboxItem, times: u32) -> SnoozedItem {
 /// A program in a folder of its own. Modes only apply on macOS and Linux.
 pub fn make_program(name: &str, mode: u32, folder_mode: u32) -> PathBuf {
     static COUNT: AtomicUsize = AtomicUsize::new(0);
-    let folder = std::env::temp_dir().join(format!("remora-{}-{}", std::process::id(), COUNT.fetch_add(1, Ordering::SeqCst)));
+    let folder =
+        std::env::temp_dir().join(format!("remora-{}-{}", std::process::id(), COUNT.fetch_add(1, Ordering::SeqCst)));
     write_program(&folder.join(name), mode, folder_mode);
     folder.join(name)
 }
@@ -62,7 +82,8 @@ fn write_program(path: &Path, mode: u32, folder_mode: u32) {
 pub fn fake_claude() -> PathBuf {
     static PATH: OnceLock<PathBuf> = OnceLock::new();
     PATH.get_or_init(|| {
-        let path = std::env::temp_dir().join(format!("remora-fake-claude-{}", std::process::id())).join(PROGRAM_NAMES[0]);
+        let path =
+            std::env::temp_dir().join(format!("remora-fake-claude-{}", std::process::id())).join(PROGRAM_NAMES[0]);
         write_program(&path, 0o755, 0o755);
         path
     })
@@ -94,7 +115,11 @@ impl RecordingRunner {
 
     fn make(output: Result<String, CommandError>, version: &str) -> Arc<Self> {
         Arc::new(RecordingRunner {
-            output, version: version.into(), arguments: Mutex::default(), environment: Mutex::default(), input: Mutex::default(),
+            output,
+            version: version.into(),
+            arguments: Mutex::default(),
+            environment: Mutex::default(),
+            input: Mutex::default(),
         })
     }
 
@@ -113,7 +138,13 @@ impl RecordingRunner {
 
 #[async_trait]
 impl CommandRunner for RecordingRunner {
-    async fn run(&self, _: &Path, arguments: &[String], environment: Option<&HashMap<String, String>>, input: Option<&[u8]>) -> Result<Vec<u8>, CommandError> {
+    async fn run(
+        &self,
+        _: &Path,
+        arguments: &[String],
+        environment: Option<&HashMap<String, String>>,
+        input: Option<&[u8]>,
+    ) -> Result<Vec<u8>, CommandError> {
         if arguments == ["--version"] {
             return Ok(self.version.clone().into_bytes());
         }

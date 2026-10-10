@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import Remora
 
 struct JSONStoreTests {
@@ -18,17 +19,23 @@ struct JSONStoreTests {
         let folder = temporaryFolder()
         let store = JSONStore<[String]>("accounts", in: folder)
         try Data("{half a file".utf8).write(to: store.url)
-        #expect(throws: JSONStore<[String]>.Failure.corrupt(name: "accounts.json", aside: "accounts.json.corrupt")) { try store.read() }
+        #expect(throws: JSONStore<[String]>.Failure.corrupt(name: "accounts.json", aside: "accounts.json.corrupt")) {
+            try store.read()
+        }
         #expect(try Data(contentsOf: folder.appending(path: "accounts.json.corrupt")) == Data("{half a file".utf8))
         #expect(try store.read() == nil, "then nothing saved")
         try Data("again".utf8).write(to: store.url)
-        #expect(throws: JSONStore<[String]>.Failure.corrupt(name: "accounts.json", aside: "accounts.json.corrupt2")) { try store.read() }
+        #expect(throws: JSONStore<[String]>.Failure.corrupt(name: "accounts.json", aside: "accounts.json.corrupt2")) {
+            try store.read()
+        }
     }
 
     /// A write that fails is an error, not silence.
     @Test func aFailedWriteThrows() throws {
         let folder = temporaryFolder().appending(path: "missing/deeper")
-        #expect(throws: JSONStore<[String]>.Failure.self) { try JSONStore<[String]>("accounts", in: folder).save(["a"]) }
+        #expect(throws: JSONStore<[String]>.Failure.self) {
+            try JSONStore<[String]>("accounts", in: folder).save(["a"])
+        }
     }
 
     /// Only you can read the files, and what Remora can fetch again stays out of backups.
@@ -102,7 +109,8 @@ struct ManagedPolicyTests {
 
     @Test func booleansReadAsUserDefaultsDoes() {
         for (value, expected) in [("YES", true), ("true", true), ("1", true), ("no", false), ("0", false)] {
-            let policy = ManagedPolicy.policy(user: Preferences(), managed: ManagedDictionary(values: ["AllowExternalAI": value]))
+            let policy = ManagedPolicy.policy(
+                user: Preferences(), managed: ManagedDictionary(values: ["AllowExternalAI": value]))
             #expect(policy.allowExternalAI == expected, "\(value)")
         }
     }
@@ -114,27 +122,38 @@ struct ManagedPolicyTests {
         preferences.refreshMinutes = 5
         preferences.openInApps = true
         let managed = ManagedDictionary(values: [
-            "HiddenContentSources": ["slack"], "RefreshMinutes": 15, "OpenInApps": false, "ClaudeCodePath": "/opt/claude/bin/claude",
+            "HiddenContentSources": ["slack"], "RefreshMinutes": 15, "OpenInApps": false,
+            "ClaudeCodePath": "/opt/claude/bin/claude",
         ])
         let effective = ManagedPolicy.effective(preferences, managed: managed)
         #expect(effective.hiddenContentPlugins == ["linear", "slack"], "the organization only adds")
         #expect(effective.refreshMinutes == 15 && !effective.openInApps)
         #expect(ManagedPolicy.claudeCodePath(managed) == "/opt/claude/bin/claude")
-        #expect(ManagedPolicy.isForced("RefreshMinutes", managed) && !ManagedPolicy.isForced("RefreshMinutes", ManagedDictionary()))
-        #expect(!ManagedPolicy.isManaged(ManagedDictionary(values: ["RefreshMinutes": 15])), "the Privacy pane stays editable")
+        #expect(
+            ManagedPolicy.isForced("RefreshMinutes", managed)
+                && !ManagedPolicy.isForced("RefreshMinutes", ManagedDictionary()))
+        #expect(
+            !ManagedPolicy.isManaged(ManagedDictionary(values: ["RefreshMinutes": 15])),
+            "the Privacy pane stays editable")
 
-        let odd = ManagedDictionary(values: ["RefreshMinutes": 0, "ClaudeCodePath": "  ", "HiddenContentSources": "slack"])
+        let odd = ManagedDictionary(values: [
+            "RefreshMinutes": 0, "ClaudeCodePath": "  ", "HiddenContentSources": "slack",
+        ])
         let kept = ManagedPolicy.effective(preferences, managed: odd)
         #expect(kept.refreshMinutes == 5, "out of range: ignored")
         #expect(ManagedPolicy.claudeCodePath(odd) == nil)
         #expect(kept.hiddenContentPlugins == ["linear"])
-        #expect(ManagedPolicy.effective(preferences, managed: ManagedDictionary(values: ["RefreshMinutes": "30"])).refreshMinutes == 30)
+        #expect(
+            ManagedPolicy.effective(preferences, managed: ManagedDictionary(values: ["RefreshMinutes": "30"]))
+                .refreshMinutes == 30)
     }
 
     @Test func assistantExclusionsAddUpAndModelsComeFromTheOrganization() {
         var preferences = Preferences()
         preferences.assistantExcludedSources = ["slack"]
-        let managed = ManagedDictionary(values: ["AIExcludedSources": ["reminders"], "AllowedAIModels": ["claude-haiku-5-5"]])
+        let managed = ManagedDictionary(values: [
+            "AIExcludedSources": ["reminders"], "AllowedAIModels": ["claude-haiku-5-5"],
+        ])
         let policy = ManagedPolicy.assistantPolicy(user: preferences, managed: managed)
         #expect(policy.excludedSources == ["slack", "reminders"])
         #expect(policy.allowedModels == ["claude-haiku-5-5"])
@@ -160,16 +179,20 @@ struct KeychainTests {
     /// Earlier versions kept one item per account: it moves into the vault on first read.
     @Test func movesAPerAccountItemIntoTheVault() throws {
         let items = MemoryKeychainItems()
-        try items.write(try JSONEncoder().encode(["token": "old"]), service: "fr.igitscor.perch", account: account.uuidString)
+        try items.write(
+            try JSONEncoder().encode(["token": "old"]), service: "fr.igitscor.perch", account: account.uuidString)
         let keychain = Keychain(items: items)
         #expect(keychain.secrets(for: account) == ["token": "old"])
-        #expect(try items.read(service: "fr.igitscor.perch", account: account.uuidString) == nil, "the old item is gone")
+        #expect(
+            try items.read(service: "fr.igitscor.perch", account: account.uuidString) == nil, "the old item is gone")
         #expect(Keychain(items: items).secrets(for: account) == ["token": "old"])
     }
 
     @Test func movesThePerchVault() throws {
         let items = MemoryKeychainItems()
-        try items.write(try JSONEncoder().encode([account.uuidString: ["token": "perch"]]), service: "fr.igitscor.perch", account: "secrets")
+        try items.write(
+            try JSONEncoder().encode([account.uuidString: ["token": "perch"]]), service: "fr.igitscor.perch",
+            account: "secrets")
         #expect(Keychain(items: items).secrets(for: account) == ["token": "perch"])
         #expect(items.items["fr.igitscor.perch"]?.isEmpty ?? true)
         #expect(try items.read(service: "fr.igitscor.remora", account: "secrets") != nil)

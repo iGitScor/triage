@@ -1,12 +1,14 @@
 import Foundation
 import Testing
+
 @testable import RemoraCore
 
 struct InboxAssemblerTests {
     let assembler = InboxAssembler()
 
     @Test func groupsItemsByBundleRank() {
-        let layout = assembler.layout(items: [makeItem("1", bundle: .authored), makeItem("2", bundle: .reviews)], states: [:], now: now)
+        let layout = assembler.layout(
+            items: [makeItem("1", bundle: .authored), makeItem("2", bundle: .reviews)], states: [:], now: now)
         #expect(layout.groups.map(\.bundle) == [.reviews, .authored])
     }
 
@@ -41,7 +43,9 @@ struct InboxAssemblerTests {
     }
 
     @Test func startedItemsLeaveEveryOtherSection() {
-        let items = [makeItem("1", needsAction: true), makeItem("2", needsAction: true), makeItem("3", needsAction: true)]
+        let items = [
+            makeItem("1", needsAction: true), makeItem("2", needsAction: true), makeItem("3", needsAction: true),
+        ]
         let states = ["1": ItemState(startedAt: now - 60), "3": ItemState(startedAt: now - 600)]
         let layout = assembler.layout(items: items, states: states, now: now)
         #expect(layout.inProgress.map(\.id) == ["3", "1"])
@@ -56,7 +60,8 @@ struct InboxAssemblerTests {
     }
 
     @Test func pinnedItemsGetTheirOwnSection() {
-        let layout = assembler.layout(items: [makeItem("1"), makeItem("2")], states: ["2": ItemState(pinned: true)], now: now)
+        let layout = assembler.layout(
+            items: [makeItem("1"), makeItem("2")], states: ["2": ItemState(pinned: true)], now: now)
         #expect(layout.pinned.map(\.id) == ["2"])
         #expect(layout.groups.flatMap(\.items).map(\.id) == ["1"])
     }
@@ -108,6 +113,8 @@ struct InboxAssemblerTests {
         var question = makeItem("3", bundle: .reply, needsAction: true)
         question.pluginID = "slack"
         let layout = assembler.layout(items: [review, secondReview, question], states: [:], now: now)
-        #expect(layout.countsBySource(actionableOnly: true).map(\.pluginID) == ["slack", "github"], "to reply comes before to review")
+        #expect(
+            layout.countsBySource(actionableOnly: true).map(\.pluginID) == ["slack", "github"],
+            "to reply comes before to review")
     }
 }

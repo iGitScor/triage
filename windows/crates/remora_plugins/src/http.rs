@@ -29,7 +29,13 @@ impl Request {
 
     pub fn post_json(url: impl Into<String>, body: &impl Serialize) -> Result<Self, PluginError> {
         let body = serde_json::to_string(body).map_err(|e| PluginError::Decode(e.to_string()))?;
-        Ok(Request { method: Method::Post, url: url.into(), headers: vec![("Content-Type".into(), "application/json".into())], body: Some(body), timeout: None })
+        Ok(Request {
+            method: Method::Post,
+            url: url.into(),
+            headers: vec![("Content-Type".into(), "application/json".into())],
+            body: Some(body),
+            timeout: None,
+        })
     }
 
     pub fn header(mut self, name: &str, value: impl Into<String>) -> Self {
@@ -49,7 +55,8 @@ impl Request {
 
 /// `base` + `path` + encoded query parameters.
 pub fn url_with_query(base: &str, path: &str, query: &[(&str, &str)]) -> String {
-    let mut url = reqwest::Url::parse(&format!("{}/{}", base.trim_end_matches('/'), path.trim_start_matches('/'))).expect("valid base URL");
+    let mut url = reqwest::Url::parse(&format!("{}/{}", base.trim_end_matches('/'), path.trim_start_matches('/')))
+        .expect("valid base URL");
     if !query.is_empty() {
         url.query_pairs_mut().extend_pairs(query);
     }
@@ -104,7 +111,9 @@ impl fmt::Display for PluginError {
             PluginError::Unauthorized => write!(f, "The token was rejected. Check it and its scopes."),
             PluginError::Status(code) => {
                 let text = match code {
-                    404 => "The server couldn’t find what Remora asked for: check the address and what the token can see.",
+                    404 => {
+                        "The server couldn’t find what Remora asked for: check the address and what the token can see."
+                    }
                     500.. => "The server had a problem: Remora tries again at the next refresh.",
                     _ => "The server refused the request.",
                 };
@@ -117,11 +126,15 @@ impl fmt::Display for PluginError {
             PluginError::Network(message) => write!(f, "Network error: {message}"),
             // Same words as any network failure: the interface already translates them.
             PluginError::TimedOut => PluginError::Network("timed out".into()).fmt(f),
-            PluginError::TooLarge(limit) => write!(f, "The server’s answer is too large: Remora reads at most {} MB.", limit / 1_000_000),
+            PluginError::TooLarge(limit) => {
+                write!(f, "The server’s answer is too large: Remora reads at most {} MB.", limit / 1_000_000)
+            }
             PluginError::Decode(message) => write!(f, "Unexpected answer from the server: {message}"),
             PluginError::MissingField(key) => write!(f, "“{key}” is required."),
             PluginError::InvalidField(key) => write!(f, "“{key}” is not valid."),
-            PluginError::InsecureField(key) => write!(f, "“{key}” must start with https://: the token would travel unencrypted."),
+            PluginError::InsecureField(key) => {
+                write!(f, "“{key}” must start with https://: the token would travel unencrypted.")
+            }
             PluginError::UnknownPlugin(id) => write!(f, "Unknown plugin “{id}”."),
         }
     }
@@ -166,7 +179,12 @@ impl ReqwestClient {
         if !response.status().is_success() {
             return Err(PluginError::Status(response.status().as_u16()));
         }
-        let kind = response.headers().get(reqwest::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or_default().to_string();
+        let kind = response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or_default()
+            .to_string();
         if !kind.starts_with("image/") {
             return Err(PluginError::Decode(format!("not an image ({kind})")));
         }
@@ -199,7 +217,13 @@ impl HttpClient for ReqwestClient {
         if let Some(timeout) = request.timeout {
             builder = builder.timeout(timeout);
         }
-        let response = builder.send().await.map_err(|e| if e.is_timeout() { PluginError::TimedOut } else { PluginError::Network(e.to_string()) })?;
+        let response = builder.send().await.map_err(|e| {
+            if e.is_timeout() {
+                PluginError::TimedOut
+            } else {
+                PluginError::Network(e.to_string())
+            }
+        })?;
         let status = response.status().as_u16();
         let header = |name: &str| response.headers().get(name).and_then(|v| v.to_str().ok()).map(str::to_string);
         if let Some(resume) = rate_limit(status, header, chrono::Utc::now()) {
@@ -207,7 +231,8 @@ impl HttpClient for ReqwestClient {
         }
         if response.status().is_redirection() {
             // Only refused redirects get here (see `redirect_allowed`).
-            let location = response.headers().get(reqwest::header::LOCATION).and_then(|v| v.to_str().ok()).unwrap_or_default();
+            let location =
+                response.headers().get(reqwest::header::LOCATION).and_then(|v| v.to_str().ok()).unwrap_or_default();
             let target = response.url().join(location).ok().and_then(|u| u.host_str().map(str::to_string));
             return Err(PluginError::BlockedRedirect(target.unwrap_or_else(|| "?".into())));
         }
@@ -238,16 +263,30 @@ pub async fn read_capped(mut response: reqwest::Response, limit: usize) -> Resul
 /// A rate limit, and when to come back: `Some(resume)` for a 429, or a 403 with nothing left
 /// (`x-ratelimit-remaining` on GitHub, `RateLimit-Remaining` on GitLab). `resume` comes from `Retry-After` (seconds or
 /// a date), else from the reset time those two give in seconds since 1970.
-pub fn rate_limit(status: u16, header: impl Fn(&str) -> Option<String>, now: chrono::DateTime<chrono::Utc>) -> Option<Option<i64>> {
-    let exhausted = ["x-ratelimit-remaining", "ratelimit-remaining"].iter().any(|name| header(name).is_some_and(|v| v.trim() == "0"));
+pub fn rate_limit(
+    status: u16,
+    header: impl Fn(&str) -> Option<String>,
+    now: chrono::DateTime<chrono::Utc>,
+) -> Option<Option<i64>> {
+    let exhausted = ["x-ratelimit-remaining", "ratelimit-remaining"]
+        .iter()
+        .any(|name| header(name).is_some_and(|v| v.trim() == "0"));
     if status != 429 && !(status == 403 && exhausted) {
         return None;
     }
     let retry_after = header("retry-after").and_then(|value| {
         let value = value.trim().to_string();
-        value.parse::<i64>().ok().map(|seconds| now.timestamp() + seconds).or_else(|| chrono::DateTime::parse_from_rfc2822(&value).ok().map(|d| d.timestamp()))
+        value
+            .parse::<i64>()
+            .ok()
+            .map(|seconds| now.timestamp() + seconds)
+            .or_else(|| chrono::DateTime::parse_from_rfc2822(&value).ok().map(|d| d.timestamp()))
     });
-    let reset = || ["x-ratelimit-reset", "ratelimit-reset"].iter().find_map(|name| header(name).and_then(|v| v.trim().parse::<i64>().ok()));
+    let reset = || {
+        ["x-ratelimit-reset", "ratelimit-reset"]
+            .iter()
+            .find_map(|name| header(name).and_then(|v| v.trim().parse::<i64>().ok()))
+    };
     Some(retry_after.or_else(reset))
 }
 
@@ -255,7 +294,8 @@ pub fn rate_limit(status: u16, header: impl Fn(&str) -> Option<String>, now: chr
 /// GitLab's `PRIVATE-TOKEN` would follow a redirect to another host.
 pub fn redirect_allowed(from: Option<&reqwest::Url>, to: &reqwest::Url) -> bool {
     let Some(from) = from else { return false };
-    let same_host = from.host_str().is_some() && from.host_str().map(str::to_lowercase) == to.host_str().map(str::to_lowercase);
+    let same_host =
+        from.host_str().is_some() && from.host_str().map(str::to_lowercase) == to.host_str().map(str::to_lowercase);
     same_host && (to.scheme() == "https" || (to.scheme() == "http" && from.scheme() == "http"))
 }
 
@@ -300,11 +340,20 @@ mod tests {
 
     #[tokio::test]
     async fn guarded_client_only_reaches_declared_hosts() {
-        let client = GuardedHttpClient::new(Arc::new(StubHttp::paths(&[("/x", "{}")])), vec!["api.linear.app".into(), "gitlab.acme.io".into()]);
+        let client = GuardedHttpClient::new(
+            Arc::new(StubHttp::paths(&[("/x", "{}")])),
+            vec!["api.linear.app".into(), "gitlab.acme.io".into()],
+        );
         assert!(client.send(Request::get("https://api.linear.app/x")).await.is_ok());
         assert!(client.send(Request::get("https://eu.gitlab.acme.io/x")).await.is_ok());
-        assert_eq!(client.send(Request::get("https://evil.example.com/x")).await.err(), Some(PluginError::BlockedHost("evil.example.com".into())));
-        assert_eq!(client.send(Request::get("https://api.linear.app.evil.com/x")).await.err(), Some(PluginError::BlockedHost("api.linear.app.evil.com".into())));
+        assert_eq!(
+            client.send(Request::get("https://evil.example.com/x")).await.err(),
+            Some(PluginError::BlockedHost("evil.example.com".into()))
+        );
+        assert_eq!(
+            client.send(Request::get("https://api.linear.app.evil.com/x")).await.err(),
+            Some(PluginError::BlockedHost("api.linear.app.evil.com".into()))
+        );
     }
 
     /// A local server answering one request with `body`, without announcing its length (read until the connection
@@ -331,20 +380,35 @@ mod tests {
         assert_eq!(client.send(Request::get(&small)).await.unwrap().body.len(), MAX_BODY - 1);
         let huge = serve_once(vec![b'x'; MAX_BODY + 1]).await;
         assert_eq!(client.send(Request::get(&huge)).await.err(), Some(PluginError::TooLarge(MAX_BODY)));
-        assert_eq!(PluginError::TooLarge(MAX_BODY).to_string(), "The server’s answer is too large: Remora reads at most 5 MB.");
+        assert_eq!(
+            PluginError::TooLarge(MAX_BODY).to_string(),
+            "The server’s answer is too large: Remora reads at most 5 MB."
+        );
     }
 
     /// GitHub's 403 with nothing left, GitLab's reset header, Retry-After, and a refused token.
     #[test]
     fn rate_limits_are_recognised_with_their_reset_time() {
         let now: chrono::DateTime<chrono::Utc> = "2027-01-15T08:00:00Z".parse().unwrap();
-        let headers = |pairs: &'static [(&'static str, &'static str)]| move |name: &str| pairs.iter().find(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.to_string());
-        assert_eq!(rate_limit(403, headers(&[("X-RateLimit-Remaining", "0"), ("X-RateLimit-Reset", "1800000600")]), now), Some(Some(1_800_000_600)));
+        let headers = |pairs: &'static [(&'static str, &'static str)]| {
+            move |name: &str| pairs.iter().find(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.to_string())
+        };
+        assert_eq!(
+            rate_limit(403, headers(&[("X-RateLimit-Remaining", "0"), ("X-RateLimit-Reset", "1800000600")]), now),
+            Some(Some(1_800_000_600))
+        );
         assert_eq!(rate_limit(429, headers(&[("RateLimit-Reset", "1800000900")]), now), Some(Some(1_800_000_900)));
         assert_eq!(rate_limit(429, headers(&[("Retry-After", "120")]), now), Some(Some(now.timestamp() + 120)));
-        assert_eq!(rate_limit(429, headers(&[("Retry-After", "Fri, 15 Jan 2027 08:05:00 GMT")]), now), Some(Some(now.timestamp() + 300)));
+        assert_eq!(
+            rate_limit(429, headers(&[("Retry-After", "Fri, 15 Jan 2027 08:05:00 GMT")]), now),
+            Some(Some(now.timestamp() + 300))
+        );
         assert_eq!(rate_limit(429, headers(&[]), now), Some(None));
-        assert_eq!(rate_limit(403, headers(&[("X-RateLimit-Remaining", "12")]), now), None, "a refused token, not a rate limit");
+        assert_eq!(
+            rate_limit(403, headers(&[("X-RateLimit-Remaining", "12")]), now),
+            None,
+            "a refused token, not a rate limit"
+        );
         assert_eq!(rate_limit(200, headers(&[]), now), None);
     }
 

@@ -1,31 +1,31 @@
 <script lang="ts">
-  // Claude's take on what to handle first, as on macOS: written when the card opens if there is none,
-  // again on request once the last one is no longer fresh.
-  import { onMount } from 'svelte'
-  import { api, type AssistantView, type Item } from './api'
-  import { t, translateMessage } from './i18n'
-  import { ago } from './time'
+// Claude's take on what to handle first, as on macOS: written when the card opens if there is none,
+// again on request once the last one is no longer fresh.
+import { onMount } from 'svelte'
+import { api, type AssistantView, type Item } from './api'
+import { t, translateMessage } from './i18n'
+import { ago } from './time'
 
-  let { assistant, items }: { assistant: AssistantView; items: Item[] } = $props()
-  let busy = $state(false)
-  let error = $state('')
+let { assistant, items }: { assistant: AssistantView; items: Item[] } = $props()
+let busy = $state(false)
+let error = $state('')
 
-  async function write(force: boolean) {
-    busy = true
-    error = ''
-    try {
-      await api.makeBrief(force)
-    } catch (e) {
-      error = translateMessage(e instanceof Error ? e.message : String(e))
-    } finally {
-      busy = false
-    }
+async function write(force: boolean) {
+  busy = true
+  error = ''
+  try {
+    await api.makeBrief(force)
+  } catch (e) {
+    error = translateMessage(e instanceof Error ? e.message : String(e))
+  } finally {
+    busy = false
   }
+}
 
-  onMount(() => {
-    if (!assistant.brief) write(false)
-  })
-  const byId = $derived(new Map(items.map((i) => [i.id, i])))
+onMount(() => {
+  if (!assistant.brief) write(false)
+})
+const byId = $derived(new Map(items.map((i) => [i.id, i])))
 </script>
 
 <section class="brief" aria-label={t('Your brief')}>

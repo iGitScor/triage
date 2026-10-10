@@ -58,11 +58,12 @@ struct PeopleStack: View {
     }
 
     @ViewBuilder private func mark(for person: Person) -> some View {
-        let symbol: String? = switch person.tone {
-        case .accent?, .positive?: "checkmark"
-        case .negative?: "xmark"
-        default: nil
-        }
+        let symbol: String? =
+            switch person.tone {
+            case .accent?, .positive?: "checkmark"
+            case .negative?: "xmark"
+            default: nil
+            }
         if let symbol {
             Image(systemName: symbol)
                 .font(.system(size: 5.5, weight: .black))

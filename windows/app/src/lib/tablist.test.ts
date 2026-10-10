@@ -12,12 +12,13 @@ function tabs() {
     </nav>`
   const node = document.querySelector<HTMLElement>('[role="tablist"]')!
   const clicked: string[] = []
-  node.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => clicked.push(b.id)))
+  for (const b of node.querySelectorAll('button')) b.addEventListener('click', () => clicked.push(b.id))
   tablist(node)
   return clicked
 }
 
-const press = (key: string) => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+const press = (key: string) =>
+  document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 
 describe('tablist', () => {
   afterEach(() => (document.body.innerHTML = ''))

@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import Remora
 
 /// The layout is computed once per change, and the clock moves it only when that changes something.
@@ -9,12 +10,21 @@ struct LayoutCacheTests {
     @Test func timeMovesTheLayoutOnlyAtBoundaries() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
-        let morning = Date(timeIntervalSince1970: 1_791_615_600) // 2026-10-10 09:00, Paris
-        var event = InboxItem(id: "e", accountID: UUID(), pluginID: "slack", bundle: .reminders, title: "Standup", context: "Slack", date: morning)
+        let morning = Date(timeIntervalSince1970: 1_791_615_600)  // 2026-10-10 09:00, Paris
+        var event = InboxItem(
+            id: "e", accountID: UUID(), pluginID: "slack", bundle: .reminders, title: "Standup", context: "Slack",
+            date: morning)
         event.expires = morning.addingTimeInterval(3_600)
-        #expect(!InboxModel.layoutTimeChanged(from: morning, to: morning.addingTimeInterval(600), items: [event], calendar: calendar))
-        #expect(InboxModel.layoutTimeChanged(from: morning, to: morning.addingTimeInterval(3_700), items: [event], calendar: calendar), "the event started")
-        #expect(InboxModel.layoutTimeChanged(from: morning, to: morning.addingTimeInterval(86_400), items: [], calendar: calendar), "a new day")
+        #expect(
+            !InboxModel.layoutTimeChanged(
+                from: morning, to: morning.addingTimeInterval(600), items: [event], calendar: calendar))
+        #expect(
+            InboxModel.layoutTimeChanged(
+                from: morning, to: morning.addingTimeInterval(3_700), items: [event], calendar: calendar),
+            "the event started")
+        #expect(
+            InboxModel.layoutTimeChanged(
+                from: morning, to: morning.addingTimeInterval(86_400), items: [], calendar: calendar), "a new day")
     }
 
     @Test func aQuietTickLeavesTheLayoutAlone() async throws {
@@ -83,15 +93,15 @@ struct PolicyEnforcementTests {
     }
 }
 
-
 /// A review started then done records how long it really took.
 @MainActor
 struct ReviewTimingTests {
     @Test func aTimedReviewIsRemembered() async throws {
         let harness = Harness()
         let model = try await harness.connected()
-        var review = InboxItem(id: "r", accountID: try #require(model.accounts.first).id, pluginID: "github", bundle: .reviews,
-                               title: "Retry", context: "acme/app #1", date: .now)
+        var review = InboxItem(
+            id: "r", accountID: try #require(model.accounts.first).id, pluginID: "github", bundle: .reviews,
+            title: "Retry", context: "acme/app #1", date: .now)
         review.changes = ChangeSet(files: [ChangedFile(path: "src/retry.ts", additions: 40, deletions: 0)])
         model.start(review)
         model.toggleDone(review)
@@ -114,7 +124,6 @@ struct MenuTitleTests {
     }
 }
 
-
 /// A reminder's context is stored in English and translated when shown.
 @MainActor
 struct ShownContextTests {
@@ -125,7 +134,9 @@ struct ShownContextTests {
         let reminder = try #require(model.reminders.first)
         #expect(reminder.context == "Reminder", "stored as written, whatever the language")
         #expect(reminder.shownContext == L("Reminder"))
-        let github = InboxItem(id: "g", accountID: UUID(), pluginID: "github", bundle: .reviews, title: "x", context: "Reminder", date: .now)
+        let github = InboxItem(
+            id: "g", accountID: UUID(), pluginID: "github", bundle: .reviews, title: "x", context: "Reminder",
+            date: .now)
         #expect(github.shownContext == "Reminder", "only a reminder's is translated: a repo may be called that")
     }
 }
@@ -196,6 +207,8 @@ struct CorruptStorageTests {
         #expect(model.accounts.isEmpty)
         #expect(model.storageIssues.map(\.file) == ["accounts.json"])
         #expect(model.storageIssues.first?.message.contains("accounts.json.corrupt") == true)
-        #expect(FileManager.default.fileExists(atPath: harness.folder.appending(path: "accounts.json.corrupt").path), "kept, for support or by hand")
+        #expect(
+            FileManager.default.fileExists(atPath: harness.folder.appending(path: "accounts.json.corrupt").path),
+            "kept, for support or by hand")
     }
 }

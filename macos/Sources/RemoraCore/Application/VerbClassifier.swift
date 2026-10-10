@@ -123,7 +123,8 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
 
     /// Any of the keywords as whole words: not preceded or followed by a letter or a digit. One pattern, compiled once.
     static func wordPattern(_ keywords: [String]) -> NSRegularExpression {
-        let alternatives = keywords.sorted { $0.count > $1.count }.map(NSRegularExpression.escapedPattern(for:)).joined(separator: "|")
+        let alternatives = keywords.sorted { $0.count > $1.count }.map(NSRegularExpression.escapedPattern(for:)).joined(
+            separator: "|")
         return try! NSRegularExpression(pattern: "(^|[^\\p{L}\\p{N}])(\(alternatives))($|[^\\p{L}\\p{N}])")
     }
 

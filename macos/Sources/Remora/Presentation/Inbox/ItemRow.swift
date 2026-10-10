@@ -52,7 +52,8 @@ struct ItemRow: View {
         .background(background, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
         .overlay {
             if selected {
-                RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous).strokeBorder(Myna.selection, lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous).strokeBorder(
+                    Myna.selection, lineWidth: 1.5)
             }
         }
         .overlay(alignment: .topTrailing) { if showsActions { actions } }
@@ -102,9 +103,14 @@ struct ItemRow: View {
 
     /// What VoiceOver reads: where, what, who, when, then the item's status and badges.
     private var accessibilityText: String {
-        var parts = [model.accountLabel(for: item), item.shownContext, item.title, item.preview, item.author?.name, item.date.shortRelative]
+        var parts = [
+            model.accountLabel(for: item), item.shownContext, item.title, item.preview, item.author?.name,
+            item.date.shortRelative,
+        ]
         if state.pinned { parts.append(L("Pinned")) }
-        if let startedAt = state.startedAt { parts.append(L("Started %@", startedAt.formatted(.relative(presentation: .named)))) }
+        if let startedAt = state.startedAt {
+            parts.append(L("Started %@", startedAt.formatted(.relative(presentation: .named))))
+        }
         if state.remindedAt != nil { parts.append(L("Reminder")) }
         if let snooze = state.snooze {
             parts.append(L("Snoozed until %@", snooze.until.formatted(.dateTime.weekday(.wide).hour().minute())))
@@ -125,7 +131,9 @@ struct ItemRow: View {
     }
 
     private var snoozeSwipe: SwipeAction {
-        SwipeAction(label: "Snooze", symbol: "moon.zzz", tint: Myna.dark, foreground: Myna.onDark, dismisses: false, perform: onSnooze)
+        SwipeAction(
+            label: "Snooze", symbol: "moon.zzz", tint: Myna.dark, foreground: Myna.onDark, dismisses: false,
+            perform: onSnooze)
     }
 
     @ViewBuilder private var leading: some View {
@@ -156,9 +164,12 @@ struct ItemRow: View {
                 .lineLimit(1)
             Spacer(minLength: 4)
             if let snooze = state.snooze {
-                Label(snooze.until.formatted(.dateTime.weekday(.abbreviated).hour().minute()), systemImage: snooze.mode == .hide ? "moon.zzz" : "bell")
-                    .font(Myna.font(10.5, .medium))
-                    .foregroundStyle(Myna.accentText)
+                Label(
+                    snooze.until.formatted(.dateTime.weekday(.abbreviated).hour().minute()),
+                    systemImage: snooze.mode == .hide ? "moon.zzz" : "bell"
+                )
+                .font(Myna.font(10.5, .medium))
+                .foregroundStyle(Myna.accentText)
             } else if !showsActions {
                 if let reason = model.rankingReason(item) {
                     Image(systemName: "star.fill")
@@ -178,13 +189,16 @@ struct ItemRow: View {
         let reason = state.snooze?.reason
         let linked = model.linkedItems(item)
         let times = state.snooze == nil ? 0 : model.snoozeCount(item)
-        if !badges.isEmpty || !item.participants.isEmpty || state.remindedAt != nil || state.startedAt != nil || state.pinned || reason != nil || times >= 2 || !linked.isEmpty {
+        if !badges.isEmpty || !item.participants.isEmpty || state.remindedAt != nil || state.startedAt != nil
+            || state.pinned || reason != nil || times >= 2 || !linked.isEmpty
+        {
             HStack(spacing: 4) {
                 if let startedAt = state.startedAt {
-                    BadgeChip(badge: Badge(
-                        id: "started", label: L("Started %@", startedAt.formatted(.relative(presentation: .named))),
-                        symbol: "play.fill", tone: .accent
-                    ))
+                    BadgeChip(
+                        badge: Badge(
+                            id: "started", label: L("Started %@", startedAt.formatted(.relative(presentation: .named))),
+                            symbol: "play.fill", tone: .accent
+                        ))
                 }
                 if state.remindedAt != nil {
                     BadgeChip(badge: Badge(id: "reminder", label: L("Reminder"), symbol: "bell.fill", tone: .accent))
@@ -193,15 +207,21 @@ struct ItemRow: View {
                     BadgeChip(badge: Badge(id: "reason", label: reason.title, symbol: reason.symbol, tone: .neutral))
                 }
                 if times >= 2 {
-                    BadgeChip(badge: Badge(id: "times", label: L("Snoozed %d×", times), symbol: "arrow.triangle.2.circlepath", tone: .warning))
+                    BadgeChip(
+                        badge: Badge(
+                            id: "times", label: L("Snoozed %d×", times), symbol: "arrow.triangle.2.circlepath",
+                            tone: .warning))
                 }
                 ForEach(badges) { BadgeChip(badge: $0) }
                 ForEach(linked) { other in
-                    Button { model.open(other) } label: {
-                        BadgeChip(badge: Badge(
-                            id: "link", label: other.shownContext,
-                            symbol: PluginRegistry.manifest(other.pluginID)?.symbol ?? "link", tone: .accent
-                        ))
+                    Button {
+                        model.open(other)
+                    } label: {
+                        BadgeChip(
+                            badge: Badge(
+                                id: "link", label: other.shownContext,
+                                symbol: PluginRegistry.manifest(other.pluginID)?.symbol ?? "link", tone: .accent
+                            ))
                     }
                     .buttonStyle(.plain)
                     .help(L("Linked: %@", other.title))
@@ -241,9 +261,9 @@ struct ItemRow: View {
     @ViewBuilder private var menu: some View {
         if let url = item.url {
             Button("Open") { model.open(item) }
-        if item.appURL != nil {
-            Button("Open in browser") { model.open(item, inBrowser: true) }
-        }
+            if item.appURL != nil {
+                Button("Open in browser") { model.open(item, inBrowser: true) }
+            }
             Button("Copy link") {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(url.absoluteString, forType: .string)
@@ -263,7 +283,8 @@ struct ItemRow: View {
     }
 
     private var background: Color {
-        if state.remindedAt != nil || state.startedAt != nil || (item.hasBadge("approved") && item.bundle == .authored) {
+        if state.remindedAt != nil || state.startedAt != nil || (item.hasBadge("approved") && item.bundle == .authored)
+        {
             return showsActions ? Myna.accentSoft.opacity(1.4) : Myna.accentSoft
         }
         return showsActions ? Myna.card2 : Myna.card

@@ -91,14 +91,17 @@ public struct SnoozeAdvisor: Sendable {
         case .focus, .motivation:
             return next(hour: bestHour(history: history), after: now)
         case .notUrgent:
-            let monday = calendar.nextDate(after: now, matching: DateComponents(weekday: 2), matchingPolicy: .nextTime) ?? now
+            let monday =
+                calendar.nextDate(after: now, matching: DateComponents(weekday: 2), matchingPolicy: .nextTime) ?? now
             return morning(daysAfter: 0, of: monday, hour: 9)
         }
     }
 
     /// The hour you most often finish things, learned from done snoozes (9:00 until there's enough data).
     public func bestHour(history: [SnoozeRecord]) -> Int {
-        let hours = history.compactMap(\.doneAt).map { calendar.component(.hour, from: $0) }.filter { (7...20).contains($0) }
+        let hours = history.compactMap(\.doneAt).map { calendar.component(.hour, from: $0) }.filter {
+            (7...20).contains($0)
+        }
         guard hours.count >= 5 else { return 9 }
         let counts = Dictionary(grouping: hours, by: { $0 }).mapValues(\.count)
         return counts.max { ($0.value, -$0.key) < ($1.value, -$1.key) }?.key ?? 9
@@ -112,7 +115,8 @@ public struct SnoozeAdvisor: Sendable {
         let durations = similar.map { $0.until.timeIntervalSince($0.at) }.sorted()
         let median = durations[durations.count / 2]
         let date = now.addingTimeInterval(median)
-        return median >= 12 * 3_600 ? workday(morning(daysAfter: 0, of: date, hour: 9), from: now) : clock.roundedUp(date)
+        return median >= 12 * 3_600
+            ? workday(morning(daysAfter: 0, of: date, hour: 9), from: now) : clock.roundedUp(date)
     }
 
     /// A small, guilt-free way in when you're not feeling it.
@@ -126,7 +130,8 @@ public struct SnoozeAdvisor: Sendable {
 
     /// Reschedules items 30 minutes apart, starting at `start`.
     public func spread(_ items: [InboxItem], from start: Date, step: TimeInterval = 30 * 60) -> [String: Date] {
-        Dictionary(uniqueKeysWithValues: items.enumerated().map { ($1.id, start.addingTimeInterval(Double($0) * step)) })
+        Dictionary(
+            uniqueKeysWithValues: items.enumerated().map { ($1.id, start.addingTimeInterval(Double($0) * step)) })
     }
 
     // MARK: Patterns
@@ -140,7 +145,8 @@ public struct SnoozeAdvisor: Sendable {
         let recent = history.filter { $0.at > now.addingTimeInterval(-30 * 86_400) }
         var insights: [SnoozeInsight] = []
 
-        let loops = snoozed
+        let loops =
+            snoozed
             .map { item in (item, recent.filter { $0.itemID == item.id }.count) }
             .filter { $0.1 >= 3 }
             .sorted { $0.1 > $1.1 }
@@ -159,7 +165,8 @@ public struct SnoozeAdvisor: Sendable {
         }
         if let pile = byHour.compactMap({ key, items in key.map { ($0, items) } })
             .filter({ $0.1.count >= 4 })
-            .min(by: { $0.0 < $1.0 }) {
+            .min(by: { $0.0 < $1.0 })
+        {
             insights.append(.pileUp(at: pile.0, items: pile.1.sorted { $0.date > $1.date }))
         }
 
@@ -218,9 +225,11 @@ public struct KeywordSimilarity: SimilarityModel {
     public init() {}
 
     public func similar(_ a: String, _ b: String) -> Bool {
-        let keysA = Self.ticketKeys(a), keysB = Self.ticketKeys(b)
+        let keysA = Self.ticketKeys(a)
+        let keysB = Self.ticketKeys(b)
         if !keysA.isDisjoint(with: keysB) { return true }
-        let wordsA = Self.words(a), wordsB = Self.words(b)
+        let wordsA = Self.words(a)
+        let wordsB = Self.words(b)
         let shared = wordsA.intersection(wordsB).count
         let union = wordsA.union(wordsB).count
         return shared >= 2 && Double(shared) / Double(max(union, 1)) >= 0.4
@@ -232,10 +241,11 @@ public struct KeywordSimilarity: SimilarityModel {
     }
 
     static func words(_ text: String) -> Set<String> {
-        Set(text.lowercased()
-            .split { !$0.isLetter && !$0.isNumber }
-            .map(String.init)
-            .filter { $0.count >= 4 && !stopWords.contains($0) })
+        Set(
+            text.lowercased()
+                .split { !$0.isLetter && !$0.isNumber }
+                .map(String.init)
+                .filter { $0.count >= 4 && !stopWords.contains($0) })
     }
 }
 
@@ -244,7 +254,8 @@ extension String {
     public var contextKey: String {
         var parts = split(separator: " ")
         if let last = parts.last, last.count > 1, let first = last.first, "#!".contains(first),
-           last.dropFirst().allSatisfy(\.isNumber) {
+            last.dropFirst().allSatisfy(\.isNumber)
+        {
             parts.removeLast()
         }
         return parts.isEmpty ? self : parts.joined(separator: " ")

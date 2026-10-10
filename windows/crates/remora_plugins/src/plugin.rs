@@ -17,7 +17,11 @@ impl PluginConfig {
 
     pub fn required(&self, key: &str) -> Result<String, PluginError> {
         let value = self.get(key);
-        if value.is_empty() { Err(PluginError::MissingField(key.into())) } else { Ok(value) }
+        if value.is_empty() {
+            Err(PluginError::MissingField(key.into()))
+        } else {
+            Ok(value)
+        }
     }
 
     /// "gitlab.acme.io/" → "https://gitlab.acme.io". Tokens travel with every request, so only https is accepted

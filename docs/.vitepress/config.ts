@@ -189,11 +189,20 @@ export default withMermaid(
             { text: 'Guide', link: '/guide/getting-started', activeMatch: '/guide/' },
             { text: 'IT and compliance', link: '/admin/', activeMatch: '/admin/' },
             { text: 'Developers', link: '/develop/', activeMatch: '/develop/' },
-            { text: 'Download', items: [{ text: 'Mac (macOS 14+)', link: DMG }, { text: 'Windows 10 or 11 (preview)', link: EXE }] },
+            {
+              text: 'Download',
+              items: [
+                { text: 'Mac (macOS 14+)', link: DMG },
+                { text: 'Windows 10 or 11 (preview)', link: EXE },
+              ],
+            },
           ],
           sidebar: { '/guide/': guideEn, '/admin/': adminEn, '/develop/': develop },
           editLink: { pattern: `${REPO}/edit/main/docs/:path`, text: 'Edit this page' },
-          footer: { message: 'Released under the GPL-3.0-or-later license.', copyright: `<a href="${SITE}/en/">Remora</a>` },
+          footer: {
+            message: 'Released under the GPL-3.0-or-later license.',
+            copyright: `<a href="${SITE}/en/">Remora</a>`,
+          },
         },
       },
       fr: {
@@ -206,7 +215,13 @@ export default withMermaid(
             { text: 'Guide', link: '/fr/guide/premiers-pas', activeMatch: '/fr/guide/' },
             { text: 'DSI et conformité', link: '/fr/admin/', activeMatch: '/fr/admin/' },
             { text: 'Développeurs', link: '/fr/developper/', activeMatch: '/fr/developper/' },
-            { text: 'Télécharger', items: [{ text: 'Mac (macOS 14+)', link: DMG }, { text: 'Windows 10 ou 11 (aperçu)', link: EXE }] },
+            {
+              text: 'Télécharger',
+              items: [
+                { text: 'Mac (macOS 14+)', link: DMG },
+                { text: 'Windows 10 ou 11 (aperçu)', link: EXE },
+              ],
+            },
           ],
           sidebar: { '/fr/guide/': guideFr, '/fr/admin/': adminFr, '/fr/developper/': developFr },
           editLink: { pattern: `${REPO}/edit/main/docs/:path`, text: 'Modifier cette page' },

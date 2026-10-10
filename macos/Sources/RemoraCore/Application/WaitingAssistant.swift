@@ -33,11 +33,14 @@ public struct WaitingAssistant: Sendable {
     public func reviewers(for item: InboxItem, among items: [InboxItem], me: String?, limit: Int = 3) -> [Person] {
         let excluded = Set([me, item.author?.name].compactMap { $0?.lowercased() })
         let place = item.context.contextKey
-        let local = items
+        let local =
+            items
             .filter { $0.id != item.id && $0.context.contextKey == place }
             .flatMap { $0.participants }
         let frequency = Dictionary(grouping: local, by: \.name).mapValues(\.count)
-        let ranked = frequency.sorted { ($0.value, $1.key) > ($1.value, $0.key) }.compactMap { name, _ in local.first { $0.name == name } }
+        let ranked = frequency.sorted { ($0.value, $1.key) > ($1.value, $0.key) }.compactMap { name, _ in
+            local.first { $0.name == name }
+        }
         var seen = Set<String>()
         return ((item.suggestedPeople ?? []) + ranked)
             .filter { !excluded.contains($0.name.lowercased()) && seen.insert($0.name.lowercased()).inserted }
@@ -57,7 +60,9 @@ public struct WaitingAssistant: Sendable {
         case .nudge(let people, let days):
             let names = people.map { "@" + $0.name }.joined(separator: " ")
             let waited = L("%d day", plural: "%d days", days)
-            return L("Hi %@, a gentle ping on “%@”: it has been waiting for a review for %@. %@\n%@\nThanks!", names, item.title, waited, facts, link)
+            return L(
+                "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %@. %@\n%@\nThanks!", names,
+                item.title, waited, facts, link)
         }
     }
 
@@ -66,7 +71,8 @@ public struct WaitingAssistant: Sendable {
         let small = (item.diffSize ?? .max) < 150
         let green = item.hasBadge("checks.passing")
         switch (small, green) {
-        case (true, true): return L("It’s small (%@) and checks are green.", item.badges.first { $0.id == "diff" }?.label ?? "")
+        case (true, true):
+            return L("It’s small (%@) and checks are green.", item.badges.first { $0.id == "diff" }?.label ?? "")
         case (true, false): return L("It’s small (%@).", item.badges.first { $0.id == "diff" }?.label ?? "")
         case (false, true): return L("Checks are green.")
         case (false, false): return ""

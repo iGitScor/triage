@@ -24,7 +24,13 @@ const templates = Object.keys(dictionary)
   .sort((a, b) => b.replace(PLACEHOLDER, '').length - a.replace(PLACEHOLDER, '').length)
   .map((key) => ({
     key,
-    pattern: new RegExp(`^${key.split(PLACEHOLDER).map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(.+?)')}$`, 's'),
+    pattern: new RegExp(
+      `^${key
+        .split(PLACEHOLDER)
+        .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('(.+?)')}$`,
+      's',
+    ),
   }))
 
 /**

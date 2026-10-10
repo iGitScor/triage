@@ -31,7 +31,8 @@ public struct PersonalRanker: Sendable {
     public private(set) var isTrained = false
 
     public init(records: [ActionRecord]) {
-        isTrained = records.count >= Self.minimumRecords
+        isTrained =
+            records.count >= Self.minimumRecords
             && Set(records.map(\.outcome)).count == 2
         for record in records {
             totals[record.outcome, default: 0] += 1
@@ -97,7 +98,9 @@ extension SnoozeAdvisor {
         let reasons = history.filter { $0.context == item.context.contextKey }.compactMap(\.reason)
         guard reasons.count >= 3 else { return nil }
         let counts = Dictionary(grouping: reasons, by: { $0 }).mapValues(\.count)
-        guard let (reason, count) = counts.max(by: { $0.value < $1.value }), Double(count) / Double(reasons.count) >= 0.6 else {
+        guard let (reason, count) = counts.max(by: { $0.value < $1.value }),
+            Double(count) / Double(reasons.count) >= 0.6
+        else {
             return nil
         }
         return reason

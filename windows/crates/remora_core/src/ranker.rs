@@ -115,8 +115,11 @@ impl PersonalRanker {
     }
 
     fn features(item: &InboxItem) -> Vec<String> {
-        let mut features =
-            vec![format!("tool:{}", item.plugin_id), format!("verb:{}", item.bundle.id), format!("place:{}", context_key(&item.context))];
+        let mut features = vec![
+            format!("tool:{}", item.plugin_id),
+            format!("verb:{}", item.bundle.id),
+            format!("place:{}", context_key(&item.context)),
+        ];
         if let Some(author) = &item.author {
             features.push(format!("from:{}", author.name));
         }
@@ -188,7 +191,10 @@ mod tests {
         let ranker = PersonalRanker::new(&records());
         assert!(ranker.is_trained());
         assert!(ranker.score(&review("x", "erin")) > ranker.score(&review("y", "frank")));
-        assert_eq!(ranker.reason(&review("x", "erin"), &english).as_deref(), Some("You usually handle items from erin quickly."));
+        assert_eq!(
+            ranker.reason(&review("x", "erin"), &english).as_deref(),
+            Some("You usually handle items from erin quickly.")
+        );
         assert_eq!(ranker.reason(&review("y", "frank"), &english), None);
     }
 
@@ -203,7 +209,8 @@ mod tests {
 
     #[test]
     fn reasons_are_translated_and_tools_capitalized() {
-        let french = |key: &str| if key == "You usually handle %@ items quickly." { "Vite : %@".into() } else { key.into() };
+        let french =
+            |key: &str| if key == "You usually handle %@ items quickly." { "Vite : %@".into() } else { key.into() };
         assert_eq!(describe("tool:github", &french), "Vite : Github");
         assert_eq!(describe("badge:approved", &english), "You usually handle items like this quickly.");
     }
@@ -235,11 +242,15 @@ mod tests {
         let mut target = review("x", "erin");
         target.context = "acme/app #9".into();
         let history = |reasons: &[crate::SnoozeReason]| -> Vec<crate::SnoozeRecord> {
-            reasons.iter().map(|r| crate::SnoozeRecord::new(&review("h", "erin"), Some(*r), now(), now() + chrono::Duration::hours(1))).collect()
+            reasons
+                .iter()
+                .map(|r| {
+                    crate::SnoozeRecord::new(&review("h", "erin"), Some(*r), now(), now() + chrono::Duration::hours(1))
+                })
+                .collect()
         };
         use crate::SnoozeReason::*;
         assert_eq!(advisor.usual_reason(&target, &history(&[Waiting, Waiting, Waiting, NoTime])), Some(Waiting));
         assert_eq!(advisor.usual_reason(&target, &history(&[Waiting, NoTime, Focus])), None);
     }
-
 }

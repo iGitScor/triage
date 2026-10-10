@@ -46,7 +46,9 @@ impl CodeReview {
         }
         match self.checks {
             Checks::Passing => badges.push(Badge::new("checks.passing", "Checks", Tone::Positive)),
-            Checks::Failing => badges.push(notify(Badge::new("checks.failing", "Checks failed", Tone::Negative), "Checks failed")),
+            Checks::Failing => {
+                badges.push(notify(Badge::new("checks.failing", "Checks failed", Tone::Negative), "Checks failed"))
+            }
             Checks::Running => badges.push(Badge::new("checks.running", "Running", Tone::Warning)),
             Checks::None => {}
         }

@@ -4,7 +4,11 @@ import SwiftUI
 
 struct InboxView: View {
     enum Tab: String, CaseIterable {
-        case inProgress = "In progress", myTurn = "My turn", waiting = "Waiting", snoozed = "Snoozed", done = "Done"
+        case inProgress = "In progress"
+        case myTurn = "My turn"
+        case waiting = "Waiting"
+        case snoozed = "Snoozed"
+        case done = "Done"
 
         var title: String { L(self == .done ? "Done items" : rawValue) }
     }
@@ -21,7 +25,8 @@ struct InboxView: View {
     /// `--demo --tab snoozed` opens on that tab, for screenshots.
     private static var launchTab: Tab {
         let arguments = CommandLine.arguments
-        guard arguments.contains("--demo"), let index = arguments.firstIndex(of: "--tab"), index + 1 < arguments.count else { return .myTurn }
+        guard arguments.contains("--demo"), let index = arguments.firstIndex(of: "--tab"), index + 1 < arguments.count
+        else { return .myTurn }
         return Tab.allCases.first { "\($0)".lowercased() == arguments[index + 1].lowercased() } ?? .myTurn
     }
     @State private var picker: TimePickerSubject?
@@ -49,18 +54,25 @@ struct InboxView: View {
                 TabSwitch(
                     tab: $tab,
                     tabs: layout.inProgress.isEmpty ? [.myTurn, .waiting] : [.inProgress, .myTurn, .waiting],
-                    counts: [.inProgress: layout.inProgress.count, .myTurn: layout.actionCount, .waiting: layout.waitingItems.count]
+                    counts: [
+                        .inProgress: layout.inProgress.count, .myTurn: layout.actionCount,
+                        .waiting: layout.waitingItems.count,
+                    ]
                 )
-                ArchiveButton(tab: .snoozed, symbol: "moon.zzz", count: layout.snoozed.count, compact: !layout.inProgress.isEmpty, selection: $tab)
-                ArchiveButton(tab: .done, symbol: "checkmark.circle", count: nil, compact: !layout.inProgress.isEmpty, selection: $tab)
+                ArchiveButton(
+                    tab: .snoozed, symbol: "moon.zzz", count: layout.snoozed.count, compact: !layout.inProgress.isEmpty,
+                    selection: $tab)
+                ArchiveButton(
+                    tab: .done, symbol: "checkmark.circle", count: nil, compact: !layout.inProgress.isEmpty,
+                    selection: $tab)
             }
             .padding(.horizontal, Self.gutter)
             SearchField(text: Bindable(model).query, focus: $focus) {
                 focus = .list
                 if selection == nil { selection = navigationOrder(model.visibleLayout).first?.id }
             }
-                .padding(.horizontal, Self.gutter)
-                .padding(.vertical, 10)
+            .padding(.horizontal, Self.gutter)
+            .padding(.vertical, 10)
             content(layout)
             if let undo = model.undoPoint { UndoBar(point: undo) }
             footer
@@ -160,87 +172,102 @@ struct InboxView: View {
 
     @ViewBuilder private func content(_ layout: InboxLayout) -> some View {
         ScrollViewReader { proxy in
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 10) {
-                switch tab {
-                case .inProgress:
-                    if layout.inProgress.isEmpty {
-                        EmptyState(symbol: "play.circle", title: "Nothing in progress", message: "Start a reminder or an item to keep it in front of you.")
-                    }
-                    rows(layout.inProgress)
-                case .myTurn:
-                    if showBrief, model.preferences.wholeInboxBrief { BriefCard().transition(.opacity.combined(with: .move(edge: .top))) }
-                    if model.accounts.isEmpty && model.allItems.isEmpty {
-                        Onboarding(connect: showSettings)
-                    } else if layout.myTurnItems.isEmpty {
-                        EmptyState(
-                            symbol: "sun.max.fill",
-                            title: "All done!",
-                            message: layout.waitingItems.isEmpty
-                                ? "Nothing needs you right now."
-                                : L("Nothing needs you right now. %d waiting on others.", layout.waitingItems.count)
-                        )
-                    }
-                    if !layout.pinned.isEmpty {
-                        section(id: "pinned", title: "Pinned", symbol: "pin.fill", items: layout.pinned)
-                    }
-                    groups(layout.myTurn, in: .myTurn)
-                case .waiting:
-                    if layout.waitingItems.isEmpty {
-                        EmptyState(symbol: "hourglass", title: "Nothing waiting", message: "Your merge requests waiting on reviewers show up here.")
-                    }
-                    groups(layout.waiting, in: .waiting)
-                case .snoozed:
-                    if layout.snoozed.isEmpty {
-                        EmptyState(symbol: "moon.zzz.fill", title: "No snoozed items", message: "Snooze an item to make it come back later.")
-                    } else {
-                        InsightCard()
-                        if model.assistantAccount != nil, layout.snoozed.count >= 2, model.triageSuggestions.isEmpty, !model.isTriaging {
-                            HStack {
-                                Spacer()
-                                ActionButton(label: "Triage with Claude", symbol: "sparkles") {
-                                    Task { await model.triage() }
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 10) {
+                    switch tab {
+                    case .inProgress:
+                        if layout.inProgress.isEmpty {
+                            EmptyState(
+                                symbol: "play.circle", title: "Nothing in progress",
+                                message: "Start a reminder or an item to keep it in front of you.")
+                        }
+                        rows(layout.inProgress)
+                    case .myTurn:
+                        if showBrief, model.preferences.wholeInboxBrief {
+                            BriefCard().transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                        if model.accounts.isEmpty && model.allItems.isEmpty {
+                            Onboarding(connect: showSettings)
+                        } else if layout.myTurnItems.isEmpty {
+                            EmptyState(
+                                symbol: "sun.max.fill",
+                                title: "All done!",
+                                message: layout.waitingItems.isEmpty
+                                    ? "Nothing needs you right now."
+                                    : L("Nothing needs you right now. %d waiting on others.", layout.waitingItems.count)
+                            )
+                        }
+                        if !layout.pinned.isEmpty {
+                            section(id: "pinned", title: "Pinned", symbol: "pin.fill", items: layout.pinned)
+                        }
+                        groups(layout.myTurn, in: .myTurn)
+                    case .waiting:
+                        if layout.waitingItems.isEmpty {
+                            EmptyState(
+                                symbol: "hourglass", title: "Nothing waiting",
+                                message: "Your merge requests waiting on reviewers show up here.")
+                        }
+                        groups(layout.waiting, in: .waiting)
+                    case .snoozed:
+                        if layout.snoozed.isEmpty {
+                            EmptyState(
+                                symbol: "moon.zzz.fill", title: "No snoozed items",
+                                message: "Snooze an item to make it come back later.")
+                        } else {
+                            InsightCard()
+                            if model.assistantAccount != nil, layout.snoozed.count >= 2,
+                                model.triageSuggestions.isEmpty, !model.isTriaging
+                            {
+                                HStack {
+                                    Spacer()
+                                    ActionButton(label: "Triage with Claude", symbol: "sparkles") {
+                                        Task { await model.triage() }
+                                    }
                                 }
                             }
+                            TriagePanel()
                         }
-                        TriagePanel()
-                    }
-                    rows(layout.snoozed)
-                case .done:
-                    if layout.done.isEmpty {
-                        EmptyState(symbol: "checkmark.circle.fill", title: "Nothing done yet", message: "Items you mark as done show up here until they change.")
-                    } else {
-                        HStack {
-                            Text("\(layout.done.count) done").font(Myna.font(12.5, .medium)).foregroundStyle(Myna.muted)
-                            Spacer()
-                            Button { withAnimation(.snappy) { model.clear(layout.done) } } label: {
-                                Label("Clear all", systemImage: "trash")
-                                    .font(Myna.font(12, .semibold))
-                                    .foregroundStyle(Myna.ink)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
-                                    .background(Myna.card, in: Capsule())
+                        rows(layout.snoozed)
+                    case .done:
+                        if layout.done.isEmpty {
+                            EmptyState(
+                                symbol: "checkmark.circle.fill", title: "Nothing done yet",
+                                message: "Items you mark as done show up here until they change.")
+                        } else {
+                            HStack {
+                                Text("\(layout.done.count) done").font(Myna.font(12.5, .medium)).foregroundStyle(
+                                    Myna.muted)
+                                Spacer()
+                                Button {
+                                    withAnimation(.snappy) { model.clear(layout.done) }
+                                } label: {
+                                    Label("Clear all", systemImage: "trash")
+                                        .font(Myna.font(12, .semibold))
+                                        .foregroundStyle(Myna.ink)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 5)
+                                        .background(Myna.card, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                                .help("Remove these items from the Done list. They come back if something new happens.")
                             }
-                            .buttonStyle(.plain)
-                            .help("Remove these items from the Done list. They come back if something new happens.")
+                            .padding(.horizontal, 2)
                         }
-                        .padding(.horizontal, 2)
+                        rows(layout.done)
                     }
-                    rows(layout.done)
                 }
+                .padding(.horizontal, Self.gutter)
+                .padding(.bottom, 14)
             }
-            .padding(.horizontal, Self.gutter)
-            .padding(.bottom, 14)
-        }
-        .scrollIndicators(.never)
-        .focusable()
-        .focusEffectDisabled()
-        .focused($focus, equals: .list)
-        .onKeyPress(phases: .down) { handle($0) }
-        .onChange(of: selection) { _, id in
-            guard let id else { return }
-            withAnimation(.snappy(duration: 0.15)) { proxy.scrollTo(id) }
-        }
+            .scrollIndicators(.never)
+            .focusable()
+            .focusEffectDisabled()
+            .focused($focus, equals: .list)
+            .onKeyPress(phases: .down) { handle($0) }
+            .onChange(of: selection) { _, id in
+                guard let id else { return }
+                withAnimation(.snappy(duration: 0.15)) { proxy.scrollTo(id) }
+            }
         }
     }
 
@@ -250,7 +277,9 @@ struct InboxView: View {
     private func navigationOrder(_ layout: InboxLayout) -> [InboxItem] {
         switch tab {
         case .inProgress: layout.inProgress
-        case .myTurn: shown(id: "pinned", layout.pinned) + layout.myTurn.flatMap { shown(id: "\(Tab.myTurn.rawValue)/\($0.id)", $0.items) }
+        case .myTurn:
+            shown(id: "pinned", layout.pinned)
+                + layout.myTurn.flatMap { shown(id: "\(Tab.myTurn.rawValue)/\($0.id)", $0.items) }
         case .waiting: layout.waiting.flatMap { shown(id: "\(Tab.waiting.rawValue)/\($0.id)", $0.items) }
         case .snoozed: layout.snoozed
         case .done: layout.done
@@ -287,7 +316,8 @@ struct InboxView: View {
         /// After an action that takes the item off this list, the keyboard lands on its neighbour.
         func leaving(_ action: (InboxItem) -> Void) {
             guard let current, let index else { return }
-            let neighbour = items.indices.contains(index + 1) ? items[index + 1].id : (index > 0 ? items[index - 1].id : nil)
+            let neighbour =
+                items.indices.contains(index + 1) ? items[index + 1].id : (index > 0 ? items[index - 1].id : nil)
             withAnimation(.snappy) { action(current) }
             selection = navigationOrder(model.visibleLayout).contains { $0.id == current.id } ? current.id : neighbour
         }
@@ -316,12 +346,17 @@ struct InboxView: View {
 
     private func groups(_ groups: [InboxLayout.Group], in tab: Tab) -> some View {
         ForEach(groups) { group in
-            section(id: "\(tab.rawValue)/\(group.id)", title: group.bundle.title, symbol: group.bundle.symbol, items: group.items, bundle: group.bundle)
+            section(
+                id: "\(tab.rawValue)/\(group.id)", title: group.bundle.title, symbol: group.bundle.symbol,
+                items: group.items, bundle: group.bundle)
         }
     }
 
-    @ViewBuilder private func section(id: String, title: String, symbol: String, items: [InboxItem], bundle: InboxBundle? = nil) -> some View {
-        let canSummarize = bundle != nil && model.assistantAccount != nil && model.assistantPolicy.items(items).count >= 2
+    @ViewBuilder private func section(
+        id: String, title: String, symbol: String, items: [InboxItem], bundle: InboxBundle? = nil
+    ) -> some View {
+        let canSummarize =
+            bundle != nil && model.assistantAccount != nil && model.assistantPolicy.items(items).count >= 2
         BundleHeader(
             title: title,
             symbol: symbol,
@@ -355,9 +390,11 @@ struct InboxView: View {
                     summarizing: model.summarizing.contains(restKey),
                     showAll: { withAnimation(.snappy) { _ = expanded.insert(id) } },
                     snoozeAll: { picker = .snoozeMany(rest) },
-                    summarize: model.assistantAccount == nil ? nil : {
-                        toggleSummary(id: restKey, topic: L(bundle?.title ?? title), items: rest)
-                    }
+                    summarize: model.assistantAccount == nil
+                        ? nil
+                        : {
+                            toggleSummary(id: restKey, topic: L(bundle?.title ?? title), items: rest)
+                        }
                 )
             }
         }
@@ -372,9 +409,12 @@ struct InboxView: View {
 
     private func rows(_ items: [InboxItem]) -> some View {
         ForEach(items) { item in
-            ItemRow(item: item, selected: selection == item.id && focus == .list, onSnooze: { picker = .snooze(item) }, onDraft: { draft = $0 })
-                .id(item.id)
-                .transition(.opacity.combined(with: .move(edge: .trailing)))
+            ItemRow(
+                item: item, selected: selection == item.id && focus == .list, onSnooze: { picker = .snooze(item) },
+                onDraft: { draft = $0 }
+            )
+            .id(item.id)
+            .transition(.opacity.combined(with: .move(edge: .trailing)))
         }
     }
 
@@ -411,7 +451,9 @@ struct InboxView: View {
         guard ids.count == 1, let account = model.accounts.first(where: { $0.id == ids[0] }) else {
             return L("%d sources need reconnecting", ids.count)
         }
-        return L("%@ needs reconnecting", account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID)
+        return L(
+            "%@ needs reconnecting", account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID
+        )
     }
 
     private var footer: some View {
@@ -419,8 +461,12 @@ struct InboxView: View {
             switch model.sourcesHealth {
             case .offline:
                 // Not the tools' fault: one calm line, and the inbox as it was.
-                Label { LiveText { offlineText } } icon: { Image(systemName: "wifi.slash") }
-                    .foregroundStyle(Myna.muted)
+                Label {
+                    LiveText { offlineText }
+                } icon: {
+                    Image(systemName: "wifi.slash")
+                }
+                .foregroundStyle(Myna.muted)
             case .reconnect(let ids):
                 Button(action: showSettings) {
                     Label(reconnectText(ids), systemImage: "key.fill")
@@ -431,8 +477,11 @@ struct InboxView: View {
                 .accessibilityHint(L("Opens Settings to reconnect"))
             case .failing(let count):
                 Button(action: showSettings) {
-                    Label(L("%d source failing", plural: "%d sources failing", count), systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(Myna.danger)
+                    Label(
+                        L("%d source failing", plural: "%d sources failing", count),
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .foregroundStyle(Myna.danger)
                 }
                 .buttonStyle(.plain)
                 .help(model.errors.values.map(\.message).joined(separator: "\n"))
@@ -441,16 +490,24 @@ struct InboxView: View {
                 updated
             }
             Spacer()
-            Button { showShortcuts.toggle() } label: { Image(systemName: "keyboard") }
-                .buttonStyle(.plain)
-                .foregroundStyle(Myna.muted)
-                .help("Keyboard shortcuts")
-                .accessibilityLabel(L("Keyboard shortcuts"))
-                .popover(isPresented: $showShortcuts, arrowEdge: .top) { ShortcutsList() }
-            Button { picker = .newReminder } label: { Label("Reminder", systemImage: "plus") }
-                .buttonStyle(.plain)
-                .foregroundStyle(Myna.ink)
-                .help("New reminder (or drag down from the menu bar icon)")
+            Button {
+                showShortcuts.toggle()
+            } label: {
+                Image(systemName: "keyboard")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Myna.muted)
+            .help("Keyboard shortcuts")
+            .accessibilityLabel(L("Keyboard shortcuts"))
+            .popover(isPresented: $showShortcuts, arrowEdge: .top) { ShortcutsList() }
+            Button {
+                picker = .newReminder
+            } label: {
+                Label("Reminder", systemImage: "plus")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Myna.ink)
+            .help("New reminder (or drag down from the menu bar icon)")
             Button("Quit") { NSApp.terminate(nil) }
                 .buttonStyle(.plain)
                 .foregroundStyle(Myna.muted)
@@ -534,7 +591,9 @@ private struct ArchiveButton: View {
                 if compact {
                     if let count, count > 0 { Text("\(count)").font(Myna.font(11.5, .semibold)) }
                 } else {
-                    Text(count.map { $0 > 0 ? "\(tab.title) \($0)" : tab.title } ?? tab.title).font(Myna.font(11.5, .semibold)).lineLimit(1)
+                    Text(count.map { $0 > 0 ? "\(tab.title) \($0)" : tab.title } ?? tab.title).font(
+                        Myna.font(11.5, .semibold)
+                    ).lineLimit(1)
                 }
             }
             .foregroundStyle(selected ? Myna.onDark : Myna.muted)
@@ -605,7 +664,8 @@ private struct ShortcutsList: View {
         Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 6) {
             ForEach(rows, id: \.keys) { row in
                 GridRow {
-                    Text(row.keys).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Myna.ink)
+                    Text(row.keys).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(
+                        Myna.ink)
                     Text(L(row.action)).font(Myna.font(12.5)).foregroundStyle(Myna.inkSoft)
                 }
             }
@@ -636,9 +696,13 @@ private struct SearchField: View {
                     return .handled
                 }
             if !text.isEmpty {
-                Button { text = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Myna.muted)
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Myna.muted)
             }
         }
         .font(Myna.font(13))
@@ -695,7 +759,9 @@ private struct BundleHeader: View {
             .accessibilityLabel(spokenTitle)
             .accessibilityValue(L(collapsed ? "Collapsed" : "Expanded"))
             .accessibilityActions {
-                if let summarize { Button(L(summaryShown ? "Hide the summary" : "Summarize this bundle"), action: summarize) }
+                if let summarize {
+                    Button(L(summaryShown ? "Hide the summary" : "Summarize this bundle"), action: summarize)
+                }
                 if let snoozeAll { Button(L("Snooze all"), action: snoozeAll) }
                 Button(L("Mark all as done"), action: sweep)
             }
@@ -861,12 +927,15 @@ private struct Onboarding: View {
                 .multilineTextAlignment(.center)
             HStack(spacing: 6) {
                 ForEach(PluginRegistry.manifests, id: \.id) { manifest in
-                    Label(manifest.isComingSoon ? L("%@ · soon", manifest.name) : manifest.name, systemImage: manifest.symbol)
-                        .font(Myna.font(11.5, .medium))
-                        .foregroundStyle(Myna.inkSoft)
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 4)
-                        .background(Myna.card, in: Capsule())
+                    Label(
+                        manifest.isComingSoon ? L("%@ · soon", manifest.name) : manifest.name,
+                        systemImage: manifest.symbol
+                    )
+                    .font(Myna.font(11.5, .medium))
+                    .foregroundStyle(Myna.inkSoft)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Myna.card, in: Capsule())
                 }
             }
             Button("Connect a source", action: connect).buttonStyle(PillButtonStyle())

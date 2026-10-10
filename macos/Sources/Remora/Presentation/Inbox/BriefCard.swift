@@ -23,13 +23,17 @@ struct BriefCard: View {
                 if model.isBriefing {
                     ProgressView().controlSize(.small).tint(Myna.accent)
                 } else {
-                    Button { Task { await model.makeBrief() } } label: {
+                    Button {
+                        Task { await model.makeBrief() }
+                    } label: {
                         Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .bold))
                     }
                     .buttonStyle(.plain)
                     .disabled(model.isBriefFresh)
                     .opacity(model.isBriefFresh ? 0.35 : 1)
-                    .help(model.isBriefFresh ? L("This brief is still fresh (Settings → General → Assistant)") : L("Write a new brief"))
+                    .help(
+                        model.isBriefFresh
+                            ? L("This brief is still fresh (Settings → General → Assistant)") : L("Write a new brief"))
                 }
             }
 
@@ -55,14 +59,17 @@ struct BriefCard: View {
         .foregroundStyle(Myna.onDark)
         .padding(14)
         .background(Myna.dark, in: RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous).strokeBorder(Myna.border.opacity(0.6)))
+        .overlay(
+            RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous).strokeBorder(Myna.border.opacity(0.6))
+        )
         .task { if model.brief == nil { await model.makeBrief() } }
     }
 
     private func footer(for brief: Brief) -> String {
         let written = L("Written %@", brief.createdAt.formatted(.relative(presentation: .named)))
         guard model.isBriefFresh else { return written }
-        let minutes = Int(brief.freshUntil(cacheMinutes: model.preferences.briefCacheMinutes).timeIntervalSinceNow / 60) + 1
+        let minutes =
+            Int(brief.freshUntil(cacheMinutes: model.preferences.briefCacheMinutes).timeIntervalSinceNow / 60) + 1
         return L("%@ · new one possible in %d min", written, minutes)
     }
 }
@@ -89,7 +96,9 @@ private struct FocusRow: View {
             Spacer(minLength: 0)
         }
         .padding(8)
-        .background(hovering ? Color.white.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(
+            hovering ? Color.white.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+        )
         .contentShape(Rectangle())
         .onTapGesture { model.open(item) }
         .onHover { hovering = $0 }

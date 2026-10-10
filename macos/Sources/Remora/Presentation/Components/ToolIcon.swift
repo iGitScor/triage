@@ -7,8 +7,9 @@ enum ToolIcon {
         let manifest = PluginRegistry.manifest(pluginID)
         let base: NSImage?
         if let logo = manifest?.logo,
-           let url = Bundle.main.url(forResource: logo, withExtension: "svg", subdirectory: "Logos"),
-           let svg = NSImage(contentsOf: url) {
+            let url = Bundle.main.url(forResource: logo, withExtension: "svg", subdirectory: "Logos"),
+            let svg = NSImage(contentsOf: url)
+        {
             svg.size = NSSize(width: pointSize, height: pointSize)
             base = svg
         } else {

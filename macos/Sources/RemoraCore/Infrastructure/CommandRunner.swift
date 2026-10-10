@@ -25,7 +25,9 @@ public struct ProcessCommandRunner: CommandRunner {
         self.timeout = timeout
     }
 
-    public func run(_ executable: URL, arguments: [String], environment: [String: String]?, input: Data?) async throws -> Data {
+    public func run(_ executable: URL, arguments: [String], environment: [String: String]?, input: Data?) async throws
+        -> Data
+    {
         let process = Process()
         process.executableURL = executable
         process.arguments = arguments
@@ -68,7 +70,9 @@ public struct ProcessCommandRunner: CommandRunner {
 
     /// The last few lines of a program's error output, short enough for an error message.
     static func tail(_ data: Data) -> String {
-        let lines = String(decoding: data, as: UTF8.self).split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+        let lines = String(decoding: data, as: UTF8.self).split(whereSeparator: \.isNewline).map {
+            $0.trimmingCharacters(in: .whitespaces)
+        }
         return String(lines.filter { !$0.isEmpty }.suffix(3).joined(separator: " ").suffix(300))
     }
 }
@@ -83,7 +87,8 @@ public enum CommandError: LocalizedError, Equatable {
         switch self {
         case .notFound(let name): L("Couldn’t find %@.", name)
         case .timedOut: L("The command took too long and was stopped.")
-        case .failed(let status, let message): message.isEmpty ? L("The command failed (status %d).", Int(status)) : message
+        case .failed(let status, let message):
+            message.isEmpty ? L("The command failed (status %d).", Int(status)) : message
         }
     }
 }

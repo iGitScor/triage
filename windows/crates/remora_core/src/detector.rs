@@ -108,7 +108,10 @@ mod tests {
             url: None,
         };
         let redacted = notice.redacted();
-        assert_eq!((redacted.title.as_str(), redacted.subtitle.as_str(), redacted.item_id.as_str()), ("Mentions", "#general", "1"));
+        assert_eq!(
+            (redacted.title.as_str(), redacted.subtitle.as_str(), redacted.item_id.as_str()),
+            ("Mentions", "#general", "1")
+        );
         assert!(!redacted.body.contains("Salary"));
     }
 }

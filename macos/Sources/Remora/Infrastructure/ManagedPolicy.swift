@@ -48,7 +48,9 @@ enum ManagedPolicy {
 
     /// The `claude` the organization chose, which wins over the one in the account.
     static func claudeCodePath(_ managed: ManagedValues = ManagedDefaults()) -> String? {
-        (managed.forced(claudeCodePathKey) as? String).flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
+        (managed.forced(claudeCodePathKey) as? String).flatMap {
+            $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0
+        }
     }
 
     /// Whether a setting is the organization's: its control is then locked in Settings.
@@ -74,7 +76,9 @@ enum ManagedPolicy {
     }
 
     /// The user's exclusions plus the organization's; the models only the organization restricts.
-    static func assistantPolicy(user preferences: Preferences, managed: ManagedValues = ManagedDefaults()) -> AssistantPolicy {
+    static func assistantPolicy(user preferences: Preferences, managed: ManagedValues = ManagedDefaults())
+        -> AssistantPolicy
+    {
         let models = managed.forced(allowedAIModelsKey).map(strings)
         return AssistantPolicy(
             excludedSources: preferences.assistantExcludedSources.union(managedAIExclusions(managed)),
@@ -127,6 +131,7 @@ protocol ManagedValues {
 /// `fr.igitscor.remora`'s managed preferences.
 struct ManagedDefaults: ManagedValues {
     func forced(_ key: String) -> Any? {
-        UserDefaults.standard.objectIsForced(forKey: key) ? UserDefaults.standard.object(forKey: key) ?? [String]() : nil
+        UserDefaults.standard.objectIsForced(forKey: key)
+            ? UserDefaults.standard.object(forKey: key) ?? [String]() : nil
     }
 }

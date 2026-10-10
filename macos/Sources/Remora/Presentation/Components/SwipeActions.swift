@@ -42,7 +42,11 @@ private struct SwipeActionsModifier: ViewModifier {
             .offset(x: offset)
             .background { revealed }
             .clipShape(RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+            .onGeometryChange(for: CGFloat.self) {
+                $0.size.width
+            } action: {
+                width = $0
+            }
             .onHover { inside in
                 hovering = inside
                 inside ? startMonitoring() : stopMonitoring()

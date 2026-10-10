@@ -50,7 +50,7 @@ final class StatusItemController: NSObject {
                 NSAccessibilityCustomAction(name: L("New reminder…")) { [weak self] in
                     self?.newReminder()
                     return true
-                },
+                }
             ])
         }
         updateLabel()
@@ -84,7 +84,8 @@ final class StatusItemController: NSObject {
         // Focus: while you're on something, the other counters wait.
         let focused = focus && running > 0
         let counts = focused ? [] : allCounts
-        label = MenuBarTitle.Content(counts: counts, running: running, since: startedAt, branded: branded, focused: focused)
+        label = MenuBarTitle.Content(
+            counts: counts, running: running, since: startedAt, branded: branded, focused: focused)
         frames = [:]
         shown = nil
         scheduleAnimation()
@@ -207,12 +208,16 @@ final class StatusItemController: NSObject {
         }
         menu.addItem(item(L("Open Remora"), symbol: "tray", key: "") { [weak self] in self?.togglePopover() })
         menu.addItem(item(L("New reminder…"), symbol: "alarm", key: "") { [weak self] in self?.newReminder() })
-        menu.addItem(item(L("Refresh now"), symbol: "arrow.clockwise", key: "r") { [weak self] in
-            Task { await self?.model.refresh(manual: true) }
-        })
+        menu.addItem(
+            item(L("Refresh now"), symbol: "arrow.clockwise", key: "r") { [weak self] in
+                Task { await self?.model.refresh(manual: true) }
+            })
         menu.addItem(.separator())
         if let offer = model.updater.offer {
-            menu.addItem(item(L("Update to Remora %@…", offer.version.description), symbol: "arrow.down.circle", key: "") { SettingsOpener.open() })
+            menu.addItem(
+                item(L("Update to Remora %@…", offer.version.description), symbol: "arrow.down.circle", key: "") {
+                    SettingsOpener.open()
+                })
         }
         menu.addItem(item(L("Settings…"), symbol: "gearshape", key: ",") { SettingsOpener.open() })
         menu.addItem(.separator())
@@ -333,7 +338,9 @@ enum MenuBarTitle {
         let total = content.counts.reduce(0) { $0 + $1.count }
         var parts = ["Remora"]
         if content.running > 0 { parts.append(runningText(content, now: now)) }
-        if !content.focused { parts.append(total > 0 ? L("%d needs you", plural: "%d need you", total) : L("Nothing needs you")) }
+        if !content.focused {
+            parts.append(total > 0 ? L("%d needs you", plural: "%d need you", total) : L("Nothing needs you"))
+        }
         return parts.joined(separator: ", ")
     }
 
@@ -341,7 +348,8 @@ enum MenuBarTitle {
         let text = L("%d in progress", content.running)
         guard let since = content.since else { return text }
         let minutes = max(0, Int(now.timeIntervalSince(since) / 60))
-        let elapsed = minutes < 60
+        let elapsed =
+            minutes < 60
             ? L("%d min", minutes)
             : L("%d h", minutes / 60) + (minutes % 60 == 0 ? "" : String(format: " %02d", minutes % 60))
         return "\(text) (\(elapsed))"
@@ -391,15 +399,21 @@ enum MenuBarTitle {
                 let attachment = NSTextAttachment()
                 attachment.image = image
                 // Centered on the digits' height, like the fish next to it.
-                attachment.bounds = CGRect(x: 0, y: ((font.capHeight - image.size.height) / 2).rounded(), width: image.size.width, height: image.size.height)
+                attachment.bounds = CGRect(
+                    x: 0, y: ((font.capHeight - image.size.height) / 2).rounded(), width: image.size.width,
+                    height: image.size.height)
                 title.append(NSAttributedString(attachment: attachment))
                 title.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
             }
-            title.append(NSAttributedString(string: counts.isEmpty ? runningText(content) : "\(running)", attributes: attributes))
+            title.append(
+                NSAttributedString(string: counts.isEmpty ? runningText(content) : "\(running)", attributes: attributes)
+            )
         }
         for (index, entry) in counts.enumerated() {
             title.append(NSAttributedString(string: index == 0 && running == 0 ? " " : "  ", attributes: attributes))
-            if let pluginID = entry.pluginID, let image = ToolIcon.image(pluginID: pluginID, pointSize: 12, color: color) {
+            if let pluginID = entry.pluginID,
+                let image = ToolIcon.image(pluginID: pluginID, pointSize: 12, color: color)
+            {
                 let attachment = NSTextAttachment()
                 attachment.image = image
                 attachment.bounds = CGRect(x: 0, y: -1.5, width: image.size.width, height: image.size.height)
@@ -413,7 +427,10 @@ enum MenuBarTitle {
 
     private static func symbol(_ name: String, pointSize: CGFloat, color: NSColor?) -> NSImage? {
         let configuration = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .semibold)
-        guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) else { return nil }
+        guard
+            let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(
+                configuration)
+        else { return nil }
         guard let color else {
             image.isTemplate = true
             return image

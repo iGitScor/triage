@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import Remora
 
 /// Updates are opt-in, the organization can lock them, and only a signed, newer release is installed.

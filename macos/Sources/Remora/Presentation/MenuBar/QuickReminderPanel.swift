@@ -20,17 +20,19 @@ final class QuickReminderPanel {
     }
 
     func show(at point: NSPoint, date: Date) {
-        panel.host(QuickReminderView(date: date) { [weak self] title in
-            self?.model.addReminder(title, at: date)
-            self?.close()
-        } cancel: { [weak self] in
-            self?.close()
-        })
+        panel.host(
+            QuickReminderView(date: date) { [weak self] title in
+                self?.model.addReminder(title, at: date)
+                self?.close()
+            } cancel: { [weak self] in
+                self?.close()
+            })
         panel.place(near: point, offset: NSPoint(x: -20, y: 10))
         panel.makeKeyAndOrderFront(nil)
         // Shown again while open (another drag): the previous monitor goes first.
         if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
-        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) {
+            [weak self] _ in
             Task { @MainActor in self?.close() }
         }
     }

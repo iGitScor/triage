@@ -14,8 +14,8 @@ static COMMIT_PREFIX: LazyLock<Regex> =
 /// Words too common to tell two titles apart, in English and French (Swift's `KeywordSimilarity.stopWords`).
 pub(crate) const STOP_WORDS: &[&str] = &[
     "the", "and", "for", "with", "from", "into", "this", "that", "your", "about", "when", "what", "after", "new",
-    "pour", "avec", "dans", "les", "des", "une", "sur", "est", "pas", "qui", "que", "vous", "nous", "vers",
-    "la", "le", "de", "du", "au",
+    "pour", "avec", "dans", "les", "des", "une", "sur", "est", "pas", "qui", "que", "vous", "nous", "vers", "la", "le",
+    "de", "du", "au",
 ];
 
 #[derive(Clone, Debug)]

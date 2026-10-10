@@ -19,15 +19,19 @@ public final class EmbeddingSimilarity: SimilarityModel, @unchecked Sendable {
     }
 
     public func distance(_ a: String, _ b: String) -> Double? {
-        let wordsA = Self.words(a), wordsB = Self.words(b)
+        let wordsA = Self.words(a)
+        let wordsB = Self.words(b)
         guard !wordsA.isEmpty, !wordsB.isEmpty,
-              let embedding = embedding(for: EmbeddingIntentClassifier.language(of: a + " " + b)) else { return nil }
+            let embedding = embedding(for: EmbeddingIntentClassifier.language(of: a + " " + b))
+        else { return nil }
 
         func side(_ from: [String], _ to: [String]) -> Double {
             let scores = from.map { word in
                 to.map { other in
-                    word == other ? 0 : (embedding.contains(word) && embedding.contains(other)
-                        ? embedding.distance(between: word, and: other) : 2)
+                    word == other
+                        ? 0
+                        : (embedding.contains(word) && embedding.contains(other)
+                            ? embedding.distance(between: word, and: other) : 2)
                 }.min() ?? 2
             }
             return scores.reduce(0, +) / Double(scores.count)

@@ -53,7 +53,8 @@ impl InboxLayout {
             entry.0 += 1;
             entry.1 = entry.1.min(item.bundle.rank);
         }
-        let mut sorted: Vec<(String, usize, i32)> = counts.into_iter().map(|(id, (n, rank))| (id.to_string(), n, rank)).collect();
+        let mut sorted: Vec<(String, usize, i32)> =
+            counts.into_iter().map(|(id, (n, rank))| (id.to_string(), n, rank)).collect();
         sorted.sort_by(|a, b| a.2.cmp(&b.2).then(b.1.cmp(&a.1)).then(a.0.cmp(&b.0)));
         sorted.into_iter().map(|(id, n, _)| (id, n)).collect()
     }
@@ -99,7 +100,13 @@ impl InboxAssembler {
         item.bundle.is_mine().unwrap_or(item.needs_action)
     }
 
-    pub fn layout(&self, items: &[InboxItem], states: &HashMap<String, ItemState>, now: DateTime<Utc>, query: &str) -> InboxLayout {
+    pub fn layout(
+        &self,
+        items: &[InboxItem],
+        states: &HashMap<String, ItemState>,
+        now: DateTime<Utc>,
+        query: &str,
+    ) -> InboxLayout {
         self.layout_ranked(items, states, now, query, None)
     }
 
@@ -126,7 +133,9 @@ impl InboxAssembler {
                 Placement::Done => layout.done.push(item.clone()),
                 Placement::Cleared => {}
                 Placement::Inbox if state.map(|s| s.pinned).unwrap_or(false) => layout.pinned.push(item.clone()),
-                Placement::Inbox if Self::is_my_turn(item, state) => mine.entry(item.bundle.clone()).or_default().push(item.clone()),
+                Placement::Inbox if Self::is_my_turn(item, state) => {
+                    mine.entry(item.bundle.clone()).or_default().push(item.clone())
+                }
                 Placement::Inbox => theirs.entry(item.bundle.clone()).or_default().push(item.clone()),
             }
         }
@@ -142,7 +151,11 @@ impl InboxAssembler {
     }
 }
 
-fn groups(items: HashMap<InboxBundle, Vec<InboxItem>>, now: DateTime<Utc>, personal: Option<PersonalScore>) -> Vec<Group> {
+fn groups(
+    items: HashMap<InboxBundle, Vec<InboxItem>>,
+    now: DateTime<Utc>,
+    personal: Option<PersonalScore>,
+) -> Vec<Group> {
     let prioritizer = Prioritizer::with_personal(now, personal);
     let mut groups: Vec<Group> = items
         .into_iter()
@@ -160,9 +173,14 @@ fn matches(item: &InboxItem, query: &str) -> bool {
     if query.is_empty() {
         return true;
     }
-    [item.title.as_str(), item.context.as_str(), item.author.as_ref().map(|a| a.name.as_str()).unwrap_or(""), item.preview.as_deref().unwrap_or("")]
-        .iter()
-        .any(|field| field.to_lowercase().contains(&query))
+    [
+        item.title.as_str(),
+        item.context.as_str(),
+        item.author.as_ref().map(|a| a.name.as_str()).unwrap_or(""),
+        item.preview.as_deref().unwrap_or(""),
+    ]
+    .iter()
+    .any(|field| field.to_lowercase().contains(&query))
 }
 
 #[cfg(test)]
@@ -193,7 +211,10 @@ mod tests {
     #[test]
     fn done_stays_done_until_it_changes() {
         let item = item("1", InboxBundle::reviews());
-        let state = ItemState { done: Some(Mark { at: now(), fingerprint: item.fingerprint(), cleared_at: None }), ..Default::default() };
+        let state = ItemState {
+            done: Some(Mark { at: now(), fingerprint: item.fingerprint(), cleared_at: None }),
+            ..Default::default()
+        };
         assert_eq!(assembler().placement(&item, Some(&state), now()), Placement::Done);
         let mut updated = item.clone();
         updated.badges = vec![approved()];
@@ -226,7 +247,8 @@ mod tests {
     fn started_items_leave_every_other_section() {
         let mut items: Vec<InboxItem> = ["1", "2", "3"].iter().map(|id| item(id, InboxBundle::reviews())).collect();
         items.iter_mut().for_each(|i| i.needs_action = true);
-        let started = |minutes| ItemState { started_at: Some(now() - Duration::minutes(minutes)), ..Default::default() };
+        let started =
+            |minutes| ItemState { started_at: Some(now() - Duration::minutes(minutes)), ..Default::default() };
         let states = HashMap::from([("1".to_string(), started(1)), ("3".to_string(), started(10))]);
         let layout = assembler().layout(&items, &states, now(), "");
         assert_eq!(layout.in_progress.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(), ["3", "1"]);
@@ -267,7 +289,12 @@ mod tests {
 
     #[test]
     fn query_filters_on_title_and_context() {
-        let layout = assembler().layout(&[item("1", InboxBundle::reviews()), item("22", InboxBundle::reviews())], &HashMap::new(), now(), "#22");
+        let layout = assembler().layout(
+            &[item("1", InboxBundle::reviews()), item("22", InboxBundle::reviews())],
+            &HashMap::new(),
+            now(),
+            "#22",
+        );
         assert_eq!(layout.my_turn_items().count(), 1);
     }
 }

@@ -108,7 +108,9 @@ public struct PluginConfig: Sendable {
         var raw = try required(key)
         while raw.hasSuffix("/") { raw.removeLast() }
         if !raw.contains("://") { raw = "https://" + raw }
-        guard let url = URL(string: raw), let host = url.host?.lowercased(), !host.isEmpty else { throw PluginError.invalidField(key) }
+        guard let url = URL(string: raw), let host = url.host?.lowercased(), !host.isEmpty else {
+            throw PluginError.invalidField(key)
+        }
         switch url.scheme?.lowercased() {
         case "https": return url
         case "http" where Self.loopback.contains(host): return url

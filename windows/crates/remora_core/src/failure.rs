@@ -45,8 +45,12 @@ pub enum SourcesHealth {
     Fine,
     Offline,
     /// Accounts whose token to reconnect.
-    Reconnect { accounts: Vec<String> },
-    Failing { count: usize },
+    Reconnect {
+        accounts: Vec<String>,
+    },
+    Failing {
+        count: usize,
+    },
 }
 
 impl SourcesHealth {
@@ -55,14 +59,20 @@ impl SourcesHealth {
         if !failures.is_empty() && failures.iter().all(|(_, f)| f.kind == FailureKind::Offline) {
             return SourcesHealth::Offline;
         }
-        let mut auth: Vec<String> = failures.iter().filter(|(_, f)| f.kind == FailureKind::Auth).map(|(id, _)| (*id).clone()).collect();
+        let mut auth: Vec<String> =
+            failures.iter().filter(|(_, f)| f.kind == FailureKind::Auth).map(|(id, _)| (*id).clone()).collect();
         if !auth.is_empty() {
             auth.sort();
             return SourcesHealth::Reconnect { accounts: auth };
         }
         // A rate limit is waited out, and the account says until when: not a failure.
-        let count = failures.iter().filter(|(_, f)| !matches!(f.kind, FailureKind::RateLimited | FailureKind::Offline)).count();
-        if count > 0 { SourcesHealth::Failing { count } } else { SourcesHealth::Fine }
+        let count =
+            failures.iter().filter(|(_, f)| !matches!(f.kind, FailureKind::RateLimited | FailureKind::Offline)).count();
+        if count > 0 {
+            SourcesHealth::Failing { count }
+        } else {
+            SourcesHealth::Fine
+        }
     }
 }
 
@@ -75,14 +85,25 @@ mod tests {
         let f = |kind| Failure::new(kind, "x");
         let (a, b, c) = ("a".to_string(), "b".to_string(), "c".to_string());
         assert_eq!(SourcesHealth::of([]), SourcesHealth::Fine);
-        assert_eq!(SourcesHealth::of([(&a, &f(FailureKind::Offline)), (&b, &f(FailureKind::Offline))]), SourcesHealth::Offline);
+        assert_eq!(
+            SourcesHealth::of([(&a, &f(FailureKind::Offline)), (&b, &f(FailureKind::Offline))]),
+            SourcesHealth::Offline
+        );
         assert_eq!(
             SourcesHealth::of([(&a, &f(FailureKind::Auth)), (&b, &f(FailureKind::Other))]),
             SourcesHealth::Reconnect { accounts: vec!["a".into()] }
         );
-        assert_eq!(SourcesHealth::of([(&a, &f(FailureKind::RateLimited))]), SourcesHealth::Fine, "a rate limit is only waited out");
         assert_eq!(
-            SourcesHealth::of([(&a, &f(FailureKind::RateLimited)), (&b, &f(FailureKind::Other)), (&c, &f(FailureKind::Unreachable))]),
+            SourcesHealth::of([(&a, &f(FailureKind::RateLimited))]),
+            SourcesHealth::Fine,
+            "a rate limit is only waited out"
+        );
+        assert_eq!(
+            SourcesHealth::of([
+                (&a, &f(FailureKind::RateLimited)),
+                (&b, &f(FailureKind::Other)),
+                (&c, &f(FailureKind::Unreachable))
+            ]),
             SourcesHealth::Failing { count: 2 }
         );
         assert_eq!(f(FailureKind::Offline).message, OFFLINE, "network failures say what they mean");

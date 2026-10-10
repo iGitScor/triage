@@ -103,9 +103,12 @@ public struct ClaudePlugin: AssistantPlugin {
     private static func output<Output: Decodable>(of response: Response) throws -> Output {
         if response.stopReason == "refusal" { throw HTTPError.api(L("Claude declined this request.")) }
         // Thinking counts toward max_tokens: a long one can leave the answer cut off, and half a JSON is unusable.
-        if response.stopReason == "max_tokens" { throw HTTPError.api(L("Claude’s answer was cut off. Try again, or with fewer items.")) }
+        if response.stopReason == "max_tokens" {
+            throw HTTPError.api(L("Claude’s answer was cut off. Try again, or with fewer items."))
+        }
         guard let text = response.content.first(where: { $0.type == "text" })?.text,
-              let output = try? JSONDecoder().decode(Output.self, from: Data(text.utf8)) else {
+            let output = try? JSONDecoder().decode(Output.self, from: Data(text.utf8))
+        else {
             throw HTTPError.api(L("Claude returned an unexpected answer."))
         }
         return output
@@ -116,9 +119,15 @@ public struct ClaudePlugin: AssistantPlugin {
 
 extension ClaudePlugin {
     struct Request: Encodable {
-        struct Message: Encodable { var role: String; var content: String }
+        struct Message: Encodable {
+            var role: String
+            var content: String
+        }
         struct OutputConfig: Encodable {
-            struct Format: Encodable { var type: String; var schema: BriefPrompt.Schema }
+            struct Format: Encodable {
+                var type: String
+                var schema: BriefPrompt.Schema
+            }
             var effort: String
             var format: Format
         }
@@ -139,10 +148,16 @@ extension ClaudePlugin {
     }
 
     struct Response: Decodable {
-        struct Block: Decodable { var type: String; var text: String? }
+        struct Block: Decodable {
+            var type: String
+            var text: String?
+        }
         var content: [Block]
         var stopReason: String?
 
-        enum CodingKeys: String, CodingKey { case content, stopReason = "stop_reason" }
+        enum CodingKeys: String, CodingKey {
+            case content
+            case stopReason = "stop_reason"
+        }
     }
 }

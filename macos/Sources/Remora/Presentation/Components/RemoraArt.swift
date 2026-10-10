@@ -6,13 +6,17 @@ enum RemoraArt {
     /// The fish in a unit square (y up), facing right: a rounded body and a soft forked tail.
     /// Kept deliberately simple so it reads at menu bar size; parts are filled one by one.
     static func parts() -> [CGPath] {
-        let body = CGPath(roundedRect: CGRect(x: 0.22, y: 0.36, width: 0.70, height: 0.26),
-                          cornerWidth: 0.13, cornerHeight: 0.13, transform: nil)
+        let body = CGPath(
+            roundedRect: CGRect(x: 0.22, y: 0.36, width: 0.70, height: 0.26),
+            cornerWidth: 0.13, cornerHeight: 0.13, transform: nil)
         let tail = CGMutablePath()
         tail.move(to: CGPoint(x: 0.27, y: 0.49))
-        tail.addCurve(to: CGPoint(x: 0.06, y: 0.64), control1: CGPoint(x: 0.18, y: 0.56), control2: CGPoint(x: 0.10, y: 0.64))
-        tail.addCurve(to: CGPoint(x: 0.06, y: 0.34), control1: CGPoint(x: 0.10, y: 0.55), control2: CGPoint(x: 0.10, y: 0.43))
-        tail.addCurve(to: CGPoint(x: 0.27, y: 0.49), control1: CGPoint(x: 0.10, y: 0.34), control2: CGPoint(x: 0.18, y: 0.42))
+        tail.addCurve(
+            to: CGPoint(x: 0.06, y: 0.64), control1: CGPoint(x: 0.18, y: 0.56), control2: CGPoint(x: 0.10, y: 0.64))
+        tail.addCurve(
+            to: CGPoint(x: 0.06, y: 0.34), control1: CGPoint(x: 0.10, y: 0.55), control2: CGPoint(x: 0.10, y: 0.43))
+        tail.addCurve(
+            to: CGPoint(x: 0.27, y: 0.49), control1: CGPoint(x: 0.10, y: 0.34), control2: CGPoint(x: 0.18, y: 0.42))
         tail.closeSubpath()
         return [body, tail]
     }
@@ -67,9 +71,12 @@ enum RemoraArt {
 
     /// Draws the fish cropped to its bounds, filling `rect`.
     static func drawCropped(in rect: CGRect, color: NSColor, context: CGContext) {
-        let scaleX = rect.width / bounds.width, scaleY = rect.height / bounds.height
-        draw(in: CGRect(x: rect.minX - bounds.minX * scaleX, y: rect.minY - bounds.minY * scaleY, width: scaleX, height: scaleY),
-             color: color, context: context)
+        let scaleX = rect.width / bounds.width
+        let scaleY = rect.height / bounds.height
+        draw(
+            in: CGRect(
+                x: rect.minX - bounds.minX * scaleX, y: rect.minY - bounds.minY * scaleY, width: scaleX, height: scaleY),
+            color: color, context: context)
     }
 
     /// The mark: the fish on a lime disc.

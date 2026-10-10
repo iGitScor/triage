@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import RemoraCore
 
 /// Same cases as Windows (`text.rs`).
@@ -26,8 +27,12 @@ struct ReadableTests {
 /// Counts take the right form in each language.
 struct PluralTests {
     @Test func oneIsSingularAndFrenchCountsZeroToo() {
-        #expect(AppLanguage.isSingular(1, french: false) && !AppLanguage.isSingular(0, french: false) && !AppLanguage.isSingular(2, french: false))
-        #expect(AppLanguage.isSingular(1, french: true) && AppLanguage.isSingular(0, french: true) && !AppLanguage.isSingular(2, french: true))
+        #expect(
+            AppLanguage.isSingular(1, french: false) && !AppLanguage.isSingular(0, french: false)
+                && !AppLanguage.isSingular(2, french: false))
+        #expect(
+            AppLanguage.isSingular(1, french: true) && AppLanguage.isSingular(0, french: true)
+                && !AppLanguage.isSingular(2, french: true))
     }
 
     @Test func theFormFollowsTheCount() {

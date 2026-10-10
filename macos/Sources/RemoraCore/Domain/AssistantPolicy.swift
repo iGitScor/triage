@@ -13,7 +13,9 @@ public struct AssistantPolicy: Equatable, Sendable {
 
     public init(excludedSources: Set<String> = [], allowedModels: [String]? = nil) {
         self.excludedSources = excludedSources
-        self.allowedModels = allowedModels.map { $0.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } }
+        self.allowedModels = allowedModels.map {
+            $0.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        }
     }
 
     /// The items the assistant may read.

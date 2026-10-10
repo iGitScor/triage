@@ -47,20 +47,30 @@ public struct ReviewPrep: Equatable, Sendable {
     /// `OAuthClient`, not in "author", and `test` is in `RetryTests.swift`, not in "latest".
     static let words: [Flag: Set<String>] = [
         .migrations: ["migration", "migrations", "migrate", "db", "schema"],
-        .auth: ["auth", "oauth", "authn", "authz", "authentication", "authorization", "login", "logout", "session",
-                "sessions", "permission", "permissions", "rbac", "sso", "saml", "jwt"],
+        .auth: [
+            "auth", "oauth", "authn", "authz", "authentication", "authorization", "login", "logout", "session",
+            "sessions", "permission", "permissions", "rbac", "sso", "saml", "jwt",
+        ],
         .personalData: ["privacy", "gdpr", "consent", "pii", "personal"],
         .infra: ["docker", "dockerfile", "terraform", "helm", "k8s", "kubernetes", "workflows", "env"],
     ]
     /// Manifests, by file name.
-    static let manifests: Set<String> = ["package.json", "go.mod", "gemfile", "requirements.txt", "podfile", "cargo.toml",
-                                         "pyproject.toml", "package.swift", "build.gradle", "pom.xml"]
+    static let manifests: Set<String> = [
+        "package.json", "go.mod", "gemfile", "requirements.txt", "podfile", "cargo.toml",
+        "pyproject.toml", "package.swift", "build.gradle", "pom.xml",
+    ]
     static let testWords: Set<String> = ["test", "tests", "spec", "specs", "testing"]
-    static let lockfiles = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "go.sum", "gemfile.lock", "podfile.lock",
-                            "cargo.lock", "poetry.lock", "package.resolved", "composer.lock", "flake.lock"]
+    static let lockfiles = [
+        "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "go.sum", "gemfile.lock", "podfile.lock",
+        "cargo.lock", "poetry.lock", "package.resolved", "composer.lock", "flake.lock",
+    ]
     /// Folders and suffixes of files nobody reviews line by line: they don't count in the estimate.
-    static let generatedFolders: Set<String> = ["dist", "build", "vendor", "node_modules", "pods", "__generated__", "generated", "__snapshots__"]
-    static let generatedSuffixes = [".min.js", ".min.css", ".map", ".snap", ".pb.go", ".g.dart", ".generated.ts", ".pbxproj", "_pb2.py"]
+    static let generatedFolders: Set<String> = [
+        "dist", "build", "vendor", "node_modules", "pods", "__generated__", "generated", "__snapshots__",
+    ]
+    static let generatedSuffixes = [
+        ".min.js", ".min.css", ".map", ".snap", ".pb.go", ".g.dart", ".generated.ts", ".pbxproj", "_pb2.py",
+    ]
 
     /// A lockfile or a generated file: shown in the count, left out of the estimate.
     static func isGenerated(_ path: String) -> Bool {
@@ -94,19 +104,21 @@ public struct ReviewPrep: Equatable, Sendable {
             size = .tiny
             estimate = 2
         } else if let lines {
-            size = switch lines {
-            case ..<20: .tiny
-            case ..<150: .small
-            case ..<500: .medium
-            default: .large
-            }
+            size =
+                switch lines {
+                case ..<20: .tiny
+                case ..<150: .small
+                case ..<500: .medium
+                default: .large
+                }
             estimate = min(60, max(2 + lines / 40, Int((Double(reviewableCount) / 3).rounded(.up))))
         } else {
-            size = switch reviewableCount {
-            case ...2: .small
-            case ...8: .medium
-            default: .large
-            }
+            size =
+                switch reviewableCount {
+                case ...2: .small
+                case ...8: .medium
+                default: .large
+                }
             estimate = min(60, 2 + reviewableCount * 2)
         }
         estimatedMinutes = max(1, Int((Double(estimate) * pace).rounded()))
@@ -140,9 +152,11 @@ public enum ReviewQueue {
     public static func order(_ items: [InboxItem], now: Date = .now) -> [InboxItem] {
         let prioritizer = Prioritizer(now: now)
         return items.sorted { a, b in
-            let pressingA = prioritizer.isPressing(a), pressingB = prioritizer.isPressing(b)
+            let pressingA = prioritizer.isPressing(a)
+            let pressingB = prioritizer.isPressing(b)
             if pressingA != pressingB { return pressingA }
-            let minutesA = minutes(a), minutesB = minutes(b)
+            let minutesA = minutes(a)
+            let minutesB = minutes(b)
             if minutesA != minutesB { return minutesA < minutesB }
             return a.date < b.date
         }
@@ -154,7 +168,8 @@ public enum ReviewQueue {
 
     /// One default for a review without a file list, wherever it is counted.
     static func minutes(_ item: InboxItem, pace: Double = 1) -> Int {
-        ReviewPrep(item, pace: pace)?.estimatedMinutes ?? max(1, Int((Double(ReviewPrep.unknownMinutes) * pace).rounded()))
+        ReviewPrep(item, pace: pace)?.estimatedMinutes
+            ?? max(1, Int((Double(ReviewPrep.unknownMinutes) * pace).rounded()))
     }
 }
 

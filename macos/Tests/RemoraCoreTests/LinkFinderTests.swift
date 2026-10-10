@@ -1,6 +1,7 @@
 import Foundation
 import NaturalLanguage
 import Testing
+
 @testable import RemoraCore
 
 struct LinkFinderTests {
@@ -20,7 +21,8 @@ struct LinkFinderTests {
     }
 
     @Test func sameToolIsNeverLinked() {
-        let a = item("1", "github", "CE-1380 part 1"), b = item("2", "github", "CE-1380 part 2")
+        let a = item("1", "github", "CE-1380 part 1")
+        let b = item("2", "github", "CE-1380 part 2")
         #expect(LinkFinder().links([a, b]).isEmpty)
     }
 
@@ -31,7 +33,9 @@ struct LinkFinderTests {
 
     @Test(.enabled(if: NLEmbedding.wordEmbedding(for: .english) != nil))
     func distinctiveWordsLinkButOrdinaryOnesDoNot() {
-        let finder = LinkFinder(similarity: [KeywordSimilarity(), RareTokenSimilarity(), EmbeddingSimilarity(threshold: 0.9)])
+        let finder = LinkFinder(similarity: [
+            KeywordSimilarity(), RareTokenSimilarity(), EmbeddingSimilarity(threshold: 0.9),
+        ])
         let axiosIssue = item("1", "linear", "Update axios to address security vulnerabilities")
         let axiosPR = item("2", "github", "chore(deps): bump axios to 1.7.4")
         let fakerIssue = item("3", "linear", "Update @faker-js/faker to address security vulnerabilities")

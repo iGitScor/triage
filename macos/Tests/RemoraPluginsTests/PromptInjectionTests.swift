@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import RemoraPlugins
 
 /// Inbox content is written by other people; the prompts treat it as data.
@@ -28,7 +29,10 @@ struct PromptInjectionTests {
     }
 
     @Test func snoozedItemsAreTaggedToo() {
-        let snoozed = SnoozedItem(item: hostile, snooze: Snooze(until: .now.addingTimeInterval(3_600), mode: .hide, fingerprint: hostile.fingerprint), times: 1)
+        let snoozed = SnoozedItem(
+            item: hostile,
+            snooze: Snooze(until: .now.addingTimeInterval(3_600), mode: .hide, fingerprint: hostile.fingerprint),
+            times: 1)
         let message = BriefPrompt.triageMessage(items: [snoozed], now: .now)
         #expect(message.hasSuffix("\n</snoozed_items>"))
         #expect(message.components(separatedBy: "</snoozed_items>").count == 2)

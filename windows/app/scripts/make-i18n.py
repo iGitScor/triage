@@ -4,6 +4,7 @@ strings the Windows app shows that have no French yet: t("…") calls in src/, a
 produce for the interface (bundle titles, badges, presets, manifests, notices, refusals, error messages, with
 `{name}` read as %@ as the interface's t() does). `--check` (CI) fails when the file is out of date or a string has
 no French."""
+
 import json
 import pathlib
 import re
@@ -14,7 +15,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 root = pathlib.Path(__file__).resolve().parent.parent
 repo = root.parent.parent
 sys.path.insert(0, str(repo / "macos" / "scripts"))
-from translations_fr import FR  # noqa: E402
+from translations_fr import FR
 
 out = root / "src" / "i18n" / "fr.json"
 check = "--check" in sys.argv
@@ -32,7 +33,7 @@ ui = re.compile(r"""\bt\(\s*(['"])((?:\\.|(?!\1).)+)\1""")
 # t(done ? 'Move to inbox' : 'Done'): every literal in a one-line call; and objects of messages marked `// t-keys`.
 ui_call = re.compile(r"\bt\(([^()\n]*)\)")
 ui_literal = re.compile(r"""(['"])((?:\\.|(?!\1).)+)\1""")
-ui_keys = re.compile(r"// t-keys\n(.*?)\n\s*\}", re.S)
+ui_keys = re.compile(r"// t-keys\n(.*?)\n\s*\}", re.DOTALL)
 rust = [
     re.compile(r'Badge::new\("[^"]*",\s*"([^"]+)"'),
     re.compile(r'\.notifying\("([^"]+)"\)'),
@@ -53,7 +54,7 @@ rust = [
     re.compile(r'context: format!\("([^"]+)"'),
     re.compile(r'unwrap_or_else\(\|\| "([^"]+)"\.into\(\)\)'),
 ]
-steps = re.compile(r'setup_steps:\s*vec!\[(.*?)\]', re.S)
+steps = re.compile(r"setup_steps:\s*vec!\[(.*?)\]", re.DOTALL)
 
 used = set()
 for file in (root / "src").rglob("*"):
@@ -82,7 +83,7 @@ if not check:
 if missing:
     print(f"{len(missing)} without French (add them to macos/scripts/translations_fr.py):")
     for key in missing:
-        print(f"    {json.dumps(key, ensure_ascii=False)}: \"\",")
+        print(f'    {json.dumps(key, ensure_ascii=False)}: "",')
     if check:
         sys.exit(1)
 elif check:

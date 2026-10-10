@@ -42,10 +42,11 @@ impl CompliancePolicy {
 /// True when `host` is one of `allowed` or a subdomain of one (never a look-alike).
 pub fn host_matches(host: &str, allowed: &[String]) -> bool {
     let host = host.to_lowercase();
-    !host.is_empty() && allowed.iter().any(|a| {
-        let a = a.to_lowercase();
-        host == a || host.ends_with(&format!(".{a}"))
-    })
+    !host.is_empty()
+        && allowed.iter().any(|a| {
+            let a = a.to_lowercase();
+            host == a || host.ends_with(&format!(".{a}"))
+        })
 }
 
 #[cfg(test)]
@@ -55,8 +56,14 @@ mod tests {
 
     fn manifest(id: &str, external_ai: bool) -> PluginManifest {
         PluginManifest {
-            id: id.into(), name: id.into(), summary: String::new(), fields: vec![], setup_steps: vec![],
-            setup_label: String::new(), setup_url: None, logo: None,
+            id: id.into(),
+            name: id.into(),
+            summary: String::new(),
+            fields: vec![],
+            setup_steps: vec![],
+            setup_label: String::new(),
+            setup_url: None,
+            logo: None,
             egress: Egress { hosts: vec![], description: "d".into(), external_ai },
         }
     }
@@ -71,7 +78,8 @@ mod tests {
 
     #[test]
     fn allow_list_restricts_sources() {
-        let policy = CompliancePolicy { allowed_plugins: Some(HashSet::from(["github".to_string()])), ..Default::default() };
+        let policy =
+            CompliancePolicy { allowed_plugins: Some(HashSet::from(["github".to_string()])), ..Default::default() };
         assert!(policy.allows(&manifest("github", false)));
         assert_eq!(policy.refusal(&manifest("slack", false)), Some("Not allowed by your privacy policy."));
     }

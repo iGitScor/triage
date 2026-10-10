@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import RemoraPlugins
 
 struct ComplianceTests {
@@ -34,7 +35,9 @@ struct ComplianceTests {
     @Test func everyPluginDeclaresWhereItsDataGoes() {
         for manifest in PluginRegistry.manifests + PluginRegistry.assistantManifests {
             #expect(!manifest.egress.description.isEmpty, "\(manifest.id)")
-            #expect(!manifest.egress.hosts.isEmpty || manifest.id == "claude-code" || manifest.id == "gitlab", "\(manifest.id) must declare hosts")
+            #expect(
+                !manifest.egress.hosts.isEmpty || manifest.id == "claude-code" || manifest.id == "gitlab",
+                "\(manifest.id) must declare hosts")
         }
     }
 
@@ -42,7 +45,8 @@ struct ComplianceTests {
         let issues = #"{"data": {"viewer": {"name": "Alice", "assignedIssues": {"nodes": []}}}}"#
         let linear = try LinearPlugin(
             config: config(["token": "lin_api_key"]),
-            http: GuardedHTTPClient(LinearStub(issues: issues, notifications: issues), allowing: LinearPlugin.manifest.egress.hosts)
+            http: GuardedHTTPClient(
+                LinearStub(issues: issues, notifications: issues), allowing: LinearPlugin.manifest.egress.hosts)
         )
         _ = try await linear.fetch()
     }

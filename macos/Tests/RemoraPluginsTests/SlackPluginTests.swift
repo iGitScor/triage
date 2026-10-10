@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import RemoraPlugins
 
 struct SlackPluginTests {
@@ -15,15 +16,18 @@ struct SlackPluginTests {
 
     /// A Google Calendar reminder, as Slack sends it. Same case as Windows.
     @Test func calendarReminderReadsInYourLanguageAndTimeZone() {
-        let text = ":loudspeaker: _1 minute until this event:_\n<!date^1791555300^{time}|4:15 PM> - <!date^1791558900^{time}|5:15 PM> "
+        let text =
+            ":loudspeaker: _1 minute until this event:_\n<!date^1791555300^{time}|4:15 PM> - <!date^1791558900^{time}|5:15 PM> "
             + "Staging Movidone *Guests:* You _(organizer)_, <mailto:lou@acme.io|Lou Martin>"
         let style = SlackDateStyle(locale: Locale(identifier: "fr_FR"), timeZone: paris, now: start)
-        #expect(SlackText.plain(text, me: "UME", style: style)
-            == "📢 1 minute until this event:\n16:15 - 17:15 Staging Movidone Guests: You (organizer), Lou Martin")
+        #expect(
+            SlackText.plain(text, me: "UME", style: style)
+                == "📢 1 minute until this event:\n16:15 - 17:15 Staging Movidone Guests: You (organizer), Lou Martin")
     }
 
     @Test func dateTokens() {
-        let style = SlackDateStyle(locale: Locale(identifier: "en_GB"), timeZone: paris, now: start.addingTimeInterval(7_200))
+        let style = SlackDateStyle(
+            locale: Locale(identifier: "en_GB"), timeZone: paris, now: start.addingTimeInterval(7_200))
         let format = { (format: String) in SlackText.formatted(self.start, format, fallback: "fallback", style: style) }
         #expect(format("{date_num} {time}") == "2026-10-09 16:15")
         #expect(format("{date_short}") == "9 Oct 2026")
@@ -31,19 +35,23 @@ struct SlackPluginTests {
         #expect(format("{date_pretty}") == "Today")
         #expect(format("{ago}") == "2 hours ago")
         #expect(format("on {nonsense}") == "fallback", "a token Slack may add later")
-        #expect(SlackText.plain("<!date^1791555300^{date_num}^https://x.io|x>", me: "", style: style) == "2026-10-09", "with a link")
-        #expect(SlackText.plain("<tel:+33100000000|Call Lou>, <!subteam^S1|@design>, <mailto:a@b.io>", me: "") == "Call Lou, @design, a@b.io")
+        #expect(
+            SlackText.plain("<!date^1791555300^{date_num}^https://x.io|x>", me: "", style: style) == "2026-10-09",
+            "with a link")
+        #expect(
+            SlackText.plain("<tel:+33100000000|Call Lou>, <!subteam^S1|@design>, <mailto:a@b.io>", me: "")
+                == "Call Lou, @design, a@b.io")
     }
 
     /// An app's reminder is over once the event starts; a person's message never expires.
     @Test func appRemindersExpireWhenTheEventStarts() async throws {
         let search = """
-        {"ok": true, "messages": {"matches": [
-          {"ts": "1791555240.0", "text": "_1 minute until this event:_ <!date^1791555300^{time}|4:15 PM> - <!date^1791558900^{time}|5:15 PM>",
-           "username": "Google Calendar", "bot_id": "B1", "channel": {"id": "D7", "is_im": true}},
-          {"ts": "1791555000.0", "text": "Shall we meet at <!date^1791555300^{time}|4:15 PM>?", "username": "carol", "channel": {"id": "D1", "is_im": true}}
-        ]}}
-        """
+            {"ok": true, "messages": {"matches": [
+              {"ts": "1791555240.0", "text": "_1 minute until this event:_ <!date^1791555300^{time}|4:15 PM> - <!date^1791558900^{time}|5:15 PM>",
+               "username": "Google Calendar", "bot_id": "B1", "channel": {"id": "D7", "is_im": true}},
+              {"ts": "1791555000.0", "text": "Shall we meet at <!date^1791555300^{time}|4:15 PM>?", "username": "carol", "channel": {"id": "D1", "is_im": true}}
+            ]}}
+            """
         let http = StubHTTP(routes: [
             "/auth.test": #"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#,
             "/search.messages": search,
@@ -63,12 +71,12 @@ struct SlackPluginTests {
 
     @Test func keepsLatestMessagePerConversation() async throws {
         let search = """
-        {"ok": true, "messages": {"matches": [
-          {"ts": "1700000100.0", "text": "second", "username": "carol", "channel": {"id": "D1", "is_im": true}},
-          {"ts": "1700000000.0", "text": "first", "username": "carol", "channel": {"id": "D1", "is_im": true}},
-          {"ts": "1700000050.0", "text": "hey <@UME>\\nmore", "username": "erin", "channel": {"id": "C1", "name": "dev"}}
-        ]}}
-        """
+            {"ok": true, "messages": {"matches": [
+              {"ts": "1700000100.0", "text": "second", "username": "carol", "channel": {"id": "D1", "is_im": true}},
+              {"ts": "1700000000.0", "text": "first", "username": "carol", "channel": {"id": "D1", "is_im": true}},
+              {"ts": "1700000050.0", "text": "hey <@UME>\\nmore", "username": "erin", "channel": {"id": "C1", "name": "dev"}}
+            ]}}
+            """
         let http = StubHTTP(routes: [
             "/auth.test": #"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme", "team_id": "T42"}"#,
             "/search.messages": search,
@@ -88,16 +96,16 @@ struct SlackPluginTests {
     /// Google Calendar's app DMs event updates with an empty `text`: the words are in attachments or blocks.
     @Test func appMessagesAreReadableAndToRead() async throws {
         let search = """
-        {"ok": true, "messages": {"matches": [
-          {"ts": "1700000300.0", "text": "", "username": "Google Calendar", "bot_id": "B1", "channel": {"id": "D7", "is_im": true},
-           "attachments": [{"fallback": "Event updated", "pretext": "Event updated", "title": "Design review", "text": "Tomorrow 10:00"}]},
-          {"ts": "1700000200.0", "text": "", "username": "Jira Cloud", "channel": {"id": "D8", "is_im": true},
-           "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": "*PAY-12* moved to Done"}},
-                      {"type": "context", "elements": [{"type": "mrkdwn", "text": "by Erin"}, {"type": "image", "image_url": "x"}]}]},
-          {"ts": "1700000100.0", "text": "", "username": "Mystery", "channel": {"id": "D9", "is_im": true}},
-          {"ts": "1700000000.0", "text": "can you look?", "username": "carol", "channel": {"id": "D1", "is_im": true}}
-        ]}}
-        """
+            {"ok": true, "messages": {"matches": [
+              {"ts": "1700000300.0", "text": "", "username": "Google Calendar", "bot_id": "B1", "channel": {"id": "D7", "is_im": true},
+               "attachments": [{"fallback": "Event updated", "pretext": "Event updated", "title": "Design review", "text": "Tomorrow 10:00"}]},
+              {"ts": "1700000200.0", "text": "", "username": "Jira Cloud", "channel": {"id": "D8", "is_im": true},
+               "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": "*PAY-12* moved to Done"}},
+                          {"type": "context", "elements": [{"type": "mrkdwn", "text": "by Erin"}, {"type": "image", "image_url": "x"}]}]},
+              {"ts": "1700000100.0", "text": "", "username": "Mystery", "channel": {"id": "D9", "is_im": true}},
+              {"ts": "1700000000.0", "text": "can you look?", "username": "carol", "channel": {"id": "D1", "is_im": true}}
+            ]}}
+            """
         let http = StubHTTP(routes: [
             "/auth.test": #"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#,
             "/search.messages": search,
@@ -132,22 +140,22 @@ struct SlackPluginTests {
     /// already a mention, and your own or older replies don't count.
     @Test func repliesInYourThreads() async throws {
         let mine = """
-        {"ok": true, "messages": {"matches": [
-          {"ts": "1700000200.0", "text": "I can take it", "channel": {"id": "C1", "name": "design"},
-           "permalink": "https://acme.slack.com/archives/C1/p1700000200?thread_ts=1700000100.0"},
-          {"ts": "1700000050.0", "text": "older one", "channel": {"id": "C1", "name": "design"},
-           "permalink": "https://acme.slack.com/archives/C1/p1700000050?thread_ts=1700000100.0"},
-          {"ts": "1700000300.0", "text": "in a DM", "channel": {"id": "D1", "is_im": true}}
-        ]}}
-        """
+            {"ok": true, "messages": {"matches": [
+              {"ts": "1700000200.0", "text": "I can take it", "channel": {"id": "C1", "name": "design"},
+               "permalink": "https://acme.slack.com/archives/C1/p1700000200?thread_ts=1700000100.0"},
+              {"ts": "1700000050.0", "text": "older one", "channel": {"id": "C1", "name": "design"},
+               "permalink": "https://acme.slack.com/archives/C1/p1700000050?thread_ts=1700000100.0"},
+              {"ts": "1700000300.0", "text": "in a DM", "channel": {"id": "D1", "is_im": true}}
+            ]}}
+            """
         let replies = """
-        {"ok": true, "messages": [
-          {"ts": "1700000100.0", "text": "Who can review the mockups?", "user": "U2"},
-          {"ts": "1700000200.0", "text": "I can take it", "user": "UME"},
-          {"ts": "1700000400.0", "text": "Great, *thanks*! Tomorrow then", "user": "U2", "user_profile": {"display_name": "erin"}},
-          {"ts": "1700000500.0", "text": "<@UME> also this", "user": "U3"}
-        ]}
-        """
+            {"ok": true, "messages": [
+              {"ts": "1700000100.0", "text": "Who can review the mockups?", "user": "U2"},
+              {"ts": "1700000200.0", "text": "I can take it", "user": "UME"},
+              {"ts": "1700000400.0", "text": "Great, *thanks*! Tomorrow then", "user": "U2", "user_profile": {"display_name": "erin"}},
+              {"ts": "1700000500.0", "text": "<@UME> also this", "user": "U3"}
+            ]}
+            """
         let http = SlackStub(mine: mine, replies: replies)
         let items = try await SlackPlugin(config: config(["token": "xoxp"]), http: http).fetch().items
         let thread = try #require(items.first { $0.context.hasPrefix("Thread") })
@@ -160,8 +168,12 @@ struct SlackPluginTests {
     }
 
     @Test func threadsWithoutTheHistoryScopeSaySo() async throws {
-        let mine = #"{"ok": true, "messages": {"matches": [{"ts": "1.0", "text": "x", "channel": {"id": "C1", "name": "a"}}]}}"#
-        let snapshot = try await SlackPlugin(config: config(["token": "xoxp"]), http: SlackStub(mine: mine, replies: #"{"ok": false, "error": "missing_scope"}"#)).fetch()
+        let mine =
+            #"{"ok": true, "messages": {"matches": [{"ts": "1.0", "text": "x", "channel": {"id": "C1", "name": "a"}}]}}"#
+        let snapshot = try await SlackPlugin(
+            config: config(["token": "xoxp"]),
+            http: SlackStub(mine: mine, replies: #"{"ok": false, "error": "missing_scope"}"#)
+        ).fetch()
         #expect(snapshot.remarks.count == 1 && snapshot.remarks[0].contains("channels:history"))
         #expect(!snapshot.items.contains { $0.context.hasPrefix("Thread") })
     }

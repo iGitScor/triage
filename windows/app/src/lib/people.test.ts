@@ -1,6 +1,8 @@
 import { describe as group, expect, it, vi } from 'vitest'
 
-vi.mock('@tauri-apps/api/core', () => ({ convertFileSrc: (path: string, protocol: string) => `${protocol}://localhost/${encodeURIComponent(path)}` }))
+vi.mock('@tauri-apps/api/core', () => ({
+  convertFileSrc: (path: string, protocol: string) => `${protocol}://localhost/${encodeURIComponent(path)}`,
+}))
 const { describe, mark, shown, avatarSrc } = await import('./people')
 
 group('reviewers on a row', () => {
@@ -18,6 +20,8 @@ group('reviewers on a row', () => {
   })
 
   it('asks Rust for avatars, never the network', () => {
-    expect(avatarSrc('https://avatars.githubusercontent.com/u/1?v=4')).toBe('avatar://localhost/https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F1%3Fv%3D4')
+    expect(avatarSrc('https://avatars.githubusercontent.com/u/1?v=4')).toBe(
+      'avatar://localhost/https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F1%3Fv%3D4',
+    )
   })
 })

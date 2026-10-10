@@ -6,8 +6,9 @@ import Foundation
 
 let arguments = CommandLine.arguments
 guard arguments.count == 2, let encoded = ProcessInfo.processInfo.environment["UPDATE_SIGNING_KEY"],
-      let raw = Data(base64Encoded: encoded.trimmingCharacters(in: .whitespacesAndNewlines)),
-      let key = try? Curve25519.Signing.PrivateKey(rawRepresentation: raw) else {
+    let raw = Data(base64Encoded: encoded.trimmingCharacters(in: .whitespacesAndNewlines)),
+    let key = try? Curve25519.Signing.PrivateKey(rawRepresentation: raw)
+else {
     FileHandle.standardError.write(Data("usage: UPDATE_SIGNING_KEY=<base64> swift sign.swift <file>\n".utf8))
     exit(1)
 }

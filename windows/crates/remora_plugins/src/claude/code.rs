@@ -21,8 +21,13 @@ pub const DEFAULT_DIGEST_MODEL: &str = "claude-haiku-5-5";
 /// The same words as the macOS app, which the shared French dictionary translates.
 pub fn manifest() -> PluginManifest {
     let field = |key: &str, label: &str| ConfigField {
-        key: key.into(), label: label.into(), placeholder: String::new(), default_value: String::new(),
-        is_secret: false, is_optional: false, help: None,
+        key: key.into(),
+        label: label.into(),
+        placeholder: String::new(),
+        default_value: String::new(),
+        is_secret: false,
+        is_optional: false,
+        help: None,
     };
     PluginManifest {
         id: ID.into(),
@@ -59,10 +64,12 @@ pub fn manifest() -> PluginManifest {
 
 // Errors, as the macOS app words them, for Windows: a terminal, `where.exe`, and the Windows trust rule.
 const COULDNT_FIND: &str = "Couldn’t find Claude Code. Install it with Anthropic’s installer, or enter the path to claude (run `where.exe claude` in a terminal).";
-const NOT_TRUSTED: &str = "Remora only runs a program named claude.exe or claude.cmd from a folder on this computer, which %@ isn’t.";
+const NOT_TRUSTED: &str =
+    "Remora only runs a program named claude.exe or claude.cmd from a folder on this computer, which %@ isn’t.";
 const NO_PROGRAM: &str = "There is no program at %@. Run `where.exe claude` in a terminal and paste the path it shows.";
 const NOT_CLAUDE_CODE: &str = "%@ isn’t Claude Code. Run `where.exe claude` in a terminal and paste the path it shows.";
-const UNEXPECTED: &str = "Claude Code returned an unexpected answer. Run `claude` in a terminal to check it’s signed in.";
+const UNEXPECTED: &str =
+    "Claude Code returned an unexpected answer. Run `claude` in a terminal to check it’s signed in.";
 const NEEDS_NODE: &str = "Claude Code needs Node.js, which Remora can’t find. Reinstall Claude Code with Anthropic’s installer, which doesn’t need Node.js, or enter the path to claude.";
 const NOT_SIGNED_IN: &str = "Claude Code isn’t signed in. Run `claude` in a terminal once to sign in.";
 const FAILED: &str = "Claude Code: %@";
@@ -103,7 +110,9 @@ impl SearchEnv {
     /// install, npm's global folder, Volta, Bun, Scoop and mise, the Node.js that nvm-windows or Node's own installer
     /// made active, then the user's PATH (a tray app gets the full one, unlike a Mac app opened from the Dock).
     pub fn windows_folders(&self) -> Vec<PathBuf> {
-        let under = |base: &Option<PathBuf>, path: &str| base.as_ref().map(|b| path.split('/').fold(b.clone(), |p, part| p.join(part)));
+        let under = |base: &Option<PathBuf>, path: &str| {
+            base.as_ref().map(|b| path.split('/').fold(b.clone(), |p, part| p.join(part)))
+        };
         let mut folders: Vec<PathBuf> = [
             under(&self.home, ".local/bin"),
             under(&self.home, ".claude/local"),
@@ -127,12 +136,19 @@ impl SearchEnv {
     /// The macOS app's list, for running the tests and the app on a Mac or Linux: Anthropic's installer and its
     /// older local install, Homebrew, npm's user prefix, volta, bun, mise, asdf, then nvm's folders newest first.
     pub fn unix_folders(&self) -> Vec<PathBuf> {
-        let Some(home) = &self.home else { return vec![PathBuf::from("/opt/homebrew/bin"), PathBuf::from("/usr/local/bin")] };
+        let Some(home) = &self.home else {
+            return vec![PathBuf::from("/opt/homebrew/bin"), PathBuf::from("/usr/local/bin")];
+        };
         let mut folders = vec![
-            home.join(".local/bin"), home.join(".claude/local"),
-            PathBuf::from("/opt/homebrew/bin"), PathBuf::from("/usr/local/bin"),
-            home.join(".npm-global/bin"), home.join(".volta/bin"), home.join(".bun/bin"),
-            home.join(".local/share/mise/shims"), home.join(".asdf/shims"),
+            home.join(".local/bin"),
+            home.join(".claude/local"),
+            PathBuf::from("/opt/homebrew/bin"),
+            PathBuf::from("/usr/local/bin"),
+            home.join(".npm-global/bin"),
+            home.join(".volta/bin"),
+            home.join(".bun/bin"),
+            home.join(".local/share/mise/shims"),
+            home.join(".asdf/shims"),
         ];
         folders.extend(nvm_folders(home));
         folders
@@ -151,7 +167,8 @@ pub fn nvm_folders(home: &Path) -> Vec<PathBuf> {
     let mut versions: Vec<String> = std::fs::read_dir(&root)
         .map(|entries| entries.filter_map(|e| e.ok()?.file_name().into_string().ok()).collect())
         .unwrap_or_default();
-    let numbers = |v: &str| v.trim_start_matches('v').split('.').map(|n| n.parse::<u64>().unwrap_or(0)).collect::<Vec<_>>();
+    let numbers =
+        |v: &str| v.trim_start_matches('v').split('.').map(|n| n.parse::<u64>().unwrap_or(0)).collect::<Vec<_>>();
     versions.sort_by_key(|v| std::cmp::Reverse(numbers(v)));
     versions.into_iter().map(|v| root.join(v).join("bin")).collect()
 }
@@ -160,7 +177,9 @@ pub fn nvm_folders(home: &Path) -> Vec<PathBuf> {
 fn expand(configured: &str, home: Option<&Path>) -> PathBuf {
     let raw = configured.trim().trim_matches('"');
     match (raw.strip_prefix('~'), home) {
-        (Some(rest), Some(home)) if rest.is_empty() || rest.starts_with(['/', '\\']) => home.join(rest.trim_start_matches(['/', '\\'])),
+        (Some(rest), Some(home)) if rest.is_empty() || rest.starts_with(['/', '\\']) => {
+            home.join(rest.trim_start_matches(['/', '\\']))
+        }
         _ => PathBuf::from(raw),
     }
 }
@@ -172,7 +191,8 @@ pub fn locate(configured: &str) -> Option<PathBuf> {
 }
 
 pub fn locate_in(configured: &str, env: &SearchEnv) -> Option<PathBuf> {
-    let candidates = if configured.trim().is_empty() { env.candidates() } else { vec![expand(configured, env.home.as_deref())] };
+    let candidates =
+        if configured.trim().is_empty() { env.candidates() } else { vec![expand(configured, env.home.as_deref())] };
     candidates.into_iter().find(|p| is_trustworthy(p))
 }
 
@@ -208,7 +228,10 @@ fn only_you_can_change(path: &Path) -> bool {
     let Ok(real) = std::fs::canonicalize(path) else { return false };
     // SAFETY: getuid has no preconditions and cannot fail.
     let me = unsafe { libc::getuid() };
-    let safe = |p: Option<&Path>| p.and_then(|p| std::fs::metadata(p).ok()).is_some_and(|m| (m.uid() == me || m.uid() == 0) && m.mode() & 0o002 == 0);
+    let safe = |p: Option<&Path>| {
+        p.and_then(|p| std::fs::metadata(p).ok())
+            .is_some_and(|m| (m.uid() == me || m.uid() == 0) && m.mode() & 0o002 == 0)
+    };
     safe(Some(&real)) && safe(real.parent()) && safe(path.parent())
 }
 
@@ -251,7 +274,9 @@ pub async fn is_claude_code(executable: &Path, runner: &dyn CommandRunner) -> bo
         }
     }
     let environment = environment(executable, &std::env::vars().collect());
-    let Ok(output) = runner.run(executable, &["--version".into()], Some(&environment), None).await else { return false };
+    let Ok(output) = runner.run(executable, &["--version".into()], Some(&environment), None).await else {
+        return false;
+    };
     if !String::from_utf8_lossy(&output).contains("(Claude Code)") {
         return false;
     }
@@ -268,12 +293,16 @@ pub fn environment(executable: &Path, base: &HashMap<String, String>) -> HashMap
     let key = base.keys().find(|k| k.eq_ignore_ascii_case("PATH")).cloned().unwrap_or_else(|| String::from("PATH"));
     let default = if cfg!(windows) { "" } else { "/usr/bin:/bin:/usr/sbin:/sbin" };
     let current = base.get(&key).map(String::as_str).unwrap_or(default);
-    let mut folders: Vec<PathBuf> = [executable.parent().map(Path::to_path_buf), std::fs::canonicalize(executable).ok().and_then(|r| r.parent().map(|p| plain(p.to_path_buf())))]
-        .into_iter()
-        .flatten()
-        .collect();
+    let mut folders: Vec<PathBuf> = [
+        executable.parent().map(Path::to_path_buf),
+        std::fs::canonicalize(executable).ok().and_then(|r| r.parent().map(|p| plain(p.to_path_buf()))),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
     if cfg!(windows) {
-        let program_files = base.iter().find(|(k, _)| k.eq_ignore_ascii_case("ProgramFiles")).map(|(_, v)| PathBuf::from(v));
+        let program_files =
+            base.iter().find(|(k, _)| k.eq_ignore_ascii_case("ProgramFiles")).map(|(_, v)| PathBuf::from(v));
         folders.extend(program_files.map(|p| p.join("nodejs")));
     } else {
         folders.extend([PathBuf::from("/opt/homebrew/bin"), PathBuf::from("/usr/local/bin")]);
@@ -298,8 +327,17 @@ pub struct Command {
 /// the inbox in it, goes on standard input; the command line only holds Remora's own fixed instructions.
 pub fn command(message: &str, system: &str, schema: &Schema, model: &str) -> Command {
     let mut arguments: Vec<String> = [
-        "--print", "--safe-mode", "--output-format", "json", "--no-session-persistence", "--tools", "",
-        "--system-prompt", system, "--json-schema", &schema.json(),
+        "--print",
+        "--safe-mode",
+        "--output-format",
+        "json",
+        "--no-session-persistence",
+        "--tools",
+        "",
+        "--system-prompt",
+        system,
+        "--json-schema",
+        &schema.json(),
     ]
     .iter()
     .map(|s| s.to_string())
@@ -340,7 +378,10 @@ pub fn parse(data: &[u8], known_ids: &HashSet<String>) -> Result<Brief, PluginEr
 pub fn explain(message: &str) -> PluginError {
     let lowered = message.to_lowercase();
     // "env: node" (macOS), "'node' is not recognized" (Windows' cmd.exe running npm's claude.cmd).
-    if ["env: node", "node: no such file", "node: command not found", "'node' is not recognized"].iter().any(|s| lowered.contains(s)) {
+    if ["env: node", "node: no such file", "node: command not found", "'node' is not recognized"]
+        .iter()
+        .any(|s| lowered.contains(s))
+    {
         return PluginError::Api(NEEDS_NODE.into());
     }
     if ["not logged in", "/login", "please log in"].iter().any(|s| lowered.contains(s)) {
@@ -363,8 +404,15 @@ impl ClaudeCodePlugin {
     }
 
     pub fn with_runner(config: &PluginConfig, language: &str, runner: Arc<dyn CommandRunner>) -> Self {
-        let digest_model = Some(config.get("digestModel")).filter(|m| !m.is_empty()).unwrap_or_else(|| DEFAULT_DIGEST_MODEL.into());
-        ClaudeCodePlugin { path: config.get("path"), model: config.get("model"), digest_model, language: language.into(), runner }
+        let digest_model =
+            Some(config.get("digestModel")).filter(|m| !m.is_empty()).unwrap_or_else(|| DEFAULT_DIGEST_MODEL.into());
+        ClaudeCodePlugin {
+            path: config.get("path"),
+            model: config.get("model"),
+            digest_model,
+            language: language.into(),
+            runner,
+        }
     }
 
     async fn run(&self, command: Command) -> Result<Vec<u8>, PluginError> {
@@ -383,27 +431,40 @@ impl ClaudeCodePlugin {
             return Err(PluginError::Api(NOT_CLAUDE_CODE.replace("%@", &executable.display().to_string())));
         }
         let environment = environment(&executable, &std::env::vars().collect());
-        self.runner.run(&executable, &command.arguments, Some(&environment), Some(&command.input)).await.map_err(|error| match error {
-            CommandError::Failed(_, message) => explain(&message),
-            other => PluginError::Api(other.to_string()),
-        })
+        self.runner.run(&executable, &command.arguments, Some(&environment), Some(&command.input)).await.map_err(
+            |error| match error {
+                CommandError::Failed(_, message) => explain(&message),
+                other => PluginError::Api(other.to_string()),
+            },
+        )
     }
 }
 
 #[async_trait]
 impl AssistantPlugin for ClaudeCodePlugin {
     async fn brief(&self, items: &[InboxItem], now: DateTime<Utc>) -> Result<Brief, PluginError> {
-        let command = command(&prompt::message(items, now), &prompt::system(&self.language), &Schema::brief(), &self.model);
+        let command =
+            command(&prompt::message(items, now), &prompt::system(&self.language), &Schema::brief(), &self.model);
         parse(&self.run(command).await?, &prompt::ids(items))
     }
 
     async fn digest(&self, items: &[InboxItem], topic: &str, now: DateTime<Utc>) -> Result<String, PluginError> {
-        let command = command(&prompt::digest_message(items, topic, now), &prompt::digest_system(&self.language), &Schema::digest(), &self.digest_model);
+        let command = command(
+            &prompt::digest_message(items, topic, now),
+            &prompt::digest_system(&self.language),
+            &Schema::digest(),
+            &self.digest_model,
+        );
         decode::<prompt::DigestOutput>(&self.run(command).await?).map(|o| o.summary)
     }
 
     async fn triage(&self, items: &[SnoozedItem], now: DateTime<Utc>) -> Result<Vec<TriageSuggestion>, PluginError> {
-        let command = command(&prompt::triage_message(items, now), &prompt::triage_system(&self.language), &Schema::triage(), &self.model);
+        let command = command(
+            &prompt::triage_message(items, now),
+            &prompt::triage_system(&self.language),
+            &Schema::triage(),
+            &self.model,
+        );
         let output: prompt::TriageOutput = decode(&self.run(command).await?)?;
         Ok(output.suggestions(&prompt::snoozed_ids(items), now))
     }
@@ -451,15 +512,24 @@ mod tests {
     #[test]
     fn surfaces_cli_errors() {
         let json = r#"{"type": "result", "is_error": true, "result": "Not logged in"}"#;
-        assert_eq!(parse(json.as_bytes(), &HashSet::new()).err(), Some(PluginError::Api("Claude Code: Not logged in".into())));
-        assert_eq!(parse(br#"{"is_error": true}"#, &HashSet::new()).err(), Some(PluginError::Api("Claude Code: the request failed.".into())));
+        assert_eq!(
+            parse(json.as_bytes(), &HashSet::new()).err(),
+            Some(PluginError::Api("Claude Code: Not logged in".into()))
+        );
+        assert_eq!(
+            parse(br#"{"is_error": true}"#, &HashSet::new()).err(),
+            Some(PluginError::Api("Claude Code: the request failed.".into()))
+        );
         assert_eq!(parse(b"Segmentation fault", &HashSet::new()).err(), Some(PluginError::Api(UNEXPECTED.into())));
     }
 
     #[tokio::test]
     async fn digest_uses_the_lighter_model_and_the_inbox_goes_on_stdin() {
-        let runner = RecordingRunner::new(r#"{"is_error": false, "structured_output": {"summary": "Two reviews wait; one is blocking."}}"#);
-        let summary = plugin(&fake_claude(), &runner).digest(&[item("a"), item("a")], "To review", now()).await.unwrap();
+        let runner = RecordingRunner::new(
+            r#"{"is_error": false, "structured_output": {"summary": "Two reviews wait; one is blocking."}}"#,
+        );
+        let summary =
+            plugin(&fake_claude(), &runner).digest(&[item("a"), item("a")], "To review", now()).await.unwrap();
         assert_eq!(summary, "Two reviews wait; one is blocking.");
         let arguments = runner.arguments();
         assert_eq!(after(&arguments, "--model"), "claude-haiku-5-5");
@@ -472,7 +542,9 @@ mod tests {
 
     #[tokio::test]
     async fn the_brief_drops_unknown_items() {
-        let runner = RecordingRunner::new(r#"{"is_error": false, "structured_output": {"summary": "s", "focus": [{"id": "a", "reason": "r"}, {"id": "ghost", "reason": "?"}]}}"#);
+        let runner = RecordingRunner::new(
+            r#"{"is_error": false, "structured_output": {"summary": "s", "focus": [{"id": "a", "reason": "r"}, {"id": "ghost", "reason": "?"}]}}"#,
+        );
         let brief = plugin(&fake_claude(), &runner).brief(&[item("a")], now()).await.unwrap();
         assert_eq!(brief.focus.len(), 1);
         assert!(runner.input().contains("<inbox_items>"));
@@ -494,7 +566,10 @@ mod tests {
         let items: Vec<SnoozedItem> = ["a", "b", "c", "d"].iter().map(|id| snoozed(item(id), 3)).collect();
         let suggestions = plugin(&fake_claude(), &runner).triage(&items, now()).await.unwrap();
         assert_eq!(suggestions.iter().map(|s| s.id.as_str()).collect::<Vec<_>>(), ["a", "b"]);
-        assert_eq!((suggestions[0].action, suggestions[0].until), (TriageAction::Reschedule, prompt::parse_iso8601(&later)));
+        assert_eq!(
+            (suggestions[0].action, suggestions[0].until),
+            (TriageAction::Reschedule, prompt::parse_iso8601(&later))
+        );
         assert_eq!((suggestions[1].action, suggestions[1].until), (TriageAction::Done, None));
         let message = runner.input();
         assert!(message.contains(r#""timesSnoozed":3"#) && message.contains(r#""reason":"motivation""#), "{message}");
@@ -558,7 +633,10 @@ mod tests {
         for version in ["v9.11.2", "v22.12.0", "v18.20.4"] {
             std::fs::create_dir_all(home.join(".nvm/versions/node").join(version).join("bin")).unwrap();
         }
-        let versions: Vec<String> = nvm_folders(&home).iter().map(|p| p.parent().unwrap().file_name().unwrap().to_string_lossy().into_owned()).collect();
+        let versions: Vec<String> = nvm_folders(&home)
+            .iter()
+            .map(|p| p.parent().unwrap().file_name().unwrap().to_string_lossy().into_owned())
+            .collect();
         std::fs::remove_dir_all(&home).unwrap();
         assert_eq!(versions, ["v22.12.0", "v18.20.4", "v9.11.2"]);
     }
@@ -629,7 +707,10 @@ mod tests {
         let runner = RecordingRunner::with_version("{}", "echo 1.0");
         let impostor = crate::claude::testing::make_program(PROGRAM_NAMES[0], 0o755, 0o755);
         let result = plugin(&impostor, &runner).digest(&[item("a")], "x", now()).await;
-        assert_eq!(result.err(), Some(PluginError::Api(NOT_CLAUDE_CODE.replace("%@", &impostor.display().to_string()))));
+        assert_eq!(
+            result.err(),
+            Some(PluginError::Api(NOT_CLAUDE_CODE.replace("%@", &impostor.display().to_string())))
+        );
         assert!(runner.arguments().is_empty(), "no inbox content was passed");
         assert!(runner.input().is_empty());
     }
@@ -645,7 +726,10 @@ mod tests {
     #[test]
     fn failures_are_explained() {
         assert_eq!(explain("env: node: No such file or directory"), PluginError::Api(NEEDS_NODE.into()));
-        assert_eq!(explain("'node' is not recognized as an internal or external command"), PluginError::Api(NEEDS_NODE.into()));
+        assert_eq!(
+            explain("'node' is not recognized as an internal or external command"),
+            PluginError::Api(NEEDS_NODE.into())
+        );
         assert_eq!(explain("Invalid API key · Please run /login"), PluginError::Api(NOT_SIGNED_IN.into()));
         assert_eq!(explain("Error: rate limited"), PluginError::Api("Claude Code: Error: rate limited".into()));
         assert_eq!(explain(""), PluginError::Api("Claude Code: the request failed.".into()));
@@ -663,7 +747,10 @@ mod tests {
         let manifest = manifest();
         assert_eq!(manifest.id, "claude-code");
         assert!(manifest.egress.external_ai && manifest.egress.hosts.is_empty());
-        assert_eq!(manifest.fields.iter().map(|f| f.key.as_str()).collect::<Vec<_>>(), ["path", "model", "digestModel"]);
+        assert_eq!(
+            manifest.fields.iter().map(|f| f.key.as_str()).collect::<Vec<_>>(),
+            ["path", "model", "digestModel"]
+        );
         assert_eq!(manifest.fields[2].default_value, "claude-haiku-5-5");
         assert!(manifest.fields[0].is_optional && manifest.fields[1].is_optional && !manifest.fields[2].is_optional);
     }

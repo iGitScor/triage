@@ -48,7 +48,8 @@ struct LiveUpdateSystem: UpdateSystem {
         let folder = current.deletingLastPathComponent()
         // A translocated copy (run from Downloads or the disk image) or a folder we can't write: never half-replace.
         guard current.pathExtension == "app", !current.path.contains("/AppTranslocation/"),
-              FileManager.default.isWritableFile(atPath: folder.path) else {
+            FileManager.default.isWritableFile(atPath: folder.path)
+        else {
             throw UpdateError.cannotReplace(folder.path)
         }
 
@@ -56,11 +57,14 @@ struct LiveUpdateSystem: UpdateSystem {
         try FileManager.default.createDirectory(at: mount, withIntermediateDirectories: true)
         let hdiutil = URL(fileURLWithPath: "/usr/bin/hdiutil")
         let runner = ProcessCommandRunner(timeout: 120)
-        _ = try await runner.run(hdiutil, arguments: ["attach", "-nobrowse", "-readonly", "-noautoopen", "-mountpoint", mount.path, dmg.path])
+        _ = try await runner.run(
+            hdiutil,
+            arguments: ["attach", "-nobrowse", "-readonly", "-noautoopen", "-mountpoint", mount.path, dmg.path])
         let staging: URL
         do {
             // On the app's own volume, so the swap below is a rename, not a copy.
-            let replacement = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: current, create: true)
+            let replacement = try FileManager.default.url(
+                for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: current, create: true)
             staging = replacement.appending(path: "Remora.app")
             try FileManager.default.copyItem(at: mount.appending(path: "Remora.app"), to: staging)
         } catch {
@@ -84,28 +88,35 @@ struct LiveUpdateSystem: UpdateSystem {
     static func verify(_ app: URL, version: AppVersion) throws {
         let info = NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist")) as? [String: Any] ?? [:]
         guard info["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier else { throw UpdateError.wrongApp }
-        guard (info["CFBundleShortVersionString"] as? String).flatMap(AppVersion.init) == version else { throw UpdateError.wrongVersion }
+        guard (info["CFBundleShortVersionString"] as? String).flatMap(AppVersion.init) == version else {
+            throw UpdateError.wrongVersion
+        }
 
         var running: SecCode?
         var runningStatic: SecStaticCode?
         var requirement: SecRequirement?
         var staticCode: SecStaticCode?
         guard SecCodeCopySelf([], &running) == errSecSuccess, let running,
-              SecCodeCopyStaticCode(running, [], &runningStatic) == errSecSuccess, let runningStatic,
-              SecCodeCopyDesignatedRequirement(runningStatic, [], &requirement) == errSecSuccess, let requirement,
-              SecStaticCodeCreateWithPath(app as CFURL, [], &staticCode) == errSecSuccess, let staticCode else {
+            SecCodeCopyStaticCode(running, [], &runningStatic) == errSecSuccess, let runningStatic,
+            SecCodeCopyDesignatedRequirement(runningStatic, [], &requirement) == errSecSuccess, let requirement,
+            SecStaticCodeCreateWithPath(app as CFURL, [], &staticCode) == errSecSuccess, let staticCode
+        else {
             throw UpdateError.notSameDeveloper
         }
         let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSStrictValidate | kSecCSCheckNestedCode)
-        guard SecStaticCodeCheckValidity(staticCode, flags, requirement) == errSecSuccess else { throw UpdateError.notSameDeveloper }
+        guard SecStaticCodeCheckValidity(staticCode, flags, requirement) == errSecSuccess else {
+            throw UpdateError.notSameDeveloper
+        }
     }
 
     /// Quits, and a small shell waits for this process to end before opening the new app.
     func relaunch() {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", "while kill -0 \"$1\" 2>/dev/null; do sleep 0.2; done; /usr/bin/open \"$2\"",
-                             "sh", String(ProcessInfo.processInfo.processIdentifier), Bundle.main.bundleURL.path]
+        process.arguments = [
+            "-c", "while kill -0 \"$1\" 2>/dev/null; do sleep 0.2; done; /usr/bin/open \"$2\"",
+            "sh", String(ProcessInfo.processInfo.processIdentifier), Bundle.main.bundleURL.path,
+        ]
         try? process.run()
         NSApp.terminate(nil)
     }

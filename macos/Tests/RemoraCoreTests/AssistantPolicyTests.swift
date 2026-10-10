@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import RemoraCore
 
 /// Sources kept away from the assistant, and models limited by the organization.
@@ -22,7 +23,8 @@ struct AssistantPolicyTests {
         let settings = policy.constrained(["model": "", "token": "k"], defaults: defaults)
         #expect(settings["model"] == "claude-sonnet-5-5")
         #expect(settings["digestModel"] == nil, "empty means Haiku, which is allowed: left as is")
-        #expect(policy.constrained(["model": "claude-opus-5-5", "digestModel": "claude-haiku-5-5"], defaults: defaults)
+        #expect(
+            policy.constrained(["model": "claude-opus-5-5", "digestModel": "claude-haiku-5-5"], defaults: defaults)
                 == ["model": "claude-sonnet-5-5", "digestModel": "claude-haiku-5-5"])
         #expect(settings["token"] == "k")
         // Claude Code's empty model means its own default, which nobody can vouch for: it becomes the first allowed.

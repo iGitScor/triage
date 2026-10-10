@@ -1,11 +1,13 @@
 import Foundation
-import Testing
 import RemoraCore
+import Testing
+
 @testable import RemoraPlugins
 
 struct ClaudePluginTests {
-    let item = InboxItem(id: "a", accountID: UUID(), pluginID: "github", bundle: .reviews,
-                         title: "Fix login", context: "acme/app #9", date: .now)
+    let item = InboxItem(
+        id: "a", accountID: UUID(), pluginID: "github", bundle: .reviews,
+        title: "Fix login", context: "acme/app #9", date: .now)
 
     @Test func requestUsesStructuredOutputAndFallbacks() throws {
         let body = ClaudePlugin.body(items: [item], model: "claude-opus-5-5", now: .now)
@@ -17,8 +19,12 @@ struct ClaudePluginTests {
     }
 
     @Test func parsesBriefAndDropsUnknownItems() async throws {
-        let text = #"{\"summary\": \"One review waits.\", \"focus\": [{\"id\": \"a\", \"reason\": \"Blocks Frank\"}, {\"id\": \"ghost\", \"reason\": \"?\"}]}"#
-        let http = StubHTTP(routes: ["/v1/messages": #"{"content": [{"type": "thinking"}, {"type": "text", "text": "\#(text)"}], "stop_reason": "end_turn"}"#])
+        let text =
+            #"{\"summary\": \"One review waits.\", \"focus\": [{\"id\": \"a\", \"reason\": \"Blocks Frank\"}, {\"id\": \"ghost\", \"reason\": \"?\"}]}"#
+        let http = StubHTTP(routes: [
+            "/v1/messages":
+                #"{"content": [{"type": "thinking"}, {"type": "text", "text": "\#(text)"}], "stop_reason": "end_turn"}"#
+        ])
         let brief = try await ClaudePlugin(config: config(["token": "k"]), http: http).brief([item], now: .now)
         #expect(brief.summary == "One review waits.")
         #expect(brief.focus == [Brief.Focus(id: "a", reason: "Blocks Frank")])
@@ -43,7 +49,10 @@ struct ClaudePluginTests {
     }
 
     @Test func aCutOffAnswerSaysSo() async throws {
-        let http = StubHTTP(routes: ["/v1/messages": #"{"content": [{"type": "text", "text": "{\"summary\": \"One rev"}], "stop_reason": "max_tokens"}"#])
+        let http = StubHTTP(routes: [
+            "/v1/messages":
+                #"{"content": [{"type": "text", "text": "{\"summary\": \"One rev"}], "stop_reason": "max_tokens"}"#
+        ])
         await #expect(throws: HTTPError.api(L("Claude’s answer was cut off. Try again, or with fewer items."))) {
             try await ClaudePlugin(config: config(["token": "k"]), http: http).brief([item], now: .now)
         }

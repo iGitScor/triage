@@ -1,45 +1,49 @@
 <script lang="ts">
-  // Claude's proposal for each snoozed item: nothing changes until you tick and apply.
-  import { api, type AssistantView, type Item, type TriageSuggestion } from './api'
-  import { selection } from './assistant'
-  import { t, translateMessage } from './i18n'
-  import { when } from './time'
+// Claude's proposal for each snoozed item: nothing changes until you tick and apply.
+import { api, type AssistantView, type Item, type TriageSuggestion } from './api'
+import { selection } from './assistant'
+import { t, translateMessage } from './i18n'
+import { when } from './time'
 
-  let { assistant, items }: { assistant: AssistantView; items: Item[] } = $props()
-  let toggled: Set<string> = $state(new Set())
-  let busy = $state(false)
-  let error = $state('')
-  const byId = $derived(new Map(items.map((i) => [i.id, i])))
-  const selected = $derived(selection(assistant.triage, toggled))
+let { assistant, items }: { assistant: AssistantView; items: Item[] } = $props()
+let toggled: Set<string> = $state(new Set())
+let busy = $state(false)
+let error = $state('')
+const byId = $derived(new Map(items.map((i) => [i.id, i])))
+const selected = $derived(selection(assistant.triage, toggled))
 
-  function label(s: TriageSuggestion): string {
-    switch (s.action) {
-      case 'keep': return t('Keep')
-      case 'reschedule': return t('Move to %@', s.until ? when(s.until) : '')
-      case 'done': return t('Let it go')
-      case 'now': return t('Do it now')
-    }
+function label(s: TriageSuggestion): string {
+  switch (s.action) {
+    case 'keep':
+      return t('Keep')
+    case 'reschedule':
+      return t('Move to %@', s.until ? when(s.until) : '')
+    case 'done':
+      return t('Let it go')
+    case 'now':
+      return t('Do it now')
   }
+}
 
-  function toggle(s: TriageSuggestion) {
-    if (s.action === 'keep') return
-    const next = new Set(toggled)
-    if (next.has(s.id)) next.delete(s.id)
-    else next.add(s.id)
-    toggled = next
-  }
+function toggle(s: TriageSuggestion) {
+  if (s.action === 'keep') return
+  const next = new Set(toggled)
+  if (next.has(s.id)) next.delete(s.id)
+  else next.add(s.id)
+  toggled = next
+}
 
-  async function ask() {
-    busy = true
-    error = ''
-    try {
-      await api.triage()
-    } catch (e) {
-      error = translateMessage(e instanceof Error ? e.message : String(e))
-    } finally {
-      busy = false
-    }
+async function ask() {
+  busy = true
+  error = ''
+  try {
+    await api.triage()
+  } catch (e) {
+    error = translateMessage(e instanceof Error ? e.message : String(e))
+  } finally {
+    busy = false
   }
+}
 </script>
 
 <section class="triage" aria-label={t('Triage')}>

@@ -20,7 +20,8 @@ public enum FailureKind: Equatable, Sendable {
             self = .rateLimited
         case let error as URLError:
             switch error.code {
-            case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff, .callIsActive:
+            case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff,
+                .callIsActive:
                 self = .offline
             case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed, .timedOut, .secureConnectionFailed:
                 self = .unreachable
@@ -47,11 +48,12 @@ public struct SourceFailure: Equatable, Sendable {
         let kind = FailureKind(error)
         self.kind = kind
         // The system's wording for a network failure is long and technical; these say what it means here.
-        message = switch kind {
-        case .offline: L("Offline: Remora tries again when the connection is back.")
-        case .unreachable: L("Can’t reach the server. Check the address, or your VPN if it needs one.")
-        default: error.localizedDescription
-        }
+        message =
+            switch kind {
+            case .offline: L("Offline: Remora tries again when the connection is back.")
+            case .unreachable: L("Can’t reach the server. Check the address, or your VPN if it needs one.")
+            default: error.localizedDescription
+            }
     }
 }
 

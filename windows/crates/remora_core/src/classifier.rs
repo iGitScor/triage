@@ -25,8 +25,10 @@ static NOT_PROSE: LazyLock<Regex> =
 static QUESTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"\?+["'”’)\]]*(\s|$)"#).expect("valid pattern"));
 static REQUEST_WORDS: LazyLock<Regex> = LazyLock::new(|| word_pattern(KeywordIntentClassifier::REQUESTS));
 static INFO_WORDS: LazyLock<Regex> = LazyLock::new(|| word_pattern(KeywordIntentClassifier::INFOS));
-static NO_REPLY_WORDS: LazyLock<Regex> = LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NO_REPLY)));
-static NOT_URGENT_WORDS: LazyLock<Regex> = LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NOT_URGENT)));
+static NO_REPLY_WORDS: LazyLock<Regex> =
+    LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NO_REPLY)));
+static NOT_URGENT_WORDS: LazyLock<Regex> =
+    LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NOT_URGENT)));
 
 /// Each phrase with a straight and a curly apostrophe, as people type both.
 fn with_apostrophes(phrases: &[&str]) -> Vec<String> {
@@ -45,30 +47,101 @@ fn word_pattern<S: AsRef<str>>(keywords: &[S]) -> Regex {
 
 impl KeywordIntentClassifier {
     const REQUESTS: &'static [&'static str] = &[
-        "can you", "could you", "would you", "will you", "please", "pls", "plz", "let me know", "lmk",
-        "what do you think", "thoughts", "your opinion", "need you", "waiting for you", "asap", "urgent",
-        "peux-tu", "pourrais-tu", "tu peux", "tu pourrais", "pouvez-vous", "pourriez-vous", "vous pouvez",
-        "merci de", "stp", "svp", "s'il te plaît", "s’il te plaît", "s'il vous plaît", "est-ce que",
-        "qu'en penses", "qu’en penses", "dis-moi", "dites-moi", "ton avis", "votre avis", "besoin de toi",
+        "can you",
+        "could you",
+        "would you",
+        "will you",
+        "please",
+        "pls",
+        "plz",
+        "let me know",
+        "lmk",
+        "what do you think",
+        "thoughts",
+        "your opinion",
+        "need you",
+        "waiting for you",
+        "asap",
+        "urgent",
+        "peux-tu",
+        "pourrais-tu",
+        "tu peux",
+        "tu pourrais",
+        "pouvez-vous",
+        "pourriez-vous",
+        "vous pouvez",
+        "merci de",
+        "stp",
+        "svp",
+        "s'il te plaît",
+        "s’il te plaît",
+        "s'il vous plaît",
+        "est-ce que",
+        "qu'en penses",
+        "qu’en penses",
+        "dis-moi",
+        "dites-moi",
+        "ton avis",
+        "votre avis",
+        "besoin de toi",
     ];
     /// Says that nothing is expected: information, and taken out before looking for requests.
     const NO_REPLY: &'static [&'static str] = &[
-        "no need to reply", "no need to answer", "no need to respond", "no need to do anything", "no reply needed",
-        "no response needed", "no reply necessary", "no action needed", "no action required", "nothing to do",
-        "you don't need to reply", "you don't have to reply", "don't need to reply", "no need for a reply",
-        "pas besoin de répondre", "pas besoin de me répondre", "pas besoin de réponse", "inutile de répondre",
-        "pas la peine de répondre", "aucune action requise", "aucune action nécessaire", "rien à faire",
-        "tu n'as pas besoin de répondre", "vous n'avez pas besoin de répondre",
+        "no need to reply",
+        "no need to answer",
+        "no need to respond",
+        "no need to do anything",
+        "no reply needed",
+        "no response needed",
+        "no reply necessary",
+        "no action needed",
+        "no action required",
+        "nothing to do",
+        "you don't need to reply",
+        "you don't have to reply",
+        "don't need to reply",
+        "no need for a reply",
+        "pas besoin de répondre",
+        "pas besoin de me répondre",
+        "pas besoin de réponse",
+        "inutile de répondre",
+        "pas la peine de répondre",
+        "aucune action requise",
+        "aucune action nécessaire",
+        "rien à faire",
+        "tu n'as pas besoin de répondre",
+        "vous n'avez pas besoin de répondre",
     ];
     /// Takes the urgency out, nothing more: "not urgent, but can you look?" is still a request.
     const NOT_URGENT: &'static [&'static str] = &[
-        "not urgent", "nothing urgent", "no rush", "no hurry", "pas urgent", "rien d'urgent", "pas d'urgence",
-        "sans urgence", "pas pressé", "pas de rush",
+        "not urgent",
+        "nothing urgent",
+        "no rush",
+        "no hurry",
+        "pas urgent",
+        "rien d'urgent",
+        "pas d'urgence",
+        "sans urgence",
+        "pas pressé",
+        "pas de rush",
     ];
     const INFOS: &'static [&'static str] = &[
-        "fyi", "for your information", "heads up", "heads-up", "just so you know", "announcement",
-        "@here", "@channel", "@everyone", "pour info", "pour information", "pour rappel", "à titre d'info",
-        "a titre d'info", "je vous informe", "annonce",
+        "fyi",
+        "for your information",
+        "heads up",
+        "heads-up",
+        "just so you know",
+        "announcement",
+        "@here",
+        "@channel",
+        "@everyone",
+        "pour info",
+        "pour information",
+        "pour rappel",
+        "à titre d'info",
+        "a titre d'info",
+        "je vous informe",
+        "annonce",
     ];
 
     pub fn intent(text: &str) -> Option<TextIntent> {
@@ -99,7 +172,11 @@ impl VerbClassifier {
                 item.needs_action = item.bundle != InboxBundle::awaiting();
             }
             "chat.direct" | "chat.mentions" => {
-                let text = [Some(item.title.as_str()), item.preview.as_deref()].into_iter().flatten().collect::<Vec<_>>().join("\n");
+                let text = [Some(item.title.as_str()), item.preview.as_deref()]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>()
+                    .join("\n");
                 let intent = KeywordIntentClassifier::intent(&text).unwrap_or(TextIntent::Request);
                 item.bundle = if intent == TextIntent::Request { InboxBundle::reply() } else { InboxBundle::read() };
                 item.needs_action = intent == TextIntent::Request;

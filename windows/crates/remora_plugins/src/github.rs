@@ -24,7 +24,8 @@ pub fn manifest() -> PluginManifest {
         setup_url: Some("{host}/settings/tokens/new?scopes=repo,read:org&description=Remora".into()),
         egress: Egress {
             hosts: vec!["api.github.com".into(), "github.com".into(), "avatars.githubusercontent.com".into()],
-            description: "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).".into(),
+            description: "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host)."
+                .into(),
             external_ai: false,
         },
         logo: Some("github".into()),
@@ -42,22 +43,33 @@ pub struct GitHubPlugin {
 impl GitHubPlugin {
     pub fn new(config: &PluginConfig, http: Arc<dyn HttpClient>) -> Result<Self, PluginError> {
         let host = config.url("host")?;
-        let endpoint = if host.ends_with("://github.com") { "https://api.github.com/graphql".to_string() } else { format!("{host}/api/graphql") };
+        let endpoint = if host.ends_with("://github.com") {
+            "https://api.github.com/graphql".to_string()
+        } else {
+            format!("{host}/api/graphql")
+        };
         Ok(GitHubPlugin { account_id: config.account_id.clone(), endpoint, token: config.required("token")?, http })
     }
 
     pub fn snapshot(response: GraphQlResponse, account_id: &str) -> Result<SourceSnapshot, PluginError> {
         let Some(data) = response.data else {
-            let message = response.errors.and_then(|e| e.into_iter().next()).map(|e| e.message).unwrap_or_else(|| "GitHub returned no data.".into());
+            let message = response
+                .errors
+                .and_then(|e| e.into_iter().next())
+                .map(|e| e.message)
+                .unwrap_or_else(|| "GitHub returned no data.".into());
             // A token GitHub no longer accepts: the user reconnects.
             if message.eq_ignore_ascii_case("Bad credentials") {
                 return Err(PluginError::Unauthorized);
             }
             return Err(PluginError::Api(message));
         };
-        let cut = [&data.authored, &data.reviewing].iter().any(|s| s.issue_count.is_some_and(|n| n as usize > s.nodes.len()));
-        let authored = data.authored.nodes.into_iter().flatten().map(|pr| pr.item(account_id, InboxBundle::authored(), true));
-        let reviewing = data.reviewing.nodes.into_iter().flatten().map(|pr| pr.item(account_id, InboxBundle::reviews(), false));
+        let cut =
+            [&data.authored, &data.reviewing].iter().any(|s| s.issue_count.is_some_and(|n| n as usize > s.nodes.len()));
+        let authored =
+            data.authored.nodes.into_iter().flatten().map(|pr| pr.item(account_id, InboxBundle::authored(), true));
+        let reviewing =
+            data.reviewing.nodes.into_iter().flatten().map(|pr| pr.item(account_id, InboxBundle::reviews(), false));
         let remarks = if cut { vec![crate::truncated("GitHub")] } else { vec![] };
         Ok(SourceSnapshot { identity: data.viewer.login, items: authored.chain(reviewing).collect(), remarks })
     }
@@ -93,7 +105,8 @@ impl SourcePlugin for GitHubPlugin {
             ("reviewing", "is:pr is:open archived:false review-requested:@me sort:updated-desc"),
         ]);
         let body = serde_json::json!({ "query": Self::QUERY, "variables": variables });
-        let request = Request::post_json(&self.endpoint, &body)?.header("Authorization", format!("bearer {}", self.token));
+        let request =
+            Request::post_json(&self.endpoint, &body)?.header("Authorization", format!("bearer {}", self.token));
         let response: GraphQlResponse = decode(self.http.as_ref(), request).await?;
         Self::snapshot(response, &self.account_id)
     }
@@ -146,7 +159,11 @@ struct Actor {
 
 impl Actor {
     fn person(&self) -> Person {
-        Person { name: self.login.clone().or_else(|| self.name.clone()).unwrap_or_else(|| "?".into()), avatar_url: self.avatar_url.clone(), tone: None }
+        Person {
+            name: self.login.clone().or_else(|| self.name.clone()).unwrap_or_else(|| "?".into()),
+            avatar_url: self.avatar_url.clone(),
+            tone: None,
+        }
     }
 }
 
@@ -239,7 +256,13 @@ impl PullRequest {
     }
 
     fn item(self, account_id: &str, bundle: InboxBundle, authored: bool) -> InboxItem {
-        let checks = match self.commits.as_ref().and_then(|c| c.nodes.iter().flatten().last()).and_then(|c| c.commit.status_check_rollup.as_ref()).map(|s| s.state.as_str()) {
+        let checks = match self
+            .commits
+            .as_ref()
+            .and_then(|c| c.nodes.iter().flatten().last())
+            .and_then(|c| c.commit.status_check_rollup.as_ref())
+            .map(|s| s.state.as_str())
+        {
             Some("SUCCESS") => Checks::Passing,
             Some("FAILURE") | Some("ERROR") => Checks::Failing,
             Some("PENDING") | Some("EXPECTED") => Checks::Running,
@@ -279,7 +302,9 @@ impl PullRequest {
         // Suggestions help you pick reviewers for your own PRs; the file list prepares a review of someone else's.
         let changes = if authored { None } else { self.change_set() };
         let suggested_people = if authored {
-            self.suggested_reviewers.as_ref().map(|s| s.iter().flatten().filter_map(|s| s.reviewer.as_ref().map(Actor::person)).collect())
+            self.suggested_reviewers
+                .as_ref()
+                .map(|s| s.iter().flatten().filter_map(|s| s.reviewer.as_ref().map(Actor::person)).collect())
         } else {
             None
         };
@@ -341,19 +366,30 @@ mod tests {
     #[tokio::test]
     async fn says_when_a_list_is_cut() {
         let remarks = |json: String| async move {
-            let plugin = GitHubPlugin::new(&config(&[("host", "github.com"), ("token", "t")]), Arc::new(StubHttp::paths(&[("/graphql", &json)]))).unwrap();
+            let plugin = GitHubPlugin::new(
+                &config(&[("host", "github.com"), ("token", "t")]),
+                Arc::new(StubHttp::paths(&[("/graphql", &json)])),
+            )
+            .unwrap();
             plugin.fetch().await.unwrap().remarks
         };
         assert!(remarks(RESPONSE.to_string()).await.is_empty(), "no count: nothing to say");
-        assert!(remarks(RESPONSE.replace(r#""reviewing": {"nodes""#, r#""reviewing": {"issueCount": 1, "nodes""#)).await.is_empty());
-        let cut = remarks(RESPONSE.replace(r#""reviewing": {"nodes""#, r#""reviewing": {"issueCount": 73, "nodes""#)).await;
+        assert!(remarks(RESPONSE.replace(r#""reviewing": {"nodes""#, r#""reviewing": {"issueCount": 1, "nodes""#))
+            .await
+            .is_empty());
+        let cut =
+            remarks(RESPONSE.replace(r#""reviewing": {"nodes""#, r#""reviewing": {"issueCount": 73, "nodes""#)).await;
         assert_eq!(cut, [crate::truncated("GitHub")]);
         assert_eq!(cut[0], "GitHub has more than Remora shows: only the latest 50 of each list are listed.");
     }
 
     #[tokio::test]
     async fn maps_authored_and_review_requests() {
-        let plugin = GitHubPlugin::new(&config(&[("host", "github.com"), ("token", "t")]), Arc::new(StubHttp::paths(&[("/graphql", RESPONSE)]))).unwrap();
+        let plugin = GitHubPlugin::new(
+            &config(&[("host", "github.com"), ("token", "t")]),
+            Arc::new(StubHttp::paths(&[("/graphql", RESPONSE)])),
+        )
+        .unwrap();
         let snapshot = plugin.fetch().await.unwrap();
         assert_eq!(snapshot.identity, "alice");
 
@@ -361,7 +397,10 @@ mod tests {
         assert_eq!(authored.context, "acme/app #7");
         assert!(authored.has_badge("approved") && authored.has_badge("checks.failing"));
         assert!(authored.badges.iter().any(|b| b.id == "approved" && b.notify.is_some()));
-        assert_eq!(authored.participants.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), ["erin", "platform-team"]);
+        assert_eq!(
+            authored.participants.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
+            ["erin", "platform-team"]
+        );
         assert!(authored.needs_action, "approved with failing checks: your turn");
 
         let review = snapshot.items.iter().find(|i| i.bundle == InboxBundle::reviews()).unwrap();
@@ -372,13 +411,20 @@ mod tests {
     /// waiting assistant). Same split as macOS.
     #[tokio::test]
     async fn maps_changed_files_and_suggested_reviewers() {
-        let plugin = GitHubPlugin::new(&config(&[("host", "github.com"), ("token", "t")]), Arc::new(StubHttp::paths(&[("/graphql", RESPONSE)]))).unwrap();
+        let plugin = GitHubPlugin::new(
+            &config(&[("host", "github.com"), ("token", "t")]),
+            Arc::new(StubHttp::paths(&[("/graphql", RESPONSE)])),
+        )
+        .unwrap();
         let snapshot = plugin.fetch().await.unwrap();
         let authored = snapshot.items.iter().find(|i| i.bundle == InboxBundle::authored()).unwrap();
         let review = snapshot.items.iter().find(|i| i.bundle == InboxBundle::reviews()).unwrap();
 
         let changes = review.changes.as_ref().unwrap();
-        assert_eq!(changes.files.iter().map(|f| f.path.as_str()).collect::<Vec<_>>(), ["src/search/index.ts", "src/search/index.test.ts"]);
+        assert_eq!(
+            changes.files.iter().map(|f| f.path.as_str()).collect::<Vec<_>>(),
+            ["src/search/index.ts", "src/search/index.test.ts"]
+        );
         assert_eq!((changes.files[0].additions, changes.files[0].deletions), (Some(40), Some(2)));
         assert_eq!(changes.file_count, 3, "the total, beyond the files listed");
         assert_eq!(authored.changes, None, "your own PRs don't need a review prep");
@@ -392,7 +438,11 @@ mod tests {
     #[tokio::test]
     async fn no_files_means_no_change_set() {
         let json = RESPONSE.replace(r#""changedFiles": 3,"#, "").replace(r#""files": {"nodes": [{"path": "src/search/index.ts", "additions": 40, "deletions": 2}, {"path": "src/search/index.test.ts", "additions": 12, "deletions": 0}]}"#, r#""files": {"nodes": []}"#);
-        let plugin = GitHubPlugin::new(&config(&[("host", "github.com"), ("token", "t")]), Arc::new(StubHttp::paths(&[("/graphql", &json)]))).unwrap();
+        let plugin = GitHubPlugin::new(
+            &config(&[("host", "github.com"), ("token", "t")]),
+            Arc::new(StubHttp::paths(&[("/graphql", &json)])),
+        )
+        .unwrap();
         let snapshot = plugin.fetch().await.unwrap();
         let review = snapshot.items.iter().find(|i| i.bundle == InboxBundle::reviews()).unwrap();
         assert_eq!(review.changes, None);
@@ -401,7 +451,11 @@ mod tests {
     #[tokio::test]
     async fn surfaces_graphql_errors_and_requires_a_token() {
         let errors = r#"{"errors": [{"message": "Bad credentials"}]}"#;
-        let plugin = GitHubPlugin::new(&config(&[("host", "https://github.com"), ("token", "t")]), Arc::new(StubHttp::paths(&[("/graphql", errors)]))).unwrap();
+        let plugin = GitHubPlugin::new(
+            &config(&[("host", "https://github.com"), ("token", "t")]),
+            Arc::new(StubHttp::paths(&[("/graphql", errors)])),
+        )
+        .unwrap();
         assert_eq!(plugin.fetch().await.err(), Some(PluginError::Unauthorized), "a rejected token is reconnected");
         assert_eq!(
             GitHubPlugin::new(&config(&[("host", "github.com")]), Arc::new(StubHttp::paths(&[]))).err(),

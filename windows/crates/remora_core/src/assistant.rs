@@ -103,7 +103,8 @@ pub enum TriageAction {
 
 impl TriageAction {
     /// In the order the macOS app lists them (the answer schema's enum).
-    pub const ALL: [TriageAction; 4] = [TriageAction::Keep, TriageAction::Reschedule, TriageAction::Done, TriageAction::Now];
+    pub const ALL: [TriageAction; 4] =
+        [TriageAction::Keep, TriageAction::Reschedule, TriageAction::Done, TriageAction::Now];
 
     pub fn as_str(self) -> &'static str {
         match self {
@@ -155,7 +156,8 @@ impl AssistantPolicy {
 
     /// Blank model names are dropped: a policy listing only blanks allows any model.
     pub fn new(excluded_sources: HashSet<String>, allowed_models: Option<Vec<String>>) -> Self {
-        let allowed_models = allowed_models.map(|m| m.iter().map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect());
+        let allowed_models =
+            allowed_models.map(|m| m.iter().map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect());
         AssistantPolicy { excluded_sources, allowed_models }
     }
 
@@ -170,7 +172,11 @@ impl AssistantPolicy {
 
     /// An assistant account's settings with every model field kept within `allowed_models`: a model that isn't
     /// allowed (or an empty field, whose default may not be) becomes the first allowed one.
-    pub fn constrained(&self, settings: &HashMap<String, String>, defaults: &HashMap<String, String>) -> HashMap<String, String> {
+    pub fn constrained(
+        &self,
+        settings: &HashMap<String, String>,
+        defaults: &HashMap<String, String>,
+    ) -> HashMap<String, String> {
         let mut settings = settings.clone();
         let Some(allowed) = &self.allowed_models else { return settings };
         let Some(first) = allowed.first() else { return settings };
@@ -226,14 +232,23 @@ mod tests {
 
     #[test]
     fn stored_as_the_macos_app_names_them() {
-        let summary = serde_json::to_value(BundleSummary::new("t", &[item("1", InboxBundle::reviews())], now())).unwrap();
+        let summary =
+            serde_json::to_value(BundleSummary::new("t", &[item("1", InboxBundle::reviews())], now())).unwrap();
         assert_eq!(summary["itemIDs"], serde_json::json!(["1"]));
         assert!(summary.get("createdAt").is_some());
-        let suggestion = TriageSuggestion { id: "a".into(), action: TriageAction::Reschedule, until: None, reason: "r".into() };
+        let suggestion =
+            TriageSuggestion { id: "a".into(), action: TriageAction::Reschedule, until: None, reason: "r".into() };
         assert_eq!(serde_json::to_value(&suggestion).unwrap()["action"], "reschedule");
         let snoozed = SnoozedItem {
             item: item("a", InboxBundle::reviews()),
-            snooze: Snooze { until: now(), mode: SnoozeMode::Hide, note: None, fingerprint: "f".into(), reason: None, until_news: None },
+            snooze: Snooze {
+                until: now(),
+                mode: SnoozeMode::Hide,
+                note: None,
+                fingerprint: "f".into(),
+                reason: None,
+                until_news: None,
+            },
             times: 2,
         };
         assert_eq!(serde_json::from_value::<SnoozedItem>(serde_json::to_value(&snoozed).unwrap()).unwrap(), snoozed);
@@ -242,9 +257,17 @@ mod tests {
     // Suggestions come from a model reading titles anyone can write; only reversible ones are ticked for you.
 
     fn suggestions() -> Vec<TriageSuggestion> {
-        let s = |id: &str, action, reason: &str| TriageSuggestion { id: id.into(), action, until: None, reason: reason.into() };
+        let s = |id: &str, action, reason: &str| TriageSuggestion {
+            id: id.into(),
+            action,
+            until: None,
+            reason: reason.into(),
+        };
         vec![
-            TriageSuggestion { until: Some(now() + Duration::days(1)), ..s("a", TriageAction::Reschedule, "Waiting on Bob") },
+            TriageSuggestion {
+                until: Some(now() + Duration::days(1)),
+                ..s("a", TriageAction::Reschedule, "Waiting on Bob")
+            },
             s("b", TriageAction::Done, "Stale"),
             s("c", TriageAction::Now, "Due today"),
             s("d", TriageAction::Keep, "Fine as is"),
@@ -270,7 +293,10 @@ mod tests {
     #[test]
     fn keep_is_never_applied() {
         assert_eq!(selected(&["d"]), ["a"]);
-        assert_eq!(TriageAction::ALL.into_iter().filter(|a| a.preselected()).collect::<Vec<_>>(), [TriageAction::Reschedule]);
+        assert_eq!(
+            TriageAction::ALL.into_iter().filter(|a| a.preselected()).collect::<Vec<_>>(),
+            [TriageAction::Reschedule]
+        );
         assert_eq!(TriageAction::parse("now"), Some(TriageAction::Now));
         assert_eq!(TriageAction::parse("snooze"), None);
     }
@@ -288,7 +314,8 @@ mod tests {
     #[test]
     fn models_stay_within_the_allowed_list() {
         let defaults = map(&[("model", "claude-opus-5-5"), ("digestModel", "claude-haiku-5-5")]);
-        let policy = AssistantPolicy::new(HashSet::new(), Some(vec!["claude-sonnet-5-5".into(), "claude-haiku-5-5".into()]));
+        let policy =
+            AssistantPolicy::new(HashSet::new(), Some(vec!["claude-sonnet-5-5".into(), "claude-haiku-5-5".into()]));
         // Opus by default isn't allowed: the first allowed model replaces it; Haiku is allowed and stays.
         let settings = policy.constrained(&map(&[("model", ""), ("token", "k")]), &defaults);
         assert_eq!(settings["model"], "claude-sonnet-5-5");

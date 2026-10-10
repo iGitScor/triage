@@ -121,7 +121,12 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
 
     /// Days off are skipped: a suggestion for a later day that falls on a weekend comes back the next working
     /// day, at the same time. Today stays today, weekend or not: you're working.
-    pub fn suggested_return(&self, reason: SnoozeReason, history: &[SnoozeRecord], now: DateTime<Utc>) -> DateTime<Utc> {
+    pub fn suggested_return(
+        &self,
+        reason: SnoozeReason,
+        history: &[SnoozeRecord],
+        now: DateTime<Utc>,
+    ) -> DateTime<Utc> {
         self.workday(self.raw_return(reason, history, now), now)
     }
 
@@ -149,7 +154,8 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
     /// The reason you usually give in this repo or channel: at least three snoozes there, 60 % of them for it.
     pub fn usual_reason(&self, item: &InboxItem, history: &[SnoozeRecord]) -> Option<SnoozeReason> {
         let place = context_key(&item.context);
-        let reasons: Vec<SnoozeReason> = history.iter().filter(|r| r.context == place).filter_map(|r| r.reason).collect();
+        let reasons: Vec<SnoozeReason> =
+            history.iter().filter(|r| r.context == place).filter_map(|r| r.reason).collect();
         if reasons.len() < 3 {
             return None;
         }
@@ -183,7 +189,12 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
     }
 
     /// What you usually pick for this repo or channel (or this kind of item), from at least three past snoozes.
-    pub fn usual_return(&self, item: &InboxItem, history: &[SnoozeRecord], now: DateTime<Utc>) -> Option<DateTime<Utc>> {
+    pub fn usual_return(
+        &self,
+        item: &InboxItem,
+        history: &[SnoozeRecord],
+        now: DateTime<Utc>,
+    ) -> Option<DateTime<Utc>> {
         let key = context_key(&item.context);
         let same_context: Vec<&SnoozeRecord> = history.iter().filter(|r| r.context == key).collect();
         let similar = if same_context.len() >= 3 {
@@ -218,7 +229,12 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
     }
 
     /// Reschedules items `step` apart, starting at `start`.
-    pub fn spread_every(&self, items: &[InboxItem], start: DateTime<Utc>, step: Duration) -> HashMap<String, DateTime<Utc>> {
+    pub fn spread_every(
+        &self,
+        items: &[InboxItem],
+        start: DateTime<Utc>,
+        step: Duration,
+    ) -> HashMap<String, DateTime<Utc>> {
         items.iter().enumerate().map(|(i, item)| (item.id.clone(), start + step * i as i32)).collect()
     }
 
@@ -240,7 +256,8 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
             .filter(|(_, times)| *times >= 3)
             .collect();
         loops.sort_by_key(|loop_| std::cmp::Reverse(loop_.1));
-        insights.extend(loops.into_iter().map(|(item, times)| SnoozeInsight::Loop { item: Box::new(item.clone()), times }));
+        insights
+            .extend(loops.into_iter().map(|(item, times)| SnoozeInsight::Loop { item: Box::new(item.clone()), times }));
 
         // BTreeMap, so contexts with as many snoozes come in a stable order (Swift's dictionary order is arbitrary).
         let mut avoided: BTreeMap<&str, usize> = BTreeMap::new();
@@ -250,7 +267,8 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
         let mut avoided: Vec<(&str, usize)> = avoided.into_iter().filter(|(_, times)| *times >= 3).collect();
         avoided.sort_by_key(|context| std::cmp::Reverse(context.1));
         for (context, times) in avoided {
-            let items: Vec<InboxItem> = snoozed.iter().filter(|i| context_key(&i.context) == context).cloned().collect();
+            let items: Vec<InboxItem> =
+                snoozed.iter().filter(|i| context_key(&i.context) == context).cloned().collect();
             if !items.is_empty() {
                 insights.push(SnoozeInsight::Avoidance { context: context.to_string(), times, items });
             }
@@ -281,9 +299,9 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
     }
 
     fn largest_cluster(&self, items: &[InboxItem]) -> Option<Vec<InboxItem>> {
-        let groups = items
-            .iter()
-            .map(|seed| items.iter().filter(|i| i.id == seed.id || self.is_similar(i, seed)).cloned().collect::<Vec<_>>());
+        let groups = items.iter().map(|seed| {
+            items.iter().filter(|i| i.id == seed.id || self.is_similar(i, seed)).cloned().collect::<Vec<_>>()
+        });
         // The first of the largest, as Swift's `max(by:)` keeps it.
         groups.fold(None, |best: Option<Vec<InboxItem>>, group| match best {
             Some(best) if best.len() >= group.len() => Some(best),
@@ -335,7 +353,11 @@ impl<Tz: TimeZone> SnoozeAdvisor<Tz> {
 
     fn next(&self, hour: u32, now: DateTime<Utc>) -> DateTime<Utc> {
         let today = self.morning(0, now, hour);
-        if today - now > Duration::hours(1) { today } else { self.morning(1, now, hour) }
+        if today - now > Duration::hours(1) {
+            today
+        } else {
+            self.morning(1, now, hour)
+        }
     }
 
     fn start_of_hour(&self, date: DateTime<Utc>) -> DateTime<Utc> {
@@ -366,8 +388,8 @@ pub struct KeywordSimilarity;
 
 static STOP_WORDS: [&str; 33] = [
     "the", "and", "for", "with", "from", "into", "this", "that", "your", "about", "when", "what", "after", "new",
-    "pour", "avec", "dans", "les", "des", "une", "sur", "est", "pas", "qui", "que", "vous", "nous", "vers",
-    "la", "le", "de", "du", "au",
+    "pour", "avec", "dans", "les", "des", "une", "sur", "est", "pas", "qui", "que", "vous", "nous", "vers", "la", "le",
+    "de", "du", "au",
 ];
 
 static TICKET_KEY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[A-Z][A-Z0-9]+-\d+").unwrap());
@@ -410,7 +432,11 @@ pub fn context_key(context: &str) -> String {
             parts.pop();
         }
     }
-    if parts.is_empty() { context.to_string() } else { parts.join(" ") }
+    if parts.is_empty() {
+        context.to_string()
+    } else {
+        parts.join(" ")
+    }
 }
 
 impl InboxItem {
@@ -418,7 +444,11 @@ impl InboxItem {
     pub(crate) fn diff_size(&self) -> Option<u64> {
         let label = &self.badges.iter().find(|b| b.id == "diff")?.label;
         let numbers: Vec<u64> = label.split(|c: char| !c.is_numeric()).filter_map(|n| n.parse().ok()).collect();
-        if numbers.is_empty() { None } else { Some(numbers.iter().sum()) }
+        if numbers.is_empty() {
+            None
+        } else {
+            Some(numbers.iter().sum())
+        }
     }
 }
 
@@ -462,7 +492,13 @@ mod tests {
         InboxItem { date, ..make_item(id) }
     }
 
-    fn record(item: &InboxItem, reason: Option<SnoozeReason>, at: DateTime<Utc>, hours: i64, done_hour: Option<u32>) -> SnoozeRecord {
+    fn record(
+        item: &InboxItem,
+        reason: Option<SnoozeReason>,
+        at: DateTime<Utc>,
+        hours: i64,
+        done_hour: Option<u32>,
+    ) -> SnoozeRecord {
         let mut record = SnoozeRecord::new(item, reason, at, at + Duration::hours(hours));
         record.done_at = done_hour.map(|h| {
             let day = at.with_timezone(&paris()).date_naive();
@@ -503,7 +539,11 @@ mod tests {
     fn returns_skip_the_weekend() {
         let advisor = advisor();
         let friday = at(9, 18);
-        assert_eq!(weekday(advisor.suggested_return(SnoozeReason::NoTime, &[], friday)), Weekday::Mon, "Friday evening: Monday, not Saturday");
+        assert_eq!(
+            weekday(advisor.suggested_return(SnoozeReason::NoTime, &[], friday)),
+            Weekday::Mon,
+            "Friday evening: Monday, not Saturday"
+        );
         assert_eq!(weekday(advisor.suggested_return(SnoozeReason::Focus, &[], friday)), Weekday::Mon);
         let saturday = at(10, 10);
         let later = advisor.suggested_return(SnoozeReason::NoTime, &[], saturday);
@@ -577,7 +617,9 @@ mod tests {
             .collect();
         let states = snoozed(std::slice::from_ref(&item), morning() + Duration::hours(1));
         let insights = advisor.insights(std::slice::from_ref(&item), &states, &history, morning());
-        assert!(insights.iter().any(|i| matches!(i, SnoozeInsight::Avoidance { times: 3, items, .. } if *items == [item.clone()])));
+        assert!(insights
+            .iter()
+            .any(|i| matches!(i, SnoozeInsight::Avoidance { times: 3, items, .. } if *items == [item.clone()])));
     }
 
     #[test]
@@ -638,7 +680,8 @@ mod tests {
     #[test]
     fn states_saved_before_reasons_still_decode() {
         // Dates are RFC 3339 strings on Windows, where macOS writes seconds.
-        let json = r#"{"pinned": false, "snooze": {"until": "1970-01-01T00:00:00Z", "mode": "hide", "fingerprint": "f"}}"#;
+        let json =
+            r#"{"pinned": false, "snooze": {"until": "1970-01-01T00:00:00Z", "mode": "hide", "fingerprint": "f"}}"#;
         let state: ItemState = serde_json::from_str(json).unwrap();
         assert_eq!(state.snooze.unwrap().reason, None);
     }
@@ -649,7 +692,9 @@ mod tests {
         let record = SnoozeRecord::new(&item, Some(SnoozeReason::NoTime), morning(), morning() + Duration::hours(2));
         assert_eq!(record.context, "repo");
         let json = serde_json::to_string(&record).unwrap();
-        assert!(json.contains("\"itemId\":\"1\"") && json.contains("\"reason\":\"noTime\"") && !json.contains("doneAt"));
+        assert!(
+            json.contains("\"itemId\":\"1\"") && json.contains("\"reason\":\"noTime\"") && !json.contains("doneAt")
+        );
         assert_eq!(serde_json::from_str::<SnoozeRecord>(&json).unwrap(), record);
         let pile = SnoozeInsight::PileUp { at: morning(), items: vec![] };
         assert_eq!(pile.id(), format!("pileUp/{}.0", morning().timestamp()));

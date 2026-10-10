@@ -1,36 +1,43 @@
 <script lang="ts">
-  // One review request at a time, quick wins first, as on macOS: Enter opens the diff, D marks it done,
-  // S snoozes, → skips, Esc closes.
-  import { onMount } from 'svelte'
-  import { api, type Item, type ItemExtras } from './api'
-  import { t } from './i18n'
-  import { modal } from './modal'
+// One review request at a time, quick wins first, as on macOS: Enter opens the diff, D marks it done,
+// S snoozes, → skips, Esc closes.
+import { onMount } from 'svelte'
+import { api, type Item, type ItemExtras } from './api'
+import { t } from './i18n'
+import { modal } from './modal'
 
-  let { extras, pace, onsnooze, onclose }: { extras: Record<string, ItemExtras>; pace: number; onsnooze: (item: Item) => void; onclose: () => void } = $props()
-  let queue: Item[] = $state([])
-  let index = $state(0)
-  const item = $derived(queue[index])
-  const left = $derived(queue.slice(index).reduce((sum, i) => sum + (extras[i.id]?.prep?.minutes ?? Math.round(10 * pace)), 0))
+let {
+  extras,
+  pace,
+  onsnooze,
+  onclose,
+}: { extras: Record<string, ItemExtras>; pace: number; onsnooze: (item: Item) => void; onclose: () => void } = $props()
+let queue: Item[] = $state([])
+let index = $state(0)
+const item = $derived(queue[index])
+const left = $derived(
+  queue.slice(index).reduce((sum, i) => sum + (extras[i.id]?.prep?.minutes ?? Math.round(10 * pace)), 0),
+)
 
-  onMount(async () => {
-    queue = await api.reviewQueue()
-  })
+onMount(async () => {
+  queue = await api.reviewQueue()
+})
 
-  async function done() {
-    if (!item) return
-    await api.toggleDone(item.id)
-    index += 1
-  }
+async function done() {
+  if (!item) return
+  await api.toggleDone(item.id)
+  index += 1
+}
 
-  function keydown(event: KeyboardEvent) {
-    if (!item || event.target instanceof HTMLInputElement) return
-    if (event.key === 'Enter') api.openItem(item.id)
-    else if (event.key === 'd' || event.key === 'D') done()
-    else if (event.key === 's' || event.key === 'S') onsnooze(item)
-    else if (event.key === 'ArrowRight') index += 1
-    else return
-    event.preventDefault()
-  }
+function keydown(event: KeyboardEvent) {
+  if (!item || event.target instanceof HTMLInputElement) return
+  if (event.key === 'Enter') api.openItem(item.id)
+  else if (event.key === 'd' || event.key === 'D') done()
+  else if (event.key === 's' || event.key === 'S') onsnooze(item)
+  else if (event.key === 'ArrowRight') index += 1
+  else return
+  event.preventDefault()
+}
 </script>
 
 <svelte:window onkeydown={keydown} />

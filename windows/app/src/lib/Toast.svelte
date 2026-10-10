@@ -1,48 +1,48 @@
 <script lang="ts">
-  // One message at a time at the bottom of the window: a failed action, or what a click just did with Undo
-  // (Ctrl+Z works too). Gone after a few seconds or when dismissed.
-  import { onMount } from 'svelte'
-  import Icon from './Icon.svelte'
-  import { onFailure, onOffer, type Offer } from './failures'
-  import { t } from './i18n'
+// One message at a time at the bottom of the window: a failed action, or what a click just did with Undo
+// (Ctrl+Z works too). Gone after a few seconds or when dismissed.
+import { onMount } from 'svelte'
+import Icon from './Icon.svelte'
+import { onFailure, onOffer, type Offer } from './failures'
+import { t } from './i18n'
 
-  let message = $state('')
-  let action = $state<Offer | null>(null)
-  let timer: ReturnType<typeof setTimeout> | undefined
+let message = $state('')
+let action = $state<Offer | null>(null)
+let timer: ReturnType<typeof setTimeout> | undefined
 
-  function show(text: string, offer: Offer | null) {
-    message = text
-    action = offer
-    clearTimeout(timer)
-    timer = setTimeout(close, offer ? 8000 : 6000)
+function show(text: string, offer: Offer | null) {
+  message = text
+  action = offer
+  clearTimeout(timer)
+  timer = setTimeout(close, offer ? 8000 : 6000)
+}
+
+function close() {
+  message = ''
+  action = null
+}
+
+function run() {
+  const offer = action
+  close()
+  offer?.run()
+}
+
+function onkeydown(event: KeyboardEvent) {
+  if (action && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+    event.preventDefault()
+    run()
   }
+}
 
-  function close() {
-    message = ''
-    action = null
+onMount(() => {
+  const stopFailures = onFailure((text) => show(text, null))
+  const stopOffers = onOffer((offer) => show(offer.message, offer))
+  return () => {
+    stopFailures()
+    stopOffers()
   }
-
-  function run() {
-    const offer = action
-    close()
-    offer?.run()
-  }
-
-  function onkeydown(event: KeyboardEvent) {
-    if (action && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
-      event.preventDefault()
-      run()
-    }
-  }
-
-  onMount(() => {
-    const stopFailures = onFailure((text) => show(text, null))
-    const stopOffers = onOffer((offer) => show(offer.message, offer))
-    return () => {
-      stopFailures()
-      stopOffers()
-    }
-  })
+})
 </script>
 
 <svelte:window {onkeydown} />

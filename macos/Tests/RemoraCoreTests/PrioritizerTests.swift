@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import RemoraCore
 
 struct PrioritizerTests {
@@ -19,7 +20,8 @@ struct PrioritizerTests {
             item("dueSoon", due: now + 2 * 86_400, minutesAgo: 300),
             item("urgent", priority: .urgent, minutesAgo: 900),
         ]
-        #expect(Prioritizer(now: now).sorted(items).map(\.id) == ["overdue", "urgent", "high", "dueSoon", "recent", "low"])
+        #expect(
+            Prioritizer(now: now).sorted(items).map(\.id) == ["overdue", "urgent", "high", "dueSoon", "recent", "low"])
     }
 
     @Test func lowPriorityIsShownButNotCounted() {

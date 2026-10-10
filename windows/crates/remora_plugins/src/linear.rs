@@ -11,7 +11,10 @@ pub fn manifest() -> PluginManifest {
         id: "linear".into(),
         name: "Linear".into(),
         summary: "Issues assigned to you, and the mentions and comments waiting in your Linear inbox.".into(),
-        fields: vec![ConfigField::token("Personal API key", "Linear → Settings → Security & access → Personal API keys.")],
+        fields: vec![ConfigField::token(
+            "Personal API key",
+            "Linear → Settings → Security & access → Personal API keys.",
+        )],
         setup_steps: vec![
             "Click “Create an API key”: Linear opens its Security & access settings.".into(),
             "Under Personal API keys, create a key named Remora (read access is enough) and paste it below.".into(),
@@ -63,7 +66,11 @@ impl LinearPlugin {
             .header("Authorization", self.token.clone());
         let response: GraphQl<T> = decode(self.http.as_ref(), request).await?;
         response.data.ok_or_else(|| {
-            let message = response.errors.and_then(|e| e.into_iter().next()).map(|e| e.message).unwrap_or_else(|| "the request failed.".into());
+            let message = response
+                .errors
+                .and_then(|e| e.into_iter().next())
+                .map(|e| e.message)
+                .unwrap_or_else(|| "the request failed.".into());
             // "Authentication required, not authenticated": a key Linear no longer accepts.
             if message.to_lowercase().contains("authenticat") {
                 PluginError::Unauthorized
@@ -85,9 +92,14 @@ impl SourcePlugin for LinearPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
         let issues: IssuesData = self.query(ISSUES_QUERY).await?;
         // Notifications are a bonus: if their shape differs, issues still come through.
-        let notifications = self.query::<NotificationsData>(NOTIFICATIONS_QUERY).await.map(|d| d.notifications.nodes).unwrap_or_default();
+        let notifications = self
+            .query::<NotificationsData>(NOTIFICATIONS_QUERY)
+            .await
+            .map(|d| d.notifications.nodes)
+            .unwrap_or_default();
         let now = Utc::now();
-        let mut items: Vec<InboxItem> = issues.viewer.assigned_issues.nodes.iter().map(|i| i.item(&self.account_id)).collect();
+        let mut items: Vec<InboxItem> =
+            issues.viewer.assigned_issues.nodes.iter().map(|i| i.item(&self.account_id)).collect();
         items.extend(
             notifications
                 .iter()
@@ -95,7 +107,11 @@ impl SourcePlugin for LinearPlugin {
                 .map(|n| n.item(&self.account_id)),
         );
         let cut = issues.viewer.assigned_issues.page_info.as_ref().is_some_and(|p| p.has_next_page);
-        Ok(SourceSnapshot { identity: issues.viewer.name, items, remarks: if cut { vec![crate::truncated("Linear")] } else { vec![] } })
+        Ok(SourceSnapshot {
+            identity: issues.viewer.name,
+            items,
+            remarks: if cut { vec![crate::truncated("Linear")] } else { vec![] },
+        })
     }
 }
 
@@ -274,7 +290,11 @@ impl Notification {
             preview: None,
             url: self.url.clone(),
             app_url: LinearPlugin::app_url(self.url.as_deref()),
-            author: self.actor.as_ref().map(|a| Person { name: a.name.clone(), avatar_url: a.avatar_url.clone(), tone: None }),
+            author: self.actor.as_ref().map(|a| Person {
+                name: a.name.clone(),
+                avatar_url: a.avatar_url.clone(),
+                tone: None,
+            }),
             participants: vec![],
             badges: vec![],
             date: self.created_at,
@@ -319,12 +339,19 @@ mod tests {
             ]}}}}}}"#
         );
         let http = StubHttp::bodies(&[("notifications", &notifications), ("assignedIssues", &issues(&recent))]);
-        let snapshot = LinearPlugin::new(&config(&[("token", "lin_api_key")]), Arc::new(http)).unwrap().fetch().await.unwrap();
+        let snapshot =
+            LinearPlugin::new(&config(&[("token", "lin_api_key")]), Arc::new(http)).unwrap().fetch().await.unwrap();
 
         assert_eq!(snapshot.identity, "Alice");
         let tasks: Vec<&InboxItem> = snapshot.items.iter().filter(|i| i.bundle == InboxBundle::tasks()).collect();
-        assert_eq!(tasks.iter().map(|i| i.context.as_str()).collect::<Vec<_>>(), ["ENG-42", "ENG-43", "ENG-44", "ENG-45"]);
-        assert_eq!(tasks.iter().map(|i| i.priority).collect::<Vec<_>>(), [Some(Priority::Urgent), Some(Priority::Low), Some(Priority::Low), Some(Priority::High)]);
+        assert_eq!(
+            tasks.iter().map(|i| i.context.as_str()).collect::<Vec<_>>(),
+            ["ENG-42", "ENG-43", "ENG-44", "ENG-45"]
+        );
+        assert_eq!(
+            tasks.iter().map(|i| i.priority).collect::<Vec<_>>(),
+            [Some(Priority::Urgent), Some(Priority::Low), Some(Priority::Low), Some(Priority::High)]
+        );
         assert_eq!(tasks.iter().map(|i| i.needs_action).collect::<Vec<_>>(), [true, false, false, true]);
         assert!(tasks[0].has_badge("priority.urgent") && tasks[0].has_badge("overdue") && tasks[0].has_badge("status"));
         assert_eq!(tasks[0].app_url.as_deref(), Some("linear://x/issue/ENG-42"));

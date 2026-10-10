@@ -25,7 +25,11 @@ pub fn allowed_hosts(account: &Account, manifest: &PluginManifest) -> Vec<String
 }
 
 /// Builds a plugin. `http` must already be the guarded client for this account.
-pub fn make(account: &Account, secrets: &HashMap<String, String>, http: Arc<dyn HttpClient>) -> Result<Box<dyn SourcePlugin>, PluginError> {
+pub fn make(
+    account: &Account,
+    secrets: &HashMap<String, String>,
+    http: Arc<dyn HttpClient>,
+) -> Result<Box<dyn SourcePlugin>, PluginError> {
     let mut values = account.settings.clone();
     values.extend(secrets.clone());
     let config = PluginConfig { account_id: account.id.clone(), values };
@@ -59,7 +63,10 @@ mod tests {
     #[test]
     fn self_hosted_accounts_add_their_own_host() {
         let account = Account {
-            id: "a".into(), plugin_id: "gitlab".into(), name: None, identity: None,
+            id: "a".into(),
+            plugin_id: "gitlab".into(),
+            name: None,
+            identity: None,
             settings: HashMap::from([("host".to_string(), "gitlab.acme.io".to_string())]),
         };
         assert!(allowed_hosts(&account, &gitlab::manifest()).contains(&"gitlab.acme.io".to_string()));

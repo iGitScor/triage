@@ -24,7 +24,7 @@ export function onFailure(listener: Listener): () => void {
 }
 
 export function report(message: string) {
-  listeners.forEach((listener) => listener(message))
+  for (const listener of listeners) listener(message)
 }
 
 // What a click just did, with a way back: "Marked as done · Undo". Shown by the same toast.
@@ -38,5 +38,5 @@ export function onOffer(listener: OfferListener): () => void {
 }
 
 export function offer(message: string, action: string, run: () => unknown) {
-  offerListeners.forEach((listener) => listener({ message, action, run }))
+  for (const listener of offerListeners) listener({ message, action, run })
 }

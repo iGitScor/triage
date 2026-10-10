@@ -1,77 +1,86 @@
 <script lang="ts">
-  import { listen } from '@tauri-apps/api/event'
-  import { onMount } from 'svelte'
-  import { api, type Account, type Preferences, type Settings, type Source, type UpdateStatus } from './api'
-  import ConnectForm from './ConnectForm.svelte'
-  import Icon from './Icon.svelte'
-  import Logo from './Logo.svelte'
-  import { t, translateMessage } from './i18n'
-  import { tablist } from './tablist'
+import { listen } from '@tauri-apps/api/event'
+import { onMount } from 'svelte'
+import { api, type Account, type Preferences, type Settings, type Source, type UpdateStatus } from './api'
+import ConnectForm from './ConnectForm.svelte'
+import Icon from './Icon.svelte'
+import Logo from './Logo.svelte'
+import { t, translateMessage } from './i18n'
+import { tablist } from './tablist'
 
-  let { onclose, onchange }: { onclose: () => void; onchange: (s: Settings) => void } = $props()
+let { onclose, onchange }: { onclose: () => void; onchange: (s: Settings) => void } = $props()
 
-  type Pane = 'sources' | 'general' | 'privacy'
-  let pane: Pane = $state('sources')
-  /** The account whose Disconnect asks to confirm: its token is deleted, which can't be undone. */
-  let confirming: string | null = $state(null)
-  let sources: Source[] = $state([])
-  let accounts: Account[] = $state([])
-  let settings: Settings | null = $state(null)
-  let connecting: string | null = $state(null)
-  let renaming: string | null = $state(null)
-  let newName = $state('')
-  let erasing = $state(false)
-  /// The account whose token is being replaced.
-  let reconnecting: string | null = $state(null)
-  let update: UpdateStatus = $state({ state: 'idle' })
+type Pane = 'sources' | 'general' | 'privacy'
+let pane: Pane = $state('sources')
+/** The account whose Disconnect asks to confirm: its token is deleted, which can't be undone. */
+let confirming: string | null = $state(null)
+let sources: Source[] = $state([])
+let accounts: Account[] = $state([])
+let settings: Settings | null = $state(null)
+let connecting: string | null = $state(null)
+let renaming: string | null = $state(null)
+let newName = $state('')
+let erasing = $state(false)
+/// The account whose token is being replaced.
+let reconnecting: string | null = $state(null)
+let update: UpdateStatus = $state({ state: 'idle' })
 
-  async function load() {
-    ;[sources, accounts, settings, update] = await Promise.all([api.sources(), api.accounts(), api.settings(), api.updateStatus()])
-    onchange(settings)
-  }
-
-  async function save(change: Partial<Preferences>) {
-    if (!settings) return
-    await api.setPreferences({ ...settings.preferences, ...change })
-    await load()
-  }
-
-  function allowed(id: string): boolean {
-    const list = settings?.managed.allowedPlugins ?? settings?.preferences.allowedPlugins
-    return !list || list.includes(id)
-  }
-
-  /** Connected tools that can notify, plus your own reminders. */
-  const notifying = $derived([
-    ...sources.filter((s) => !s.assistant && accounts.some((a) => a.pluginId === s.manifest.id)).map((s) => ({ id: s.manifest.id, name: s.manifest.name })),
-    { id: 'reminders', name: t('Reminders') },
+async function load() {
+  ;[sources, accounts, settings, update] = await Promise.all([
+    api.sources(),
+    api.accounts(),
+    api.settings(),
+    api.updateStatus(),
   ])
+  onchange(settings)
+}
 
-  /// The assistant's settings show once one is connected.
-  const firstAssistant = $derived(sources.findIndex((s) => s.assistant))
-  const hasAssistant = $derived(accounts.some((a) => sources.some((s) => s.assistant && s.manifest.id === a.pluginId)))
-  async function setSent(id: string, sent: boolean) {
-    const current = settings?.preferences.assistantExcludedSources ?? []
-    await save({ assistantExcludedSources: sent ? current.filter((x) => x !== id) : [...current, id] })
+async function save(change: Partial<Preferences>) {
+  if (!settings) return
+  await api.setPreferences({ ...settings.preferences, ...change })
+  await load()
+}
+
+function allowed(id: string): boolean {
+  const list = settings?.managed.allowedPlugins ?? settings?.preferences.allowedPlugins
+  return !list || list.includes(id)
+}
+
+/** Connected tools that can notify, plus your own reminders. */
+const notifying = $derived([
+  ...sources
+    .filter((s) => !s.assistant && accounts.some((a) => a.pluginId === s.manifest.id))
+    .map((s) => ({ id: s.manifest.id, name: s.manifest.name })),
+  { id: 'reminders', name: t('Reminders') },
+])
+
+/// The assistant's settings show once one is connected.
+const firstAssistant = $derived(sources.findIndex((s) => s.assistant))
+const hasAssistant = $derived(accounts.some((a) => sources.some((s) => s.assistant && s.manifest.id === a.pluginId)))
+async function setSent(id: string, sent: boolean) {
+  const current = settings?.preferences.assistantExcludedSources ?? []
+  await save({ assistantExcludedSources: sent ? current.filter((x) => x !== id) : [...current, id] })
+}
+
+async function setHidden(id: string, hidden: boolean) {
+  const current = settings?.preferences.hiddenContentPlugins ?? []
+  await save({ hiddenContentPlugins: hidden ? [...new Set([...current, id])] : current.filter((p) => p !== id) })
+}
+
+async function setAllowed(id: string, on: boolean) {
+  const all = sources.map((s) => s.manifest.id)
+  const current = settings?.preferences.allowedPlugins ?? all
+  const next = on ? [...new Set([...current, id])] : current.filter((p) => p !== id)
+  await save({ allowedPlugins: next.length === all.length ? null : next })
+}
+
+onMount(() => {
+  load()
+  const unlisten = listen<UpdateStatus>('updates-changed', (event) => (update = event.payload))
+  return () => {
+    unlisten.then((stop) => stop())
   }
-
-  async function setHidden(id: string, hidden: boolean) {
-    const current = settings?.preferences.hiddenContentPlugins ?? []
-    await save({ hiddenContentPlugins: hidden ? [...new Set([...current, id])] : current.filter((p) => p !== id) })
-  }
-
-  async function setAllowed(id: string, on: boolean) {
-    const all = sources.map((s) => s.manifest.id)
-    const current = settings?.preferences.allowedPlugins ?? all
-    const next = on ? [...new Set([...current, id])] : current.filter((p) => p !== id)
-    await save({ allowedPlugins: next.length === all.length ? null : next })
-  }
-
-  onMount(() => {
-    load()
-    const unlisten = listen<UpdateStatus>('updates-changed', (event) => (update = event.payload))
-    return () => { unlisten.then((stop) => stop()) }
-  })
+})
 </script>
 
 <div class="screen">

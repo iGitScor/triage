@@ -16,16 +16,19 @@ public struct Prioritizer: Sendable {
 
     public func sorted(_ items: [InboxItem]) -> [InboxItem] {
         items.sorted { a, b in
-            let pressingA = isPressing(a), pressingB = isPressing(b)
+            let pressingA = isPressing(a)
+            let pressingB = isPressing(b)
             if pressingA != pressingB { return pressingA }
-            let priorityA = a.priority ?? .normal, priorityB = b.priority ?? .normal
+            let priorityA = a.priority ?? .normal
+            let priorityB = b.priority ?? .normal
             if priorityA != priorityB { return priorityA > priorityB }
             if let personal {
-                let scoreA = personal(a), scoreB = personal(b)
+                let scoreA = personal(a)
+                let scoreB = personal(b)
                 if abs(scoreA - scoreB) > 0.5 { return scoreA > scoreB }
             }
             switch (a.due, b.due) {
-            case let (dueA?, dueB?) where dueA != dueB: return dueA < dueB
+            case (let dueA?, let dueB?) where dueA != dueB: return dueA < dueB
             case (.some, nil): return true
             case (nil, .some): return false
             default: return a.date > b.date

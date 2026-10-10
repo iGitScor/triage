@@ -77,7 +77,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, Notifying {
     /// System Settings → Notifications, at Remora when macOS can.
     static func openSystemSettings() {
         let id = Bundle.main.bundleIdentifier ?? ""
-        let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(id)")
+        let url =
+            URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(id)")
             ?? URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!
         NSWorkspace.shared.open(url)
     }
@@ -85,20 +86,22 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, Notifying {
     func activate() {
         center?.delegate = self
         center?.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
-        center?.setNotificationCategories(Set([Category.item, .reminder].map { category in
-            UNNotificationCategory(
-                identifier: category.rawValue,
-                actions: category.actions.map { action in
-                    UNNotificationAction(
-                        identifier: action.rawValue,
-                        title: action.title,
-                        options: [],
-                        icon: UNNotificationActionIcon(systemImageName: action.symbol)
+        center?.setNotificationCategories(
+            Set(
+                [Category.item, .reminder].map { category in
+                    UNNotificationCategory(
+                        identifier: category.rawValue,
+                        actions: category.actions.map { action in
+                            UNNotificationAction(
+                                identifier: action.rawValue,
+                                title: action.title,
+                                options: [],
+                                icon: UNNotificationActionIcon(systemImageName: action.symbol)
+                            )
+                        },
+                        intentIdentifiers: []
                     )
-                },
-                intentIdentifiers: []
-            )
-        }))
+                }))
     }
 
     func post(_ notice: Notice) {
@@ -107,7 +110,9 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, Notifying {
 
     func schedule(_ notice: Notice, at date: Date) {
         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
-        add(id: notice.itemID, notice: notice, trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false))
+        add(
+            id: notice.itemID, notice: notice,
+            trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false))
     }
 
     func cancel(_ itemID: String) {
@@ -125,11 +130,14 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, Notifying {
         guard let center else { return }
         // The handlers run on another thread: they take the shared center there rather than capturing this one.
         center.getPendingNotificationRequests { requests in
-            let ids = requests.filter { Self.itemID(of: $0.content).hasPrefix(prefix) || $0.identifier.hasPrefix(prefix) }.map(\.identifier)
+            let ids = requests.filter {
+                Self.itemID(of: $0.content).hasPrefix(prefix) || $0.identifier.hasPrefix(prefix)
+            }.map(\.identifier)
             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
         }
         center.getDeliveredNotifications { notifications in
-            let ids = notifications.filter { Self.itemID(of: $0.request.content).hasPrefix(prefix) }.map(\.request.identifier)
+            let ids = notifications.filter { Self.itemID(of: $0.request.content).hasPrefix(prefix) }.map(
+                \.request.identifier)
             UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ids)
         }
     }
@@ -158,7 +166,9 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, Notifying {
         [.banner, .sound]
     }
 
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
+    ) async {
         let info = response.notification.request.content.userInfo
         let itemID = info["itemID"] as? String
         let url = (info["url"] as? String).flatMap(URL.init(string:))

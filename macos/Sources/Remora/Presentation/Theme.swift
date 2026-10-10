@@ -34,7 +34,9 @@ enum Myna {
 
     /// Secondary text on `dark` surfaces: translucent, but nearly opaque with Increase Contrast.
     static func onDark(opacity: Double) -> Color {
-        Color(light: 0xF0F0E8, dark: 0xF0F0E8, opacity: opacity, contrast: (0xFFFFFF, 0xFFFFFF), contrastOpacity: max(opacity, 0.9))
+        Color(
+            light: 0xF0F0E8, dark: 0xF0F0E8, opacity: opacity, contrast: (0xFFFFFF, 0xFFFFFF),
+            contrastOpacity: max(opacity, 0.9))
     }
 
     static let radiusLarge: CGFloat = 18
@@ -79,16 +81,17 @@ extension Color {
     ) {
         let contrast = contrast ?? (light, dark)
         let contrastOpacity = contrastOpacity ?? (lightOpacity, darkOpacity)
-        self.init(nsColor: NSColor(name: nil) { appearance in
-            let isDark = appearance.isDark
-            guard appearance.isHighContrast else {
-                return NSColor(hex: isDark ? dark : light, alpha: isDark ? darkOpacity : lightOpacity)
-            }
-            return NSColor(
-                hex: isDark ? contrast.dark : contrast.light,
-                alpha: isDark ? contrastOpacity.dark : contrastOpacity.light
-            )
-        })
+        self.init(
+            nsColor: NSColor(name: nil) { appearance in
+                let isDark = appearance.isDark
+                guard appearance.isHighContrast else {
+                    return NSColor(hex: isDark ? dark : light, alpha: isDark ? darkOpacity : lightOpacity)
+                }
+                return NSColor(
+                    hex: isDark ? contrast.dark : contrast.light,
+                    alpha: isDark ? contrastOpacity.dark : contrastOpacity.light
+                )
+            })
     }
 
     /// The token resolved for AppKit drawing, which follows the app's appearance rather than the view's.

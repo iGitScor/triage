@@ -19,11 +19,15 @@ public struct GitLabPlugin: SourcePlugin {
         ],
         setupURL: { config in
             let host = (try? config.url("host")) ?? URL(string: "https://gitlab.com")!
-            return host.appending(path: "-/user_settings/personal_access_tokens", query: [
-                "name": "Remora", "scopes": "read_api",
-            ])
+            return host.appending(
+                path: "-/user_settings/personal_access_tokens",
+                query: [
+                    "name": "Remora", "scopes": "read_api",
+                ])
         },
-        egress: Egress(hosts: ["gitlab.com"], description: "Reads your merge requests, approvals and pipelines from your GitLab host."),
+        egress: Egress(
+            hosts: ["gitlab.com"],
+            description: "Reads your merge requests, approvals and pipelines from your GitLab host."),
         logo: "gitlab"
     )
 
@@ -41,12 +45,16 @@ public struct GitLabPlugin: SourcePlugin {
 
     public func fetch() async throws -> SourceSnapshot {
         let user: User = try await get("user")
-        async let authored: [MergeRequest] = get("merge_requests", [
-            "scope": "created_by_me", "state": "opened", "per_page": "50",
-        ])
-        async let reviewing: [MergeRequest] = get("merge_requests", [
-            "scope": "all", "state": "opened", "per_page": "50", "reviewer_username": user.username,
-        ])
+        async let authored: [MergeRequest] = get(
+            "merge_requests",
+            [
+                "scope": "created_by_me", "state": "opened", "per_page": "50",
+            ])
+        async let reviewing: [MergeRequest] = get(
+            "merge_requests",
+            [
+                "scope": "all", "state": "opened", "per_page": "50", "reviewer_username": user.username,
+            ])
         let all = try await [(authored, true), (reviewing, false)].flatMap { list, isAuthored in
             list.map { ($0, isAuthored) }
         }
@@ -64,7 +72,8 @@ public struct GitLabPlugin: SourcePlugin {
         }
         // A full page means there may be more: GitLab's count header isn't always sent.
         let truncated = try await [authored, reviewing].contains { $0.count >= 50 }
-        return SourceSnapshot(identity: user.username, items: items, remarks: truncated ? [SourceSnapshot.truncated("GitLab")] : [])
+        return SourceSnapshot(
+            identity: user.username, items: items, remarks: truncated ? [SourceSnapshot.truncated("GitLab")] : [])
     }
 
     /// The REST way, one merge request at a time. Best-effort: a call that fails leaves that part out instead of
@@ -82,16 +91,17 @@ public struct GitLabPlugin: SourcePlugin {
     }
 
     static let detailsQuery = """
-    query { currentUser {
-      authored: authoredMergeRequests(state: opened, first: 50) { nodes { ...status } }
-      reviewing: reviewRequestedMergeRequests(state: opened, first: 50) { nodes { ...status diffStats { path additions deletions } } }
-    } }
-    fragment status on MergeRequest { id approved approvedBy { nodes { username avatarUrl } } headPipeline { status } }
-    """
+        query { currentUser {
+          authored: authoredMergeRequests(state: opened, first: 50) { nodes { ...status } }
+          reviewing: reviewRequestedMergeRequests(state: opened, first: 50) { nodes { ...status diffStats { path additions deletions } } }
+        } }
+        fragment status on MergeRequest { id approved approvedBy { nodes { username avatarUrl } } headPipeline { status } }
+        """
 
     /// The details of every open merge request you wrote or review, keyed by its REST id.
     private func graphQLDetails() async throws -> [Int: GraphQL.Details] {
-        let request = try URLRequest.post(host.appending(path: "api/graphql"), json: ["query": Self.detailsQuery], headers: ["PRIVATE-TOKEN": token])
+        let request = try URLRequest.post(
+            host.appending(path: "api/graphql"), json: ["query": Self.detailsQuery], headers: ["PRIVATE-TOKEN": token])
         let response = try await http.decode(GraphQL.Response.self, from: request, using: .api())
         return response.details
     }
@@ -123,12 +133,14 @@ public struct GitLabPlugin: SourcePlugin {
                 tone: approvers.contains(reviewer.username) ? ReviewerTone.approved : ReviewerTone.waiting
             )
         }
-        for approver in approvals.approvedBy ?? [] where !participants.contains(where: { $0.name == approver.user.username }) {
-            participants.append(Person(
-                name: approver.user.username,
-                avatarURL: URL(lenient: approver.user.avatarUrl, relativeTo: host),
-                tone: ReviewerTone.approved
-            ))
+        for approver in approvals.approvedBy ?? []
+        where !participants.contains(where: { $0.name == approver.user.username }) {
+            participants.append(
+                Person(
+                    name: approver.user.username,
+                    avatarURL: URL(lenient: approver.user.avatarUrl, relativeTo: host),
+                    tone: ReviewerTone.approved
+                ))
         }
 
         let project = mr.references?.full.components(separatedBy: "!").first ?? "project \(mr.projectId)"
@@ -146,9 +158,13 @@ public struct GitLabPlugin: SourcePlugin {
             date: mr.updatedAt,
             needsAction: review.needsAction(authored: authored),
             changes: files.flatMap { files in
-                files.isEmpty ? nil : ChangeSet(files: files.map {
-                    ChangedFile(path: $0.newPath ?? $0.oldPath ?? "?", additions: $0.additions, deletions: $0.deletions)
-                })
+                files.isEmpty
+                    ? nil
+                    : ChangeSet(
+                        files: files.map {
+                            ChangedFile(
+                                path: $0.newPath ?? $0.oldPath ?? "?", additions: $0.additions, deletions: $0.deletions)
+                        })
             }
         )
     }
@@ -164,7 +180,8 @@ public struct GitLabPlugin: SourcePlugin {
 
     private func get<T: Decodable>(_ path: String, _ query: [String: String] = [:]) async throws -> T {
         let url = host.appending(path: "api/v4/\(path)", query: query)
-        return try await http.decode(T.self, from: .get(url, headers: ["PRIVATE-TOKEN": token]), using: .api(snakeCase: true))
+        return try await http.decode(
+            T.self, from: .get(url, headers: ["PRIVATE-TOKEN": token]), using: .api(snakeCase: true))
     }
 }
 
@@ -218,12 +235,16 @@ extension GitLabPlugin {
     enum GraphQL {
         struct Response: Decodable {
             struct Body: Decodable { var currentUser: CurrentUser? }
-            struct CurrentUser: Decodable { var authored: Connection?; var reviewing: Connection? }
+            struct CurrentUser: Decodable {
+                var authored: Connection?
+                var reviewing: Connection?
+            }
             struct Connection: Decodable { var nodes: [Node?]? }
             var data: Body?
 
             var details: [Int: Details] {
-                let nodes = [data?.currentUser?.authored, data?.currentUser?.reviewing].compactMap { $0?.nodes }.flatMap { $0 }.compactMap { $0 }
+                let nodes = [data?.currentUser?.authored, data?.currentUser?.reviewing].compactMap { $0?.nodes }.flatMap
+                { $0 }.compactMap { $0 }
                 var found: [Int: Details] = [:]
                 for node in nodes {
                     guard let id = node.restID else { continue }
@@ -235,10 +256,17 @@ extension GitLabPlugin {
         }
 
         struct Node: Decodable {
-            struct Person: Decodable { var username: String; var avatarUrl: String? }
+            struct Person: Decodable {
+                var username: String
+                var avatarUrl: String?
+            }
             struct People: Decodable { var nodes: [Person?]? }
             struct Pipeline: Decodable { var status: String }
-            struct Stat: Decodable { var path: String; var additions: Int?; var deletions: Int? }
+            struct Stat: Decodable {
+                var path: String
+                var additions: Int?
+                var deletions: Int?
+            }
 
             var id: String
             var approved: Bool?
@@ -253,10 +281,14 @@ extension GitLabPlugin {
                 Details(
                     approvals: Approvals(
                         approved: approved,
-                        approvedBy: (approvedBy?.nodes ?? []).compactMap { $0 }.map { Approvals.Approver(user: User(username: $0.username, avatarUrl: $0.avatarUrl)) }
+                        approvedBy: (approvedBy?.nodes ?? []).compactMap { $0 }.map {
+                            Approvals.Approver(user: User(username: $0.username, avatarUrl: $0.avatarUrl))
+                        }
                     ),
                     detail: Detail(headPipeline: headPipeline.map { Detail.Pipeline(status: $0.status.lowercased()) }),
-                    files: diffStats.map { $0.map { DiffFile(newPath: $0.path, additions: $0.additions, deletions: $0.deletions) } }
+                    files: diffStats.map {
+                        $0.map { DiffFile(newPath: $0.path, additions: $0.additions, deletions: $0.deletions) }
+                    }
                 )
             }
         }

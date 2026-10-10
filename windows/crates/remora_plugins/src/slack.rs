@@ -14,8 +14,19 @@ pub fn manifest() -> PluginManifest {
         name: "Slack".into(),
         summary: "Mentions, direct messages and replies in your threads from the last few days.".into(),
         fields: vec![
-            ConfigField::token("User OAuth token", "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies."),
-            ConfigField { key: "days".into(), label: "Look back (days)".into(), placeholder: "3".into(), default_value: "3".into(), is_secret: false, is_optional: false, help: None },
+            ConfigField::token(
+                "User OAuth token",
+                "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies.",
+            ),
+            ConfigField {
+                key: "days".into(),
+                label: "Look back (days)".into(),
+                placeholder: "3".into(),
+                default_value: "3".into(),
+                is_secret: false,
+                is_optional: false,
+                help: None,
+            },
         ],
         setup_steps: vec![
             "Click “Create the Slack app”, pick your workspace, then Next and Create. The app comes pre-filled.".into(),
@@ -24,7 +35,12 @@ pub fn manifest() -> PluginManifest {
         ],
         setup_label: "Create the Slack app".into(),
         setup_url: Some(app_manifest_url()),
-        egress: Egress { hosts: vec!["slack.com".into()], description: "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in.".into(), external_ai: false },
+        egress: Egress {
+            hosts: vec!["slack.com".into()],
+            description:
+                "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in.".into(),
+            external_ai: false,
+        },
         logo: Some("slack".into()),
     }
 }
@@ -46,7 +62,12 @@ pub struct SlackPlugin {
 
 impl SlackPlugin {
     pub fn new(config: &PluginConfig, http: Arc<dyn HttpClient>) -> Result<Self, PluginError> {
-        Ok(SlackPlugin { account_id: config.account_id.clone(), token: config.required("token")?, days: config.get("days").parse().unwrap_or(3).max(1), http })
+        Ok(SlackPlugin {
+            account_id: config.account_id.clone(),
+            token: config.required("token")?,
+            days: config.get("days").parse().unwrap_or(3).max(1),
+            http,
+        })
     }
 
     async fn call<T: DeserializeOwned>(&self, method: &str, query: &[(&str, &str)]) -> Result<T, PluginError> {
@@ -54,16 +75,28 @@ impl SlackPlugin {
         if method == "search.messages" {
             query.extend([("sort", "timestamp"), ("sort_dir", "desc"), ("count", "40")]);
         }
-        let request = Request::get(url_with_query("https://slack.com/api", method, &query)).header("Authorization", format!("Bearer {}", self.token));
+        let request = Request::get(url_with_query("https://slack.com/api", method, &query))
+            .header("Authorization", format!("Bearer {}", self.token));
         let envelope: serde_json::Value = decode(self.http.as_ref(), request).await?;
         if envelope.get("ok").and_then(|v| v.as_bool()) != Some(true) {
             let error = envelope.get("error").and_then(|v| v.as_str()).unwrap_or("unknown error");
-            return Err(if matches!(error, "invalid_auth" | "not_authed") { PluginError::Unauthorized } else { PluginError::Api(format!("Slack: {error}")) });
+            return Err(if matches!(error, "invalid_auth" | "not_authed") {
+                PluginError::Unauthorized
+            } else {
+                PluginError::Api(format!("Slack: {error}"))
+            });
         }
         serde_json::from_value(envelope).map_err(|e| PluginError::Decode(e.to_string()))
     }
 
-    fn snapshot(mentions: Vec<Match>, direct: Vec<Match>, identity: String, me: &str, team: Option<&str>, account_id: &str) -> SourceSnapshot {
+    fn snapshot(
+        mentions: Vec<Match>,
+        direct: Vec<Match>,
+        identity: String,
+        me: &str,
+        team: Option<&str>,
+        account_id: &str,
+    ) -> SourceSnapshot {
         let mut items: Vec<InboxItem> = mentions
             .iter()
             .filter(|m| !m.channel.is_direct())
@@ -76,7 +109,9 @@ impl SlackPlugin {
                 *entry = m;
             }
         }
-        items.extend(latest.values().map(|m| m.item(account_id, InboxBundle::direct_messages(), &m.channel.id, me, team)));
+        items.extend(
+            latest.values().map(|m| m.item(account_id, InboxBundle::direct_messages(), &m.channel.id, me, team)),
+        );
         SourceSnapshot { identity, items, remarks: vec![] }
     }
 
@@ -97,17 +132,29 @@ impl SlackPlugin {
         let mut items = vec![];
         for thread in threads.into_iter().take(10) {
             let thread_ts = thread.thread_ts();
-            let query = [("channel", thread.channel.id.as_str()), ("ts", thread_ts.as_str()), ("oldest", thread.ts.as_str()), ("limit", "50")];
+            let query = [
+                ("channel", thread.channel.id.as_str()),
+                ("ts", thread_ts.as_str()),
+                ("oldest", thread.ts.as_str()),
+                ("limit", "50"),
+            ];
             let replies = match self.call::<Replies>("conversations.replies", &query).await {
                 Ok(replies) => replies,
-                Err(PluginError::Api(message)) if message.ends_with("missing_scope") => return (items, vec![MISSING_HISTORY.to_string()]),
+                Err(PluginError::Api(message)) if message.ends_with("missing_scope") => {
+                    return (items, vec![MISSING_HISTORY.to_string()])
+                }
                 Err(_) => continue,
             };
             let mention = format!("<@{me}>");
             let reply = replies
                 .messages
                 .into_iter()
-                .filter(|r| r.ts != thread.ts && r.user.as_deref() != Some(me) && r.bot_id.is_none() && !r.text.contains(&mention))
+                .filter(|r| {
+                    r.ts != thread.ts
+                        && r.user.as_deref() != Some(me)
+                        && r.bot_id.is_none()
+                        && !r.text.contains(&mention)
+                })
                 .max_by_key(Reply::date);
             if let Some(reply) = reply {
                 items.push(reply.item(&thread, &self.account_id, me, team));
@@ -200,7 +247,10 @@ impl Reply {
         let plain = plain_text(&self.text, me, &DateStyle::system());
         let lines: Vec<&str> = plain.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
         let preview = lines.iter().skip(1).copied().collect::<Vec<_>>().join(" ");
-        let name = self.user_profile.as_ref().and_then(|p| [&p.display_name, &p.real_name].into_iter().flatten().find(|n| !n.is_empty()).cloned());
+        let name = self
+            .user_profile
+            .as_ref()
+            .and_then(|p| [&p.display_name, &p.real_name].into_iter().flatten().find(|n| !n.is_empty()).cloned());
         InboxItem {
             id: format!("{account_id}/{}/thread/{}", thread.channel.id, thread.thread_ts()),
             account_id: account_id.into(),
@@ -266,8 +316,17 @@ struct Attachment {
 
 impl Attachment {
     fn words(&self) -> String {
-        let parts: Vec<&str> = [&self.pretext, &self.title, &self.text].into_iter().flatten().map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
-        if parts.is_empty() { self.fallback.clone().unwrap_or_default() } else { parts.join("\n") }
+        let parts: Vec<&str> = [&self.pretext, &self.title, &self.text]
+            .into_iter()
+            .flatten()
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if parts.is_empty() {
+            self.fallback.clone().unwrap_or_default()
+        } else {
+            parts.join("\n")
+        }
     }
 }
 
@@ -344,7 +403,8 @@ impl Match {
         if !self.text.trim().is_empty() {
             return self.text.clone();
         }
-        let from_attachments: Vec<String> = self.attachments.iter().map(Attachment::words).filter(|w| !w.is_empty()).collect();
+        let from_attachments: Vec<String> =
+            self.attachments.iter().map(Attachment::words).filter(|w| !w.is_empty()).collect();
         if !from_attachments.is_empty() {
             return from_attachments.join("\n");
         }
@@ -405,7 +465,12 @@ pub struct DateStyle {
 impl DateStyle {
     pub fn system() -> Self {
         let locale = sys_locale::get_locale().unwrap_or_default().to_lowercase().replace('_', "-");
-        DateStyle { offset: None, french: locale.starts_with("fr"), us: locale == "en-us" || locale == "en", now: Utc::now() }
+        DateStyle {
+            offset: None,
+            french: locale.starts_with("fr"),
+            us: locale == "en-us" || locale == "en",
+            now: Utc::now(),
+        }
     }
 }
 
@@ -439,10 +504,10 @@ pub fn plain_text(text: &str, me: &str, style: &DateStyle) -> String {
     let mut result = DATE_TAG
         .replace_all(&result, |c: &regex::Captures| {
             let fallback = c.get(3).map(|m| m.as_str());
-            c[1].parse::<i64>()
-                .ok()
-                .and_then(|s| Utc.timestamp_opt(s, 0).single())
-                .map_or_else(|| fallback.unwrap_or_default().to_string(), |date| formatted(date, &c[2], fallback, style))
+            c[1].parse::<i64>().ok().and_then(|s| Utc.timestamp_opt(s, 0).single()).map_or_else(
+                || fallback.unwrap_or_default().to_string(),
+                |date| formatted(date, &c[2], fallback, style),
+            )
         })
         .into_owned();
     for (pattern, template) in RULES.iter() {
@@ -453,7 +518,11 @@ pub fn plain_text(text: &str, me: &str, style: &DateStyle) -> String {
 
 /// The times a message's date tags point at.
 pub fn times(text: &str) -> Vec<DateTime<Utc>> {
-    DATE_TAG.captures_iter(text).filter_map(|c| c[1].parse::<i64>().ok()).filter_map(|s| Utc.timestamp_opt(s, 0).single()).collect()
+    DATE_TAG
+        .captures_iter(text)
+        .filter_map(|c| c[1].parse::<i64>().ok())
+        .filter_map(|s| Utc.timestamp_opt(s, 0).single())
+        .collect()
 }
 
 /// Slack's tokens ({time}, {date_short}, {date_pretty}, {ago}…) in place; an unknown one gives the fallback.
@@ -465,11 +534,29 @@ pub fn formatted(date: DateTime<Utc>, format: &str, fallback: Option<&str>, styl
             String::new()
         })
     });
-    if unknown { fallback.unwrap_or_default().to_string() } else { result.into_owned() }
+    if unknown {
+        fallback.unwrap_or_default().to_string()
+    } else {
+        result.into_owned()
+    }
 }
 
-const MONTHS_FR: [&str; 12] = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-const MONTHS_FR_SHORT: [&str; 12] = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+const MONTHS_FR: [&str; 12] = [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
+];
+const MONTHS_FR_SHORT: [&str; 12] =
+    ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 const DAYS_FR: [&str; 7] = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 
 fn token(name: &str, date: DateTime<Utc>, style: &DateStyle) -> Option<String> {
@@ -553,7 +640,8 @@ mod tests {
     /// Ids from the server can't add parameters to the app link.
     #[test]
     fn app_links_encode_the_ids() {
-        let message: Match = serde_json::from_str(r#"{"ts": "1.0", "channel": {"id": "D1&team=EVIL#x", "is_im": true}}"#).unwrap();
+        let message: Match =
+            serde_json::from_str(r#"{"ts": "1.0", "channel": {"id": "D1&team=EVIL#x", "is_im": true}}"#).unwrap();
         let url = message.app_url(Some("T42")).unwrap();
         assert_eq!(url, "slack://channel?team=T42&id=D1%26team%3DEVIL%23x");
         assert!(crate::links::is_app_link(&url));
@@ -592,9 +680,15 @@ mod tests {
         assert_eq!(format("{date_pretty}"), "Today");
         assert_eq!(format("{ago}"), "2 hours ago");
         assert_eq!(format("on {nonsense}"), "fallback", "a token Slack may add later");
-        assert_eq!(formatted(start(), "{date_long}", None, &DateStyle { french: true, ..paris() }), "vendredi 9 octobre 2026");
+        assert_eq!(
+            formatted(start(), "{date_long}", None, &DateStyle { french: true, ..paris() }),
+            "vendredi 9 octobre 2026"
+        );
         assert_eq!(plain_text("<!date^1791555300^{date_num}^https://x.io|x>", "", &style), "2026-10-09", "with a link");
-        assert_eq!(plain_text("<tel:+33100000000|Call Lou>, <!subteam^S1|@design>, <mailto:a@b.io>", "", &style), "Call Lou, @design, a@b.io");
+        assert_eq!(
+            plain_text("<tel:+33100000000|Call Lou>, <!subteam^S1|@design>, <mailto:a@b.io>", "", &style),
+            "Call Lou, @design, a@b.io"
+        );
     }
 
     /// An app's reminder is over once the event starts; a person's message never expires.
@@ -605,8 +699,12 @@ mod tests {
            "username": "Google Calendar", "bot_id": "B1", "channel": {"id": "D7", "is_im": true}},
           {"ts": "1791555000.0", "text": "Shall we meet at <!date^1791555300^{time}|4:15 PM>?", "username": "carol", "channel": {"id": "D1", "is_im": true}}
         ]}}"#;
-        let http = StubHttp::paths(&[("/auth.test", r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#), ("/search.messages", search)]);
-        let items = SlackPlugin::new(&config(&[("token", "xoxp")]), Arc::new(http)).unwrap().fetch().await.unwrap().items;
+        let http = StubHttp::paths(&[
+            ("/auth.test", r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#),
+            ("/search.messages", search),
+        ]);
+        let items =
+            SlackPlugin::new(&config(&[("token", "xoxp")]), Arc::new(http)).unwrap().fetch().await.unwrap().items;
         let calendar = items.iter().find(|i| i.author.as_ref().is_some_and(|a| a.name == "Google Calendar")).unwrap();
         assert_eq!(calendar.expires, Some(start()));
         assert_eq!(items.iter().find(|i| i.author.as_ref().is_some_and(|a| a.name == "carol")).unwrap().expires, None);
@@ -615,9 +713,12 @@ mod tests {
         assert_eq!(assembler.placement(calendar, None, start() - Duration::seconds(30)), remora_core::Placement::Inbox);
         assert_eq!(assembler.placement(calendar, None, start()), remora_core::Placement::Cleared);
         let pinned = remora_core::ItemState { pinned: true, ..Default::default() };
-        assert_eq!(assembler.placement(calendar, Some(&pinned), start()), remora_core::Placement::Inbox, "pinned stays");
+        assert_eq!(
+            assembler.placement(calendar, Some(&pinned), start()),
+            remora_core::Placement::Inbox,
+            "pinned stays"
+        );
     }
-
 
     #[tokio::test]
     async fn keeps_the_latest_message_per_conversation_with_app_links() {
@@ -626,14 +727,21 @@ mod tests {
           {"ts": "1700000000.0", "text": "first", "username": "carol", "channel": {"id": "D1", "is_im": true}},
           {"ts": "1700000050.0", "text": "hey <@UME>\nmore", "username": "erin", "channel": {"id": "C1", "name": "dev"}}
         ]}}"#;
-        let http = StubHttp::paths(&[("/auth.test", r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme", "team_id": "T42"}"#), ("/search.messages", search)]);
+        let http = StubHttp::paths(&[
+            ("/auth.test", r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme", "team_id": "T42"}"#),
+            ("/search.messages", search),
+        ]);
         let snapshot = SlackPlugin::new(&config(&[("token", "xoxp")]), Arc::new(http)).unwrap().fetch().await.unwrap();
 
-        let direct: Vec<&InboxItem> = snapshot.items.iter().filter(|i| i.bundle == InboxBundle::direct_messages()).collect();
+        let direct: Vec<&InboxItem> =
+            snapshot.items.iter().filter(|i| i.bundle == InboxBundle::direct_messages()).collect();
         assert_eq!(direct.iter().map(|i| i.title.as_str()).collect::<Vec<_>>(), ["second"]);
         assert_eq!(direct[0].app_url.as_deref(), Some("slack://channel?team=T42&id=D1"));
         let mention = snapshot.items.iter().find(|i| i.bundle == InboxBundle::mentions()).unwrap();
-        assert_eq!((mention.title.as_str(), mention.preview.as_deref(), mention.context.as_str()), ("hey @you", Some("more"), "#dev"));
+        assert_eq!(
+            (mention.title.as_str(), mention.preview.as_deref(), mention.context.as_str()),
+            ("hey @you", Some("more"), "#dev")
+        );
     }
 
     /// Google Calendar's app DMs event updates with an empty `text`: the words are in attachments or blocks.
@@ -648,12 +756,25 @@ mod tests {
           {"ts": "1700000100.0", "username": "Mystery", "channel": {"id": "D9", "is_im": true}, "attachments": "odd"},
           {"ts": "1700000000.0", "text": "can you look?", "username": "carol", "channel": {"id": "D1", "is_im": true}}
         ]}}"#;
-        let http = StubHttp::paths(&[("/auth.test", r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#), ("/search.messages", search)]);
-        let items: Vec<InboxItem> = SlackPlugin::new(&config(&[("token", "xoxp")]), Arc::new(http)).unwrap().fetch().await.unwrap()
-            .items.into_iter().map(remora_core::VerbClassifier::classify).collect();
+        let http = StubHttp::paths(&[
+            ("/auth.test", r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#),
+            ("/search.messages", search),
+        ]);
+        let items: Vec<InboxItem> = SlackPlugin::new(&config(&[("token", "xoxp")]), Arc::new(http))
+            .unwrap()
+            .fetch()
+            .await
+            .unwrap()
+            .items
+            .into_iter()
+            .map(remora_core::VerbClassifier::classify)
+            .collect();
         let by = |name: &str| items.iter().find(|i| i.author.as_ref().is_some_and(|a| a.name == name)).unwrap();
         let calendar = by("Google Calendar");
-        assert_eq!((calendar.title.as_str(), calendar.preview.as_deref()), ("Event updated", Some("Design review Tomorrow 10:00")));
+        assert_eq!(
+            (calendar.title.as_str(), calendar.preview.as_deref()),
+            ("Event updated", Some("Design review Tomorrow 10:00"))
+        );
         assert_eq!(calendar.bundle, InboxBundle::read());
         assert!(!calendar.needs_action);
         let jira = by("Jira Cloud");
@@ -678,7 +799,10 @@ mod tests {
         let url = reqwest::Url::parse(&app_manifest_url()).unwrap();
         let manifest = url.query_pairs().find(|(k, _)| k == "manifest_json").map(|(_, v)| v.into_owned()).unwrap();
         let json: serde_json::Value = serde_json::from_str(&manifest).unwrap();
-        assert_eq!(json["oauth_config"]["scopes"]["user"], serde_json::json!(["search:read", "channels:history", "groups:history"]));
+        assert_eq!(
+            json["oauth_config"]["scopes"]["user"],
+            serde_json::json!(["search:read", "channels:history", "groups:history"])
+        );
     }
 
     /// Answers Slack by method, and the searches by their query: your own thread messages, or nothing.
@@ -692,11 +816,20 @@ mod tests {
     impl HttpClient for SlackStub {
         async fn send(&self, request: Request) -> Result<crate::Response, PluginError> {
             let url = reqwest::Url::parse(&request.url).unwrap();
-            let value = |name: &str| url.query_pairs().find(|(k, _)| k == name).map(|(_, v)| v.into_owned()).unwrap_or_default();
+            let value = |name: &str| {
+                url.query_pairs().find(|(k, _)| k == name).map(|(_, v)| v.into_owned()).unwrap_or_default()
+            };
             let body = match url.path().rsplit('/').next().unwrap_or_default() {
-                "auth.test" => r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme", "team_id": "T1"}"#.to_string(),
+                "auth.test" => {
+                    r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme", "team_id": "T1"}"#.to_string()
+                }
                 "conversations.replies" => {
-                    self.asked.lock().unwrap().push(format!("{} {} {}", value("channel"), value("ts"), value("oldest")));
+                    self.asked.lock().unwrap().push(format!(
+                        "{} {} {}",
+                        value("channel"),
+                        value("ts"),
+                        value("oldest")
+                    ));
                     self.replies.to_string()
                 }
                 _ if value("query").contains("is:thread") => self.mine.to_string(),
@@ -731,13 +864,21 @@ mod tests {
         assert_eq!(thread.context, "Thread in #design");
         assert!(thread.id.ends_with("/C1/thread/1700000100.0"));
         assert!(thread.bundle == InboxBundle::mentions() && thread.needs_action);
-        assert_eq!(*http.asked.lock().unwrap(), ["C1 1700000100.0 1700000200.0"], "one call, from your last message, no DM");
+        assert_eq!(
+            *http.asked.lock().unwrap(),
+            ["C1 1700000100.0 1700000200.0"],
+            "one call, from your last message, no DM"
+        );
     }
 
     #[tokio::test]
     async fn threads_without_the_history_scope_say_so() {
         let mine = r#"{"ok": true, "messages": {"matches": [{"ts": "1.0", "text": "x", "channel": {"id": "C1", "name": "a"}}]}}"#;
-        let http = Arc::new(SlackStub { mine, replies: r#"{"ok": false, "error": "missing_scope"}"#, asked: Default::default() });
+        let http = Arc::new(SlackStub {
+            mine,
+            replies: r#"{"ok": false, "error": "missing_scope"}"#,
+            asked: Default::default(),
+        });
         let snapshot = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap();
         assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].contains("channels:history"));
         assert!(!snapshot.items.iter().any(|i| i.context.starts_with("Thread")));

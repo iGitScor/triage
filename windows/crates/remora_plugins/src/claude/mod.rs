@@ -62,7 +62,11 @@ mod tests {
         for manifest in &manifests {
             assert!(manifest.egress.external_ai, "{}", manifest.id);
             assert!(!manifest.egress.description.is_empty());
-            assert!(!manifest.egress.hosts.is_empty() || manifest.id == "claude-code", "{} must declare hosts", manifest.id);
+            assert!(
+                !manifest.egress.hosts.is_empty() || manifest.id == "claude-code",
+                "{} must declare hosts",
+                manifest.id
+            );
             assert!(!remora_core::CompliancePolicy::default().allows(manifest), "external AI is off by default");
         }
         assert!(is_assistant("claude-code") && !is_assistant("github"));
@@ -73,8 +77,14 @@ mod tests {
         let http: Arc<dyn HttpClient> = Arc::new(StubHttp::paths(&[]));
         let secrets = HashMap::from([("token".to_string(), "k".to_string())]);
         assert!(make_assistant(&account("claude"), &secrets, http.clone(), "en").is_ok());
-        assert_eq!(make_assistant(&account("claude"), &HashMap::new(), http.clone(), "en").err(), Some(PluginError::MissingField("token".into())));
+        assert_eq!(
+            make_assistant(&account("claude"), &HashMap::new(), http.clone(), "en").err(),
+            Some(PluginError::MissingField("token".into()))
+        );
         assert!(make_assistant(&account("claude-code"), &HashMap::new(), http.clone(), "fr").is_ok());
-        assert_eq!(make_assistant(&account("github"), &HashMap::new(), http, "en").err(), Some(PluginError::UnknownPlugin("github".into())));
+        assert_eq!(
+            make_assistant(&account("github"), &HashMap::new(), http, "en").err(),
+            Some(PluginError::UnknownPlugin("github".into()))
+        );
     }
 }

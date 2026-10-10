@@ -37,7 +37,11 @@ impl<'a> Prioritizer<'a> {
         };
         let personal = self.personal.map_or(Ordering::Equal, |score| {
             let (a, b) = (score(a), score(b));
-            if (a - b).abs() > 0.5 { b.partial_cmp(&a).unwrap_or(Ordering::Equal) } else { Ordering::Equal }
+            if (a - b).abs() > 0.5 {
+                b.partial_cmp(&a).unwrap_or(Ordering::Equal)
+            } else {
+                Ordering::Equal
+            }
         });
         pressing.then(priority).then(personal).then(due).then(b.date.cmp(&a.date))
     }

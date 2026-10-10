@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import RemoraCore
 
 struct PersonalRankerTests {
@@ -34,8 +35,11 @@ struct PersonalRankerTests {
         let ranker = PersonalRanker(records: records)
         var urgentFromFrank = item("u", author: "frank")
         urgentFromFrank.priority = .urgent
-        let fromErin = item("a", author: "erin"), fromFrank = item("b", author: "frank")
-        let sorted = Prioritizer(now: now, personal: { ranker.score($0) }).sorted([fromFrank, fromErin, urgentFromFrank])
+        let fromErin = item("a", author: "erin")
+        let fromFrank = item("b", author: "frank")
+        let sorted = Prioritizer(now: now, personal: { ranker.score($0) }).sorted([
+            fromFrank, fromErin, urgentFromFrank,
+        ])
         #expect(sorted.map(\.id) == ["u", "a", "b"])
     }
 

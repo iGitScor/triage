@@ -1,6 +1,7 @@
 import Foundation
 import NaturalLanguage
 import Testing
+
 @testable import RemoraCore
 
 struct VerbClassifierTests {
@@ -20,17 +21,18 @@ struct VerbClassifierTests {
     }
 
     /// A negated request asks nothing; a real request elsewhere in the message still does.
-    @Test(arguments: [
-        ("No need to reply, the build is green.", TextIntent.info),
-        ("Pas besoin de répondre, c’est réglé.", .info),
-        ("FYI no action needed on your side", .info),
-        ("Rien à faire de ton côté, merci !", .info),
-        ("Not urgent, just sharing the doc", nil),
-        ("Pas urgent, juste pour te tenir au courant", nil),
-        ("No need to reply, but can you check the doc", .request),
-        ("Not urgent, but could you look at it", .request),
-        ("Urgent: the deploy is broken", .request),
-    ] as [(String, TextIntent?)])
+    @Test(
+        arguments: [
+            ("No need to reply, the build is green.", TextIntent.info),
+            ("Pas besoin de répondre, c’est réglé.", .info),
+            ("FYI no action needed on your side", .info),
+            ("Rien à faire de ton côté, merci !", .info),
+            ("Not urgent, just sharing the doc", nil),
+            ("Pas urgent, juste pour te tenir au courant", nil),
+            ("No need to reply, but can you check the doc", .request),
+            ("Not urgent, but could you look at it", .request),
+            ("Urgent: the deploy is broken", .request),
+        ] as [(String, TextIntent?)])
     func negatedRequestsAskNothing(text: String, expected: TextIntent?) {
         #expect(KeywordIntentClassifier().intent(of: text) == expected)
     }
@@ -40,27 +42,30 @@ struct VerbClassifierTests {
     }
 
     /// Whole words, a question mark that ends a sentence, links and code left out. Same cases as Windows.
-    @Test(arguments: [
-        ("Pleased to share the new office plan", nil),
-        ("See https://example.com/search?q=remora for the numbers", nil),
-        ("Use `a ?? b` when the value can be missing", nil),
-        ("The stpierre account is migrated", nil),
-        ("Thoughtful review, merged", nil),
-        ("Is the deploy done?", TextIntent.request),
-        ("Ready? Let's ship it", .request),
-        ("Tu peux regarder ?", .request),
-        ("Can you check (the second link)?", .request),
-        ("please merge", .request),
-        ("Heads-up: the API moves on Monday", .info),
-        ("FYI: www.example.com/faq?x=1 is updated", .info),
-    ] as [(String, TextIntent?)])
+    @Test(
+        arguments: [
+            ("Pleased to share the new office plan", nil),
+            ("See https://example.com/search?q=remora for the numbers", nil),
+            ("Use `a ?? b` when the value can be missing", nil),
+            ("The stpierre account is migrated", nil),
+            ("Thoughtful review, merged", nil),
+            ("Is the deploy done?", TextIntent.request),
+            ("Ready? Let's ship it", .request),
+            ("Tu peux regarder ?", .request),
+            ("Can you check (the second link)?", .request),
+            ("please merge", .request),
+            ("Heads-up: the API moves on Monday", .info),
+            ("FYI: www.example.com/faq?x=1 is updated", .info),
+        ] as [(String, TextIntent?)])
     func keywordsMatchWordsNotFragments(text: String, expected: TextIntent?) {
         #expect(KeywordIntentClassifier().intent(of: text) == expected)
     }
 
     @Test func authoredMergeRequestsGetAVerb() {
         func authored(_ badges: [String]) -> InboxBundle {
-            classifier.classify(makeItem("1", bundle: .authored, badges: badges.map { Badge(id: $0, label: $0, tone: .neutral) })).bundle
+            classifier.classify(
+                makeItem("1", bundle: .authored, badges: badges.map { Badge(id: $0, label: $0, tone: .neutral) })
+            ).bundle
         }
         #expect(authored(["approved"]) == .merge)
         #expect(authored(["approved", "checks.failing"]) == .fix)
@@ -96,7 +101,10 @@ struct VerbClassifierTests {
 
     /// Sentences the model never saw as examples, in both languages. macOS downloads the embeddings on
     /// demand, so a fresh machine (CI) may not have the French one yet.
-    @Test(.enabled(if: NLEmbedding.sentenceEmbedding(for: .english) != nil && NLEmbedding.sentenceEmbedding(for: .french) != nil))
+    @Test(
+        .enabled(
+            if: NLEmbedding.sentenceEmbedding(for: .english) != nil
+                && NLEmbedding.sentenceEmbedding(for: .french) != nil))
     func embeddingsSortUnseenSentences() {
         let model = EmbeddingIntentClassifier()
         let cases: [(String, TextIntent)] = [
@@ -132,7 +140,8 @@ struct VerbClassifierTests {
             ("The deploy is done", "Would love your feedback on the new onboarding flow"),
         ]
         for (a, b) in pairs {
-            let ours = EmbeddingIntentClassifier.cosineDistance(try #require(embedding.vector(for: a)), try #require(embedding.vector(for: b)))
+            let ours = EmbeddingIntentClassifier.cosineDistance(
+                try #require(embedding.vector(for: a)), try #require(embedding.vector(for: b)))
             #expect(abs(ours - embedding.distance(between: a, and: b, distanceType: .cosine)) < 1e-6, "\(a) / \(b)")
         }
     }

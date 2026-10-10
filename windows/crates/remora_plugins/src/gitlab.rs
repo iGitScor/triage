@@ -14,7 +14,10 @@ pub fn manifest() -> PluginManifest {
         id: "gitlab".into(),
         name: "GitLab".into(),
         summary: "Merge requests you opened and those you review. Works with self-hosted GitLab.".into(),
-        fields: vec![ConfigField::host("https://gitlab.com"), ConfigField::token("Personal access token", "Token with the read_api scope.")],
+        fields: vec![
+            ConfigField::host("https://gitlab.com"),
+            ConfigField::token("Personal access token", "Token with the read_api scope."),
+        ],
         setup_steps: vec![
             "If you use self-hosted GitLab, set the host first.".into(),
             "Click “Create a token”: GitLab opens with the read_api scope selected.".into(),
@@ -41,7 +44,12 @@ pub struct GitLabPlugin {
 
 impl GitLabPlugin {
     pub fn new(config: &PluginConfig, http: Arc<dyn HttpClient>) -> Result<Self, PluginError> {
-        Ok(GitLabPlugin { account_id: config.account_id.clone(), host: config.url("host")?, token: config.required("token")?, http })
+        Ok(GitLabPlugin {
+            account_id: config.account_id.clone(),
+            host: config.url("host")?,
+            token: config.required("token")?,
+            http,
+        })
     }
 
     async fn get<T: DeserializeOwned>(&self, path: &str, query: &[(&str, &str)]) -> Result<T, PluginError> {
@@ -57,11 +65,24 @@ impl GitLabPlugin {
         let diffs_path = format!("{base}/diffs");
         // Review prep: file paths only. The diff text in this response is never decoded.
         let files = async {
-            if authored { None } else { self.get::<Vec<DiffFile>>(&diffs_path, &[("per_page", "50")]).await.ok() }
+            if authored {
+                None
+            } else {
+                self.get::<Vec<DiffFile>>(&diffs_path, &[("per_page", "50")]).await.ok()
+            }
         };
-        let (approvals, detail, files) = futures::join!(self.get::<Approvals>(&approvals_path, &[]), self.get::<Detail>(&base, &[]), files);
+        let (approvals, detail, files) =
+            futures::join!(self.get::<Approvals>(&approvals_path, &[]), self.get::<Detail>(&base, &[]), files);
         let approvals = approvals.unwrap_or(Approvals { approved: None, approved_by: None });
-        Self::map(mr, approvals, detail.unwrap_or(Detail { head_pipeline: None }), files, authored, &self.account_id, &self.host)
+        Self::map(
+            mr,
+            approvals,
+            detail.unwrap_or(Detail { head_pipeline: None }),
+            files,
+            authored,
+            &self.account_id,
+            &self.host,
+        )
     }
 
     /// Approvals, pipeline and changed files of every open merge request you wrote or review, in one GraphQL
@@ -72,13 +93,23 @@ impl GitLabPlugin {
             reviewing: reviewRequestedMergeRequests(state: opened, first: 50) { nodes { ...status diffStats { path additions deletions } } } } } \
             fragment status on MergeRequest { id approved approvedBy { nodes { username avatarUrl } } headPipeline { status } }";
         let url = format!("{}/api/graphql", self.host.trim_end_matches('/'));
-        let request = Request::post_json(url, &serde_json::json!({ "query": QUERY }))?.header("PRIVATE-TOKEN", self.token.clone());
+        let request = Request::post_json(url, &serde_json::json!({ "query": QUERY }))?
+            .header("PRIVATE-TOKEN", self.token.clone());
         let response: graphql::Response = decode(self.http.as_ref(), request).await?;
         Ok(response.details())
     }
 
-    fn map(mr: MergeRequest, approvals: Approvals, detail: Detail, files: Option<Vec<DiffFile>>, authored: bool, account_id: &str, host: &str) -> InboxItem {
-        let approvers: HashSet<String> = approvals.approved_by.iter().flatten().map(|a| a.user.username.clone()).collect();
+    fn map(
+        mr: MergeRequest,
+        approvals: Approvals,
+        detail: Detail,
+        files: Option<Vec<DiffFile>>,
+        authored: bool,
+        account_id: &str,
+        host: &str,
+    ) -> InboxItem {
+        let approvers: HashSet<String> =
+            approvals.approved_by.iter().flatten().map(|a| a.user.username.clone()).collect();
         let is_draft = mr.draft.or(mr.work_in_progress).unwrap_or(false);
         let checks = match detail.head_pipeline.as_ref().map(|p| p.status.as_str()) {
             Some("success") => Checks::Passing,
@@ -96,19 +127,39 @@ impl GitLabPlugin {
             additions: None,
             deletions: None,
         };
-        let avatar = |raw: &Option<String>| raw.as_ref().filter(|s| !s.is_empty()).map(|s| if s.starts_with('/') { format!("{host}{s}") } else { s.clone() });
+        let avatar = |raw: &Option<String>| {
+            raw.as_ref().filter(|s| !s.is_empty()).map(|s| {
+                if s.starts_with('/') {
+                    format!("{host}{s}")
+                } else {
+                    s.clone()
+                }
+            })
+        };
         let mut participants: Vec<Person> = mr
             .reviewers
             .iter()
             .flatten()
-            .map(|r| Person { name: r.username.clone(), avatar_url: avatar(&r.avatar_url), tone: approvers.contains(&r.username).then_some(Tone::Accent) })
+            .map(|r| Person {
+                name: r.username.clone(),
+                avatar_url: avatar(&r.avatar_url),
+                tone: approvers.contains(&r.username).then_some(Tone::Accent),
+            })
             .collect();
         for approver in approvals.approved_by.iter().flatten() {
             if !participants.iter().any(|p| p.name == approver.user.username) {
-                participants.push(Person { name: approver.user.username.clone(), avatar_url: avatar(&approver.user.avatar_url), tone: Some(Tone::Accent) });
+                participants.push(Person {
+                    name: approver.user.username.clone(),
+                    avatar_url: avatar(&approver.user.avatar_url),
+                    tone: Some(Tone::Accent),
+                });
             }
         }
-        let project = mr.references.as_ref().and_then(|r| r.full.split('!').next().map(str::to_string)).unwrap_or_else(|| format!("project {}", mr.project_id));
+        let project = mr
+            .references
+            .as_ref()
+            .and_then(|r| r.full.split('!').next().map(str::to_string))
+            .unwrap_or_else(|| format!("project {}", mr.project_id));
         InboxItem {
             id: format!("{account_id}/{}", mr.id),
             account_id: account_id.into(),
@@ -119,7 +170,11 @@ impl GitLabPlugin {
             preview: None,
             url: Some(mr.web_url),
             app_url: None,
-            author: Some(Person { name: mr.author.username.clone(), avatar_url: avatar(&mr.author.avatar_url), tone: None }),
+            author: Some(Person {
+                name: mr.author.username.clone(),
+                avatar_url: avatar(&mr.author.avatar_url),
+                tone: None,
+            }),
             participants,
             badges: review.badges(authored),
             date: mr.updated_at,
@@ -128,7 +183,11 @@ impl GitLabPlugin {
             due: None,
             expires: None,
             changes: files.filter(|f| !f.is_empty()).map(|files| {
-                let files = files.into_iter().map(|f| ChangedFile { path: f.new_path.or(f.old_path).unwrap_or_else(|| "?".into()), additions: f.additions, deletions: f.deletions });
+                let files = files.into_iter().map(|f| ChangedFile {
+                    path: f.new_path.or(f.old_path).unwrap_or_else(|| "?".into()),
+                    additions: f.additions,
+                    deletions: f.deletions,
+                });
                 ChangeSet::new(files.collect(), None)
             }),
             suggested_people: None,
@@ -141,15 +200,18 @@ impl SourcePlugin for GitLabPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
         let user: User = self.get("user", &[]).await?;
         let authored_query = [("scope", "created_by_me"), ("state", "opened"), ("per_page", "50")];
-        let reviewing_query = [("scope", "all"), ("state", "opened"), ("per_page", "50"), ("reviewer_username", user.username.as_str())];
+        let reviewing_query =
+            [("scope", "all"), ("state", "opened"), ("per_page", "50"), ("reviewer_username", user.username.as_str())];
         let (authored, reviewing) = futures::join!(
             self.get::<Vec<MergeRequest>>("merge_requests", &authored_query),
             self.get::<Vec<MergeRequest>>("merge_requests", &reviewing_query)
         );
         let (authored, reviewing) = (authored?, reviewing?);
         // A full page means there may be more: GitLab's count header isn't always sent.
-        let remarks = if authored.len() >= 50 || reviewing.len() >= 50 { vec![crate::truncated("GitLab")] } else { vec![] };
-        let all: Vec<(MergeRequest, bool)> = authored.into_iter().map(|mr| (mr, true)).chain(reviewing.into_iter().map(|mr| (mr, false))).collect();
+        let remarks =
+            if authored.len() >= 50 || reviewing.len() >= 50 { vec![crate::truncated("GitLab")] } else { vec![] };
+        let all: Vec<(MergeRequest, bool)> =
+            authored.into_iter().map(|mr| (mr, true)).chain(reviewing.into_iter().map(|mr| (mr, false))).collect();
         // One GraphQL request for every merge request's details; an instance where it fails gets the REST calls.
         let details = if all.is_empty() { HashMap::new() } else { self.graphql_details().await.unwrap_or_default() };
         let mut items = Vec::with_capacity(all.len());
@@ -158,7 +220,15 @@ impl SourcePlugin for GitLabPlugin {
             match details.get(&mr.id).cloned() {
                 Some(found) => {
                     let files = if authored { None } else { found.files };
-                    items.push(Self::map(mr, found.approvals, found.detail, files, authored, &self.account_id, &self.host));
+                    items.push(Self::map(
+                        mr,
+                        found.approvals,
+                        found.detail,
+                        files,
+                        authored,
+                        &self.account_id,
+                        &self.host,
+                    ));
                 }
                 None => rest.push((mr, authored)),
             }
@@ -308,13 +378,27 @@ mod graphql {
             for node in lists.flat_map(|c| c.nodes.unwrap_or_default()).flatten() {
                 // "gid://gitlab/MergeRequest/101" → 101, the id REST uses.
                 let Some(id) = node.id.rsplit('/').next().and_then(|n| n.parse::<u64>().ok()) else { continue };
-                let approved_by = node.approved_by.and_then(|p| p.nodes).unwrap_or_default().into_iter().flatten()
+                let approved_by = node
+                    .approved_by
+                    .and_then(|p| p.nodes)
+                    .unwrap_or_default()
+                    .into_iter()
+                    .flatten()
                     .map(|u| Approver { user: User { username: u.username, avatar_url: u.avatar_url } })
                     .collect();
                 let approvals = Approvals { approved: node.approved, approved_by: Some(approved_by) };
-                let detail = Detail { head_pipeline: node.head_pipeline.map(|p| Pipeline { status: p.status.to_lowercase() }) };
+                let detail =
+                    Detail { head_pipeline: node.head_pipeline.map(|p| Pipeline { status: p.status.to_lowercase() }) };
                 let files = node.diff_stats.map(|stats| {
-                    stats.into_iter().map(|s| DiffFile { new_path: Some(s.path), old_path: None, additions: s.additions, deletions: s.deletions }).collect()
+                    stats
+                        .into_iter()
+                        .map(|s| DiffFile {
+                            new_path: Some(s.path),
+                            old_path: None,
+                            additions: s.additions,
+                            deletions: s.deletions,
+                        })
+                        .collect()
                 });
                 // The same merge request in both lists: keep the one with files.
                 if found.get(&id).is_none_or(|d: &Details| d.files.is_none()) || files.is_some() {
@@ -344,23 +428,35 @@ mod tests {
             ("/api/v4/merge_requests", &list),
             ("/merge_requests/12/approvals", r#"{"approved": true, "approved_by": [{"user": {"username": "erin"}}]}"#),
             ("/projects/5/merge_requests/12", r#"{"head_pipeline": {"status": "success"}}"#),
-            ("/merge_requests/12/diffs", r#"[{"new_path": "db/migrate/add_avatars.rb", "old_path": "db/migrate/add_avatars.rb", "diff": "+ secret code"}]"#),
+            (
+                "/merge_requests/12/diffs",
+                r#"[{"new_path": "db/migrate/add_avatars.rb", "old_path": "db/migrate/add_avatars.rb", "diff": "+ secret code"}]"#,
+            ),
         ]);
         let plugin = GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), Arc::new(http)).unwrap();
         let snapshot = plugin.fetch().await.unwrap();
 
         assert_eq!(snapshot.identity, "alice");
-        assert_eq!(snapshot.items.iter().map(|i| i.bundle.clone()).collect::<Vec<_>>(), [InboxBundle::authored(), InboxBundle::reviews()]);
+        assert_eq!(
+            snapshot.items.iter().map(|i| i.bundle.clone()).collect::<Vec<_>>(),
+            [InboxBundle::authored(), InboxBundle::reviews()]
+        );
         let item = &snapshot.items[0];
         assert_eq!(item.context, "g/p !12");
         assert!(item.has_badge("approved") && item.has_badge("checks.passing") && item.has_badge("comments"));
         assert_eq!(item.participants.iter().find(|p| p.name == "erin").and_then(|p| p.tone), Some(Tone::Accent));
         assert_eq!(item.participants.iter().find(|p| p.name == "frank").and_then(|p| p.tone), None);
-        assert_eq!(item.author.as_ref().and_then(|a| a.avatar_url.clone()).as_deref(), Some("https://gitlab.acme.io/uploads/a.png"));
+        assert_eq!(
+            item.author.as_ref().and_then(|a| a.avatar_url.clone()).as_deref(),
+            Some("https://gitlab.acme.io/uploads/a.png")
+        );
         assert_eq!(item.changes, None, "your own merge requests don't need a review prep");
         let review = &snapshot.items[1];
         let changes = review.changes.as_ref().unwrap();
-        assert_eq!(changes.files, [ChangedFile { path: "db/migrate/add_avatars.rb".into(), additions: None, deletions: None }]);
+        assert_eq!(
+            changes.files,
+            [ChangedFile { path: "db/migrate/add_avatars.rb".into(), additions: None, deletions: None }]
+        );
         assert_eq!(changes.file_count, 1);
         let stored = serde_json::to_string(review).unwrap();
         assert!(!stored.contains("secret code"), "diff text is never kept");
@@ -376,7 +472,11 @@ mod tests {
           "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
             "approvedBy": {"nodes": [{"username": "erin"}]}, "headPipeline": {"status": "FAILED"},
             "diffStats": [{"path": "app/models/user.rb", "additions": 12, "deletions": 3}]}]}}}}"#;
-        let stub = StubHttp::paths(&[("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", &list), ("/api/graphql", graphql)]);
+        let stub = StubHttp::paths(&[
+            ("/api/v4/user", r#"{"username": "alice"}"#),
+            ("/api/v4/merge_requests", &list),
+            ("/api/graphql", graphql),
+        ]);
         let http = Arc::new(Recording::new(stub));
         let plugin = GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), http.clone()).unwrap();
         let snapshot = plugin.fetch().await.unwrap();

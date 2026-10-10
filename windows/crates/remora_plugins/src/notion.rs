@@ -9,10 +9,22 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-fn field(key: &str, label: &str, placeholder: &str, default_value: &str, is_optional: bool, help: Option<&str>) -> ConfigField {
+fn field(
+    key: &str,
+    label: &str,
+    placeholder: &str,
+    default_value: &str,
+    is_optional: bool,
+    help: Option<&str>,
+) -> ConfigField {
     ConfigField {
-        key: key.into(), label: label.into(), placeholder: placeholder.into(), default_value: default_value.into(),
-        is_secret: false, is_optional, help: help.map(Into::into),
+        key: key.into(),
+        label: label.into(),
+        placeholder: placeholder.into(),
+        default_value: default_value.into(),
+        is_secret: false,
+        is_optional,
+        help: help.map(Into::into),
     }
 }
 
@@ -67,10 +79,20 @@ pub struct NotionPlugin {
 impl NotionPlugin {
     pub fn new(config: &PluginConfig, http: Arc<dyn HttpClient>) -> Result<Self, PluginError> {
         let token = config.required("token")?;
-        let databases = config.required("databases")?.split(',').filter(|s| !s.is_empty()).map(Self::database_id).collect();
+        let databases =
+            config.required("databases")?.split(',').filter(|s| !s.is_empty()).map(Self::database_id).collect();
         let assignee = Some(config.get("assignee")).filter(|s| !s.is_empty()).unwrap_or_else(|| "Assignee".into());
-        let done_values = config.get("doneValues").split(',').filter(|s| !s.is_empty()).map(|s| s.trim().to_lowercase()).collect();
-        Ok(NotionPlugin { account_id: config.account_id.clone(), token, databases, email: config.get("email").to_lowercase(), assignee, done_values, http })
+        let done_values =
+            config.get("doneValues").split(',').filter(|s| !s.is_empty()).map(|s| s.trim().to_lowercase()).collect();
+        Ok(NotionPlugin {
+            account_id: config.account_id.clone(),
+            token,
+            databases,
+            email: config.get("email").to_lowercase(),
+            assignee,
+            done_values,
+            http,
+        })
     }
 
     /// Accepts a raw ID or a notion.so link and returns the 32-character ID.
@@ -78,12 +100,18 @@ impl NotionPlugin {
         let trimmed = raw.trim();
         let candidate = trimmed.split('?').next().unwrap_or(trimmed);
         let hex: String = candidate.chars().filter(|c| *c != '-').collect();
-        let tail: String = hex.chars().rev().take_while(char::is_ascii_hexdigit).collect::<Vec<_>>().into_iter().rev().collect();
-        if tail.len() >= 32 { tail[tail.len() - 32..].to_string() } else { trimmed.to_string() }
+        let tail: String =
+            hex.chars().rev().take_while(char::is_ascii_hexdigit).collect::<Vec<_>>().into_iter().rev().collect();
+        if tail.len() >= 32 {
+            tail[tail.len() - 32..].to_string()
+        } else {
+            trimmed.to_string()
+        }
     }
 
     async fn send<T: DeserializeOwned>(&self, request: Request) -> Result<T, PluginError> {
-        let request = request.header("Authorization", format!("Bearer {}", self.token)).header("Notion-Version", "2025-09-03");
+        let request =
+            request.header("Authorization", format!("Bearer {}", self.token)).header("Notion-Version", "2025-09-03");
         decode(self.http.as_ref(), request).await
     }
 
@@ -98,13 +126,22 @@ impl NotionPlugin {
         let mut pages: Vec<Results<Page>> = vec![];
         for chunk in database.data_sources.chunks(2) {
             let requests = chunk.iter().map(|source| async {
-                self.send::<Results<Page>>(Request::post_json(format!("{API}/data_sources/{}/query", source.id), &query)?).await
+                self.send::<Results<Page>>(Request::post_json(
+                    format!("{API}/data_sources/{}/query", source.id),
+                    &query,
+                )?)
+                .await
             });
             pages.extend(try_join_all(requests).await?);
         }
         let name = database.name();
         let more = pages.iter().any(|p| p.next_cursor.is_some());
-        let items = pages.iter().flat_map(|p| &p.results).filter(|p| !p.is_done(&self.done_values)).map(|p| p.item(&self.account_id, &name)).collect();
+        let items = pages
+            .iter()
+            .flat_map(|p| &p.results)
+            .filter(|p| !p.is_done(&self.done_values))
+            .map(|p| p.item(&self.account_id, &name))
+            .collect();
         Ok((items, more))
     }
 
@@ -112,10 +149,16 @@ impl NotionPlugin {
     async fn current_user(&self) -> Result<Option<(String, String)>, PluginError> {
         let me: User = self.send(Request::get(format!("{API}/users/me"))).await?;
         if me.kind.as_deref() == Some("person") {
-            let label = me.name.clone().or_else(|| me.person.as_ref().and_then(|p| p.email.clone())).unwrap_or_else(|| "Notion".into());
+            let label = me
+                .name
+                .clone()
+                .or_else(|| me.person.as_ref().and_then(|p| p.email.clone()))
+                .unwrap_or_else(|| "Notion".into());
             return Ok(Some((me.id, label)));
         }
-        if let Some(owner) = me.bot.and_then(|b| b.owner).and_then(|o| o.user).filter(|u| u.kind.as_deref() == Some("person")) {
+        if let Some(owner) =
+            me.bot.and_then(|b| b.owner).and_then(|o| o.user).filter(|u| u.kind.as_deref() == Some("person"))
+        {
             return Ok(Some((owner.id, owner.name.unwrap_or_else(|| "Notion".into()))));
         }
         if self.email.is_empty() {
@@ -132,7 +175,9 @@ impl NotionPlugin {
                 query.push(("start_cursor", cursor));
             }
             let page: Results<User> = self.send(Request::get(url_with_query(API, "users", &query))).await?;
-            if let Some(user) = page.results.iter().find(|u| u.person.as_ref().and_then(|p| p.email.as_deref()).map(str::to_lowercase).as_deref() == Some(email)) {
+            if let Some(user) = page.results.iter().find(|u| {
+                u.person.as_ref().and_then(|p| p.email.as_deref()).map(str::to_lowercase).as_deref() == Some(email)
+            }) {
                 return Ok(user.id.clone());
             }
             match page.next_cursor {
@@ -155,7 +200,11 @@ impl SourcePlugin for NotionPlugin {
         }
         let cut = found.iter().any(|(_, more)| *more);
         let items = found.into_iter().flat_map(|(items, _)| items).collect();
-        Ok(SourceSnapshot { identity: label, items, remarks: if cut { vec![crate::truncated("Notion")] } else { vec![] } })
+        Ok(SourceSnapshot {
+            identity: label,
+            items,
+            remarks: if cut { vec![crate::truncated("Notion")] } else { vec![] },
+        })
     }
 }
 
@@ -242,7 +291,10 @@ struct Database {
 impl Database {
     fn name(&self) -> String {
         let title: String = self.title.iter().flatten().map(|t| t.plain_text.as_str()).collect();
-        Some(title).filter(|t| !t.is_empty()).or_else(|| self.data_sources.first().and_then(|s| s.name.clone())).unwrap_or_else(|| "Notion".into())
+        Some(title)
+            .filter(|t| !t.is_empty())
+            .or_else(|| self.data_sources.first().and_then(|s| s.name.clone()))
+            .unwrap_or_else(|| "Notion".into())
     }
 }
 
@@ -277,14 +329,20 @@ struct Page {
 
 impl Page {
     fn title(&self) -> String {
-        let title = self.properties.values().find_map(|p| p.title.as_ref()).map(|t| t.iter().map(|r| r.plain_text.as_str()).collect::<String>());
+        let title = self
+            .properties
+            .values()
+            .find_map(|p| p.title.as_ref())
+            .map(|t| t.iter().map(|r| r.plain_text.as_str()).collect::<String>());
         title.filter(|t| !t.is_empty()).unwrap_or_else(|| "Untitled".into())
     }
 
     /// The status property, or a select named "Status": not any select, which could be a priority.
     fn status(&self) -> Option<&str> {
-        let by_type = self.properties.values().find(|p| p.kind.as_deref() == Some("status")).and_then(|p| p.status.as_ref());
-        let by_name = || self.properties.iter().find(|(k, _)| k.to_lowercase() == "status").and_then(|(_, p)| p.select.as_ref());
+        let by_type =
+            self.properties.values().find(|p| p.kind.as_deref() == Some("status")).and_then(|p| p.status.as_ref());
+        let by_name =
+            || self.properties.iter().find(|(k, _)| k.to_lowercase() == "status").and_then(|(_, p)| p.select.as_ref());
         by_type.or_else(by_name).map(|n| n.name.as_str())
     }
 
@@ -299,7 +357,10 @@ impl Page {
     }
 
     fn due(&self) -> Option<DateTime<Utc>> {
-        self.properties.values().filter_map(|p| p.date.as_ref()?.start.as_deref().filter(|s| !s.is_empty()).and_then(due_date)).min()
+        self.properties
+            .values()
+            .filter_map(|p| p.date.as_ref()?.start.as_deref().filter(|s| !s.is_empty()).and_then(due_date))
+            .min()
     }
 
     fn item(&self, account_id: &str, database: &str) -> InboxItem {
@@ -365,11 +426,21 @@ mod tests {
     async fn lists_open_tasks_only() {
         let query = format!(r#"{{"results": [{}, {}]}}"#, page("a", "In progress"), page("b", "Done"));
         let http = StubHttp::paths(&[
-            ("/users/me", r#"{"id": "u1", "type": "person", "name": "Alice", "person": {"email": "alice@acme.example"}}"#),
-            ("/databases/0123456789abcdef0123456789abcdef", r#"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#),
+            (
+                "/users/me",
+                r#"{"id": "u1", "type": "person", "name": "Alice", "person": {"email": "alice@acme.example"}}"#,
+            ),
+            (
+                "/databases/0123456789abcdef0123456789abcdef",
+                r#"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#,
+            ),
             ("/data_sources/ds1/query", &query),
         ]);
-        let plugin = NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID), ("doneValues", "Done")]), Arc::new(http)).unwrap();
+        let plugin = NotionPlugin::new(
+            &config(&[("token", "secret"), ("databases", ID), ("doneValues", "Done")]),
+            Arc::new(http),
+        )
+        .unwrap();
         let snapshot = plugin.fetch().await.unwrap();
         assert_eq!(snapshot.identity, "Alice");
         assert_eq!(snapshot.items.iter().map(|i| i.title.as_str()).collect::<Vec<_>>(), ["Task a"]);
@@ -399,7 +470,9 @@ mod tests {
             }
         }
         let http = Arc::new(Capture(std::sync::Mutex::new(vec![])));
-        let plugin = NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID), ("assignee", "Owner")]), http.clone()).unwrap();
+        let plugin =
+            NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID), ("assignee", "Owner")]), http.clone())
+                .unwrap();
         let snapshot = plugin.fetch().await.unwrap();
         assert_eq!(snapshot.remarks, [crate::truncated("Notion")], "a second page means more tasks than shown");
         let sent: serde_json::Value = serde_json::from_str(&http.0.lock().unwrap()[0]).unwrap();
@@ -435,7 +508,10 @@ mod tests {
     /// An internal connection without an email would list everyone's tasks.
     #[tokio::test]
     async fn refuses_to_list_everyones_tasks() {
-        let http = StubHttp::paths(&[("/users/me", r#"{"id": "bot1", "type": "bot", "bot": {"owner": {"workspace": true}}}"#)]);
+        let http = StubHttp::paths(&[(
+            "/users/me",
+            r#"{"id": "bot1", "type": "bot", "bot": {"owner": {"workspace": true}}}"#,
+        )]);
         let plugin = NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID)]), Arc::new(http)).unwrap();
         assert_eq!(plugin.fetch().await.err(), Some(PluginError::Api(UNKNOWN_USER.into())));
     }
@@ -445,13 +521,28 @@ mod tests {
     async fn finds_you_by_email_with_an_internal_connection() {
         let me = r#"{"id": "bot1", "type": "bot", "bot": {"owner": {"workspace": true}}}"#;
         let users = r#"{"results": [{"id": "u7", "type": "person", "person": {"email": "Alice@Acme.example"}}]}"#;
-        let http = StubHttp::paths(&[("/users/me", me), ("/users", users), ("/databases/0123456789abcdef0123456789abcdef", r#"{"data_sources": []}"#)]);
-        let plugin = NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID), ("email", "alice@acme.example")]), Arc::new(http)).unwrap();
+        let http = StubHttp::paths(&[
+            ("/users/me", me),
+            ("/users", users),
+            ("/databases/0123456789abcdef0123456789abcdef", r#"{"data_sources": []}"#),
+        ]);
+        let plugin = NotionPlugin::new(
+            &config(&[("token", "secret"), ("databases", ID), ("email", "alice@acme.example")]),
+            Arc::new(http),
+        )
+        .unwrap();
         assert_eq!(plugin.fetch().await.unwrap().identity, "alice@acme.example");
 
         let http = StubHttp::paths(&[("/users/me", me), ("/users", r#"{"results": []}"#)]);
-        let plugin = NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID), ("email", "bob@acme.example")]), Arc::new(http)).unwrap();
-        assert_eq!(plugin.fetch().await.err(), Some(PluginError::Api("No Notion user with the email bob@acme.example.".into())));
+        let plugin = NotionPlugin::new(
+            &config(&[("token", "secret"), ("databases", ID), ("email", "bob@acme.example")]),
+            Arc::new(http),
+        )
+        .unwrap();
+        assert_eq!(
+            plugin.fetch().await.err(),
+            Some(PluginError::Api("No Notion user with the email bob@acme.example.".into()))
+        );
     }
 
     /// A token Notion no longer accepts asks for reconnecting; the databases are required.
@@ -464,8 +555,12 @@ mod tests {
                 Ok(crate::Response { status: 401, body: r#"{"object": "error", "code": "unauthorized"}"#.into() })
             }
         }
-        let plugin = NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID)]), Arc::new(Rejecting)).unwrap();
+        let plugin =
+            NotionPlugin::new(&config(&[("token", "secret"), ("databases", ID)]), Arc::new(Rejecting)).unwrap();
         assert_eq!(plugin.fetch().await.err(), Some(PluginError::Unauthorized));
-        assert_eq!(NotionPlugin::new(&config(&[("token", "secret")]), Arc::new(Rejecting)).err(), Some(PluginError::MissingField("databases".into())));
+        assert_eq!(
+            NotionPlugin::new(&config(&[("token", "secret")]), Arc::new(Rejecting)).err(),
+            Some(PluginError::MissingField("databases".into()))
+        );
     }
 }
