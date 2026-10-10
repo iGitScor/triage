@@ -163,7 +163,10 @@ open build/Remora.app --args --demo      # sample data in a window, nothing save
 cd windows && cargo test --workspace     # Windows core and plugins
 ```
 
-Copy `build/Remora.app` to `/Applications` and turn on *Open at login* in Settings. Signing and sharing the app:
+Copy `build/Remora.app` to `/Applications` and turn on *Open at login* in Settings.
+
+Working on Remora: [CONTRIBUTING.md](CONTRIBUTING.md). From the repository root, `make test` runs every suite,
+`make check` what CI runs, and `make` alone lists the rest (demos, translations, docs, website). Signing and sharing the app:
 [building and releasing](https://triage.iscor.me/docs/develop/building).
 
 ## Documentation

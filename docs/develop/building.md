@@ -5,6 +5,10 @@ description: Build and run Remora for macOS from source, sign it so the Keychain
 
 # Building and releasing
 
+From the repository root, `make` lists a shortcut for each command on this page and the Windows one (`make test`,
+`make check`, `make mac-demo`, `make docs`…); [CONTRIBUTING.md](https://github.com/iGitScor/triage/blob/main/CONTRIBUTING.md)
+says what a change needs before review.
+
 ## Build and run
 
 Requires macOS 14 or later and Xcode 16 (Swift 6).
