@@ -141,8 +141,8 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 
 | Suite | Tests | What it covers |
 |---|---|---|
-| macOS (Swift Testing) | 92 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate |
-| Windows (`cargo test`) | 31 | The same rules, the four source plugins against the same fixtures, the guarded client |
+| macOS (Swift Testing) | 157 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
+| Windows (`cargo test`) | 79 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 
@@ -152,7 +152,7 @@ CI runs each suite when its folder changes, and on demand.
 later), open it and drag Remora to Applications. It isn't notarized yet: the first time, right-click Remora →
 Open (on macOS 15: System Settings → Privacy & Security → Open Anyway).
 
-To build it yourself. Requirements: macOS 14 or later and Xcode 16 (Swift 6); Rust ([rustup](https://rustup.rs/)) for the Windows app.
+To build it yourself. Requirements: macOS 14 or later and Xcode 16 (Swift 6 toolchain); Rust ([rustup](https://rustup.rs/)) for the Windows app.
 
 ```sh
 cd macos

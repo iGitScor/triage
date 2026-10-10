@@ -5,7 +5,7 @@ description: How Remora for macOS is built. Three Swift modules with dependencie
 
 # Architecture
 
-Remora for macOS is a Swift package with three modules (Swift 6, language mode 5). Dependencies point inwards
+Remora for macOS is a Swift package with three modules (Swift 6, with its strict concurrency checks). Dependencies point inwards
 only. The [Windows app](./windows) ports the same domain and rules to Rust, with the same tests.
 
 ```mermaid
@@ -87,7 +87,9 @@ notifications are scheduled with the system, so they fire even if Remora isn't r
 ## App
 
 - `App/InboxModel`: the single observable store; actions (done, pin, snooze, connect…).
-- `Infrastructure/`: `JSONStore` (Application Support files), `Keychain`, `Notifier`, `Fonts`.
+- `Infrastructure/`: `JSONStore` (Application Support files), `Keychain`, `ManagedPolicy`, `Notifier`, `Fonts`.
+  `InboxModel` reaches all of them, the network and link opening through `AppEnvironment`, so `Tests/RemoraTests`
+  runs it on a temporary folder with stand-ins: never your data, tokens or notifications.
 - `Presentation/`: Myna theme (`Theme.swift`), inbox views, settings generated from manifests.
 - `Presentation/MenuBar/`: the AppKit status item. A click opens the inbox popover; a drag runs a
   mouse-tracking loop that maps the distance to a time with `SnoozeClock`. The drag bubble (`DragHUD`) is
