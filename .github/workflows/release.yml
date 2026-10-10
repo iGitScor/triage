@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: The tag matches the version in the source
         run: python3 scripts/version.py --check "${GITHUB_REF_NAME#v}"
 
@@ -40,7 +40,7 @@ jobs:
       run:
         working-directory: macos
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode 26.6 (Swift 6.2), not whatever the image defaults to
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
       # From the source before anything is built: Swift packages (none today) and the files the app bundles.
@@ -149,7 +149,7 @@ jobs:
         working-directory: windows
         shell: bash
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # From the lockfiles before anything is installed or built: the Rust crates (Cargo.lock) and the interface's
       # npm packages (app/package-lock.json).
       - name: SBOM
