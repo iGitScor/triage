@@ -112,6 +112,10 @@ Chaque outil peut être connecté plusieurs fois : deux espaces Slack, GitHub et
 compte en le connectant (« GitLab boulot », « Slack client »), ou renommez-le ensuite avec le crayon. Quand
 plusieurs comptes d’un même outil sont connectés, les éléments affichent le nom du compte.
 
+Quand un jeton expire ou est révoqué, le compte l’indique et propose **Reconnecter…** : collez un nouveau jeton, et
+le compte garde ses Terminé, reports et épingles. Sur Mac, connecter à nouveau le même compte (même outil, serveur et
+utilisateur) fait de même.
+
 Chaque liste contient les 50 éléments les plus récents. Quand un outil en a davantage (60 demandes de relecture,
 par exemple), un ⓘ en bas de la boîte et une ligne à côté du compte dans les Réglages le signalent : le reste est
 dans l’outil.
@@ -119,11 +123,13 @@ dans l’outil.
 ## En cas de problème
 
 Le bas de la boîte et le compte dans Réglages affichent l’erreur ; les derniers éléments restent visibles en
-attendant.
+attendant. Hors ligne, le bas de la boîte indique seulement **Hors ligne** : Remora attend la connexion et actualise
+dès son retour. Une limite de requêtes est attendue sans compter comme une erreur.
 
 | Vous voyez | Que faire |
 |---|---|
-| Une erreur d’authentification | Le jeton a expiré ou a été révoqué : créez-en un nouveau et collez-le avec le crayon. |
+| *… doit être reconnecté* | Le jeton a expiré ou a été révoqué : créez-en un nouveau, puis **Reconnecter…** sur le compte dans Réglages. |
+| *Serveur injoignable* | Seul le serveur de cet outil ne répond pas : vérifiez son adresse, ou connectez-vous à votre VPN s’il en faut un. |
 | *Bloqué : … n’est pas une destination autorisée.* | Remora a refusé de joindre une adresse que l’outil ne déclare pas. Vérifiez l’adresse saisie. |
 | Rien d’une organisation GitHub | Autorisez le jeton pour le SSO (voir plus haut). |
 | *Non autorisé par votre politique de confidentialité.* | L’outil est désactivé dans Réglages → Confidentialité, ou par votre organisation : demandez à votre DSI. |

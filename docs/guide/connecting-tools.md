@@ -108,16 +108,23 @@ Every tool can be connected several times: two Slack workspaces, GitHub and GitH
 when you connect it (“Work GitLab”, “Client Slack”), or rename it later with the pencil. When more than one
 account of a tool is connected, items show the account name.
 
+When a token expires or is revoked, the account says so and offers **Reconnect…**: paste a new token, and the
+account keeps its Done, snoozes and pins. On the Mac, connecting the same account again (same tool, server and user)
+does the same.
+
 Each list holds the latest 50 items. When a tool has more (60 review requests, say), an ⓘ at the bottom of the
 inbox and a line next to the account in Settings say so: the rest is in the tool.
 
 ## If something goes wrong
 
-The inbox footer and the account in Settings show the error; the last items stay visible meanwhile.
+The inbox footer and the account in Settings show the error; the last items stay visible meanwhile. Offline, the
+footer only says **Offline**: Remora waits for the connection and refreshes as soon as it's back. A rate limit is
+waited out without counting as an error.
 
 | You see | What to do |
 |---|---|
-| An authentication error | The token expired or was revoked: create a new one and paste it with the pencil. |
+| *… needs reconnecting* | The token expired or was revoked: create a new one, then **Reconnect…** on the account in Settings. |
+| *Can’t reach the server* | Only that tool's server doesn't answer: check its address, or connect to your VPN if it needs one. |
 | *Blocked: … is not an allowed destination* | Remora refused to reach a host the tool doesn’t declare. Check the address you entered. |
 | Nothing from one GitHub organization | Authorize the token for SSO (see above). |
 | *Not allowed by your privacy policy.* | The tool is turned off in Settings → Privacy, or by your organization: ask your IT team. |

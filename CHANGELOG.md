@@ -25,6 +25,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 
 
+- **Offline, an expired token and a rate limit no longer look the same.** Offline, the footer says so once, calmly,
+  and Remora refreshes as soon as the connection is back (the Mac also stops asking the tools meanwhile). A rejected
+  token says the account needs reconnecting, and **Reconnect…** replaces it while keeping Done, snoozes and pins (on
+  Windows too). A rate limit is waited out without counting as a failure; a server only a VPN reaches says so.
 - Messages from Slack apps (Google Calendar, Jira…) show their text and go to *To read* instead of *To reply*.
 - Searching no longer changes the menu bar count or what the assistant sees, and the search is cleared each time
   the inbox opens.
