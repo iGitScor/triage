@@ -643,19 +643,21 @@ mod tests {
 
     #[test]
     fn windows_installs_are_searched_installer_first_then_path() {
+        // Absolute on every OS: "/tools" has no drive letter, so Windows reads it as relative.
+        let tools = std::env::temp_dir().join("tools");
         let env = SearchEnv {
             home: Some(PathBuf::from("/U/ada")),
             app_data: Some(PathBuf::from("/U/ada/AppData/Roaming")),
             local_app_data: Some(PathBuf::from("/U/ada/AppData/Local")),
             program_files: Some(PathBuf::from("/PF")),
             nvm_symlink: None,
-            path: Some(std::env::join_paths(["/tools", "relative"].map(PathBuf::from)).unwrap()),
+            path: Some(std::env::join_paths([tools.clone(), PathBuf::from("relative")]).unwrap()),
         };
         let folders = env.windows_folders();
         assert_eq!(folders[0], Path::new("/U/ada").join(".local").join("bin"), "Anthropic's installer first");
         assert!(folders.contains(&Path::new("/U/ada/AppData/Roaming").join("npm")));
         assert!(folders.contains(&Path::new("/PF").join("nodejs")));
-        assert_eq!(folders.last(), Some(&PathBuf::from("/tools")), "PATH last, relative folders left out");
+        assert_eq!(folders.last(), Some(&tools), "PATH last, relative folders left out");
         assert!(SearchEnv::default().windows_folders().is_empty());
     }
 
