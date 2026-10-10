@@ -40,9 +40,10 @@ glissez-la près de l’horloge pour la garder visible). Un clic ouvre la boîte
 la zone de notification ne se tirent pas sous Windows : un nouveau rappel se crée avec **Ctrl+Alt+R**, de partout.
 Réglages → Général → **Lancer au démarrage de Windows** la démarre à l’ouverture de session.
 
-La version Windows a la boîte, les reports, les rappels, les notifications et les quatre outils. L’assistant Claude,
-le report intelligent (raisons et conseils), la préparation des relectures et l’assistant d’attente restent sur Mac
-pour l’instant.
+La version Windows a ce qu’a le Mac : les cinq outils, le report avec raisons et constats, la préparation et les
+sessions de relecture, l’assistant d’attente et l’assistant Claude. Elle trie les messages par mots-clés seulement, et
+ses notifications n’ont pas encore de boutons ; la liste complète est dans
+[Remora pour Windows](/fr/developper/windows#ce-que-windows-a-et-ce-qu-il-n-a-pas-encore).
 
 ## Connecter un premier outil
 

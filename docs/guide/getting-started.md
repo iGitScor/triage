@@ -36,8 +36,9 @@ Remora sits in the notification area of the taskbar (click **^** if it’s hidde
 keep it visible). Click it to open the inbox; right-click it for the menu. Tray icons can’t be dragged on Windows, so a
 new reminder is **Ctrl+Alt+R**, from anywhere. Settings → General → **Start with Windows** starts it at sign-in.
 
-The Windows version has the inbox, snooze, reminders, notifications and the four tools. The Claude assistant, smart
-snooze (reasons and insights), review prep and the waiting assistant are on the Mac only for now.
+The Windows version has what the Mac has: the five tools, snooze with reasons and insights, review prep and sessions,
+the waiting assistant and the Claude assistant. It sorts messages with keywords only, and its notifications have no
+buttons yet; the full list is in [Remora for Windows](/develop/windows#what-windows-has-and-what-it-doesn-t-yet).
 
 ## Connect a first tool
 

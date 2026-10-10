@@ -11,14 +11,31 @@ same. Each release attaches `Remora-Setup.exe` (per-user install, no admin right
 
 | Part | What | Tests |
 |---|---|---|
-| `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock, compliance policy | 19 |
-| `crates/remora_plugins` | GitHub, GitLab, Slack and Linear, and the HTTP client limited to each plugin’s declared hosts | 12 |
-| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, and the inbox service the tray app drives | 15 |
-| `app/src-tauri` | Tray icon and popup, notifications, start with Windows, the reminder shortcut, the commands | |
-| `app/src` | The Svelte interface, in English and French | type-checked |
+| `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 82 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; Claude through the API or Claude Code; the HTTP client limited to each plugin’s declared hosts | 87 |
+| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 48 |
+| `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 3 |
+| `app/src` | The Svelte interface, in English and French | type-checked, 20 |
 
-Not yet on Windows: the Claude assistant, smart snooze (reasons and insights), review prep and sessions, the waiting
-assistant, and buttons in notifications.
+## What Windows has, and what it doesn’t yet
+
+| | macOS | Windows |
+|---|---|---|
+| Sources: GitHub, GitLab, Slack, Linear, Notion | ✓ | ✓ |
+| The assistant: brief, ✦ group summaries, triage of the snoozed pile, through the Claude API or Claude Code | ✓ | ✓ |
+| Snooze reasons, suggested returns (weekends skipped), insights (loops, pile-ups, clusters, quiet items) | ✓ | ✓ |
+| Review prep (estimate without lockfiles, files, risky areas, your pace) and review sessions | ✓ | ✓ |
+| Waiting assistant: suggested reviewers, nudge drafts to copy | ✓ | ✓ |
+| Reviewers and approvals on rows | ✓ | ✓ |
+| Personal ranking (what you handle quickly) | ✓ | ✓ |
+| Links between tools (a PR and its ticket) | Ticket keys, words and on-device embeddings | Ticket keys and words: fewer links |
+| Sorting messages by meaning | Keywords, then an on-device language model | Keywords only: without one, a message goes to *To reply* |
+| Updates (opt-in), offline and reconnect, privacy policy | ✓ | ✓ |
+| Buttons in notifications (Done, Snooze) | ✓ | Not yet: a click opens the item |
+| Managed settings | All the keys in [MDM](/admin/mdm) | `AllowedPlugins`, `AllowExternalAI`, `AllowRemoteImages`, `AutomaticUpdates` |
+| Text size | Settings → General | Windows’ own scaling |
+| New reminder | Drag the menu bar fish down | A global shortcut, Ctrl+Alt+R: tray icons can’t be dragged |
+| Done, Snooze on a row | Swipe, or the keyboard | Buttons on each row |
 
 ## Same model, Windows equivalents
 

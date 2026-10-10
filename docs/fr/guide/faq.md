@@ -47,8 +47,8 @@ première synchronisation d’un nouveau compte est volontairement silencieuse.
 ## Remora existe-t-elle sur Windows ?
 
 Oui, en aperçu : [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe), pour Windows 10 ou 11, installée pour votre utilisateur seulement. Mêmes
-règles, mêmes quatre outils, même modèle de conformité ; voir [Premiers pas](./premiers-pas#sous-windows-apercu) pour ce
-qu’elle ne fait pas encore.
+règles, mêmes cinq outils, l’assistant Claude et le même modèle de conformité ; voir
+[Premiers pas](./premiers-pas#sous-windows-apercu) pour ce qu’elle ne fait pas encore.
 
 ## Comment tout effacer ?
 

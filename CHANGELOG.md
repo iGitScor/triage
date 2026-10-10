@@ -5,7 +5,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Added
 
+- **Windows catches up with the Mac**: Notion; snooze with a reason, suggested return times and insights about the
+  snoozed pile; review prep and review sessions; the waiting assistant (who could review, a nudge to copy); your
+  habits in the ranking; links between a PR and its ticket; and the **Claude assistant** (brief, ✦ group summaries,
+  triage of the snoozed pile) through the Claude API or Claude Code. What still differs is listed in the docs.
 - **Text size** (Mac, Settings → General → Appearance): default, large or larger; and no text is smaller than 11 pt.
 - **Updates**, off until you turn them on (Settings → General): Remora checks GitHub once a day and installs a new
   version when you choose, only if it is signed with Remora's release key. **Check now** works either way. IT can
