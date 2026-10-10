@@ -25,6 +25,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 
 
+- Mac: review estimates leave out lockfiles and generated files (a lockfile-only update is no longer "~60 min"),
+  risky-area chips no longer fire on lookalike words ("author", "latest"), and after five timed reviews the
+  estimate follows your pace.
 - Messages that say "no need to reply", "no action needed" or "pas besoin de répondre" go to *To read*, and "not
   urgent" no longer counts as urgent.
 - Mac: suggested snooze returns skip the weekend (a Thursday "waiting" comes back Monday, not Sunday).

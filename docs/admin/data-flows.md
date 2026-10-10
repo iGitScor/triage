@@ -65,6 +65,7 @@ sent: tokens, links, code, the rest of a message, notes, files.
 | The last copy of each tool’s items: titles, contexts, authors, statuses, Slack message text, links | `cache.json` |
 | Done, Pin, snoozes and their notes, reminders | `states.json`, `reminders.json`, `snooze-history.json` |
 | What the user handles quickly or snoozes, for ranking on this Mac only (titles’ words and authors) | `learning.json` |
+| How long timed reviews took against their estimate (two numbers each, no names or titles) | `review-times.json` |
 | The last brief and bundle summaries | `brief.json`, `bundle-summaries.json` |
 | Preferences | `preferences.json` |
 | Tokens and API keys | One item in the login Keychain: service `fr.igitscor.remora`, account `secrets` |

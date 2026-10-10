@@ -68,6 +68,7 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 | La dernière copie des éléments de chaque outil : titres, contextes, auteurs, statuts, texte des messages Slack, liens | `cache.json` |
 | Terminé, Épingler, les reports et leurs notes, les rappels | `states.json`, `reminders.json`, `snooze-history.json` |
 | Ce que l’utilisateur traite vite ou reporte, pour le classement sur ce Mac seulement (mots des titres, auteurs) | `learning.json` |
+| La durée des relectures chronométrées face à leur estimation (deux nombres chacune, ni nom ni titre) | `review-times.json` |
 | Le dernier brief et les résumés de groupes | `brief.json`, `bundle-summaries.json` |
 | Les préférences | `preferences.json` |
 | Jetons et clés d’API | Un seul élément du trousseau de session : service `fr.igitscor.remora`, compte `secrets` |

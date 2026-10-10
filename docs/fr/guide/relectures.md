@@ -10,7 +10,8 @@ description: Préparer une relecture (estimation, fichiers, zones sensibles), le
 Sous chaque demande de relecture, Remora indique ce qu’elle va demander : **« ~6 min · 4 fichiers · tests ✓ ·
 Authentification »**.
 
-- Une **estimation** selon la taille de la modification.
+- Une **estimation** selon la taille de la modification, sans les fichiers de verrouillage ni les fichiers générés.
+  Après cinq relectures chronométrées (Commencer, puis Terminé), elle suit votre propre rythme.
 - Si la modification **touche des tests** (✓).
 - Les **zones** qui méritent de l’attention, lues dans les chemins des fichiers : *Migrations*,
   *Authentification*, *Données personnelles*, *Infra/CI*, *Dépendances* ou *Lockfile seul*. Quand elles ne

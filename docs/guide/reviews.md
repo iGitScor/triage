@@ -9,7 +9,8 @@ description: Review prep (estimate, files, risky areas), review sessions with th
 
 Under each review request, Remora shows what it will take: **“~6 min · 4 files · tests ✓ · Auth”**.
 
-- An **estimate** from the size of the change.
+- An **estimate** from the size of the change, lockfiles and generated files left out. Once you've timed five
+  reviews (Start, then Done), it follows your own pace.
 - Whether the change **touches tests** (✓).
 - The **areas** that deserve attention, read from the file paths: *Migrations*, *Auth*, *Personal data*,
   *Infra/CI*, *Dependencies*, or *Lockfile only*. When they don’t fit, the rest folds into “+N”.
