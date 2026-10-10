@@ -21,7 +21,7 @@ Windows app.
 ## First run
 
 ```sh
-make setup        # Node packages for the Windows interface and the docs
+make setup        # Node packages (tooling, Windows interface, docs) and the pre-commit hook
 make test         # every test suite: Swift, then the Rust crates
 make mac-demo     # the Mac app with sample data in a window, nothing saved
 make win-demo     # the Windows app with sample data (runs on a Mac too)
@@ -32,8 +32,12 @@ keep working; on Windows without `make`, run those directly.
 
 ## Before you open a pull request
 
-- **`make check`** runs what CI runs: the tests, the Windows type-check and build, clippy with warnings as errors,
-  and the translation check.
+- **`make check`** runs what CI runs: formatting, the tests, the Windows type-check and build, clippy with warnings
+  as errors, and the translation check.
+- **Formatting is automatic.** The pre-commit hook formats what you commit: Biome for TypeScript, Svelte, CSS and
+  JSON, `swift format`, `rustfmt` and ruff (through [uv](https://docs.astral.sh/uv/)). `make format` formats
+  everything. Lines go up to 120 columns; the configs are `biome.json`, `macos/.swift-format`,
+  `windows/rustfmt.toml` and `ruff.toml`, with `.editorconfig` for editors.
 - **Both apps follow the same rules.** A change to a rule, a verb or a source in `RemoraCore` / `RemoraPlugins`
   usually needs its Rust twin in `windows/crates` (or a line in [the Windows page](docs/develop/windows.md) saying
   it isn't there yet), with a test on each side using the same fixture.

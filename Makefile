@@ -3,20 +3,39 @@
 # See CONTRIBUTING.md. On Windows without make, run the commands from windows/README.md directly.
 
 .DEFAULT_GOAL := help
-.PHONY: help setup test check version deps-check mac-test mac-run mac-demo win-test win-check win-demo i18n i18n-check \
+.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo win-test win-check win-demo i18n i18n-check \
 	docs docs-build site site-preview screenshots deploy clean
 
 help: ## List the targets
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-13s %s\n", $$1, $$2}'
 
-setup: ## Install the Node packages (Windows interface, docs)
+setup: ## Install the Node packages (tooling, Windows interface, docs) and the pre-commit hook
+	npm ci
 	npm --prefix windows/app ci
 	npm --prefix docs ci
+	npx lefthook install
 
 test: mac-test win-test ## Run every test suite
 
-check: test win-check i18n-check ## Tests, lint, type-check, translations and versions, as CI runs them
+check: format-check test win-check i18n-check ## Formatting, tests, lint, type-check, translations and versions, as CI runs them
 	python3 scripts/version.py
+
+# Formatting: biome.json (web), macos/.swift-format, windows/rustfmt.toml, ruff.toml (Python). Needs `make setup` and uv.
+RUFF := uvx ruff@0.16.8
+
+format: ## Format every file in place
+	npx biome check --write .
+	cd macos && swift format format --in-place --parallel -r Sources Tests Package.swift
+	cd windows && cargo fmt --all
+	$(RUFF) format .
+	$(RUFF) check --fix .
+
+format-check: ## Fail if a file isn't formatted or has a lint error (as CI does)
+	npx biome ci .
+	cd macos && swift format lint --strict --parallel -r Sources Tests Package.swift
+	cd windows && cargo fmt --all --check
+	$(RUFF) format --check .
+	$(RUFF) check .
 
 version: ## Show the version, or set it everywhere with V=x.y.z (then commit and tag vx.y.z)
 	python3 scripts/version.py $(V)

@@ -1,0 +1,24 @@
+# The pre-commit hook: formats what you are committing, and stops the commit on a lint error.
+# Installed by `make setup` (or `npx lefthook install`). Skip once with `git commit --no-verify`.
+# CI runs the same checks with `make format-check`.
+pre-commit:
+  parallel: true
+  commands:
+    web:
+      glob: "*.{ts,js,mjs,svelte,css,json,jsonc}"
+      run: npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+    swift:
+      root: macos/
+      glob: "*.swift"
+      run: swift format format --in-place {staged_files}
+      stage_fixed: true
+    rust:
+      root: windows/
+      glob: "*.rs"
+      run: rustfmt {staged_files}
+      stage_fixed: true
+    python:
+      glob: "*.py"
+      run: uvx ruff@0.16.8 format {staged_files} && uvx ruff@0.16.8 check {staged_files}
+      stage_fixed: true

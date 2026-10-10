@@ -1,0 +1,4 @@
+# Formatting for the Rust workspace (cargo fmt). Lines up to 120 columns, like the rest of the repository.
+max_width = 120
+use_small_heuristics = "Max"
+edition = "2021"

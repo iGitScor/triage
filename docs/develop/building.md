@@ -9,6 +9,9 @@ From the repository root, `make` lists a shortcut for each command on this page 
 `make check`, `make mac-demo`, `make docs`…); [CONTRIBUTING.md](https://github.com/iGitScor/triage/blob/main/CONTRIBUTING.md)
 says what a change needs before review.
 
+`make setup` also installs a pre-commit hook that formats what you commit (Biome, `swift format`, `rustfmt`, ruff);
+`make format` formats everything and `make format-check` checks it, as CI does.
+
 ## Build and run
 
 Requires macOS 14 or later and Xcode 16 (Swift 6).

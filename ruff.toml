@@ -1,0 +1,11 @@
+# Python scripts (generators, the site build, the roadmap viewer): `ruff format` and `ruff check`.
+line-length = 120
+target-version = "py39"
+
+# The site build runs on the deploying machine and already uses 3.12 f-strings.
+[per-file-target-version]
+"site/**" = "py312"
+
+[lint]
+# dict(key=...) reads better than a literal for the long page tables in site/build.py; the sitemap's date is local on purpose.
+ignore = ["C408", "DTZ011"]

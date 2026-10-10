@@ -1,0 +1,10 @@
+{
+  "name": "remora",
+  "private": true,
+  "description": "Repository tooling only: Biome (formats and lints the web code) and lefthook (the pre-commit hook). See CONTRIBUTING.md.",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "lefthook": "2.1.14"
+  }
+}

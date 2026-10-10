@@ -10,6 +10,9 @@ description: Construire et lancer Remora pour macOS depuis les sources, la signe
 [CONTRIBUTING.md](https://github.com/iGitScor/triage/blob/main/CONTRIBUTING.md) dit ce qu’une modification doit
 remplir avant la relecture.
 
+`make setup` installe aussi un hook de pré-commit qui formate ce que vous commitez (Biome, `swift format`,
+`rustfmt`, ruff) ; `make format` formate tout et `make format-check` le vérifie, comme la CI.
+
 ## Construire et lancer
 
 Demande macOS 14 ou ultérieur et Xcode 16 (Swift 6).
