@@ -25,6 +25,14 @@ What changed in each release of Remora, for the people who use it. Downloads are
   same with the `AIExcludedSources` key, and limit the models with `AllowedAIModels`.
 
 
+- Messages that say "no need to reply", "no action needed" or "pas besoin de répondre" go to *To read*, and "not
+  urgent" no longer counts as urgent.
+- Mac: suggested snooze returns skip the weekend (a Thursday "waiting" comes back Monday, not Sunday).
+- Mac: a tool or the assistant your policy no longer allows disappears at once, with its cached items, summaries and
+  brief, instead of staying on screen.
+- Mac: the snooze time can be set with the keyboard (← →), with VoiceOver, or as an exact date and time, past one
+  week too. Overlays close with Escape, and VoiceOver stays inside them.
+- Windows: Enter in a new reminder's title saves it.
 - Mac: a tool your organization or your Privacy settings don't allow shows why on its tile, instead of opening a form that fails at Connect.
 - Mac: the inbox is sorted again only when something changed, instead of three times a minute even while closed.
 - **Offline, an expired token and a rate limit no longer look the same.** Offline, the footer says so once, calmly,
