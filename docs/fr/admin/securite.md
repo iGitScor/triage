@@ -23,7 +23,7 @@ la page qui donne le détail. Elle couvre l’app macOS et, quand elle diffère,
 | Question | Réponse |
 |---|---|
 | Quelles données lit-elle ? | Les pull et merge requests de l’utilisateur, ses demandes de relecture, ses mentions et messages directs Slack, ses tâches Linear et Notion : titres, auteurs, statuts, texte des messages, liens. Les chemins et nombres de lignes d’une modification, jamais le code. |
-| Où vont-elles ? | Uniquement vers l’outil d’où elles viennent, et vers Anthropic si l’organisation autorise Claude et que l’utilisateur le connecte. Les hôtes de chaque outil sont déclarés dans l’app et imposés : tout autre hôte est refusé. Voir [Flux de données](./flux-de-donnees). |
+| Où vont-elles ? | Uniquement vers l’outil d’où elles viennent, et vers le fournisseur d’IA que l’utilisateur connecte, si l’organisation l’autorise : Anthropic pour Claude, ou un serveur OpenAI-compatible qu’elle peut imposer avec `AIServer` et `AllowedAIServers`. Les hôtes de chaque outil sont déclarés dans l’app et imposés : tout autre hôte est refusé. Voir [Flux de données](./flux-de-donnees). |
 | Identifiants | Les jetons de l’utilisateur, saisis par lui, gardés dans le trousseau (macOS) ou le Gestionnaire d’identification (Windows). Jamais écrits dans des fichiers ou des journaux, jamais placés dans une URL. |
 | Données personnelles | Les noms et avatars des personnes présentes dans ces éléments. Rien n’est collecté sur l’utilisateur au-delà de ce que ses outils contiennent déjà. |
 

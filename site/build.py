@@ -1065,7 +1065,7 @@ def features(lang: str) -> str:
                     (
                         "sparkle",
                         "Brief",
-                        "Three sentences and the items to handle first, with Claude Code on your plan or the Claude API. Cached, so it doesn’t spend tokens on every open.",
+                        "Three sentences and the items to handle first, with Claude Code on your plan, the Claude API or an OpenAI-compatible model. Cached, so it doesn’t spend tokens on every open.",
                     ),
                     (
                         "read",
@@ -1211,7 +1211,7 @@ def features(lang: str) -> str:
                     (
                         "sparkle",
                         "Brief",
-                        "Trois phrases et les éléments à traiter d’abord, avec Claude Code sur votre abonnement ou l’API Claude. Mis en cache, pour ne pas dépenser de jetons à chaque ouverture.",
+                        "Trois phrases et les éléments à traiter d’abord, avec Claude Code sur votre abonnement, l’API Claude ou un modèle OpenAI-compatible. Mis en cache, pour ne pas dépenser de jetons à chaque ouverture.",
                     ),
                     (
                         "read",
@@ -1318,6 +1318,12 @@ def privacy(lang: str) -> str:
                     "Titles, contexts, authors and statuses of inbox items",
                     "<strong>Off</strong>",
                 ),
+                (
+                    "OpenAI-compatible",
+                    "The server you or your organization set: OpenAI, Azure OpenAI, Mistral, or one on your computer",
+                    "The same fields as Claude",
+                    "<strong>Off</strong>, except a server on your computer",
+                ),
             ],
             stay_eyebrow="On your Mac",
             stay_title="What stays where",
@@ -1374,16 +1380,26 @@ def privacy(lang: str) -> str:
                 (
                     "<code>AllowedPlugins</code>",
                     "Array of strings",
-                    "Allowed tools: <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>",
+                    "Allowed tools: <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>",
                 ),
-                ("<code>AllowExternalAI</code>", "Boolean", "Allow Claude to receive inbox content"),
+                (
+                    "<code>AllowExternalAI</code>",
+                    "Boolean",
+                    "Allow the assistant to send inbox content off the computer",
+                ),
                 ("<code>AllowRemoteImages</code>", "Boolean", "Load avatars from allowed tools only"),
                 (
                     "<code>AIExcludedSources</code>",
                     "Array of strings",
                     "Tools whose items never reach the assistant, such as <code>slack</code> (Mac)",
                 ),
-                ("<code>AllowedAIModels</code>", "Array of strings", "The Claude models the assistant may use (Mac)"),
+                ("<code>AllowedAIModels</code>", "Array of strings", "The models the assistant may use (Mac)"),
+                (
+                    "<code>AllowedAIServers</code>, <code>AIServer</code>",
+                    "Array of URLs, URL",
+                    "The OpenAI-compatible servers allowed, or the one to use, locked",
+                ),
+                ("<code>AllowLocalAI</code>", "Boolean", "Allow or refuse a server on the computer"),
             ],
             mdm_caption="Configuration profile payload",
             windows="The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
@@ -1431,6 +1447,12 @@ def privacy(lang: str) -> str:
                     "Anthropic, via Claude Code ou <code>api.anthropic.com</code>",
                     "Titres, contextes, auteurs et statuts des éléments",
                     "<strong>Désactivé</strong>",
+                ),
+                (
+                    "OpenAI-compatible",
+                    "Le serveur choisi par vous ou votre organisation : OpenAI, Azure OpenAI, Mistral, ou un sur votre ordinateur",
+                    "Les mêmes champs que pour Claude",
+                    "<strong>Désactivé</strong>, sauf un serveur sur votre ordinateur",
                 ),
             ],
             stay_eyebrow="Sur votre Mac",
@@ -1491,9 +1513,13 @@ def privacy(lang: str) -> str:
                 (
                     "<code>AllowedPlugins</code>",
                     "Tableau de chaînes",
-                    "Outils autorisés : <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>",
+                    "Outils autorisés : <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>",
                 ),
-                ("<code>AllowExternalAI</code>", "Booléen", "Autoriser Claude à recevoir le contenu de la boîte"),
+                (
+                    "<code>AllowExternalAI</code>",
+                    "Booléen",
+                    "Autoriser l’assistant à envoyer le contenu de la boîte hors de l’ordinateur",
+                ),
                 (
                     "<code>AllowRemoteImages</code>",
                     "Booléen",
@@ -1507,8 +1533,14 @@ def privacy(lang: str) -> str:
                 (
                     "<code>AllowedAIModels</code>",
                     "Tableau de chaînes",
-                    "Les modèles Claude que l’assistant peut utiliser (Mac)",
+                    "Les modèles que l’assistant peut utiliser (Mac)",
                 ),
+                (
+                    "<code>AllowedAIServers</code>, <code>AIServer</code>",
+                    "Tableau d’URL, URL",
+                    "Les serveurs OpenAI-compatibles autorisés, ou celui à utiliser, verrouillé",
+                ),
+                ("<code>AllowLocalAI</code>", "Booléen", "Autoriser ou refuser un serveur sur l’ordinateur"),
             ],
             mdm_caption="Contenu du profil de configuration",
             windows="L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",

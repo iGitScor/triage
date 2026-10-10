@@ -7,6 +7,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- **OpenAI-compatible assistant**: the brief, summaries and triage with OpenAI, Azure OpenAI, Mistral or a model
+  on your computer (Ollama, LM Studio), as well as Claude. IT can limit the servers with `AllowedAIServers`, set one
+  with `AIServer`, and decide on local servers with `AllowLocalAI`.
 - **Windows catches up with the Mac**: Notion; snooze with a reason, suggested return times and insights about the
   snoozed pile; review prep and review sessions; the waiting assistant (who could review, a nudge to copy); your
   habits in the ranking; links between a PR and its ticket; and the **Claude assistant** (brief, ✦ group summaries,

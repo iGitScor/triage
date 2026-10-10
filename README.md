@@ -93,7 +93,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
   requested, failed checks, due reminders.
 - **Opens in the right app**: Slack and Linear items open in their desktop app when it's installed, with the browser
   as fallback.
-- **Assistant (optional)**: with Claude Code on your plan or the Claude API, a 3-sentence brief, bundle summaries
+- **Assistant (optional)**: with Claude Code on your plan, the Claude API or an OpenAI-compatible server, a 3-sentence brief, bundle summaries
   (`claude-haiku-5-5` by default) and triage of the Snoozed tab. Cached, and off unless external AI is allowed.
 - **English and French**, following the Mac's language; briefs and summaries come back in that language.
 
@@ -108,6 +108,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | Notion | Open tasks assigned to you in chosen databases (Mac only) | Personal access token, or an internal connection's secret |
 | Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this Mac |
 | Claude API | Brief, summaries, triage | Anthropic API key |
+| OpenAI-compatible | Brief, summaries, triage | API key and server (OpenAI, Azure, Mistral), or none on a local server |
 
 Accounts can be named ("Work GitLab", "Client Slack"), several per tool. Setup: [connecting your tools](https://triage.iscor.me/docs/guide/connecting-tools).
 

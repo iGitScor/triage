@@ -33,7 +33,7 @@ flowchart LR
     UI --- Store
   end
   Client --> Tools["GitHub · GitLab · Slack · Linear<br/>(allowed tools only)"]
-  Client -. "only if external AI is allowed" .-> Claude["Anthropic"]
+  Client -. "only if external AI is allowed" .-> Claude["AI provider: Anthropic or an OpenAI-compatible server"]
   Client -- "any other host" --x Blocked["Blocked"]
 ```
 

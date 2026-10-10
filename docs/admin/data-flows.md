@@ -20,6 +20,7 @@ guarded client, policy) with Windows equivalents: Credential Manager, `%LOCALAPP
 | Notion | `api.notion.com` | The token; the user's identity, then queries of the chosen databases for tasks assigned to the user | Allowed |
 | Claude Code | Anthropic, through the local `claude` program | A few fields of each inbox item: see [What reaches Claude](#what-reaches-claude) | **Off** |
 | Claude API | `api.anthropic.com` | The API key, and the same fields as Claude Code | **Off** |
+| OpenAI-compatible | The server set in the account or by `AIServer`: OpenAI, Azure OpenAI, Mistral…, or a server on this computer | The API key, if any, and the same fields as Claude Code. The provider’s own terms (retention, training) apply to what it receives | **Off**; a server on this computer is allowed unless the organization refuses it (`AllowLocalAI`) |
 | Avatars | Image hosts of allowed, connected tools only | An image request | Allowed |
 | Updates | `github.com`, and GitHub's download servers (`*.githubusercontent.com`) | A request for `latest.json` once a day, and the new version when the user installs it. No identifier, token or content | **Off** (`AutomaticUpdates`) |
 
@@ -29,7 +30,8 @@ downloaded. Remora never writes to the tools: drafted messages are copied to the
 
 ## What reaches Claude
 
-Only when external AI is allowed and the user has connected Claude. For each inbox item:
+Only when external AI is allowed and the user has connected Claude, or a local server is allowed. The same fields go to an
+OpenAI-compatible server. For each inbox item:
 
 - its verb (*To reply*, *To review*…), **title**, context (repository, channel or issue key), author, statuses
   (checks, approvals, size of the change) and age, plus an internal id so the answer can point back to the item;

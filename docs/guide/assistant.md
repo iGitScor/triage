@@ -1,11 +1,12 @@
 ---
-title: The assistant (Claude)
-description: Remora's optional Claude features (brief, bundle summaries, snooze triage), how to connect Claude Code or the Claude API, what is sent, and how to keep token use low.
+title: The assistant
+description: Remora's optional AI features (brief, bundle summaries, snooze triage), how to connect Claude Code, the Claude API or an OpenAI-compatible server, what is sent, and how to keep token use low.
 ---
 
-# The assistant (Claude)
+# The assistant
 
-Everything in Remora works without AI. Claude is an optional extra, **off by default**, that writes short text
+Everything in Remora works without AI. The assistant (Claude, or a model behind an OpenAI-compatible API) is an
+optional extra, **off by default**, that writes short text
 about your inbox:
 
 - **Brief** (✦ at the top of the inbox): three sentences and the items to handle first.
@@ -17,20 +18,24 @@ Briefs and summaries come back in your Mac’s language.
 
 ## Turn it on
 
-1. Settings → Privacy → **Allow external AI (Claude)**. If your organization manages Remora, this may be locked
+1. Settings → Privacy → **Allow external AI** (not needed for a server on your computer). If your organization manages Remora, this may be locked
    off: see [For IT and compliance](/admin/).
 2. Settings → Sources, under *Assistant*, connect one of:
    - **Claude Code** (recommended): uses the Claude Code installed and signed in on your Mac, on your Claude
      plan. No API key. If Remora doesn’t find `claude`, set *Path to claude*. Remora only runs a program named
      `claude` that only you can change, and checks it is Claude Code before sending it anything.
    - **Claude API**: an API key from the Claude Console, billed to that account.
+   - **OpenAI-compatible**: OpenAI, Azure OpenAI, Mistral, or a server on your computer (Ollama, LM Studio). Give
+     the server address up to `/v1`, the API key and the model id; the summaries model is optional. OpenAI and
+     Azure are supported; a small local model may not follow the expected answer format, and then says it returned
+     an unexpected answer. Your organization may set the server for you.
 
 ## What is sent
 
 For each item: its verb, **title**, context (repository, channel, issue key), author, statuses and age. A Slack
 item's title is the **first line of the message**; the rest isn't sent. Triage also sends when each snoozed item
 comes back, the reason you picked and how many times you snoozed it. Never your tokens, links, code, notes or the
-rest of a message. To keep a tool away from Claude, turn it off in Settings → General → **Send to the assistant** (*Hide message
+rest of a message. To keep a tool away from the assistant, turn it off in Settings → General → **Send to the assistant** (*Hide message
 content* only applies to notifications). With Claude Code, Remora
 runs it with no tools, no plugins and nothing saved to your session history. The exact list is in
 [Data flows](/admin/data-flows#what-reaches-claude).

@@ -92,7 +92,7 @@ internal connection an owner made, and add **Your Notion email** so Remora finds
 
 ## Claude (optional)
 
-Claude adds a short brief of what to handle first, two-sentence summaries of long bundles, and help to triage
+The assistant adds a short brief of what to handle first, two-sentence summaries of long bundles, and help to triage
 what you keep snoozing. It stays off until external AI is allowed, in Settings → Privacy or by your organization.
 See [The assistant](./assistant).
 
@@ -101,6 +101,9 @@ See [The assistant](./assistant).
   doesn't need Node.js. Installs through Homebrew, npm (nvm, volta), bun, mise or asdf are found too; otherwise,
   paste the output of `which claude` into *Path to claude*. Settings → Privacy shows which `claude` Remora runs.
 - **Claude API**: an API key from the Claude Console. Settings → Sources, under *Assistant* → Claude API.
+- **OpenAI-compatible**: OpenAI, Azure OpenAI, Mistral, or a server on your computer such as Ollama or LM Studio.
+  Settings → Sources, under *Assistant* → OpenAI-compatible: the server address up to `/v1`, the API key and the
+  model id from your provider. A server on your computer needs no key and works with external AI off.
 
 ## Several accounts
 

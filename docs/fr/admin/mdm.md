@@ -17,20 +17,23 @@ peut plus modifier la politique.
 | Clé | Type | Signification | Par défaut sans gestion |
 |---|---|---|---|
 | `AllowedPlugins` | Tableau de chaînes | Les outils qui peuvent être connectés et actualisés. Les autres sont refusés avec « Non autorisé par votre politique de confidentialité. » | Tous |
-| `AllowExternalAI` | Booléen | Autoriser les extensions Claude à envoyer le contenu de la boîte à Anthropic | `false` |
+| `AllowExternalAI` | Booléen | Autoriser l’assistant à envoyer le contenu de la boîte hors de l’ordinateur : à Anthropic pour Claude, au serveur choisi pour OpenAI-compatible | `false` |
 | `AllowRemoteImages` | Booléen | Charger les avatars, depuis les outils autorisés seulement | `true` |
 | `AIExcludedSources` | Tableau de chaînes | Les outils dont les éléments ne parviennent jamais à l’assistant (brief, résumés, tri) ; `reminders` pour les rappels de l’utilisateur. S’ajoute au choix de l’utilisateur et le verrouille dans les Réglages | Aucun |
-| `AllowedAIModels` | Tableau de chaînes | Les modèles Claude que l’assistant peut utiliser. Un modèle absent de la liste (ou celui par défaut, s’il n’y est pas) est remplacé par le premier | Tous |
+| `AllowedAIModels` | Tableau de chaînes | Les modèles que l’assistant peut utiliser, avec les identifiants de n’importe quel fournisseur. Un modèle absent de la liste (ou celui par défaut, s’il n’y est pas) est remplacé par le premier | Tous |
+| `AllowedAIServers` | Tableau de chaînes | Les serveurs que l’assistant OpenAI-compatible peut utiliser, en préfixes d’URL : schéma, hôte, port et chemin doivent correspondre, le chemin sur une limite de `/` (`https://acme.openai.azure.com/openai/` autorise `…/openai/v1`, pas d’autres ressources). Tout autre serveur est refusé avec « Votre organisation n’autorise pas ce serveur d’IA. » | Tout serveur https |
+| `AIServer` | Chaîne | Le serveur qu’utilise l’assistant OpenAI-compatible, rempli et verrouillé dans les Réglages, y compris pour les comptes déjà connectés. Refusé si `AllowedAIServers` ne l’autorise pas | Choisi par l’utilisateur |
+| `AllowLocalAI` | Booléen | Un serveur sur cet ordinateur (`localhost`, `127.0.0.1`, `::1`, seules adresses qui peuvent utiliser http). `true` : autorisé même avec l’IA externe désactivée. `false` : refusé. Non défini : autorisé sauf si `AllowExternalAI` est géré à `false`, car un serveur local pourrait relayer vers le cloud | Voir le sens |
 | `HiddenContentSources` | Tableau de chaînes | Les outils dont les notifications disent où quelque chose s’est passé, pas ce qui a été écrit ; `reminders` pour les rappels de l’utilisateur. S’ajoute au choix de l’utilisateur et le verrouille dans les Réglages | Aucun |
 | `RefreshMinutes` | Entier | La fréquence de vérification des outils, de 1 à 60 minutes (une autre valeur est ignorée). Verrouillé dans les Réglages | 5 |
 | `OpenInApps` | Booléen | Ouvrir les éléments Slack et Linear dans leur app quand elle est installée ; `false` ouvre toujours la page web | `true` |
 | `ClaudeCodePath` | Chaîne | Le `claude` que Remora exécute, à la place de celui trouvé ou saisi dans le compte. Il doit toujours s’appeler `claude`, appartenir à l’utilisateur ou à root, et répondre comme Claude Code | Trouvé automatiquement |
 | `AutomaticUpdates` | Booléen | `true` : interroge GitHub une fois par jour pour une nouvelle version, verrouillé. `false` : aucune vérification, même pas *Vérifier maintenant*, pour les parcs que vous redéployez vous-même | Désactivé ; l’utilisateur décide |
 
-Les cinq dernières sont des réglages, pas des règles de confidentialité : elles ne verrouillent pas Réglages → Confidentialité.
+`AIServer` et les cinq dernières sont des réglages, pas des règles de confidentialité : elles ne verrouillent pas Réglages → Confidentialité.
 
-Identifiants : `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (API Claude).
-Pour choisir entre Claude Code et l’API Claude, ne listez que l’un des deux dans `AllowedPlugins`.
+Identifiants : `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (API Claude),
+`openai` (OpenAI-compatible). Pour choisir l’assistant, ne listez que celui-là dans `AllowedPlugins`.
 
 Par exemple, Claude autorisé pour les revues de code et les tâches, jamais pour Slack, et seulement avec Sonnet et
 Haiku :
@@ -48,7 +51,26 @@ Haiku :
 </array>
 ```
 
-Ces deux clés sont lues par l’app macOS ; l’app Windows n’a pas encore d’assistant.
+`AIExcludedSources` et `AllowedAIModels` ne sont lues que par l’app macOS.
+
+Ou l’assistant OpenAI-compatible sur la seule ressource Azure OpenAI de l’entreprise, réglée pour tous :
+
+```xml
+<key>AllowedPlugins</key>
+<array>
+    <string>github</string>
+    <string>openai</string>
+</array>
+<key>AllowExternalAI</key><true/>
+<key>AllowedAIServers</key>
+<array>
+    <string>https://acme.openai.azure.com/openai/</string>
+</array>
+<key>AIServer</key><string>https://acme.openai.azure.com/openai/v1</string>
+```
+
+Sans `AllowedAIServers` ni `AIServer`, l’utilisateur peut saisir n’importe quel serveur https : un parc géré qui
+autorise `openai` devrait définir l’une des deux.
 
 Un compte déjà connecté à un outil que la politique n’autorise plus cesse d’être actualisé à la synchronisation
 suivante.
@@ -97,7 +119,7 @@ et les clés comme liste de propriétés.
 
 ## Windows : stratégie de groupe ou Intune
 
-L’app Windows lit les trois mêmes clés, et `AutomaticUpdates`, sous **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**,
+L’app Windows lit ces valeurs sous **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**,
 puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par utilisateur (une valeur définie dans HKLM l’emporte) :
 
 | Valeur | Type | Signification |
@@ -106,6 +128,9 @@ puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par 
 | `AllowExternalAI` | `REG_DWORD` | `1` pour autoriser l’IA externe, `0` pour l’interdire |
 | `AllowRemoteImages` | `REG_DWORD` | `1` pour charger les avatars des outils autorisés, `0` sinon |
 | `AutomaticUpdates` | `REG_DWORD` | `1` pour vérifier les mises à jour chaque jour (verrouillé), `0` pour les désactiver |
+| `AllowedAIServers` | `REG_MULTI_SZ` | Les serveurs OpenAI-compatibles autorisés, un préfixe d’URL par ligne |
+| `AIServer` | `REG_SZ` | Le serveur OpenAI-compatible, réglé et verrouillé |
+| `AllowLocalAI` | `REG_DWORD` | `1` pour autoriser un serveur sur cet ordinateur, `0` pour le refuser |
 
 Déployez-les par une préférence de stratégie de groupe (Configuration ordinateur → Préférences → Paramètres Windows →
 Registre), un script de correction ou de configuration Intune, ou un fichier `.reg`. La même politique que le profil

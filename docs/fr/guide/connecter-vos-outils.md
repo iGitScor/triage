@@ -95,7 +95,7 @@ pour que Remora trouve vos tâches.
 
 ## Claude (facultatif)
 
-Claude ajoute un court brief de quoi traiter d’abord, des résumés en deux phrases des listes chargées, et une aide
+L’assistant ajoute un court brief de quoi traiter d’abord, des résumés en deux phrases des listes chargées, et une aide
 pour trier ce que vous reportez sans cesse. Il reste désactivé tant que l’IA externe n’est pas autorisée, dans
 Réglages → Confidentialité ou par votre organisation. Voir [L’assistant](./assistant).
 
@@ -105,6 +105,10 @@ Réglages → Confidentialité ou par votre organisation. Voir [L’assistant](.
   sont trouvées aussi ; sinon, collez le résultat de `which claude` dans *Chemin de claude*. Réglages →
   Confidentialité indique quel `claude` Remora lance.
 - **API Claude** : une clé d’API de la Claude Console. Réglages → Sources, section *Assistant* → Claude API.
+- **OpenAI-compatible** : OpenAI, Azure OpenAI, Mistral, ou un serveur sur votre ordinateur comme Ollama ou
+  LM Studio. Réglages → Sources, section *Assistant* → OpenAI-compatible : l’adresse du serveur jusqu’à `/v1`, la
+  clé d’API et l’identifiant du modèle de votre fournisseur. Un serveur sur votre ordinateur n’a pas besoin de clé
+  et fonctionne avec l’IA externe désactivée.
 
 ## Plusieurs comptes
 

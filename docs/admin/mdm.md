@@ -17,20 +17,23 @@ the policy.
 | Key | Type | Meaning | Default when not managed |
 |---|---|---|---|
 | `AllowedPlugins` | Array of strings | The tools that may be connected and refreshed. Any other is refused with “Not allowed by your privacy policy.” | All |
-| `AllowExternalAI` | Boolean | Allow Claude plugins to send inbox content to Anthropic | `false` |
+| `AllowExternalAI` | Boolean | Allow the assistant to send inbox content off the computer: to Anthropic for Claude, to the server set for OpenAI-compatible | `false` |
 | `AllowRemoteImages` | Boolean | Load avatars, from the hosts of allowed tools only | `true` |
 | `AIExcludedSources` | Array of strings | Tools whose items never reach the assistant (brief, summaries, triage); `reminders` for the user’s own reminders. Added to the user’s own choice and locked in Settings | None |
-| `AllowedAIModels` | Array of strings | The Claude models the assistant may use. A model that isn’t listed (or the default, when it isn’t) is replaced by the first one | Any |
+| `AllowedAIModels` | Array of strings | The models the assistant may use, by any provider’s ids. A model that isn’t listed (or the default, when it isn’t) is replaced by the first one | Any |
+| `AllowedAIServers` | Array of strings | The servers the OpenAI-compatible assistant may use, as URL prefixes: scheme, host, port and path must match, the path on a `/` boundary (`https://acme.openai.azure.com/openai/` allows `…/openai/v1`, not other resources). Any other server is refused with “Your organization doesn’t allow this AI server.” | Any https server |
+| `AIServer` | String | The server the OpenAI-compatible assistant uses, filled in and locked in Settings, also for accounts already connected. Refused if `AllowedAIServers` doesn’t allow it | Set by the user |
+| `AllowLocalAI` | Boolean | A server on this computer (`localhost`, `127.0.0.1`, `::1`, the only addresses that may use http). `true`: allowed even with external AI off. `false`: refused. Not set: allowed unless `AllowExternalAI` is managed `false`, since a local server could forward to the cloud | See meaning |
 | `HiddenContentSources` | Array of strings | Tools whose notifications say where something happened, not what was written; `reminders` for the user’s own reminders. Added to the user’s own choice and locked in Settings | None |
 | `RefreshMinutes` | Integer | How often tools are checked, from 1 to 60 minutes (another value is ignored). Locked in Settings | 5 |
 | `OpenInApps` | Boolean | Open Slack and Linear items in their desktop app when installed; `false` always opens the web page | `true` |
 | `ClaudeCodePath` | String | The `claude` Remora runs, instead of the one found or entered in the account. It must still be named `claude`, belong to the user or root, and answer as Claude Code | Found automatically |
 | `AutomaticUpdates` | Boolean | `true`: check GitHub for a new version once a day, locked on. `false`: no update check at all, not even *Check now*, for fleets you redeploy yourself | Off; the user decides |
 
-The last five are settings, not privacy rules: they don’t make Settings → Privacy read-only.
+`AIServer` and the last five are settings, not privacy rules: they don’t make Settings → Privacy read-only.
 
-Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (Claude API).
-To choose between Claude Code and the Claude API, list only one of them in `AllowedPlugins`.
+Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (Claude API),
+`openai` (OpenAI-compatible). To choose the assistant, list only that one in `AllowedPlugins`.
 
 For example, Claude allowed for code reviews and tasks, never for Slack, and only with Sonnet and Haiku:
 
@@ -47,7 +50,26 @@ For example, Claude allowed for code reviews and tasks, never for Slack, and onl
 </array>
 ```
 
-These two keys are read by the macOS app; the Windows app has no assistant yet.
+`AIExcludedSources` and `AllowedAIModels` are read by the macOS app only.
+
+Or the OpenAI-compatible assistant on the company’s Azure OpenAI resource only, set for everyone:
+
+```xml
+<key>AllowedPlugins</key>
+<array>
+    <string>github</string>
+    <string>openai</string>
+</array>
+<key>AllowExternalAI</key><true/>
+<key>AllowedAIServers</key>
+<array>
+    <string>https://acme.openai.azure.com/openai/</string>
+</array>
+<key>AIServer</key><string>https://acme.openai.azure.com/openai/v1</string>
+```
+
+Without `AllowedAIServers` or `AIServer`, the user can type any https server: a managed fleet that allows `openai`
+should set one of them.
 
 An account that is already connected to a tool the policy no longer allows stops refreshing at the next sync.
 
@@ -95,7 +117,7 @@ property list.
 
 ## Windows: Group Policy or Intune
 
-The Windows app reads the same three keys, and `AutomaticUpdates`, from **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**,
+The Windows app reads these values from **`HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Remora`**,
 then from `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` for user-scoped policies (a value set in HKLM wins):
 
 | Value | Type | Meaning |
@@ -104,6 +126,9 @@ then from `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` for user-scoped policies 
 | `AllowExternalAI` | `REG_DWORD` | `1` to allow external AI, `0` to forbid it |
 | `AllowRemoteImages` | `REG_DWORD` | `1` to load avatars from allowed tools, `0` not to |
 | `AutomaticUpdates` | `REG_DWORD` | `1` to check for updates daily (locked on), `0` to turn updating off |
+| `AllowedAIServers` | `REG_MULTI_SZ` | The allowed OpenAI-compatible servers, one URL prefix per line |
+| `AIServer` | `REG_SZ` | The OpenAI-compatible server, set and locked |
+| `AllowLocalAI` | `REG_DWORD` | `1` to allow a server on this computer, `0` to refuse it |
 
 Deploy them with a Group Policy Preference (Computer Configuration → Preferences → Windows Settings → Registry), an
 Intune remediation or configuration script, or a `.reg` file. The same policy as the profile above, in PowerShell

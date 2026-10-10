@@ -20,6 +20,7 @@ politique sous `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe ou Intune).
 | Notion | `api.notion.com` | Le jeton ; l’identité de l’utilisateur, puis des requêtes des bases choisies pour les tâches qui lui sont assignées | Autorisé |
 | Claude Code | Anthropic, via le programme local `claude` | Quelques champs de chaque élément : voir [Ce qui parvient à Claude](#ce-qui-parvient-a-claude) | **Désactivé** |
 | API Claude | `api.anthropic.com` | La clé d’API, et les mêmes champs que Claude Code | **Désactivé** |
+| OpenAI-compatible | Le serveur choisi dans le compte ou par `AIServer` : OpenAI, Azure OpenAI, Mistral…, ou un serveur sur cet ordinateur | La clé d’API s’il y en a une, et les mêmes champs que Claude Code. Les conditions du fournisseur (conservation, entraînement) s’appliquent à ce qu’il reçoit | **Désactivé** ; un serveur sur cet ordinateur est autorisé sauf si l’organisation le refuse (`AllowLocalAI`) |
 | Avatars | Les hébergeurs d’images des outils autorisés et connectés seulement | Une requête d’image | Autorisé |
 | Mises à jour | `github.com`, et les serveurs de téléchargement de GitHub (`*.githubusercontent.com`) | Une requête de `latest.json` par jour, et la nouvelle version quand l’utilisateur l’installe. Aucun identifiant, jeton ni contenu | **Désactivé** (`AutomaticUpdates`) |
 
@@ -29,7 +30,8 @@ jamais téléchargés. Remora n’écrit jamais dans les outils : les messages r
 
 ## Ce qui parvient à Claude
 
-Seulement si l’IA externe est autorisée et que l’utilisateur a connecté Claude. Pour chaque élément :
+Seulement si l’IA externe est autorisée et que l’utilisateur a connecté Claude, ou si un serveur local est autorisé.
+Les mêmes champs vont à un serveur OpenAI-compatible. Pour chaque élément :
 
 - son verbe (*À répondre*, *À relire*…), son **titre**, son contexte (dépôt, canal ou clé de ticket), son auteur, ses
   statuts (vérifications, approbations, taille du changement) et son âge, plus un identifiant interne pour que la
