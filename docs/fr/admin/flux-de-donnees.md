@@ -14,8 +14,8 @@ politique sous `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe ou Intune).
 | Flux | Destination | Ce qui est envoyé | Par défaut |
 |---|---|---|---|
 | GitHub | `api.github.com`, `github.com`, `avatars.githubusercontent.com`, ou l’adresse GitHub Enterprise | Le jeton de l’utilisateur ; des lectures de ses pull requests, demandes de relecture, et des chemins et nombres de lignes des fichiers modifiés | Autorisé |
-| GitLab | L’adresse GitLab configurée | Le jeton ; des lectures de ses merge requests, approbations, pipelines et chemins des fichiers modifiés. Le texte des diffs dans les réponses n’est jamais décodé ni stocké | Autorisé |
-| Slack | `slack.com` | Le jeton utilisateur ; des recherches de ses mentions et messages directs | Autorisé |
+| GitLab | L’adresse GitLab configurée | Le jeton ; des lectures de ses merge requests, puis une requête GraphQL pour leurs approbations, pipelines, et les chemins et nombres de lignes des fichiers modifiés. Le texte des diffs dans les réponses n’est jamais décodé ni stocké | Autorisé |
+| Slack | `slack.com` | Le jeton utilisateur ; des recherches de ses mentions, messages directs et messages dans des fils, puis les réponses d’au plus 10 de ces fils (`conversations.replies`, permissions d’historique en lecture seule) | Autorisé |
 | Linear | `api.linear.app`, `public.linear.app` | La clé d’API ; des lectures des tickets assignés et des notifications | Autorisé |
 | Notion | `api.notion.com` | Le jeton ; l’identité de l’utilisateur, puis des requêtes des bases choisies pour les tâches qui lui sont assignées | Autorisé |
 | Claude Code | Anthropic, via le programme local `claude` | Quelques champs de chaque élément : voir [Ce qui parvient à Claude](#ce-qui-parvient-a-claude) | **Désactivé** |

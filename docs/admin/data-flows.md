@@ -14,8 +14,8 @@ guarded client, policy) with Windows equivalents: Credential Manager, `%LOCALAPP
 | Flow | Destination | What is sent | Default |
 |---|---|---|---|
 | GitHub | `api.github.com`, `github.com`, `avatars.githubusercontent.com`, or the GitHub Enterprise host | The user’s token; read requests for their pull requests, review requests, and the changed files’ paths and line counts | Allowed |
-| GitLab | The configured GitLab host | The user’s token; read requests for their merge requests, approvals, pipelines and changed file paths. The diff text in responses is never decoded or stored | Allowed |
-| Slack | `slack.com` | The user token; search requests for the user’s mentions and direct messages | Allowed |
+| GitLab | The configured GitLab host | The user’s token; read requests for their merge requests, then one GraphQL query for their approvals, pipelines and changed file paths and line counts. The diff text in responses is never decoded or stored | Allowed |
+| Slack | `slack.com` | The user token; search requests for the user’s mentions, direct messages and own thread messages, then the replies of up to 10 of those threads (`conversations.replies`, read-only history scopes) | Allowed |
 | Linear | `api.linear.app`, `public.linear.app` | The API key; read requests for assigned issues and notifications | Allowed |
 | Notion | `api.notion.com` | The token; the user's identity, then queries of the chosen databases for tasks assigned to the user | Allowed |
 | Claude Code | Anthropic, through the local `claude` program | A few fields of each inbox item: see [What reaches Claude](#what-reaches-claude) | **Off** |

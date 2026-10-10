@@ -54,6 +54,14 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Windows: error messages and empty tabs are in French on a French system, values included ("Erreur réseau : …").
 - Reduce Motion (Mac) and Windows' Animation effects setting are respected: no slides, springs or spinning; Windows
   contrast themes show borders and the selected tab.
+- **Slack: replies in your threads**, even when nobody mentions you (the 10 most recent threads you wrote in).
+  New Slack apps ask for two read-only history permissions; an existing one shows how to add them.
+- When a tool has more than the latest 50 items of a list, the inbox and Settings say so.
+- Mac: connecting an account that's already there updates its token and keeps your Done, snoozes and pins, instead
+  of showing every item twice.
+- Mac: Settings says when notifications are off for Remora, or when *Open at login* needs your approval, with a
+  button to fix it.
+- Mac: reviewers who approved or asked for changes are marked ✓ or ✕, and VoiceOver says it.
 - Windows: searching waits for you to stop typing, and the inbox doesn't reload while its window is hidden.
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.
 

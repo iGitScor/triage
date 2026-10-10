@@ -40,11 +40,14 @@ Shows your merge requests, the ones you review, their approvals and pipelines.
 
 ## Slack
 
-Shows mentions and direct messages from the last few days. Mentions are one item per message; a direct
-conversation is one item, so a new message brings it back even after you marked it done.
+Shows mentions, direct messages and replies in your threads from the last few days. Mentions are one item per
+message; a direct conversation is one item, so a new message brings it back even after you marked it done. A
+thread you wrote in is one item too, when someone replied after you, even without mentioning you (the 10 most
+recent threads).
 
 1. Settings → Sources → Slack → **Create the Slack app**. Slack opens with an app named Remora, already set up
-   with the only permission it needs (`search:read`, as you).
+   with the read-only permissions it needs, as you: `search:read`, and `channels:history` and `groups:history`
+   to read the threads you wrote in.
 2. Pick your workspace, then **Next** → **Create**.
 3. On the app page: **Install App** → *Install to your workspace* → **Allow**.
 4. Copy the **User OAuth Token** (it starts with `xoxp-`) and paste it in Remora.
@@ -55,6 +58,10 @@ admin approves it, come back to step 3.
 :::
 
 Slack items open in the Slack app, on the conversation. ⌥-click opens the exact message on the web.
+
+An app created before thread replies only has `search:read`: Settings says so next to the account. Add the two
+history permissions to the app (*OAuth & Permissions* → *User Token Scopes*), reinstall it, and connect the new
+token again: the account is updated, nothing is lost.
 
 ## Linear
 
@@ -100,6 +107,9 @@ See [The assistant](./assistant).
 Every tool can be connected several times: two Slack workspaces, GitHub and GitHub Enterprise… Name each account
 when you connect it (“Work GitLab”, “Client Slack”), or rename it later with the pencil. When more than one
 account of a tool is connected, items show the account name.
+
+Each list holds the latest 50 items. When a tool has more (60 review requests, say), an ⓘ at the bottom of the
+inbox and a line next to the account in Settings say so: the rest is in the tool.
 
 ## If something goes wrong
 

@@ -42,11 +42,14 @@ Affiche vos merge requests, celles que vous relisez, leurs approbations et pipel
 
 ## Slack
 
-Affiche les mentions et messages directs des derniers jours. Une mention est un élément par message ; une
-conversation directe est un seul élément, donc un nouveau message la fait revenir même après l’avoir terminée.
+Affiche les mentions, messages directs et réponses dans vos fils des derniers jours. Une mention est un élément
+par message ; une conversation directe est un seul élément, donc un nouveau message la fait revenir même après
+l’avoir terminée. Un fil où vous avez écrit est aussi un élément, quand quelqu’un a répondu après vous, même sans
+vous mentionner (les 10 fils les plus récents).
 
 1. Réglages → Sources → Slack → **Créer l’app Slack**. Slack s’ouvre avec une app nommée Remora, déjà configurée
-   avec la seule permission nécessaire (`search:read`, en votre nom).
+   avec les permissions en lecture seule nécessaires, en votre nom : `search:read`, ainsi que `channels:history`
+   et `groups:history` pour lire les fils où vous avez écrit.
 2. Choisissez votre espace de travail, puis **Next** → **Create**.
 3. Sur la page de l’app : **Install App** → *Install to your workspace* → **Allow**.
 4. Copiez le **User OAuth Token** (il commence par `xoxp-`) et collez-le dans Remora.
@@ -57,6 +60,10 @@ Certains espaces de travail exigent qu’un administrateur approuve les nouvelle
 :::
 
 Les éléments Slack s’ouvrent dans l’appli Slack, sur la conversation. ⌥-clic ouvre le message exact sur le web.
+
+Une app créée avant les réponses dans les fils n’a que `search:read` : les Réglages l’indiquent à côté du compte.
+Ajoutez les deux permissions d’historique à l’app (*OAuth & Permissions* → *User Token Scopes*), réinstallez-la et
+connectez à nouveau le nouveau jeton : le compte est mis à jour, rien n’est perdu.
 
 ## Linear
 
@@ -104,6 +111,10 @@ Réglages → Confidentialité ou par votre organisation. Voir [L’assistant](.
 Chaque outil peut être connecté plusieurs fois : deux espaces Slack, GitHub et GitHub Enterprise… Nommez chaque
 compte en le connectant (« GitLab boulot », « Slack client »), ou renommez-le ensuite avec le crayon. Quand
 plusieurs comptes d’un même outil sont connectés, les éléments affichent le nom du compte.
+
+Chaque liste contient les 50 éléments les plus récents. Quand un outil en a davantage (60 demandes de relecture,
+par exemple), un ⓘ en bas de la boîte et une ligne à côté du compte dans les Réglages le signalent : le reste est
+dans l’outil.
 
 ## En cas de problème
 
