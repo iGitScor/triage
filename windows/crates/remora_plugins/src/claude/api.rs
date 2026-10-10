@@ -153,18 +153,44 @@ impl ClaudePlugin {
         if body.fallbacks.is_some() {
             request = request.header("anthropic-beta", "server-side-fallback-2026-07-01");
         }
-        decode(self.http.as_ref(), request).await.map_err(|e| {
-            if e == PluginError::TimedOut {
-                PluginError::Api(TOO_SLOW.into())
-            } else {
-                e
+        let mut attempt = 0;
+        loop {
+            match decode(self.http.as_ref(), request.clone()).await {
+                Err(PluginError::TimedOut) => return Err(PluginError::Api(TOO_SLOW.into())),
+                Err(error) => match retry_delay(&error, attempt, Utc::now()) {
+                    Some(delay) => {
+                        attempt += 1;
+                        tokio::time::sleep(delay).await;
+                    }
+                    None => return Err(error),
+                },
+                ok => return ok,
             }
-        })
+        }
     }
 
     /// A brief from the API's answer, without the items Claude may have made up.
     pub fn parse(response: ApiResponse, known_ids: &HashSet<String>) -> Result<Brief, PluginError> {
         output::<prompt::Output>(response).map(|o| o.brief(known_ids))
+    }
+}
+
+/// Retries an overloaded or rate-limited answer up to twice (AI-04): 429, 408, 409 and 5xx (529 is "overloaded").
+/// A rate limit waits as long as `retry-after` says, up to a minute; beyond that, or without it, 2 s then 4 s.
+/// `None`: give up and show the error. Same rule on macOS (`ClaudePlugin.retryDelay`).
+pub fn retry_delay(error: &PluginError, attempt: u32, now: DateTime<Utc>) -> Option<Duration> {
+    if attempt >= 2 {
+        return None;
+    }
+    let backoff = Duration::from_secs(2 << attempt);
+    match error {
+        PluginError::RateLimited(Some(until)) => {
+            let wait = until - now.timestamp();
+            (wait <= 60).then(|| Duration::from_secs(wait.max(0) as u64))
+        }
+        PluginError::RateLimited(None) => Some(backoff),
+        PluginError::Status(code) if matches!(code, 408 | 409 | 500..) => Some(backoff),
+        _ => None,
     }
 }
 
@@ -374,5 +400,52 @@ mod tests {
         async fn send(&self, request: Request) -> Result<Response, PluginError> {
             self.0.send(request).await
         }
+    }
+
+    /// Answers with each status in turn, then 200 with a brief.
+    struct Flaky {
+        statuses: Mutex<Vec<u16>>,
+        calls: Mutex<usize>,
+    }
+
+    #[async_trait]
+    impl HttpClient for Flaky {
+        async fn send(&self, _request: Request) -> Result<Response, PluginError> {
+            *self.calls.lock().unwrap() += 1;
+            let mut statuses = self.statuses.lock().unwrap();
+            let status = if statuses.is_empty() { 200 } else { statuses.remove(0) };
+            Ok(Response { status, body: answer(r#"{"summary":"Fine.","focus":[]}"#, "end_turn") })
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn overloaded_answers_are_retried_twice() {
+        let flaky = Arc::new(Flaky { statuses: Mutex::new(vec![529, 503]), calls: Mutex::new(0) });
+        let started = tokio::time::Instant::now();
+        let brief = ClaudePlugin::new(&config(&[("token", "k")]), flaky.clone(), "en")
+            .unwrap()
+            .brief(&[item("a")], now())
+            .await;
+        assert_eq!(brief.unwrap().summary, "Fine.");
+        assert_eq!(*flaky.calls.lock().unwrap(), 3);
+        assert_eq!(started.elapsed(), Duration::from_secs(6), "2 s, then 4 s");
+
+        let down = Arc::new(Flaky { statuses: Mutex::new(vec![529; 4]), calls: Mutex::new(0) });
+        let error =
+            ClaudePlugin::new(&config(&[("token", "k")]), down.clone(), "en").unwrap().brief(&[item("a")], now()).await;
+        assert_eq!(error.unwrap_err(), PluginError::Status(529));
+        assert_eq!(*down.calls.lock().unwrap(), 3);
+    }
+
+    #[test]
+    fn retries_wait_what_the_server_says_up_to_a_minute() {
+        let at = now();
+        let in_secs = |s: i64| PluginError::RateLimited(Some(at.timestamp() + s));
+        assert_eq!(retry_delay(&in_secs(20), 0, at), Some(Duration::from_secs(20)));
+        assert_eq!(retry_delay(&in_secs(600), 0, at), None);
+        assert_eq!(retry_delay(&PluginError::RateLimited(None), 1, at), Some(Duration::from_secs(4)));
+        assert_eq!(retry_delay(&PluginError::Status(500), 2, at), None);
+        assert_eq!(retry_delay(&PluginError::Status(400), 0, at), None);
+        assert_eq!(retry_delay(&PluginError::Unauthorized, 0, at), None);
     }
 }

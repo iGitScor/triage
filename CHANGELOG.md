@@ -39,6 +39,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Mac: counts read right in English and French ("1 file", "1 élément marqué comme terminé"), and reminders say
   "Rappel" in French. A long task title no longer widens the menu bar menu.
 - Mac: with Increase Contrast, text, borders and dividers are stronger.
+- The Claude API assistant tries again, twice, when Claude is overloaded or asks to slow down, instead of failing
+  at once.
 - Windows: screen readers hear what a refresh brought and when an action fails, each screen puts focus on its
   heading, every field has a name, and item titles and error messages can be selected and copied.
 - Saving happens in the background: actions on many items at once (Mark all as done, Snooze all) no longer pause

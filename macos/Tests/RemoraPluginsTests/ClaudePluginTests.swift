@@ -64,4 +64,55 @@ struct ClaudePluginTests {
             try await ClaudePlugin(config: config(["token": "k"]), http: http).brief([item], now: .now)
         }
     }
+
+    /// AI-04: overloaded and rate-limited answers are retried twice, then the error shows.
+    @Test func retriesOverloadedAnswersTwice() async throws {
+        final class Flaky: HTTPClient, @unchecked Sendable {
+            var statuses: [Int]
+            var calls = 0
+            init(_ statuses: [Int]) { self.statuses = statuses }
+            func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+                calls += 1
+                let status = statuses.isEmpty ? 200 : statuses.removeFirst()
+                let body =
+                    #"{"content": [{"type": "text", "text": "{\"summary\": \"Fine.\", \"focus\": []}"}], "stop_reason": "end_turn"}"#
+                return (
+                    Data(body.utf8),
+                    HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!
+                )
+            }
+        }
+        let waits = Waits()
+        let flaky = Flaky([529, 503])
+        var plugin = try ClaudePlugin(config: config(["token": "k"]), http: flaky)
+        plugin.sleep = { await waits.add($0) }
+        #expect(try await plugin.brief([item], now: .now).summary == "Fine.")
+        #expect(flaky.calls == 3)
+        #expect(await waits.all == [2, 4])
+
+        let down = Flaky([529, 529, 529, 529])
+        plugin = try ClaudePlugin(config: config(["token": "k"]), http: down)
+        plugin.sleep = { _ in }
+        await #expect(throws: HTTPError.status(529)) { try await plugin.brief([item], now: .now) }
+        #expect(down.calls == 3)
+    }
+
+    @Test func retryWaitsWhatTheServerSaysUpToAMinute() {
+        let now = Date.now
+        #expect(
+            ClaudePlugin.retryDelay(after: HTTPError.rateLimited(now.addingTimeInterval(20)), attempt: 0, now: now)
+                == 20)
+        #expect(
+            ClaudePlugin.retryDelay(after: HTTPError.rateLimited(now.addingTimeInterval(600)), attempt: 0, now: now)
+                == nil)
+        #expect(ClaudePlugin.retryDelay(after: HTTPError.rateLimited(nil), attempt: 1, now: now) == 4)
+        #expect(ClaudePlugin.retryDelay(after: HTTPError.status(500), attempt: 2, now: now) == nil)
+        #expect(ClaudePlugin.retryDelay(after: HTTPError.status(400), attempt: 0, now: now) == nil)
+        #expect(ClaudePlugin.retryDelay(after: HTTPError.unauthorized, attempt: 0, now: now) == nil)
+    }
+}
+
+private actor Waits {
+    var all: [TimeInterval] = []
+    func add(_ seconds: TimeInterval) { all.append(seconds) }
 }
