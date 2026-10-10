@@ -34,6 +34,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - A tool that keeps failing is asked less often (up to every 30 minutes), and a rate limit is waited out until the
   tool's reset time. A refresh you ask for tries again right away, except where a rate limit holds.
 - Windows: a policy value Remora can't read is applied as strictly as possible and named in Settings → Privacy.
+- Chat messages are sorted more accurately: a question mark in a link or code, or a word like "pleased", no
+  longer sends a message to *To reply*. On the Mac, sorting is also several times faster.
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.
 
 - Windows: **Create a token** opened a broken link for GitHub and GitLab.
