@@ -35,7 +35,7 @@ Dans *À moi*, les éléments sont rangés par ce que vous avez à faire, quel q
 Les messages sont rangés dans *À répondre* ou *À lire* sur votre Mac : d’abord par des règles de mots-clés en
 français et en anglais (« pourrais-tu… », « can you… », « pour info », « FYI »), puis par le modèle de langue
 embarqué d’Apple. Pas d’IA générative, rien n’est envoyé. Dans le doute, Remora choisit *À répondre* : mieux vaut
-une question à écarter qu’une question manquée.
+une question à écarter qu’une question manquée. Les messages des applications Slack (Google Agenda, Jira…) vont
 
 ## Terminé, Épingler
 
