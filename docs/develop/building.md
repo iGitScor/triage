@@ -110,4 +110,5 @@ site/deploy.sh
 It runs, in order: `python3 site/build.py` (marketing pages → `site/public`), `site/og/render.sh` (social cards
 and the touch icon), `npm --prefix docs run build` (docs → `site/public/docs`), then `npx wrangler deploy`.
 
-`npm --prefix docs run dev` serves the docs locally with live reload.
+`npm --prefix docs run dev` serves the docs locally with live reload. `make a11y` builds the docs and checks every
+page with axe, in light and dark (WCAG 2.1 AA), as the Website workflow does on each change.

@@ -4,7 +4,7 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo win-test win-check win-demo i18n i18n-check \
-	docs docs-build site site-preview screenshots deploy clean
+	docs docs-build a11y site site-preview screenshots deploy clean
 
 help: ## List the targets
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-13s %s\n", $$1, $$2}'
@@ -14,6 +14,7 @@ setup: ## Install the Node packages (tooling, Windows interface, docs) and the p
 	npm --prefix windows/app ci
 	npm --prefix docs ci
 	npx lefthook install
+	npx playwright install chromium
 
 test: mac-test win-test ## Run every test suite
 
@@ -89,6 +90,9 @@ docs: ## The documentation with live reload
 docs-build: ## Build the documentation into site/public/docs
 	npm --prefix docs run build
 	python3 site/csp.py
+
+a11y: docs-build ## Check every page of the website and docs with axe (WCAG 2.1 AA, light and dark)
+	node scripts/a11y.mjs
 
 site: ## Write the marketing pages (site/public) from site/build.py
 	python3 site/build.py

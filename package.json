@@ -1,10 +1,12 @@
 {
   "name": "remora",
   "private": true,
-  "description": "Repository tooling only: Biome (formats and lints the web code) and lefthook (the pre-commit hook). See CONTRIBUTING.md.",
+  "description": "Repository tooling only: Biome (formats and lints the web code), lefthook (the pre-commit hook), Playwright and axe (the website's accessibility check). See CONTRIBUTING.md.",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@biomejs/biome": "2.5.14",
-    "lefthook": "2.1.14"
+    "lefthook": "2.1.14",
+    "playwright": "1.63.0"
   }
 }

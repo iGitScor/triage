@@ -64,7 +64,7 @@ Maintainers release with `make version V=x.y.z`, a commit, then the tag `vx.y.z`
 ([building and releasing](docs/develop/building.md#releasing)); the release workflow refuses a tag that doesn't
 match the source.
 `make deploy` publishes the website and docs and needs a Cloudflare login; `make site-preview` shows them locally
-first.
+first, and `make a11y` checks their accessibility with axe.
 
 ## Security and licence
 

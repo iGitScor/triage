@@ -1,0 +1,51 @@
+name: Website
+
+# Accessibility of the marketing pages and the docs: every page, light and dark, against WCAG 2.1 AA with axe
+# (scripts/a11y.mjs). Locally: `make a11y`.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "site/**"
+      - "docs/**"
+      - "scripts/a11y.mjs"
+      - "package-lock.json"
+      - ".github/workflows/site.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "docs/**"
+      - "scripts/a11y.mjs"
+      - "package-lock.json"
+      - ".github/workflows/site.yml"
+
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request cancels the run in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            docs/package-lock.json
+      - name: Install Playwright, axe and the docs' packages
+        run: |
+          npm ci --ignore-scripts
+          npm --prefix docs ci
+          npx playwright install --with-deps chromium
+      - name: Build the docs into site/public/docs
+        run: npm --prefix docs run build && python3 site/csp.py
+      - name: Check every page
+        run: node scripts/a11y.mjs

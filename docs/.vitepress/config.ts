@@ -173,7 +173,8 @@ export default withMermaid(
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ],
     sitemap: { hostname: `${SITE}/docs/` },
-    markdown: { lineNumbers: false },
+    // The high-contrast GitHub themes: the regular ones' comments and keywords fall under 4.5:1 on our code blocks.
+    markdown: { lineNumbers: false, theme: { light: 'github-light-high-contrast', dark: 'github-dark-high-contrast' } },
     themeConfig: {
       logo: { src: '/favicon.svg', alt: '' },
       siteTitle: 'Remora',

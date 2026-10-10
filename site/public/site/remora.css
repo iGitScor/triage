@@ -444,10 +444,7 @@
 
 /* ---------- Keyboard and MDM snippets ---------- */
 
+/* Code cards are dark in both themes, so keys use the bright accent. */
 .code-card pre code .tok-key {
-  color: var(--accent-text);
-}
-
-.band .code-card pre code .tok-key {
   color: var(--accent);
 }

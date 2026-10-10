@@ -122,6 +122,14 @@ html:not(.dark) {
   line-height: 1.5;
 }
 
+/* Mermaid's dark edge labels are light grey on mid grey (4.4:1): put them on the card colour instead.
+   !important because Mermaid styles each diagram by its id. */
+.dark .vp-doc .mermaid .edgeLabel,
+.dark .vp-doc .mermaid .edgeLabel p,
+.dark .vp-doc .mermaid .labelBkg {
+  background-color: var(--vp-c-bg-soft) !important;
+}
+
 /* Screenshots under the home features: side by side, stacked on phones. */
 /* Feature icons as on the marketing pages: a line icon on an ink tile. */
 .VPFeature .icon {
