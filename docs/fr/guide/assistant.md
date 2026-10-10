@@ -27,9 +27,13 @@ Briefs et résumés sont rédigés dans la langue de votre Mac.
 
 ## Ce qui est envoyé
 
-Les **titres, contextes** (dépôt, canal, clé de ticket), **auteurs et statuts** des éléments. Pas vos jetons, pas le
-code, pas des conversations entières. Avec Claude Code, Remora le lance sans outils, sans extensions et sans rien
-enregistrer dans l’historique de vos sessions.
+Pour chaque élément : son verbe, son **titre**, son contexte (dépôt, canal, clé de ticket), son auteur, ses statuts
+et son âge. Le titre d’un message Slack est la **première ligne du message** ; la suite n’est pas envoyée. Le tri
+envoie aussi la date de retour de chaque élément reporté, la raison choisie et le nombre de reports. Jamais vos
+jetons, liens, code, notes, ni la suite d’un message. Pour tenir un outil à l’écart de Claude, désactivez-le dans
+Réglages → Général → **Envoyer à l’assistant** (*Masquer le contenu des messages* ne concerne que les notifications). Avec Claude Code, Remora le lance sans outils, sans extensions et sans rien enregistrer
+dans l’historique de vos sessions. La liste exacte est dans
+[Flux de données](/fr/admin/flux-de-donnees#ce-qui-parvient-a-claude).
 
 ## Limiter les jetons consommés
 
@@ -37,4 +41,5 @@ enregistrer dans l’historique de vos sessions.
   **Réutiliser un brief ou un résumé pendant**), et un résumé de liste seulement tant que la liste ne change pas.
 - **Brief de toute la boîte** peut être désactivé pour ne garder que les résumés de liste, plus courts et faits avec
   un modèle plus léger (`claude-haiku-5-5` par défaut).
-- Rien n’est généré avant que vous cliquiez sur ✦, à part un court brief de test quand vous connectez Claude.
+- Rien n’est généré avant que vous cliquiez sur ✦, à part un premier brief quand vous connectez Claude (si le brief
+  de toute la boîte est désactivé, le test utilise un seul élément fictif).

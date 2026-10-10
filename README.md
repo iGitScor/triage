@@ -178,16 +178,18 @@ The documentation is at **[triage.iscor.me/docs](https://triage.iscor.me/docs/)*
   [the inbox](https://triage.iscor.me/docs/guide/inbox), [snooze and reminders](https://triage.iscor.me/docs/guide/snooze-and-reminders), [reviews](https://triage.iscor.me/docs/guide/reviews),
   [the assistant](https://triage.iscor.me/docs/guide/assistant), [FAQ](https://triage.iscor.me/docs/guide/faq).
 - **For IT and compliance**: [overview](https://triage.iscor.me/docs/admin/), [data flows](https://triage.iscor.me/docs/admin/data-flows),
-  [MDM policy](https://triage.iscor.me/docs/admin/mdm), [deployment](https://triage.iscor.me/docs/admin/deployment).
+  [MDM policy](https://triage.iscor.me/docs/admin/mdm), [deployment](https://triage.iscor.me/docs/admin/deployment), [code signing policy](https://triage.iscor.me/docs/admin/code-signing).
 - **Developers**: [architecture](https://triage.iscor.me/docs/develop/), [writing a plugin](https://triage.iscor.me/docs/develop/plugins),
   [building and releasing](https://triage.iscor.me/docs/develop/building), [Windows](https://triage.iscor.me/docs/develop/windows),
   [proposal: delegation](https://triage.iscor.me/docs/develop/proposals/delegation).
 
 ## Releasing
 
-Push a version tag (`git tag -s v0.3.0 && git push origin v0.3.0`): [the release workflow](.github/workflows/release.yml)
-runs the tests, stamps the version, builds the app (signed ad hoc for now) and publishes `Remora.dmg` with its
-SHA-256 as a GitHub release. The download link above always points to the latest one.
+Set the version (`make version V=0.3.2`), commit, then push the tag `v0.3.2`: [the release
+workflow](.github/workflows/release.yml) checks that the tag matches the source, tests and builds both apps (signed
+ad hoc for now), and publishes `Remora.dmg` and `Remora-Setup.exe` with their SHA-256, SBOM and signed build provenance in one
+GitHub release, only if
+both succeed. The download links above always point to the latest one.
 
 ## Website
 

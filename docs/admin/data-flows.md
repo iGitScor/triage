@@ -1,6 +1,6 @@
 ---
 title: Data flows
-description: Every network flow of Remora (GitHub, GitLab, Slack, Linear, Claude, avatars), what each one sends, what stays on the Mac and where, and how it is enforced.
+description: Every network flow of Remora (GitHub, GitLab, Slack, Linear, Claude, avatars), what each one sends, exactly what reaches Claude, what is stored on the computer and where, and how it is enforced.
 ---
 
 # Data flows
@@ -17,30 +17,74 @@ guarded client, policy) with Windows equivalents: Credential Manager, `%LOCALAPP
 | GitLab | The configured GitLab host | The user’s token; read requests for their merge requests, approvals, pipelines and changed file paths. The diff text in responses is never decoded or stored | Allowed |
 | Slack | `slack.com` | The user token; search requests for the user’s mentions and direct messages | Allowed |
 | Linear | `api.linear.app`, `public.linear.app` | The API key; read requests for assigned issues and notifications | Allowed |
-| Notion (not yet available) | `api.notion.com` | The token; database queries | Allowed |
-| Claude Code | Anthropic, through the local `claude` program | Titles, contexts, authors and statuses of inbox items (brief, summaries, triage) | **Off** |
-| Claude API | `api.anthropic.com` | Same as Claude Code | **Off** |
+| Notion | `api.notion.com` | The token; the user's identity, then queries of the chosen databases for tasks assigned to the user | Allowed |
+| Claude Code | Anthropic, through the local `claude` program | A few fields of each inbox item: see [What reaches Claude](#what-reaches-claude) | **Off** |
+| Claude API | `api.anthropic.com` | The API key, and the same fields as Claude Code | **Off** |
 | Avatars | Image hosts of allowed, connected tools only | An image request | Allowed |
 
 Data from the tools comes **back** to the Mac and stays there. There is **no telemetry, no analytics, no crash
 reporting**, no update check, and no other network access. Fonts and tool logos are bundled in the app, never
 downloaded. Remora never writes to the tools: drafted messages are copied to the clipboard for the user to paste.
 
-## What stays on the Mac
+## What reaches Claude
+
+Only when external AI is allowed and the user has connected Claude. For each inbox item:
+
+- its verb (*To reply*, *To review*…), **title**, context (repository, channel or issue key), author, statuses
+  (checks, approvals, size of the change) and age, plus an internal id so the answer can point back to the item;
+- for a **Slack** message, the title is the **first line of the message** (the rest, shown as a preview in the
+  inbox, is not sent);
+- for **triage** of the Snoozed tab, also when the item comes back, the snooze reason the user picked (*Waiting
+  for someone*, *Not feeling it*…) and how many times it was snoozed.
+
+The brief sends up to 120 items, a bundle summary the items of that bundle, triage up to 80 snoozed items. Never
+sent: tokens, links, code, the rest of a message, notes, files.
+
+- **Connecting** Claude makes a first brief of the inbox, which is also the connection test. When the whole-inbox
+  brief is turned off (Settings → General → Assistant), the test uses one made-up item instead, so no inbox content
+  leaves the computer until the user asks for a summary.
+- With Claude Code, Remora runs `claude` with no tools, no plugins, hooks or MCP servers, and nothing saved to the
+  processes can read. Data then goes wherever that Claude Code is set up to send it (normally Anthropic).
+  Settings → Privacy shows which `claude` runs.
+
+## Stored on this computer
+
+### macOS
 
 | Data | Where |
 |---|---|
-| Inbox cache, item states, reminders, preferences, snooze history, briefs and summaries | JSON files in `~/Library/Application Support/Remora/`, protected by FileVault like the rest of the user’s files |
-| Tokens | One item in the login Keychain (service `fr.igitscor.remora`, account `secrets`) |
-| What the user handles quickly or snoozes | `learning.json`, used for ranking on this Mac only |
-| Review prep | File paths and line counts of review requests; code is never stored |
-| Notifications | Local (`UNUserNotificationCenter`) |
+| Accounts (names, hosts, settings; no tokens) | `accounts.json` |
+| The last copy of each tool’s items: titles, contexts, authors, statuses, Slack message text, links | `cache.json` |
+| Done, Pin, snoozes and their notes, reminders | `states.json`, `reminders.json`, `snooze-history.json` |
+| What the user handles quickly or snoozes, for ranking on this Mac only (titles’ words and authors) | `learning.json` |
+| The last brief and bundle summaries | `brief.json`, `bundle-summaries.json` |
+| Preferences | `preferences.json` |
+| Tokens and API keys | One item in the login Keychain: service `fr.igitscor.remora`, account `secrets` |
+| Scheduled reminders and delivered notifications (titles) | macOS notifications (`UNUserNotificationCenter`) |
 
-**On-device ML**: sorting messages and comparing topics use Apple’s NaturalLanguage framework (sentence and word
-embeddings shipped with macOS); ranking and snooze advice use small statistics over the local history. Nothing is
-sent anywhere.
+Machine and iCloud backups, since Remora can fetch them again. Review prep keeps file paths and line counts only;
+code is never stored. Remora keeps **no HTTP cache**: requests aren’t written to disk, and the cache earlier
+versions left in `~/Library/Caches/fr.igitscor.remora` and `~/Library/HTTPStorages` is deleted at launch.
 
-Settings → Privacy → **Erase local data…** removes all of the above, tokens included.
+Settings → Privacy → **Erase local data…** deletes all of the above: the JSON files, every Keychain item Remora
+(or its earlier name, Perch) stored, scheduled and delivered notifications, and the old HTTP cache. Disconnecting
+one account removes its token, its items and its notifications.
+
+### Windows
+
+| Data | Where |
+|---|---|
+| Accounts, the last copy of each tool’s items (as on macOS, Slack message text included), item states, reminders, preferences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `preferences.json` in `%LOCALAPPDATA%\fr.igitscor.remora` |
+| Tokens | One Credential Manager entry: `fr.igitscor.remora`, user `secrets` |
+
+The files are plain JSON, readable by the user’s Windows account (and administrators); BitLocker encrypts them with
+the rest of the disk. Settings → Privacy → **Erase local data** deletes the files and the tokens; notifications
+already in the notification center stay until dismissed. The uninstaller’s “delete app data” option removes the
+folder too.
+
+**On-device ML**: on macOS, sorting messages and comparing topics use Apple’s NaturalLanguage framework (sentence and
+word embeddings shipped with macOS); ranking and snooze advice use small statistics over the local history. The
+Windows app sorts with keyword rules only. Nothing is sent anywhere.
 
 ## How it is enforced
 

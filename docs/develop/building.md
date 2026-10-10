@@ -40,17 +40,21 @@ Manage Certificates → + → Apple Development. Then `make run`.
 
 ## Releasing
 
-Releases are repo-wide tags. Bump nothing by hand: the tag is the version.
+Releases are repo-wide tags, and the version lives in the source: the macOS `Info.plist`, the Rust workspace and the
+Windows interface's package files. `make version` shows it; `make version V=x.y.z` sets it everywhere.
 
 ```sh
-git tag -s v0.3.0 -m "Remora 0.3.0"
-git push origin v0.3.0
+make version V=0.3.2
+git commit -am "chore: version 0.3.2"
+git tag -s v0.3.2 -m "Remora 0.3.2"
+git push origin main v0.3.2
 ```
 
 [`.github/workflows/release.yml`](https://github.com/iGitScor/triage/blob/main/.github/workflows/release.yml)
-runs the tests, stamps the version (`CFBundleShortVersionString` from the tag, `CFBundleVersion` from the run
-number), builds a Universal app signed ad hoc, packages `Remora.dmg` with the licences, and publishes it with its
-SHA-256 as a GitHub release. The name never changes, so
+first checks that the tag matches the version in the source, then builds both apps in parallel with the same checks
+as CI: the Mac app is tested, stamped with a build number (`CFBundleVersion`, the run number), built Universal,
+signed, and packaged as `Remora.dmg` with the licences; the Windows app goes through the translation check,
+type-check, clippy and tests before `Remora-Setup.exe` is built. Only when both succeed does a last job publish the
 `releases/latest/download/Remora.dmg` always serves the newest.
 
 For a signed and notarized build, see [Deploying Remora](/admin/deployment#signing-it-with-your-developer-id).
