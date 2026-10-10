@@ -36,6 +36,9 @@ Les messages sont rangés dans *À répondre* ou *À lire* sur votre Mac : d’a
 français et en anglais (« pourrais-tu… », « can you… », « pour info », « FYI »), puis par le modèle de langue
 embarqué d’Apple. Pas d’IA générative, rien n’est envoyé. Dans le doute, Remora choisit *À répondre* : mieux vaut
 une question à écarter qu’une question manquée. Les messages des applications Slack (Google Agenda, Jira…) vont
+dans *À lire*, et le rappel d’un événement envoyé par une application quitte la boîte dès que l’événement commence
+(sauf si vous l’avez épinglé ou démarré).
+
 Sur Windows, seules les règles de mots-clés s’appliquent (le modèle de langue est celui d’Apple) : un message sans
 l’un de ces mots va dans *À répondre*.
 

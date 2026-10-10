@@ -35,6 +35,9 @@ Inside *My turn*, items are grouped by what you have to do, whatever the tool th
 Chat messages are sorted into *To reply* or *To read* on your Mac: first with keyword rules in English and French
 (“can you…”, “pourrais-tu…”, “FYI”, “pour info”), then with Apple’s on-device language model. No generative AI and
 nothing is sent anywhere. When Remora isn’t sure, it says *To reply*: better a question you can dismiss than one
+you miss. Messages from Slack apps (Google Calendar, Jira…) go to *To read*, and an app’s reminder of an event
+leaves the inbox once the event starts (unless you pinned or started it).
+
 On Windows, only the keyword rules run (the language model is Apple's): a message without one of those words goes
 to *To reply*.
 

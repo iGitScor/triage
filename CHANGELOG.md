@@ -34,6 +34,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - A tool that keeps failing is asked less often (up to every 30 minutes), and a rate limit is waited out until the
   tool's reset time. A refresh you ask for tries again right away, except where a rate limit holds.
 - Windows: a policy value Remora can't read is applied as strictly as possible and named in Settings → Privacy.
+- Slack messages read as text: dates in your language and time zone, emoji instead of `:codes:`, no `*` or `_`
+  marks, and emails or phone numbers by their name. Titles from GitHub, GitLab, Linear and Notion lose their emoji
+  codes and marks too.
+- A Slack app's event reminder (Google Calendar…) leaves the inbox once the event starts, unless you pinned or
 - Chat messages are sorted more accurately: a question mark in a link or code, or a word like "pleased", no
   longer sends a message to *To reply*. On the Mac, sorting is also several times faster.
 - Windows: the tabs work with screen readers and the arrow keys, and the snooze sheet keeps the keyboard inside it.
