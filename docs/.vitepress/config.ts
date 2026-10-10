@@ -27,9 +27,11 @@ const adminEn: DefaultTheme.SidebarItem[] = [
     text: 'For IT and compliance',
     items: [
       { text: 'Overview', link: '/admin/' },
+      { text: 'Security overview', link: '/admin/security' },
       { text: 'Data flows', link: '/admin/data-flows' },
       { text: 'Managing the policy (MDM)', link: '/admin/mdm' },
       { text: 'Deploying Remora', link: '/admin/deployment' },
+      { text: 'Code signing policy', link: '/admin/code-signing' },
     ],
   },
 ]
@@ -47,6 +49,22 @@ const develop: DefaultTheme.SidebarItem[] = [
   {
     text: 'Proposals',
     items: [{ text: 'Delegation and teams', link: '/develop/proposals/delegation' }],
+  },
+]
+
+const developFr: DefaultTheme.SidebarItem[] = [
+  {
+    text: 'Développeurs',
+    items: [
+      { text: 'Architecture', link: '/fr/developper/' },
+      { text: 'Écrire une extension', link: '/fr/developper/extensions' },
+      { text: 'Construire et publier', link: '/fr/developper/construire-et-publier' },
+      { text: 'Remora pour Windows', link: '/fr/developper/windows' },
+    ],
+  },
+  {
+    text: 'Propositions',
+    items: [{ text: 'Délégation et équipes', link: '/fr/developper/propositions/delegation' }],
   },
 ]
 
@@ -70,9 +88,11 @@ const adminFr: DefaultTheme.SidebarItem[] = [
     text: 'Pour la DSI et la conformité',
     items: [
       { text: 'Vue d’ensemble', link: '/fr/admin/' },
+      { text: 'Synthèse sécurité', link: '/fr/admin/securite' },
       { text: 'Flux de données', link: '/fr/admin/flux-de-donnees' },
       { text: 'Gérer la politique (MDM)', link: '/fr/admin/mdm' },
       { text: 'Déployer Remora', link: '/fr/admin/deploiement' },
+      { text: 'Politique de signature du code', link: '/fr/admin/signature-du-code' },
     ],
   },
 ]
@@ -96,8 +116,11 @@ const PAIRS = new Map<string, string>([['index', 'fr/index']])
 for (const [en, fr] of [
   [guideEn, guideFr],
   [adminEn, adminFr],
+  [develop, developFr],
 ] as const)
-  for (const [i, item] of en[0].items!.entries()) PAIRS.set(item.link!.slice(1).replace(/\/$/, '/index'), fr[0].items![i].link!.slice(1).replace(/\/$/, '/index'))
+  for (const [g, group] of en.entries())
+    for (const [i, item] of group.items!.entries())
+      PAIRS.set(item.link!.slice(1).replace(/\/$/, '/index'), fr[g].items![i].link!.slice(1).replace(/\/$/, '/index'))
 
 /** The URL of a page, as cleanUrls serves it. */
 const urlOf = (path: string) => `${SITE}/docs/${path.replace(/(^|\/)index$/, '$1')}`
@@ -182,10 +205,10 @@ export default withMermaid(
           nav: [
             { text: 'Guide', link: '/fr/guide/premiers-pas', activeMatch: '/fr/guide/' },
             { text: 'DSI et conformité', link: '/fr/admin/', activeMatch: '/fr/admin/' },
-            { text: 'Développeurs (en anglais)', link: '/develop/' },
+            { text: 'Développeurs', link: '/fr/developper/', activeMatch: '/fr/developper/' },
             { text: 'Télécharger', items: [{ text: 'Mac (macOS 14+)', link: DMG }, { text: 'Windows 10 ou 11 (aperçu)', link: EXE }] },
           ],
-          sidebar: { '/fr/guide/': guideFr, '/fr/admin/': adminFr },
+          sidebar: { '/fr/guide/': guideFr, '/fr/admin/': adminFr, '/fr/developper/': developFr },
           editLink: { pattern: `${REPO}/edit/main/docs/:path`, text: 'Modifier cette page' },
           footer: { message: 'Publié sous licence GPL-3.0-or-later.', copyright: `<a href="${SITE}/fr/">Remora</a>` },
           outline: { label: 'Sur cette page' },

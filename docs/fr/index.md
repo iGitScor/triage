@@ -44,8 +44,8 @@ features:
     link: /fr/admin/mdm
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>'
     title: Une extension par outil
-    details: Un manifeste, une récupération et des tests sur fixtures. Le formulaire, le logo et le contrôle de conformité viennent avec (en anglais).
-    link: /develop/plugins
+    details: Un manifeste, une récupération et des tests sur fixtures. Le formulaire, le logo et le contrôle de conformité viennent avec.
+    link: /fr/developper/extensions
 ---
 
 <div class="home-shots">
