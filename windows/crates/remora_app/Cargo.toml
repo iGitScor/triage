@@ -13,7 +13,7 @@ remora_core = { version = "0.4.0", path = "../remora_core" }
 remora_plugins = { version = "0.4.0", path = "../remora_plugins" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
-dirs = "6"
+dirs = "7"
 uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(windows)'.dependencies]
