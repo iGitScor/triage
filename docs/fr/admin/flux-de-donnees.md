@@ -44,6 +44,10 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 - **À la connexion**, Claude rédige un premier brief de la boîte, qui sert aussi de test. Quand le *Brief de toute
   la boîte* est désactivé (Réglages → Général → Assistant), le test utilise un seul élément fictif : aucun contenu
   de la boîte ne quitte l’ordinateur avant que l’utilisateur demande un résumé.
+- Les éléments sont écrits par d’autres, donc un message pourrait essayer de donner des ordres à Claude. Remora
+  les envoie comme un bloc de données délimité et demande à Claude de ne jamais suivre les instructions qu’ils
+  contiennent ; les réponses s’affichent en texte brut, et les suggestions de tri qui masquent ou ouvrent des
+  éléments ne sont jamais cochées d’avance.
 - **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications :
 - Avec Claude Code, Remora lance `claude` sans outils, sans extensions, hooks ni serveurs MCP, et sans rien
   ligne de commande, que d’autres processus peuvent lire. Les données vont là où ce Claude Code est configuré pour les envoyer

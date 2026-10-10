@@ -43,6 +43,9 @@ sent: tokens, links, code, the rest of a message, notes, files.
 - **Connecting** Claude makes a first brief of the inbox, which is also the connection test. When the whole-inbox
   brief is turned off (Settings → General → Assistant), the test uses one made-up item instead, so no inbox content
   leaves the computer until the user asks for a summary.
+- Items are written by other people, so a message could try to give Claude orders. Remora sends them as a
+  marked block of data and tells Claude never to follow instructions found in them; Claude's answers are shown as
+  plain text, and triage suggestions that hide or open items are never ticked for the user.
 - With Claude Code, Remora runs `claude` with no tools, no plugins, hooks or MCP servers, and nothing saved to the
   processes can read. Data then goes wherever that Claude Code is set up to send it (normally Anthropic).
   Settings → Privacy shows which `claude` runs.
