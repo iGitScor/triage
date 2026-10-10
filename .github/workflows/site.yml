@@ -46,6 +46,8 @@ jobs:
           npm --prefix docs ci
           npx playwright install --with-deps chromium
       - name: Build the docs into site/public/docs
-        run: npm --prefix docs run build && python3 site/csp.py
+        run: npm --prefix docs run build
+      - name: The docs' CSP in site/public/_headers covers their inline scripts
+        run: python3 site/csp.py --check
       - name: Check every page
         run: node scripts/a11y.mjs

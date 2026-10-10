@@ -173,6 +173,9 @@ export default withMermaid(
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ],
     sitemap: { hostname: `${SITE}/docs/` },
+    // The pages' bundle hashes and site data go in a JS file, not an inline script: the CSP in site/public/_headers
+    // then only hashes scripts that never change, so it stays the same from one docs edit to the next.
+    metaChunk: true,
     // The high-contrast GitHub themes: the regular ones' comments and keywords fall under 4.5:1 on our code blocks.
     markdown: { lineNumbers: false, theme: { light: 'github-light-high-contrast', dark: 'github-dark-high-contrast' } },
     themeConfig: {

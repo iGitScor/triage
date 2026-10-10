@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Writes the docs' Content-Security-Policy in public/_headers with the hash of each inline script VitePress emits,
-instead of 'unsafe-inline'. One of them lists the pages' bundle hashes, so it changes with the docs: run after
-every docs build (make docs-build and deploy.sh do). `--check` (CI) fails when _headers is out of date."""
+instead of 'unsafe-inline'. With `metaChunk` (docs/.vitepress/config.ts) the pages' bundle hashes live in a JS file,
+so only scripts that never change are inline and the hashes stay the same from one docs edit to the next. Run after
+a docs build (make docs-build and deploy.sh do); `--check` (the Website workflow) fails when an inline script was
+added or changed, e.g. by a VitePress update: then run this and commit public/_headers."""
 
 import base64
 import hashlib
