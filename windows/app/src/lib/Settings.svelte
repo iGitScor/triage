@@ -200,7 +200,8 @@ onMount(() => {
         <p class="help">{t('While fresh, Remora shows it again instead of asking the assistant.')}</p>
         <h3 class="subsection">{t('Send to the assistant')}</h3>
         {#each notifying as source (source.id)}
-          <label class="toggle"><input type="checkbox" checked={!p.assistantExcludedSources.includes(source.id)} onchange={(e) => setSent(source.id, e.currentTarget.checked)} />{source.name}</label>
+          {@const kept = settings.managed.aiExcludedSources?.includes(source.id) ?? false}
+          <label class="toggle" title={kept ? t('Managed by your organization') : undefined}><input type="checkbox" checked={!kept && !p.assistantExcludedSources.includes(source.id)} disabled={kept} onchange={(e) => setSent(source.id, e.currentTarget.checked)} />{source.name}</label>
         {/each}
         <p class="help">{t("Items from a tool that's off never reach the assistant: not in the brief, summaries or triage.")}</p>
       {/if}

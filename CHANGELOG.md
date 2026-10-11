@@ -5,6 +5,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Added
+
+- Windows: the organization can keep tools away from the assistant and limit its models, with the
+  `AIExcludedSources` and `AllowedAIModels` registry values, as on Macs.
+
 ### Changed
 
 - Fewer requests to your tools: GitLab, Slack and Notion are asked who you are once an hour instead of at every

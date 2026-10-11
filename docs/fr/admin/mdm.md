@@ -51,7 +51,7 @@ Haiku :
 </array>
 ```
 
-`AIExcludedSources` et `AllowedAIModels` ne sont lues que par l’app macOS.
+Sous Windows, ce sont deux [valeurs de registre](#windows-strategie-de-groupe-ou-intune) `REG_MULTI_SZ`.
 
 Ou l’assistant OpenAI-compatible sur la seule ressource Azure OpenAI de l’entreprise, réglée pour tous :
 
@@ -131,6 +131,8 @@ puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par 
 | `AllowedAIServers` | `REG_MULTI_SZ` | Les serveurs OpenAI-compatibles autorisés, un préfixe d’URL par ligne |
 | `AIServer` | `REG_SZ` | Le serveur OpenAI-compatible, réglé et verrouillé |
 | `AllowLocalAI` | `REG_DWORD` | `1` pour autoriser un serveur sur cet ordinateur, `0` pour le refuser |
+| `AIExcludedSources` | `REG_MULTI_SZ` | Les outils dont les éléments ne parviennent jamais à l’assistant, un identifiant par ligne (`reminders` pour les rappels) ; verrouillé dans les Réglages |
+| `AllowedAIModels` | `REG_MULTI_SZ` | Les modèles que l’assistant peut utiliser, un identifiant par ligne |
 
 Déployez-les par une préférence de stratégie de groupe (Configuration ordinateur → Préférences → Paramètres Windows →
 Registre), un script de correction ou de configuration Intune, ou un fichier `.reg`. La même politique que le profil
@@ -149,11 +151,11 @@ actualisation : un changement s’applique dans l’intervalle d’actualisation
 *Géré par votre organisation* dans Réglages → Confidentialité. Un utilisateur ne peut pas écrire sous
 `HKLM\SOFTWARE\Policies`, donc pas assouplir ce qu’elle fixe.
 
-Une erreur de saisie n’ouvre jamais rien. `AllowedPlugins` et `AllowedAIServers` acceptent aussi une liste en
-`REG_SZ` (`github, slack`), et les interrupteurs un `REG_SZ` `0` ou `1`. Tout autre type, ou une valeur illisible,
-est appliqué de la façon la plus stricte (aucun outil, pas d’IA externe, aucun serveur d’IA, pas de serveur local,
-pas d’avatars, pas de mises à jour), et Réglages → Confidentialité indique la valeur à
-corriger.
+Une erreur de saisie n’ouvre jamais rien. Les listes acceptent aussi un `REG_SZ` (`github, slack`), et les
+interrupteurs un `REG_SZ` `0` ou `1`. Tout autre type, ou une valeur illisible, est appliqué de la façon la plus
+stricte (aucun outil, pas d’IA externe, aucun serveur d’IA, pas de serveur local, pas d’avatars, pas de mises à jour ;
+un `AIExcludedSources` ou un `AllowedAIModels` illisible coupe l’assistant), et Réglages → Confidentialité indique la
+valeur à corriger.
 
 ## Vérifier sur un Mac
 

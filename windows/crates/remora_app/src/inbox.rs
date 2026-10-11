@@ -690,9 +690,10 @@ impl Inbox {
         account
     }
 
-    /// What the assistant may read: everything but the sources you keep from it.
+    /// What the assistant may read and use: everything but the sources you or your organization keep from it, with the
+    /// organization's models.
     pub fn assistant_policy(&self) -> AssistantPolicy {
-        AssistantPolicy::new(self.preferences.assistant_excluded_sources.iter().cloned().collect(), None)
+        self.managed.assistant_policy(&self.preferences)
     }
 
     /// The assistant for an account, through a client limited to its declared hosts.

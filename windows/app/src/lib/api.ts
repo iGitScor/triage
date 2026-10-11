@@ -230,6 +230,10 @@ export interface Managed {
   /** AI-23: its server, set by the organization and locked in Settings. */
   aiServer?: string | null
   allowLocalAi?: boolean | null
+  /** SEC-29: sources the organization keeps from the assistant, locked off in Settings. */
+  aiExcludedSources?: string[] | null
+  /** SEC-29: the models the assistant may use. */
+  allowedAiModels?: string[] | null
   /** Policy values present but unreadable, applied as "deny". */
   unreadable: string[]
 }

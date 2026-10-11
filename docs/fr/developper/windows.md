@@ -14,7 +14,7 @@ mêmes données de test et les mêmes tests, pour que les deux apps se comporten
 |---|---|---|
 | `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 100 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 105 |
-| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 70 |
+| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 72 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 3 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 35 |
 
@@ -33,7 +33,7 @@ mêmes données de test et les mêmes tests, pour que les deux apps se comporten
 | Tri des messages par le sens | Mots-clés, puis un modèle de langue sur l’appareil | Mots-clés seulement : sans correspondance, un message va dans *À répondre* |
 | Mises à jour (sur option), hors ligne et reconnexion, politique de confidentialité | ✓ | ✓ |
 | Boutons dans les notifications (Terminé, Reporter) | ✓ | Pas encore : un clic ouvre l’élément |
-| Réglages gérés | Toutes les clés de [MDM](/fr/admin/mdm) | `AllowedPlugins`, `AllowExternalAI`, `AllowRemoteImages`, `AutomaticUpdates`, `AllowedAIServers`, `AIServer`, `AllowLocalAI` |
+| Réglages gérés | Toutes les clés de [MDM](/fr/admin/mdm) | `AllowedPlugins`, `AllowExternalAI`, `AllowRemoteImages`, `AutomaticUpdates`, `AllowedAIServers`, `AIServer`, `AllowLocalAI`, `AIExcludedSources`, `AllowedAIModels` |
 | Taille du texte | Réglages → Général | La mise à l’échelle de Windows |
 | Nouveau rappel | Glisser le poisson de la barre des menus | Un raccourci global, Ctrl+Alt+R : on ne peut pas glisser une icône de la zone de notification |
 | Terminé, Reporter sur une ligne | Balayer, ou le clavier | Des boutons sur chaque ligne |

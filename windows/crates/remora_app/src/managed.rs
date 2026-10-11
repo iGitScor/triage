@@ -1,5 +1,5 @@
 use crate::Preferences;
-use remora_core::CompliancePolicy;
+use remora_core::{AssistantPolicy, CompliancePolicy};
 use serde::Serialize;
 use std::collections::HashSet;
 
@@ -9,6 +9,8 @@ use std::collections::HashSet;
 /// `AutomaticUpdates` (REG_DWORD 0/1): 1 checks every day, locked on; 0 turns updating off entirely, Check now included.
 /// For the OpenAI-compatible assistant (AI-23): `AllowedAIServers` (REG_MULTI_SZ of URL prefixes), `AIServer`
 /// (REG_SZ, the server, locked in Settings) and `AllowLocalAI` (REG_DWORD 0/1, a server on this computer).
+/// For every assistant, as on macOS: `AIExcludedSources` (REG_MULTI_SZ of plugin IDs, or `reminders`), added to the
+/// user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs).
 /// A key that is set wins over the user's own choice.
 ///
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -26,12 +28,16 @@ pub struct Managed {
     /// The OpenAI-compatible assistant's server. Empty: unreadable, so the assistant is refused.
     pub ai_server: Option<String>,
     pub allow_local_ai: Option<bool>,
+    /// Sources whose items never reach the assistant, on top of the user's.
+    pub ai_excluded_sources: Option<Vec<String>>,
+    /// The models the assistant may use, by any provider's ids.
+    pub allowed_ai_models: Option<Vec<String>>,
     /// Names of the values that were present but unreadable, applied as "deny".
     pub unreadable: Vec<String>,
 }
 
 pub const POLICY_KEY: &str = r"SOFTWARE\Policies\Remora";
-pub const VALUES: [&str; 7] = [
+pub const VALUES: [&str; 9] = [
     "AllowedPlugins",
     "AllowExternalAI",
     "AllowRemoteImages",
@@ -39,6 +45,8 @@ pub const VALUES: [&str; 7] = [
     "AllowedAIServers",
     "AIServer",
     "AllowLocalAI",
+    "AIExcludedSources",
+    "AllowedAIModels",
 ];
 
 /// A registry value as found, before interpretation.
@@ -63,9 +71,9 @@ fn plugin_list(raw: RawValue) -> Result<Option<Vec<String>>, ()> {
     Ok(Some(ids.iter().map(|id| id.trim().to_lowercase()).filter(|id| !id.is_empty()).collect()))
 }
 
-/// `AllowedAIServers`: REG_MULTI_SZ, or a REG_SZ separated by commas, semicolons or spaces. Paths keep their case;
-/// a list of blanks is no list.
-fn server_list(raw: RawValue) -> Result<Option<Vec<String>>, ()> {
+/// `AllowedAIServers` and `AllowedAIModels`: REG_MULTI_SZ, or a REG_SZ separated by commas, semicolons or spaces.
+/// Entries keep their case; a list of blanks is no list.
+fn text_list(raw: RawValue) -> Result<Option<Vec<String>>, ()> {
     let urls: Vec<String> = match raw {
         RawValue::Missing => return Ok(None),
         RawValue::MultiString(items) => items,
@@ -166,7 +174,7 @@ impl Managed {
                 Some(vec![])
             }
         };
-        let allowed_ai_servers = match server_list(value("AllowedAIServers")) {
+        let allowed_ai_servers = match text_list(value("AllowedAIServers")) {
             Ok(list) => list,
             Err(()) => {
                 unreadable.push("AllowedAIServers".to_string());
@@ -180,6 +188,15 @@ impl Managed {
                 Some(String::new())
             }
         };
+        // An AI list that can't be read turns the assistant off (see `policy`): the lists themselves stay unset.
+        let ai_excluded_sources = plugin_list(value("AIExcludedSources")).unwrap_or_else(|()| {
+            unreadable.push("AIExcludedSources".to_string());
+            None
+        });
+        let allowed_ai_models = text_list(value("AllowedAIModels")).unwrap_or_else(|()| {
+            unreadable.push("AllowedAIModels".to_string());
+            None
+        });
         let mut flag = |name: &str| match switch(value(name)) {
             Ok(on) => on,
             Err(()) => {
@@ -200,6 +217,8 @@ impl Managed {
             allowed_ai_servers,
             ai_server,
             allow_local_ai,
+            ai_excluded_sources,
+            allowed_ai_models,
             unreadable,
         }
     }
@@ -222,18 +241,35 @@ impl Managed {
             || self.allowed_ai_servers.is_some()
             || self.ai_server.is_some()
             || self.allow_local_ai.is_some()
+            || self.ai_excluded_sources.is_some()
+            || self.allowed_ai_models.is_some()
+            || self.ai_lists_unreadable()
+    }
+
+    /// An `AIExcludedSources` or `AllowedAIModels` Remora can't read: no source or model can be trusted to stay out,
+    /// so no assistant runs, on this computer or elsewhere.
+    fn ai_lists_unreadable(&self) -> bool {
+        self.unreadable.iter().any(|name| name == "AIExcludedSources" || name == "AllowedAIModels")
+    }
+
+    /// What the assistant may read and use: the user's exclusions plus the organization's, and the organization's
+    /// models.
+    pub fn assistant_policy(&self, preferences: &Preferences) -> AssistantPolicy {
+        let excluded = preferences.assistant_excluded_sources.iter().chain(self.ai_excluded_sources.iter().flatten());
+        AssistantPolicy::new(excluded.cloned().collect(), self.allowed_ai_models.clone())
     }
 
     pub fn policy(&self, preferences: &Preferences) -> CompliancePolicy {
         let allowed = self.allowed_plugins.as_ref().or(preferences.allowed_plugins.as_ref());
         CompliancePolicy {
             allowed_plugins: allowed.map(|ids| ids.iter().cloned().collect::<HashSet<_>>()),
-            allow_external_ai: self.allow_external_ai.unwrap_or(preferences.allow_external_ai),
+            allow_external_ai: !self.ai_lists_unreadable()
+                && self.allow_external_ai.unwrap_or(preferences.allow_external_ai),
             allow_remote_images: self.allow_remote_images.unwrap_or(preferences.allow_remote_images),
             allowed_ai_servers: self.allowed_ai_servers.clone(),
             ai_server: self.ai_server.clone(),
-            allow_local_ai: self.allow_local_ai,
-            external_ai_managed_off: self.allow_external_ai == Some(false),
+            allow_local_ai: if self.ai_lists_unreadable() { Some(false) } else { self.allow_local_ai },
+            external_ai_managed_off: self.allow_external_ai == Some(false) || self.ai_lists_unreadable(),
         }
     }
 }
@@ -396,5 +432,39 @@ mod tests {
                 .policy(&Preferences { allow_external_ai: false, ..Preferences::default() })
                 .external_ai_managed_off
         );
+    }
+
+    /// SEC-29: the organization keeps sources from the assistant and limits its models, as on macOS.
+    #[test]
+    fn ai_exclusions_and_models_are_read() {
+        let it = Managed::from_values(values(&[
+            ("AIExcludedSources", RawValue::MultiString(vec!["Slack".into(), " reminders ".into(), String::new()])),
+            ("AllowedAIModels", RawValue::String("claude-haiku-5-5, gpt-X".into())),
+        ]));
+        assert!(it.is_managed() && it.unreadable.is_empty());
+        let user = Preferences { assistant_excluded_sources: vec!["linear".into()], ..Preferences::default() };
+        let policy = it.assistant_policy(&user);
+        assert_eq!(
+            policy.excluded_sources,
+            HashSet::from(["linear".to_string(), "slack".to_string(), "reminders".to_string()]),
+            "added to the user's own"
+        );
+        assert_eq!(policy.allowed_models, Some(vec!["claude-haiku-5-5".to_string(), "gpt-X".to_string()]));
+        assert_eq!(Managed::default().assistant_policy(&user).allowed_models, None, "any model when unset");
+    }
+
+    /// An AI list that can't be read turns every assistant off, a local one included.
+    #[test]
+    fn unreadable_ai_lists_turn_the_assistant_off() {
+        let user = Preferences { allow_external_ai: true, ..Preferences::default() };
+        for name in ["AIExcludedSources", "AllowedAIModels"] {
+            let it =
+                Managed::from_values(values(&[(name, RawValue::Number(1)), ("AllowLocalAI", RawValue::Number(1))]));
+            assert_eq!(it.unreadable, [name]);
+            let policy = it.policy(&user);
+            assert!(
+                !policy.allow_external_ai && policy.allow_local_ai == Some(false) && policy.external_ai_managed_off
+            );
+        }
     }
 }

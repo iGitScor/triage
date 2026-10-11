@@ -50,7 +50,7 @@ For example, Claude allowed for code reviews and tasks, never for Slack, and onl
 </array>
 ```
 
-`AIExcludedSources` and `AllowedAIModels` are read by the macOS app only.
+On Windows, both are `REG_MULTI_SZ` [registry values](#windows-group-policy-or-intune).
 
 Or the OpenAI-compatible assistant on the company’s Azure OpenAI resource only, set for everyone:
 
@@ -129,6 +129,8 @@ then from `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` for user-scoped policies 
 | `AllowedAIServers` | `REG_MULTI_SZ` | The allowed OpenAI-compatible servers, one URL prefix per line |
 | `AIServer` | `REG_SZ` | The OpenAI-compatible server, set and locked |
 | `AllowLocalAI` | `REG_DWORD` | `1` to allow a server on this computer, `0` to refuse it |
+| `AIExcludedSources` | `REG_MULTI_SZ` | Tools whose items never reach the assistant, one ID per line (`reminders` for reminders); locked in Settings |
+| `AllowedAIModels` | `REG_MULTI_SZ` | The models the assistant may use, one ID per line |
 
 Deploy them with a Group Policy Preference (Computer Configuration → Preferences → Windows Settings → Registry), an
 Intune remediation or configuration script, or a `.reg` file. The same policy as the profile above, in PowerShell
@@ -146,9 +148,10 @@ Check it with `reg query HKLM\SOFTWARE\Policies\Remora`. Remora reads the policy
 a change applies within the refresh interval, without a restart, and users see *Managed by your organization* in
 Settings → Privacy. Users can’t write under `HKLM\SOFTWARE\Policies`, so they can’t loosen what it sets.
 
-A typing mistake never opens things up. `AllowedPlugins` and `AllowedAIServers` also accept a `REG_SZ` list
-(`github, slack`), and the switches a `REG_SZ` `0` or `1`. Any other type, or a value Remora can’t read, is applied as
-strictly as possible (no tool, no external AI, no AI server, no local server, no avatars, no updates), and Settings → Privacy names the value to fix.
+A typing mistake never opens things up. The lists also accept a `REG_SZ` (`github, slack`), and the switches a
+`REG_SZ` `0` or `1`. Any other type, or a value Remora can’t read, is applied as strictly as possible (no tool, no
+external AI, no AI server, no local server, no avatars, no updates; an unreadable `AIExcludedSources` or
+`AllowedAIModels` turns the assistant off), and Settings → Privacy names the value to fix.
 
 ## Checking it on a Mac
 
