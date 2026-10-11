@@ -101,9 +101,10 @@ pas, et les notes de chaque version le disent.
   si le certificat de publication est aussi défini, car l’app n’installe une mise à jour que si elle est signée
   comme elle. Windows : `npx tauri signer generate`, la clé publique dans `tauri.conf.json`
   (`plugins.updater.pubkey`), la clé privée et son mot de passe comme `TAURI_SIGNING_PRIVATE_KEY` et
-  `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` ; chaque signature est liée à sa version. Gardez les deux clés privées hors
-  ligne : qui en détient une peut livrer une mise à jour à tous ceux qui les ont activées, et une nouvelle clé
-  oblige les utilisateurs à mettre à jour une fois à la main.
+  `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` ; chaque signature est liée à sa version, et faite dans une tâche à part
+  par la CLI autonome de Tauri (épinglée par somme de contrôle), loin des paquets npm du build. Gardez les deux
+  clés privées hors ligne : qui en détient une peut livrer une mise à jour à tous ceux qui les ont activées, et une
+  nouvelle clé oblige les utilisateurs à mettre à jour une fois à la main.
 
 ## Captures d’écran
 

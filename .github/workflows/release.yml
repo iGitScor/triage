@@ -263,18 +263,6 @@ jobs:
           fi
           sha256sum Remora-Setup.exe > Remora-Setup.exe.sha256
           cat Remora-Setup.exe.sha256
-      # The updater's signature, over the final (Authenticode-signed) installer and bound to this version,
-      # so an old installer can't be passed off as a new one (`requireSignedVersion`). Key: `npx tauri signer generate`.
-      - name: Sign the update
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "::warning::No TAURI_SIGNING_PRIVATE_KEY secret: Windows won't be offered this update."
-            exit 0
-          fi
-          app/node_modules/.bin/tauri signer sign --app-version "${GITHUB_REF_NAME#v}" Remora-Setup.exe
       - name: Provenance
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
@@ -291,11 +279,46 @@ jobs:
             windows/Remora-Setup.exe
             windows/Remora-Setup.exe.sha256
             windows/Remora-Setup.exe.cdx.json
-            windows/Remora-Setup.exe.sig
           if-no-files-found: error
 
+  # The updater's signature, over the final (Authenticode-signed) installer and bound to this version, so an old
+  # installer can't be passed off as a new one (`requireSignedVersion`). Key: `npx tauri signer generate`. In its own
+  # job, so the key never meets the build's npm packages, their install scripts or the restored caches: it gets only
+  # the installer and Tauri's standalone CLI, pinned by checksum. It needn't follow app/package.json: the signature
+  # format is the same across Tauri 2.
+  windows-update:
+    needs: windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TAURI_CLI: https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.1/cargo-tauri-x86_64-unknown-linux-gnu.tgz
+      TAURI_CLI_SHA256: 04ef3a9a2ed7b7dc479bef08ab40deee80065c99fc778f79ebce775eb72bbeff
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: windows
+          path: dist
+      - name: Sign the update
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::warning::No TAURI_SIGNING_PRIVATE_KEY secret: Windows won't be offered this update."
+            exit 0
+          fi
+          curl -fsSL -o "$RUNNER_TEMP/tauri.tgz" "$TAURI_CLI"
+          echo "$TAURI_CLI_SHA256  $RUNNER_TEMP/tauri.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/tauri.tgz" -C "$RUNNER_TEMP" cargo-tauri
+          "$RUNNER_TEMP/cargo-tauri" signer sign --app-version "${GITHUB_REF_NAME#v}" dist/Remora-Setup.exe
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-update
+          path: dist/Remora-Setup.exe.sig
+          if-no-files-found: ignore
+
   publish:
-    needs: [macos, windows]
+    needs: [macos, windows, windows-update]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

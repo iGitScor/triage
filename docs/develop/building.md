@@ -95,7 +95,8 @@ and each release's notes say so.
   private key to a folder for the `UPDATE_SIGNING_KEY` secret; the DMG is signed only when the release certificate
   is also set, since the app installs an update only if it is signed like itself. Windows: `npx tauri signer
   generate`, the public key in `tauri.conf.json` (`plugins.updater.pubkey`), the private key and its password as
-  `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; each signature is bound to its version.
+  `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; each signature is bound to its version,
+  and made in a job of its own by Tauri's standalone CLI (pinned by checksum), away from the build's npm packages.
   Keep both private keys offline: whoever has one can ship an update to everyone who turned updates on, and a new
   key means users update by hand once.
 
