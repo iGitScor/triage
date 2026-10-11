@@ -1,4 +1,4 @@
-/* VitePress's theme variables, mapped onto Myna's tokens (brand/tokens.css). */
+/* VitePress's theme variables, mapped onto Myna's tokens (site/public/site/tokens.css). */
 :root {
   --vp-font-family-base: var(--font);
   --vp-font-family-mono: var(--mono);
@@ -44,7 +44,8 @@
 }
 
 /* The docs follow VitePress's own light/dark switch, not only the OS setting: every token that
-   changes with the scheme is set again here, from brand/tokens.css (a test keeps them equal). */
+   changes with the scheme is set again here, from site/public/site/tokens.css (scripts/tokens-check.py keeps
+   them equal). */
 html.dark {
   --backdrop: #0e0e14;
   --backdrop-2: #0e0e14;

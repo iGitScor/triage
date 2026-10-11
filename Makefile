@@ -38,6 +38,7 @@ format-check: ## Fail if a file isn't formatted or has a lint error (as CI does)
 	$(RUFF) format --check .
 	$(RUFF) check .
 	python3 scripts/test-counts.py --check
+	python3 scripts/tokens-check.py
 
 version: ## Show the version, or set it everywhere with V=x.y.z (then commit and tag vx.y.z)
 	python3 scripts/version.py $(V)

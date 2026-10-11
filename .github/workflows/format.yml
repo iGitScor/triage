@@ -34,3 +34,5 @@ jobs:
         run: pipx run ruff==0.16.8 format --check . && pipx run ruff==0.16.8 check .
       - name: Test counts in the docs
         run: python3 scripts/test-counts.py --check
+      - name: The docs theme matches the shared tokens
+        run: python3 scripts/tokens-check.py

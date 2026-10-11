@@ -49,10 +49,10 @@ jobs:
       - name: Windows interface
         run: npm audit --omit=dev --audit-level=high
         working-directory: windows/app
-      # The docs are built, not installed: their dev server's known issues (no fix in VitePress 1) are
-      # reported here, and only a critical one fails.
+      # The docs: VitePress 1 runs on a patched Vite and KaTeX through `overrides` in docs/package.json, until
+      # VitePress 2 and its Mermaid plugin are stable. A high or critical advisory fails.
       - name: Documentation
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=high
         working-directory: docs
       # Repository tooling (Biome, lefthook): never shipped.
       - name: Tooling

@@ -2,7 +2,7 @@ import AppKit
 import RemoraCore
 import SwiftUI
 
-/// Myna design tokens (see podcast/brand/tokens.css), resolved for light and dark appearance.
+/// Myna design tokens (see site/public/site/tokens.css), resolved for light and dark appearance.
 enum Myna {
     // Each token has a high-contrast variant, used when Increase Contrast is on (UI-04):
     // darker inks and borders on light, lighter ones on dark, and stronger hairlines.
