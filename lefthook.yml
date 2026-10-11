@@ -22,3 +22,6 @@ pre-commit:
       glob: "*.py"
       run: uvx ruff@0.16.8 format {staged_files} && uvx ruff@0.16.8 check {staged_files}
       stage_fixed: true
+    test-counts:
+      glob: "*.{swift,rs,ts,md}"
+      run: python3 scripts/test-counts.py | xargs git add --

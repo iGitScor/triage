@@ -3,7 +3,7 @@
 # See CONTRIBUTING.md. On Windows without make, run the commands from windows/README.md directly.
 
 .DEFAULT_GOAL := help
-.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo win-test win-check win-demo i18n i18n-check \
+.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo win-test win-check win-demo i18n i18n-check test-counts \
 	docs docs-build a11y site site-preview screenshots deploy clean
 
 help: ## List the targets
@@ -37,6 +37,7 @@ format-check: ## Fail if a file isn't formatted or has a lint error (as CI does)
 	cd windows && cargo fmt --all --check
 	$(RUFF) format --check .
 	$(RUFF) check .
+	python3 scripts/test-counts.py --check
 
 version: ## Show the version, or set it everywhere with V=x.y.z (then commit and tag vx.y.z)
 	python3 scripts/version.py $(V)
@@ -76,6 +77,9 @@ win-demo: ## The Windows tray app with sample data in a window (runs on a Mac to
 i18n: ## Regenerate the French strings of both apps from the dictionary
 	python3 macos/scripts/make-strings.py
 	python3 windows/app/scripts/make-i18n.py
+
+test-counts: ## Write the number of tests into the READMEs and the Windows docs (the pre-commit hook does it too)
+	python3 scripts/test-counts.py
 
 i18n-check: ## Fail if a string has no French, or the strings or emoji tables are out of date (as CI does)
 	python3 macos/scripts/make-strings.py --check
