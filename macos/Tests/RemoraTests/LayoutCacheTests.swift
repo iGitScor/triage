@@ -127,6 +127,32 @@ struct AIServerTests {
     }
 }
 
+/// Avatars come only from an allowed tool's hosts, over https, while images are allowed; GitLab's include Gravatar.
+@MainActor
+struct AvatarHostTests {
+    @Test func gitLabAvatarsMayComeFromGravatar() throws {
+        let harness = Harness()
+        let accounts = [
+            Account(pluginID: "gitlab", name: nil, settings: ["host": "https://gitlab.acme.io"]),
+            Account(pluginID: "linear", name: nil, settings: [:]),
+        ]
+        try JSONEncoder().encode(accounts).write(to: harness.folder.appending(path: "accounts.json"))
+        let model = harness.model()
+        #expect(model.allowsImage(URL(string: "https://gitlab.acme.io/uploads/-/system/user/avatar/1/a.png")))
+        #expect(model.allowsImage(URL(string: "https://secure.gravatar.com/avatar/abc?s=80")))
+        #expect(!model.allowsImage(URL(string: "https://evil.example.com/a.png")))
+        #expect(!model.allowsImage(URL(string: "http://gitlab.acme.io/a.png")), "https only")
+
+        let linearOnly = Harness()
+        try JSONEncoder().encode([accounts[1]]).write(to: linearOnly.folder.appending(path: "accounts.json"))
+        #expect(!linearOnly.model().allowsImage(URL(string: "https://secure.gravatar.com/avatar/abc")))
+
+        model.preferences.allowRemoteImages = false
+        #expect(
+            !model.allowsImage(URL(string: "https://secure.gravatar.com/avatar/abc")), "nothing while images are off")
+    }
+}
+
 /// A review started then done records how long it really took.
 @MainActor
 struct ReviewTimingTests {

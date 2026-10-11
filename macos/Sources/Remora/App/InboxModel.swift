@@ -346,14 +346,21 @@ final class InboxModel {
 
     /// Avatars load only from the hosts of allowed, connected tools.
     func allowsImage(_ url: URL?) -> Bool {
-        guard policy.allowRemoteImages, let host = url?.host?.lowercased() else { return false }
+        guard policy.allowRemoteImages, url?.scheme?.lowercased() == "https", let host = url?.host?.lowercased()
+        else { return false }
         return sourceAccounts.contains { account in
             guard let manifest = PluginRegistry.manifest(account.pluginID), policy.allows(manifest) else {
                 return false
             }
-            return GuardedHTTPClient.matches(host, allowedHosts(for: account, manifest: manifest))
+            let hosts = allowedHosts(for: account, manifest: manifest) + (Self.imageOnlyHosts[account.pluginID] ?? [])
+            return GuardedHTTPClient.matches(host, hosts)
         }
     }
+
+    /// Hosts a tool's avatars come from without the tool ever being asked anything there: GitLab serves most
+    /// avatars from Gravatar. Images only, and only while the policy allows them; never a request with a token.
+    /// Same list on Windows (`view.rs`).
+    static let imageOnlyHosts = ["gitlab": ["secure.gravatar.com", "www.gravatar.com"]]
 
     // MARK: Assistant
 
