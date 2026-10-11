@@ -84,10 +84,21 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
     /// Fails as the system does when there's no network, before any answer.
     var offline = false
     private(set) var requests = 0
+    /// The OpenAI-compatible assistant's answer, and what happens while it is being written.
+    static let assistantAnswer =
+        #"{"choices": [{"message": {"content": "{\"summary\": \"Two reviews wait.\", \"focus\": []}", "refusal": null}, "finish_reason": "stop"}]}"#
+    var whileAnswering: (@Sendable () async -> Void)?
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         requests += 1
         let url = request.url!
+        if url.path.hasSuffix("/chat/completions") {
+            await whileAnswering?()
+            return (
+                Data(Self.assistantAnswer.utf8),
+                HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            )
+        }
         if offline { throw URLError(.notConnectedToInternet) }
         if let status {
             return (

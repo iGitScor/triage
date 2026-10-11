@@ -11,6 +11,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
   refresh, and a list the server marks as unchanged comes back without its content. Less chance of hitting a rate
   limit.
 
+### Fixed
+
+- A brief, summary or triage still being written when you erase local data, remove the assistant or turn AI off
+  is now dropped, instead of coming back on screen and on disk.
+
 ## 0.5.0 (2026-10-11)
 
 ### Added

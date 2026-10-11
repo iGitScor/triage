@@ -507,16 +507,16 @@ pub async fn review_queue(state: State<'_, AppState>) -> Result<Vec<remora_core:
 #[tauri::command]
 pub async fn make_brief(app: AppHandle, state: State<'_, AppState>, force: bool) -> Result<()> {
     let language = crate::i18n::translator().lang();
-    let (plugin, items) = {
+    let (from, plugin, items) = {
         let mut inbox = state.inbox.lock().await;
         if !inbox.preferences.whole_inbox_brief || (!force && inbox.brief_is_fresh(Utc::now())) {
             return Ok(());
         }
-        let Some(plugin) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
-        (plugin?, inbox.brief_items(Utc::now()))
+        let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
+        (from, plugin?, inbox.brief_items(Utc::now()))
     };
     let brief = plugin.brief(&items, Utc::now()).await.map_err(|e| e.to_string())?;
-    state.inbox.lock().await.store_brief(Some(brief.written_from(&items)));
+    state.inbox.lock().await.keep_brief(&from, brief.written_from(&items));
     changed(&app).await;
     Ok(())
 }
@@ -525,17 +525,17 @@ pub async fn make_brief(app: AppHandle, state: State<'_, AppState>, force: bool)
 #[tauri::command]
 pub async fn summarize(app: AppHandle, state: State<'_, AppState>, bundle_id: String, topic: String) -> Result<()> {
     let language = crate::i18n::translator().lang();
-    let (plugin, items) = {
+    let (from, plugin, items) = {
         let mut inbox = state.inbox.lock().await;
         let (items, fresh) = inbox.bundle_items(&bundle_id, Utc::now());
         if items.is_empty() || fresh {
             return Ok(());
         }
-        let Some(plugin) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
-        (plugin?, items)
+        let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
+        (from, plugin?, items)
     };
     let text = plugin.digest(&items, &topic, Utc::now()).await.map_err(|e| e.to_string())?;
-    state.inbox.lock().await.store_summary(&bundle_id, remora_core::BundleSummary::new(text, &items, Utc::now()));
+    state.inbox.lock().await.keep_summary(&from, &bundle_id, remora_core::BundleSummary::new(text, &items, Utc::now()));
     changed(&app).await;
     Ok(())
 }
@@ -544,17 +544,17 @@ pub async fn summarize(app: AppHandle, state: State<'_, AppState>, bundle_id: St
 #[tauri::command]
 pub async fn triage(app: AppHandle, state: State<'_, AppState>) -> Result<()> {
     let language = crate::i18n::translator().lang();
-    let (plugin, snoozed) = {
+    let (from, plugin, snoozed) = {
         let mut inbox = state.inbox.lock().await;
         let snoozed = inbox.snoozed_for_triage(Utc::now());
         if snoozed.is_empty() {
             return Ok(());
         }
-        let Some(plugin) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
-        (plugin?, snoozed)
+        let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
+        (from, plugin?, snoozed)
     };
     let suggestions = plugin.triage(&snoozed, Utc::now()).await.map_err(|e| e.to_string())?;
-    state.inbox.lock().await.triage = suggestions;
+    state.inbox.lock().await.keep_triage(&from, suggestions);
     changed(&app).await;
     Ok(())
 }

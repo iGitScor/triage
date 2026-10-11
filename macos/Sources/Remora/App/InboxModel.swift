@@ -397,7 +397,9 @@ final class InboxModel {
         let items = briefItems
         do {
             let assistant = try assistantPlugin(account, secrets: environment.secrets.secrets(for: account.id))
-            store(try await assistant.brief(items, now: .now).writtenFrom(items))
+            let brief = try await assistant.brief(items, now: .now).writtenFrom(items)
+            guard stillAnswers(account) else { return }
+            store(brief)
         } catch {
             briefError = error.localizedDescription
         }
@@ -416,11 +418,18 @@ final class InboxModel {
         do {
             let assistant = try assistantPlugin(account, secrets: environment.secrets.secrets(for: account.id))
             let text = try await assistant.digest(items, topic: topic, now: .now)
+            guard stillAnswers(account) else { return }
             bundleSummaries[key] = BundleSummary(text: text, items: items)
             persist(bundleSummariesStore, bundleSummaries)
         } catch {
             bundleSummaryErrors[key] = error.localizedDescription
         }
+    }
+
+    /// Whether an answer from this account may still be kept. The assistant can take a minute or more: an answer that
+    /// comes back after Erase, a disconnect or a policy that turns AI off is dropped (SEC-27).
+    private func stillAnswers(_ account: Account) -> Bool {
+        assistantAccount?.id == account.id
     }
 
     /// What a brief is written from: the pinned items and My turn, as the assistant may see them.
@@ -1044,7 +1053,9 @@ final class InboxModel {
         defer { isTriaging = false }
         do {
             let assistant = try assistantPlugin(account, secrets: environment.secrets.secrets(for: account.id))
-            triageSuggestions = try await assistant.triage(items, now: .now)
+            let suggestions = try await assistant.triage(items, now: .now)
+            guard stillAnswers(account) else { return }
+            triageSuggestions = suggestions
             triageKey = (ids, .now)
         } catch {
             triageError = error.localizedDescription

@@ -273,3 +273,57 @@ struct CorruptStorageTests {
             "kept, for support or by hand")
     }
 }
+
+/// SEC-27: the assistant can take a minute or more; what it answers after Erase or a disconnect isn't kept.
+@MainActor
+struct AssistantInFlightTests {
+    let item = InboxItem(
+        id: "r", accountID: UUID(), pluginID: "github", bundle: .reviews, title: "Retry", context: "acme/app #1",
+        date: .now)
+
+    func connected(_ harness: Harness) throws -> (InboxModel, Account) {
+        let account = Account(
+            pluginID: "openai", name: nil, settings: ["host": "https://api.openai.com/v1", "model": "gpt-x"])
+        try JSONEncoder().encode([account]).write(to: harness.folder.appending(path: "accounts.json"))
+        harness.secrets.stored[account.id] = ["token": "sk"]
+        let model = harness.model()
+        model.preferences.allowExternalAI = true
+        #expect(model.assistantAccount?.id == account.id)
+        return (model, account)
+    }
+
+    @Test func anAnswerStillWantedIsKept() async throws {
+        let harness = Harness()
+        let (model, _) = try connected(harness)
+        await model.makeBrief()
+        await model.summarize(key: "k", topic: "Reviews", items: [item])
+        #expect(model.brief?.summary == "Two reviews wait.")
+        #expect(model.bundleSummaries["k"]?.text == "Two reviews wait.")
+    }
+
+    @Test func aBriefThatComesBackAfterEraseIsDropped() async throws {
+        let harness = Harness()
+        let (model, _) = try connected(harness)
+        harness.server.whileAnswering = { await MainActor.run { try? model.eraseLocalData() } }
+        await model.makeBrief()
+        #expect(model.brief == nil)
+        #expect(!harness.writtenText().contains("Two reviews wait."), "nothing written back")
+    }
+
+    @Test func aSummaryThatComesBackAfterADisconnectIsDropped() async throws {
+        let harness = Harness()
+        let (model, account) = try connected(harness)
+        harness.server.whileAnswering = { await MainActor.run { model.disconnect(account) } }
+        await model.summarize(key: "k", topic: "Reviews", items: [item])
+        #expect(model.bundleSummaries.isEmpty)
+        #expect(!harness.writtenText().contains("Two reviews wait."))
+    }
+
+    @Test func anAnswerThatComesBackOnceAIIsTurnedOffIsDropped() async throws {
+        let harness = Harness()
+        let (model, _) = try connected(harness)
+        harness.server.whileAnswering = { await MainActor.run { model.preferences.allowExternalAI = false } }
+        await model.makeBrief()
+        #expect(model.brief == nil)
+    }
+}

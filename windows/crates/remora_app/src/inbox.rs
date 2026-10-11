@@ -38,6 +38,8 @@ pub struct FetchJob {
 }
 
 pub type FetchResult = (String, Result<SourceSnapshot, PluginError>);
+/// The assistant to ask, with its account's id (an answer is kept only while that account still answers).
+pub type AssistantJob = (String, Result<Box<dyn AssistantPlugin>, String>);
 
 /// Runs fetches concurrently.
 pub async fn run(jobs: Vec<FetchJob>) -> Vec<FetchResult> {
@@ -730,14 +732,24 @@ impl Inbox {
         claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.to_string())
     }
 
-    /// The assistant to ask now, or None when there is none or it isn't allowed.
-    pub fn assistant(
-        &mut self,
-        http: Arc<dyn HttpClient>,
-        language: &str,
-    ) -> Option<Result<Box<dyn AssistantPlugin>, String>> {
+    /// The assistant to ask now, with its account's id for `keep_*`, or None when there is none or it isn't allowed.
+    pub fn assistant(&mut self, http: Arc<dyn HttpClient>, language: &str) -> Option<AssistantJob> {
         let account = self.assistant_account()?;
-        Some(self.assistant_for(&account, http, language))
+        let plugin = self.assistant_for(&account, http, language);
+        Some((account.id, plugin))
+    }
+
+    /// Whether an answer from this assistant account may still be kept. It is asked without the lock and can take a
+    /// minute or more: an answer that comes back after Erase, a disconnect or a policy that turns AI off is dropped.
+    fn still_answers(&self, account_id: &str) -> bool {
+        self.assistant_account().is_some_and(|a| a.id == account_id)
+    }
+
+    /// Keeps a brief, unless its assistant is gone or no longer allowed.
+    pub fn keep_brief(&mut self, from: &str, brief: Brief) {
+        if self.still_answers(from) {
+            self.store_brief(Some(brief));
+        }
     }
 
     /// The whole inbox as the assistant may see it, for a brief.
@@ -777,9 +789,19 @@ impl Inbox {
         (items, fresh)
     }
 
-    pub fn store_summary(&mut self, bundle_id: &str, summary: BundleSummary) {
-        self.bundle_summaries.insert(bundle_id.to_string(), summary);
-        self.persist(SUMMARIES, &self.bundle_summaries);
+    /// Keeps a group's summary, unless its assistant is gone or no longer allowed.
+    pub fn keep_summary(&mut self, from: &str, bundle_id: &str, summary: BundleSummary) {
+        if self.still_answers(from) {
+            self.bundle_summaries.insert(bundle_id.to_string(), summary);
+            self.persist(SUMMARIES, &self.bundle_summaries);
+        }
+    }
+
+    /// Keeps triage suggestions, unless their assistant is gone or no longer allowed.
+    pub fn keep_triage(&mut self, from: &str, suggestions: Vec<TriageSuggestion>) {
+        if self.still_answers(from) {
+            self.triage = suggestions;
+        }
     }
 
     /// The snoozed pile as the assistant may see it, with how often each was snoozed.
@@ -2129,6 +2151,54 @@ mod tests {
             vec![TriageSuggestion { id: "x".into(), action: TriageAction::Done, until: None, reason: "old".into() }];
         inbox.enforce_ai_policy();
         assert!(inbox.brief.is_none() && inbox.triage.is_empty());
+    }
+
+    /// SEC-27: the assistant is asked without the lock; what it answers after Erase, a disconnect or AI being turned
+    /// off is dropped, on screen and on disk.
+    #[test]
+    fn an_assistant_answer_that_outlives_its_account_is_dropped() {
+        let dir = tempfile::tempdir().unwrap();
+        // Each in its own folder: a dropped inbox may still be writing to its own.
+        let connected = |name: &str| {
+            let store = JsonStore::new(dir.path().join(name));
+            let mut inbox = Inbox::open(store, Arc::new(MemoryVault::default()), Managed::default());
+            inbox.preferences.allow_external_ai = true;
+            let account = connect_openai(&inbox, "https://api.openai.com/v1").unwrap();
+            inbox.finish_assistant_connect(account.clone(), HashMap::from([("token".into(), "sk".into())])).unwrap();
+            (inbox, account.id)
+        };
+        let brief = || Brief::new("Two reviews wait.", vec![], Utc::now());
+        let summary = || BundleSummary::new("Two reviews wait.", &[item("r", InboxBundle::reviews())], Utc::now());
+        let suggestions =
+            || vec![TriageSuggestion { id: "x".into(), action: TriageAction::Done, until: None, reason: "r".into() }];
+
+        let (mut inbox, from) = connected("kept");
+        inbox.keep_brief(&from, brief());
+        inbox.keep_summary(&from, "b", summary());
+        inbox.keep_triage(&from, suggestions());
+        assert!(inbox.brief.is_some() && inbox.bundle_summaries.len() == 1 && inbox.triage.len() == 1, "still wanted");
+
+        let (mut inbox, from) = connected("erased");
+        inbox.erase_local_data().unwrap();
+        inbox.keep_brief(&from, brief());
+        inbox.keep_summary(&from, "b", summary());
+        inbox.keep_triage(&from, suggestions());
+        assert!(inbox.brief.is_none() && inbox.bundle_summaries.is_empty() && inbox.triage.is_empty());
+        assert_eq!(
+            crate::store::json_files(&dir.path().join("erased")).map(|files| files.count()).unwrap_or(0),
+            0,
+            "nothing on disk"
+        );
+
+        let (mut inbox, from) = connected("disconnected");
+        inbox.disconnect(&from).unwrap();
+        inbox.keep_summary(&from, "b", summary());
+        assert!(inbox.bundle_summaries.is_empty());
+
+        let (mut inbox, from) = connected("ai-off");
+        inbox.preferences.allow_external_ai = false;
+        inbox.keep_brief(&from, brief());
+        assert!(inbox.brief.is_none());
     }
 
     /// Applying a triage: only what was ticked, and the first "now" item is the one to open.
