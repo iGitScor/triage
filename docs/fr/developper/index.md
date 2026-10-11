@@ -51,8 +51,8 @@ flowchart TB
   par `SnoozeReason`, meilleure heure (celle où vous terminez d’habitude), retour habituel selon le contexte,
   relances, et constats (boucle, évitement, accumulation avec `spread`, regroupement via des `SimilarityModel`,
   éléments périmés). `KeywordSimilarity` (clés de tickets, mots communs) et `EmbeddingSimilarity`
-  (Infrastructure, embeddings de mots d’Apple ; seuil de 1,05 calibré sur des paires de titres, mieux vaut
-  manquer un rapprochement qu’en inventer un).
+  (Infrastructure, embeddings de mots d’Apple ; distance ≤ 0,95 pour un même sujet, 0,9 pour relier des éléments
+  entre outils, calibrées sur des paires de titres, mieux vaut manquer un rapprochement qu’en inventer un).
 - `VerbClassifier` : fait passer les éléments du *type* signalé par l’extension (mention, message direct, votre
   MR) à un groupe de *verbe* (à répondre, à lire, à corriger, prête à fusionner, en attente des autres). Le texte
   des messages passe par des `TextIntentClassifier`, dans l’ordre : `KeywordIntentClassifier` (formulations

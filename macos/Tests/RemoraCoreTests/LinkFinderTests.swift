@@ -34,7 +34,8 @@ struct LinkFinderTests {
     @Test(.enabled(if: NLEmbedding.wordEmbedding(for: .english) != nil))
     func distinctiveWordsLinkButOrdinaryOnesDoNot() {
         let finder = LinkFinder(similarity: [
-            KeywordSimilarity(), RareTokenSimilarity(), EmbeddingSimilarity(threshold: 0.9),
+            KeywordSimilarity(), RareTokenSimilarity(),
+            EmbeddingSimilarity(threshold: EmbeddingSimilarity.linkThreshold),
         ])
         let axiosIssue = item("1", "linear", "Update axios to address security vulnerabilities")
         let axiosPR = item("2", "github", "chore(deps): bump axios to 1.7.4")

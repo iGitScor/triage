@@ -95,7 +95,10 @@ final class InboxModel {
     @ObservationIgnored let advisor = SnoozeAdvisor(similarity: [KeywordSimilarity(), EmbeddingSimilarity()])
     @ObservationIgnored private var triageKey: (ids: [String], at: Date)?
     @ObservationIgnored private let linkFinder = LinkFinder(
-        similarity: [KeywordSimilarity(), RareTokenSimilarity(), EmbeddingSimilarity(threshold: 0.9)]
+        similarity: [
+            KeywordSimilarity(), RareTokenSimilarity(),
+            EmbeddingSimilarity(threshold: EmbeddingSimilarity.linkThreshold),
+        ]
     )
     @ObservationIgnored private let bundleSummariesStore: JSONStore<[String: BundleSummary]>
     @ObservationIgnored private var polling: Task<Void, Never>?

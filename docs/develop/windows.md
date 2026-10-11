@@ -15,7 +15,7 @@ same. Each release attaches `Remora-Setup.exe` (per-user install, no admin right
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 99 |
 | `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 68 |
 | `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 3 |
-| `app/src` | The Svelte interface, in English and French | type-checked, 26 |
+| `app/src` | The Svelte interface, in English and French | type-checked, 32 |
 
 ## What Windows has, and what it doesn’t yet
 

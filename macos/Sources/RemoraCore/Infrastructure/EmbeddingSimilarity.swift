@@ -5,12 +5,17 @@ import NaturalLanguage
 /// each significant word is matched with its closest word in the other title, and the distances averaged.
 /// Sentence embeddings were tried first and did not separate short technical titles.
 public final class EmbeddingSimilarity: SimilarityModel, @unchecked Sendable {
-    /// Calibrated on title pairs: same topic ≤ 0.89; unrelated pairs seen as low as 1.046 on real data.
+    /// Grouping snoozed items by topic. Calibrated on title pairs: same topic ≤ 0.89; unrelated pairs seen as low as
+    /// 1.046 on real data.
+    public static let topicThreshold = 0.95
+    /// Linking items across tools: stricter, since a wrong link is shown on the item itself.
+    public static let linkThreshold = 0.9
+
     private let threshold: Double
     private let lock = NSLock()
     private var embeddings: [NLLanguage: NLEmbedding] = [:]
 
-    public init(threshold: Double = 0.95) {
+    public init(threshold: Double = EmbeddingSimilarity.topicThreshold) {
         self.threshold = threshold
     }
 

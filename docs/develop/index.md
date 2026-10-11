@@ -44,7 +44,8 @@ flowchart TB
   `SnoozeReason`, best hour (when you usually mark things done), usual return per context, nudges, and
   insights (loop, avoidance, pile-up with `spread`, cluster via `SimilarityModel`s, stale).
   `KeywordSimilarity` (ticket keys, shared words) and `EmbeddingSimilarity` (Infrastructure, Apple word
-  embeddings; threshold 1.05 calibrated on title pairs, precision over recall).
+  embeddings; distance ≤ 0.95 for a shared topic, 0.9 to link items across tools, calibrated on title pairs,
+  precision over recall).
 - `VerbClassifier`: moves items from the *kind* a plugin reported (mention, DM, your MR) to a *verb*
   bundle (to reply, to read, to fix, ready to merge, waiting on others). Chat text goes through
   `TextIntentClassifier`s in order: `KeywordIntentClassifier` (English and French wording), then
