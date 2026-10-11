@@ -1,12 +1,12 @@
 ---
 layout: home
 title: Documentation
-description: Utiliser Remora, la boîte de réception dans la barre des menus du Mac pour GitHub, GitLab, Slack et Linear ; la déployer et la verrouiller côté DSI.
+description: Utiliser Remora, la boîte de réception pour GitHub, GitLab, Slack, Linear et Notion dans la barre des menus du Mac ou la zone de notification de Windows ; la déployer et la verrouiller côté DSI.
 
 hero:
   name: Remora
   text: Tout ce qui a besoin de vous. Rien de plus.
-  tagline: Une seule boîte de réception dans la barre des menus pour les relectures, merge requests, Slack et Linear, rangée par ce que vous avez à faire. Elle tourne sur votre Mac et ne parle qu’aux outils autorisés.
+  tagline: Une seule boîte de réception dans la barre des menus ou la zone de notification de Windows pour les relectures, merge requests, Slack, Linear et Notion, rangée par ce que vous avez à faire. Elle tourne sur votre ordinateur et ne parle qu’aux outils autorisés.
   image:
     src: /favicon.svg
     alt: Remora
@@ -24,11 +24,11 @@ hero:
 features:
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>'
     title: Rangé par verbes
-    details: À répondre, À relire, À corriger, Prêtes à fusionner, À faire. Les messages sont classés sur votre Mac, en français et en anglais, sans IA générative.
+    details: À répondre, À relire, À corriger, Prêtes à fusionner, À faire. Les messages sont classés sur votre ordinateur, en français et en anglais, sans IA générative.
     link: /fr/guide/boite-de-reception
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'
     title: Reporter avec une raison
-    details: Chaque raison propose un retour adapté, et les rappels se tirent directement de la barre des menus.
+    details: Chaque raison propose un retour adapté, et les rappels se tirent directement de la barre des menus (Ctrl+Alt+R sous Windows).
     link: /fr/guide/reporter-et-rappels
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4"/></svg>'
     title: Des relectures préparées
@@ -40,7 +40,7 @@ features:
     link: /fr/admin/flux-de-donnees
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>'
     title: Prête pour votre DSI
-    details: Un profil de configuration pour les outils, l’IA et les avatars, un DMG à chaque version, et la liste complète de ce qui quitte le Mac.
+    details: Un profil de configuration ou une stratégie de registre pour les outils, l’IA et les avatars, un DMG et un installeur à chaque version, et la liste complète de ce qui quitte l’ordinateur.
     link: /fr/admin/mdm
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>'
     title: Une extension par outil

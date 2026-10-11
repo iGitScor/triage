@@ -10,7 +10,7 @@ only. The [Windows app](./windows) ports the same domain and rules to Rust, with
 
 ```mermaid
 flowchart TB
-  App["Remora<br/>SwiftUI, AppKit, Keychain, files, notifications"] --> Plugins["RemoraPlugins<br/>GitHub, GitLab, Slack, Linear, Notion, Claude"]
+  App["Remora<br/>SwiftUI, AppKit, Keychain, files, notifications"] --> Plugins["RemoraPlugins<br/>GitHub, GitLab, Slack, Linear, Notion, Claude, OpenAI-compatible"]
   App --> Core["RemoraCore<br/>domain and rules, Foundation only"]
   Plugins --> Core
 ```

@@ -3,6 +3,13 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Changed
+
+- Mac: GitLab avatars from Gravatar appear, as on Windows; avatars load over https only.
+- Website: the download buttons offer Windows first to visitors on Windows, then the Mac.
+
 ## 0.4.0 (2026-10-10)
 
 ### Added

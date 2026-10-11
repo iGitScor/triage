@@ -98,12 +98,13 @@ Ensuite :
 |---|---|
 | `fields` | Le formulaire de connexion. `.token(…)` et les champs avec `isSecret: true` vont dans le trousseau ; les autres dans `accounts.json`. `.host(default)` pour les outils auto-hébergés. |
 | `setupSteps`, `setupLabel`, `setupURL` | Le guide numéroté et le bouton en haut du formulaire. `setupURL` reçoit la configuration, il peut donc pointer vers l’adresse propre de l’utilisateur. |
-| `egress` | Les adresses et une description d’une phrase, affichées dans Réglages → Confidentialité et appliquées. `externalAI: true` pour les extensions qui envoient le contenu de la boîte à un fournisseur d’IA : elles restent désactivées tant que ce n’est pas autorisé. |
+| `egress` | Les adresses et une description d’une phrase, affichées dans Réglages → Confidentialité et appliquées. `externalAI: true` pour les extensions qui envoient le contenu de la boîte à un fournisseur d’IA : elles restent désactivées tant que ce n’est pas autorisé. Un assistant dont l’utilisateur saisit le serveur (OpenAI-compatible) nomme ce réglage dans `serverField`, pour que la politique puisse le vérifier (`AllowedAIServers`, `AIServer`, `AllowLocalAI`). |
 | `isComingSoon` | Listée avec un badge *Bientôt*, impossible à connecter. |
 | `logo` | Le SVG de `Resources/Logos`, affiché dans les compteurs de la barre des menus. |
 
 Une extension qui s’appuie sur un programme local utilise `CommandRunner` (voir `ClaudeCodePlugin`). Les extensions
-d’assistant implémentent `AssistantPlugin` (`brief`, `digest`, `triage`) et vont dans `PluginRegistry.assistants`.
+d’assistant implémentent `AssistantPlugin` (`brief`, `digest`, `triage`) et vont dans `PluginRegistry.assistants` ;
+`ClaudePlugin` et `OpenAIPlugin` partagent les prompts (`BriefPrompt`) et la règle de nouvel essai (`AssistantRetry`).
 
 ## Tests
 

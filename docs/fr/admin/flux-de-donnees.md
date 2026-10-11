@@ -1,15 +1,16 @@
 ---
 title: Flux de données
-description: Chaque flux réseau de Remora (GitHub, GitLab, Slack, Linear, Claude, avatars), ce que chacun envoie, exactement ce qui parvient à Claude, ce qui est stocké sur l’ordinateur et où, et comment c’est appliqué.
+description: Chaque flux réseau de Remora (GitHub, GitLab, Slack, Linear, Notion, l’assistant, avatars, mises à jour), ce que chacun envoie, exactement ce qui parvient à l’assistant, ce qui est stocké sur l’ordinateur et où, et comment c’est appliqué.
 ---
 
 # Flux de données
 
-Cette page liste chaque flux. Elle décrit l’app macOS ; l’app Windows suit le même modèle (adresses déclarées, client
-contrôlé, politique) avec les équivalents Windows : Gestionnaire d’identification, `%LOCALAPPDATA%\fr.igitscor.remora`, et une
-politique sous `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe ou Intune).
+Cette page liste chaque flux, pour les deux apps : elles ont les mêmes flux, adresses déclarées, client contrôlé et
+politique. Quand Windows diffère, elle le dit ; ses équivalents sont le Gestionnaire d’identification,
+`%LOCALAPPDATA%\fr.igitscor.remora`, et une politique sous `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe ou
+Intune).
 
-## Ce qui quitte le Mac
+## Ce qui quitte l’ordinateur
 
 | Flux | Destination | Ce qui est envoyé | Par défaut |
 |---|---|---|---|
@@ -18,20 +19,21 @@ politique sous `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe ou Intune).
 | Slack | `slack.com` | Le jeton utilisateur ; des recherches de ses mentions, messages directs et messages dans des fils, puis les réponses d’au plus 10 de ces fils (`conversations.replies`, permissions d’historique en lecture seule) | Autorisé |
 | Linear | `api.linear.app`, `public.linear.app` | La clé d’API ; des lectures des tickets assignés et des notifications | Autorisé |
 | Notion | `api.notion.com` | Le jeton ; l’identité de l’utilisateur, puis des requêtes des bases choisies pour les tâches qui lui sont assignées | Autorisé |
-| Claude Code | Anthropic, via le programme local `claude` | Quelques champs de chaque élément : voir [Ce qui parvient à Claude](#ce-qui-parvient-a-claude) | **Désactivé** |
+| Claude Code | Anthropic, via le programme local `claude` | Quelques champs de chaque élément : voir [Ce qui parvient à l’assistant](#ce-qui-parvient-a-claude) | **Désactivé** |
 | API Claude | `api.anthropic.com` | La clé d’API, et les mêmes champs que Claude Code | **Désactivé** |
 | OpenAI-compatible | Le serveur choisi dans le compte ou par `AIServer` : OpenAI, Azure OpenAI, Mistral…, ou un serveur sur cet ordinateur | La clé d’API s’il y en a une, et les mêmes champs que Claude Code. Les conditions du fournisseur (conservation, entraînement) s’appliquent à ce qu’il reçoit | **Désactivé** ; un serveur sur cet ordinateur est autorisé sauf si l’organisation le refuse (`AllowLocalAI`) |
-| Avatars | Les hébergeurs d’images des outils autorisés et connectés seulement | Une requête d’image | Autorisé |
+| Avatars | Les hébergeurs d’images des outils autorisés et connectés seulement, en https ; les avatars GitLab aussi depuis Gravatar (`secure.gravatar.com`, `www.gravatar.com`) | Une requête d’image, jamais avec un jeton | Autorisé |
 | Mises à jour | `github.com`, et les serveurs de téléchargement de GitHub (`*.githubusercontent.com`) | Une requête de `latest.json` par jour, et la nouvelle version quand l’utilisateur l’installe. Aucun identifiant, jeton ni contenu | **Désactivé** (`AutomaticUpdates`) |
 
-Les données des outils **reviennent** sur le Mac et y restent. **Pas de télémétrie, pas d’analytics, pas de rapports
+Les données des outils **reviennent** sur l’ordinateur et y restent. **Pas de télémétrie, pas d’analytics, pas de rapports
 de plantage**, pas de vérification de mise à jour sauf si elles sont activées, aucun autre accès réseau. Polices et logos sont intégrés à l’app,
 jamais téléchargés. Remora n’écrit jamais dans les outils : les messages rédigés sont copiés dans le presse-papiers.
 
-## Ce qui parvient à Claude
+## Ce qui parvient à l’assistant {#ce-qui-parvient-a-claude}
 
-Seulement si l’IA externe est autorisée et que l’utilisateur a connecté Claude, ou si un serveur local est autorisé.
-Les mêmes champs vont à un serveur OpenAI-compatible. Pour chaque élément :
+Seulement si l’utilisateur a connecté un assistant et que la politique l’autorise : l’IA externe pour Claude ou un
+serveur OpenAI-compatible ailleurs, `AllowLocalAI` pour un serveur sur cet ordinateur. Claude et les serveurs
+OpenAI-compatibles reçoivent les mêmes champs. Pour chaque élément :
 
 - son verbe (*À répondre*, *À relire*…), son **titre**, son contexte (dépôt, canal ou clé de ticket), son auteur, ses
   statuts (vérifications, approbations, taille du changement) et son âge, plus un identifiant interne pour que la
@@ -44,22 +46,22 @@ Les mêmes champs vont à un serveur OpenAI-compatible. Pour chaque élément :
 Le brief envoie jusqu’à 120 éléments, un résumé de groupe les éléments de ce groupe, le tri jusqu’à 80 éléments
 reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un message, les notes, les fichiers.
 
-- **À la connexion**, Claude rédige un premier brief de la boîte, qui sert aussi de test. Quand le *Brief de toute
+- **À la connexion**, l’assistant rédige un premier brief de la boîte, qui sert aussi de test. Quand le *Brief de toute
   la boîte* est désactivé (Réglages → Général → Assistant), le test utilise un seul élément fictif : aucun contenu
   de la boîte ne quitte l’ordinateur avant que l’utilisateur demande un résumé.
-- Les éléments sont écrits par d’autres, donc un message pourrait essayer de donner des ordres à Claude. Remora
-  les envoie comme un bloc de données délimité et demande à Claude de ne jamais suivre les instructions qu’ils
+- Les éléments sont écrits par d’autres, donc un message pourrait essayer de donner des ordres à l’assistant. Remora
+  les envoie comme un bloc de données délimité et demande au modèle de ne jamais suivre les instructions qu’ils
   contiennent ; les réponses s’affichent en texte brut, et les suggestions de tri qui masquent ou ouvrent des
   éléments ne sont jamais cochées d’avance.
-- **Envoyer à l’assistant** (Réglages → Général) tient les éléments d’un outil entièrement à l’écart de Claude ;
-  l’organisation peut faire de même et limiter les modèles avec des [clés MDM](./mdm#les-cles) (`AIExcludedSources`,
-  `AllowedAIModels`).
+- **Envoyer à l’assistant** (Réglages → Général) tient les éléments d’un outil entièrement à l’écart de
+  l’assistant ; sur macOS, l’organisation peut faire de même et limiter les modèles avec des
+  [clés MDM](./mdm#les-cles) (`AIExcludedSources`, `AllowedAIModels`).
 - **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications :
-  les titres de cet outil peuvent toujours parvenir à Claude : c’est le rôle d’*Envoyer à l’assistant*.
+  les titres de cet outil peuvent toujours parvenir à l’assistant : c’est le rôle d’*Envoyer à l’assistant*.
 - Avec Claude Code, Remora lance `claude` sans outils, sans extensions, hooks ni serveurs MCP, et sans rien
   enregistrer dans l’historique de sessions. Le contenu de la boîte passe par son entrée standard, jamais par la
   ligne de commande, que d’autres processus peuvent lire. Les données vont là où ce Claude Code est configuré pour les envoyer
-  (normalement Anthropic). Réglages → Confidentialité indique quel `claude` est lancé.
+  (normalement Anthropic). Sur macOS, Réglages → Confidentialité indique quel `claude` est lancé.
 
 ## Ce qui est stocké sur l’ordinateur
 
@@ -92,7 +94,7 @@ reçues, et l’ancien cache HTTP. Déconnecter un compte retire son jeton, ses 
 
 | Données | Emplacement |
 |---|---|
-| Les comptes, la dernière copie des éléments de chaque outil (comme sur macOS, texte des messages Slack compris), les états, les rappels, les préférences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `preferences.json` dans `%LOCALAPPDATA%\fr.igitscor.remora` |
+| Les mêmes données que sur macOS : les comptes, la dernière copie des éléments de chaque outil (texte des messages Slack compris), les états, les rappels, l’historique des reports, ce que l’utilisateur traite vite, la durée des relectures, le dernier brief et les résumés, les préférences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `snooze-history.json`, `learning.json`, `review-times.json`, `brief.json`, `bundle-summaries.json`, `preferences.json` dans `%LOCALAPPDATA%\fr.igitscor.remora` |
 | Jetons | Une entrée du Gestionnaire d’identification : `fr.igitscor.remora`, utilisateur `secrets` |
 
 Les fichiers sont du JSON en clair, lisibles par le compte Windows de l’utilisateur (et les administrateurs) ;
@@ -113,9 +115,16 @@ seulement. Rien n’est envoyé.
    n’autorise pas, et donne à chacune un client HTTP limité à ses adresses déclarées plus celle du compte. Toute
    autre adresse échoue avec « Bloqué : … n’est pas une destination autorisée », domaines imitateurs compris
    (`api.linear.app.evil.com` est refusé) ; c’est testé.
-3. **IA externe désactivée par défaut.** Les extensions Claude sont refusées tant que l’IA externe n’est pas
-   autorisée ; brief, résumés et tri n’apparaissent qu’ensuite.
-4. **Avatars** chargés seulement depuis les outils autorisés et connectés : ni Gravatar ni autre tiers.
+3. **IA externe désactivée par défaut.** Un assistant qui envoie du contenu hors de l’ordinateur (Claude, ou un
+   serveur OpenAI-compatible ailleurs) est refusé tant que l’IA externe n’est pas autorisée ; brief, résumés et tri
+   n’apparaissent qu’ensuite. Un serveur sur cet ordinateur suit `AllowLocalAI` à la place.
+4. **Avatars** chargés seulement depuis les outils autorisés et connectés, et les images Gravatar de GitLab : aucun
+   autre tiers.
 5. **Réglages → Confidentialité** affiche les destinations de chaque compte connecté et s’il est autorisé.
 
 L’organisation peut verrouiller tout cela : [Gérer la politique par MDM](./mdm).
+
+## Ajouter une extension
+
+Une nouvelle extension doit déclarer ses sorties ; rien d’autre n’est nécessaire pour l’application des règles. Le
+traitement sur l’appareil est préféré à tout service externe. Voir [Écrire une extension](/fr/developper/extensions).

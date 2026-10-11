@@ -6,24 +6,23 @@ description: Remora's optional AI features (brief, bundle summaries, snooze tria
 # The assistant
 
 Everything in Remora works without AI. The assistant (Claude, or a model behind an OpenAI-compatible API) is an
-optional extra, **off by default**, that writes short text
-about your inbox:
+optional extra, **off by default**, that writes short text about your inbox:
 
 - **Brief** (✦ at the top of the inbox): three sentences and the items to handle first.
 - **Bundle summaries** (✦ on a verb’s header, from two items): what the group is about, in two sentences.
 - **Triage** (in the *Snoozed* tab): keep, reschedule, let go or do now, item by item. You confirm every change;
   only reschedules are ticked for you.
 
-Briefs and summaries come back in your Mac’s language.
+Briefs and summaries come back in your system’s language.
 
 ## Turn it on
 
-1. Settings → Privacy → **Allow external AI** (not needed for a server on your computer). If your organization manages Remora, this may be locked
-   off: see [For IT and compliance](/admin/).
+1. Settings → Privacy → **Allow external AI** (not needed for a server on your computer). If your organization
+   manages Remora, this may be locked off: see [For IT and compliance](/admin/).
 2. Settings → Sources, under *Assistant*, connect one of:
-   - **Claude Code** (recommended): uses the Claude Code installed and signed in on your Mac, on your Claude
+   - **Claude Code** (recommended): uses the Claude Code installed and signed in on your computer, on your Claude
      plan. No API key. If Remora doesn’t find `claude`, set *Path to claude*. Remora only runs a program named
-     `claude` that only you can change, and checks it is Claude Code before sending it anything.
+     `claude` (on a Mac, one that only you can change), and checks it is Claude Code before sending it anything.
    - **Claude API**: an API key from the Claude Console, billed to that account.
    - **OpenAI-compatible**: OpenAI, Azure OpenAI, Mistral, or a server on your computer (Ollama, LM Studio). Give
      the server address up to `/v1`, the API key and the model id; the summaries model is optional. OpenAI and
@@ -35,9 +34,9 @@ Briefs and summaries come back in your Mac’s language.
 For each item: its verb, **title**, context (repository, channel, issue key), author, statuses and age. A Slack
 item's title is the **first line of the message**; the rest isn't sent. Triage also sends when each snoozed item
 comes back, the reason you picked and how many times you snoozed it. Never your tokens, links, code, notes or the
-rest of a message. To keep a tool away from the assistant, turn it off in Settings → General → **Send to the assistant** (*Hide message
-content* only applies to notifications). With Claude Code, Remora
-runs it with no tools, no plugins and nothing saved to your session history. The exact list is in
+rest of a message. To keep a tool away from the assistant, turn it off in Settings → General → **Send to the
+assistant** (*Hide message content* only applies to notifications). With Claude Code, Remora runs it with no tools,
+no plugins and nothing saved to your session history. The exact list is in
 [Data flows](/admin/data-flows#what-reaches-claude).
 
 ## Keeping token use low
@@ -45,6 +44,6 @@ runs it with no tools, no plugins and nothing saved to your session history. The
 - A brief or summary is **reused** for 30 minutes by default (Settings → General → Assistant → **Reuse a brief or
   summary for**), and a bundle summary only while the bundle holds the same items.
 - **Whole-inbox brief** can be turned off to keep only bundle summaries, which are shorter and use a lighter model
-  (`claude-haiku-5-5` by default).
-- Nothing is generated until you click ✦, apart from a first brief when you connect Claude (with the whole-inbox
+  (`claude-haiku-5-5` by default with Claude).
+- Nothing is generated until you click ✦, apart from a first brief when you connect the assistant (with the whole-inbox
   brief off, the test uses one made-up item instead).

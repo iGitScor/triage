@@ -36,7 +36,7 @@ d’abord :
 
 Quand une pull request et un ticket Linear ont des titres proches (« Fix the CSV export » et « ENG-42 CSV export
 broken »), Remora les relie, même si personne ne l’a fait : chacun affiche l’autre sous forme de pastille (la clé du
-ticket, ou le dépôt et le numéro), et un clic l’ouvre. La comparaison se fait sur votre Mac.
+ticket, ou le dépôt et le numéro), et un clic l’ouvre. La comparaison se fait sur votre ordinateur.
 
 ## En attente des relecteurs
 
@@ -49,5 +49,5 @@ Pour vos merge requests dans *En attente*, Remora aide quand elles coincent :
 - **Relecteurs silencieux depuis un jour ou plus** : **Rédiger une relance** écrit un rappel aimable qui dit depuis
   combien de temps elle attend, et qu’elle est petite ou au vert quand c’est le cas.
 
-Les messages sont rédigés sur votre Mac à partir de modèles et copiés dans le presse-papiers. Remora n’envoie jamais
-rien : vous collez le message où vous voulez.
+Les messages sont rédigés sur votre ordinateur à partir de modèles et copiés dans le presse-papiers. Remora n’envoie
+jamais rien : vous collez le message où vous voulez.

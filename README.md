@@ -20,6 +20,7 @@
 
 <p align="center">
   <a href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac</a> ·
+  <a href="https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe">Download for Windows (preview)</a> ·
   <a href="https://triage.iscor.me/en/">Website</a> ·
   <a href="https://triage.iscor.me/docs/">Documentation</a> ·
   <a href="https://triage.iscor.me/docs/admin/">For IT and compliance</a>
@@ -44,13 +45,13 @@
 
 ---
 
-Remora is one inbox in your menu bar for everything that needs you: code reviews, your own merge requests, Slack
+Remora is one inbox in your Mac’s menu bar or the Windows system tray for everything that needs you: code reviews, your own merge requests, Slack
 mentions and DMs, Linear issues and your own reminders. It sorts them by **what you have to do** (*To reply*,
 *To review*, *To fix*, *Ready to merge*…), not by where they came from, and shows no more than you can take in.
 
-It is built for teams with strict data rules: **nothing leaves the Mac except to the tools you allow**. There is no
-Remora server, no account and no telemetry; sorting, ranking and advice run on the device. Claude can add a short
-brief, off by default and only where the organization allows external AI.
+It is built for teams with strict data rules: **nothing leaves the computer except to the tools you allow**. There is
+no Remora server, no account and no telemetry; sorting, ranking and advice run on the device. An assistant (Claude, or
+an OpenAI-compatible model) can add a short brief, off by default and only where the organization allows it.
 
 Inspired by [gitbar](https://gitbar.app) (merge requests in the menu bar), Gestimer (drag down to set a reminder)
 and Google Inbox (bundles, Done, Pin, Snooze). Same design system as [Myna](https://podcast.iscor.me). Built with the
@@ -69,33 +70,35 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
   due reminders, and your own merge requests once approved, blocked or failing). *Waiting* holds what you're waiting
   on others for. Snoozed and Done are one click away.
 - **Verbs**: *To reply*, *To review*, *To fix*, *Ready to merge*, *To do*, *Reminders*, *To read* (shown last, not
-  counted) and *Waiting on others*, whatever the source. Chat messages are sorted on your Mac: keyword rules in
-  English and French first, then Apple's on-device sentence embeddings. When unsure, *To reply*.
+  counted) and *Waiting on others*, whatever the source. Chat messages are sorted on your computer: keyword rules in
+  English and French first, then, on the Mac, Apple's on-device sentence embeddings. When unsure, *To reply*.
 - **Done** hides an item until something changes on it (new commit, approval, comment…). **Pin** keeps it at the top.
 - **Priority**: overdue and due today first, then the tool's priority (Linear Urgent, High…), the nearest due date,
   recent activity. Low priority is shown, not counted. Long bundles show their top five and "Show N more".
-- **Menu bar**: one count, or one per tool ordered by the most pressing verb. Click to open, **drag down to cast a
-  reminder** (a bubble shows when it comes back; further down is later), right-click for Refresh, New reminder,
-  Settings and Quit. Two-finger swipes: right for Done, left for Snooze.
+- **Menu bar** (Mac): one count, or one per tool ordered by the most pressing verb. Click to open, **drag down to
+  cast a reminder** (a bubble shows when it comes back; further down is later), right-click for Refresh, New
+  reminder, Settings and Quit. Two-finger swipes: right for Done, left for Snooze.
+- **System tray** (Windows): one count; Ctrl+Alt+R casts a reminder from anywhere, and Done and Snooze are buttons on
+  each row.
 - **Snooze with a reason**: waiting for someone, no time now, needs focus, not urgent, not feeling it. Each reason
   suggests a return time; *waiting* can come back "until there's news". Presets, or a scrubber: minutes, then
   hours, then days. The Snoozed tab shows one insight at a time: loops, pile-ups, items on the same topic
-  (on-device word embeddings), items gone quiet.
+  (on-device word embeddings on the Mac, shared words on Windows), items gone quiet.
 - **Review prep and sessions**: "~6 min · 4 files · tests ✓ · Auth" under each review request, from file paths
   and line counts only. **Start session** goes through them one by one, quick wins first (⏎ open, D done,
   S snooze, → skip).
 - **Links between tools**: a pull request and a Linear issue with a similar title are shown together.
 - **Waiting assistant**: suggested reviewers when there are none, a drafted nudge when they stay silent for a day.
   Written locally from templates; you copy it, Remora never sends.
-- **Learns your habits** on this Mac: what you handle fast and what you push back breaks ties within a bundle,
+- **Learns your habits** on your computer: what you handle fast and what you push back breaks ties within a bundle,
   and a small star says why.
-- **Notifications** with Done and Snooze buttons: new review requests, mentions and tasks, approvals, changes
-  requested, failed checks, due reminders.
+- **Notifications**: new review requests, mentions and tasks, approvals, changes requested, failed checks, due
+  reminders. Done and Snooze buttons on the Mac; on Windows, a click opens the item.
 - **Opens in the right app**: Slack and Linear items open in their desktop app when it's installed, with the browser
   as fallback.
 - **Assistant (optional)**: with Claude Code on your plan, the Claude API or an OpenAI-compatible server, a 3-sentence brief, bundle summaries
   (`claude-haiku-5-5` by default) and triage of the Snoozed tab. Cached, and off unless external AI is allowed.
-- **English and French**, following the Mac's language; briefs and summaries come back in that language.
+- **English and French**, following the computer's language; briefs and summaries come back in that language.
 
 ## Sources
 
@@ -105,8 +108,8 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | GitLab (+ self-hosted) | Merge requests you opened or review, approvals, pipelines | Token: `read_api` |
 | Slack | Mentions and DMs from the last N days | User token `xoxp-…`: `search:read` |
 | Linear | Issues assigned to you (priority, due date), unread mentions and comments | Personal API key |
-| Notion | Open tasks assigned to you in chosen databases (Mac only) | Personal access token, or an internal connection's secret |
-| Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this Mac |
+| Notion | Open tasks assigned to you in chosen databases | Personal access token, or an internal connection's secret |
+| Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this computer |
 | Claude API | Brief, summaries, triage | Anthropic API key |
 | OpenAI-compatible | Brief, summaries, triage | API key and server (OpenAI, Azure, Mistral), or none on a local server |
 
@@ -117,11 +120,13 @@ Accounts can be named ("Work GitLab", "Client Slack"), several per tool. Setup: 
 - **Declared destinations.** Every plugin declares the hosts it may reach; a test fails if one doesn't.
 - **One gate.** Plugins only get an HTTP client limited to their own hosts plus the account's host. Anything else
   fails with "Blocked: … is not an allowed destination", look-alike domains included (tested).
-- **External AI off by default.** Claude plugins are refused until it is allowed; then the AI features appear.
+- **External AI off by default.** Assistant plugins are refused until it is allowed, except a server on the
+  computer; then the AI features appear.
 - **Managed policy.** IT can lock the allowed tools, external AI and avatars with an MDM configuration profile
   (`fr.igitscor.remora`: `AllowedPlugins`, `AllowExternalAI`, `AllowRemoteImages`); on Windows, under
   `HKLM\SOFTWARE\Policies\Remora`.
-- **Local data.** Tokens in one Keychain item; everything else in `~/Library/Application Support/Remora/`.
+- **Local data.** Tokens in one Keychain item; everything else in `~/Library/Application Support/Remora/`. On
+  Windows, the Credential Manager and `%LOCALAPPDATA%\fr.igitscor.remora`.
   Settings → Privacy lists every data flow and erases local data. No telemetry, analytics or crash reporting.
 
 Every flow, the MDM profile and deployment, for IT and compliance teams: [the admin docs](https://triage.iscor.me/docs/admin/).
@@ -142,8 +147,8 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 
 | Suite | Tests | What it covers |
 |---|---|---|
-| macOS (Swift Testing) | 157 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
-| Windows (`cargo test`) | 79 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
+| macOS (Swift Testing) | 247 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
+| Windows (`cargo test`) | 245 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 
@@ -151,7 +156,9 @@ CI runs each suite when its folder changes, and on demand.
 
 **Download** [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg) (macOS 14 or
 later), open it and drag Remora to Applications. It isn't notarized yet: the first time, right-click Remora →
-Open (on macOS 15: System Settings → Privacy & Security → Open Anyway).
+Open (on macOS 15: System Settings → Privacy & Security → Open Anyway). On Windows 10 or 11, run
+[Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe) (preview, per-user
+install); it isn't signed yet, so if SmartScreen warns, click More info → Run anyway.
 
 To build it yourself. Requirements: macOS 14 or later and Xcode 16 (Swift 6 toolchain); Rust ([rustup](https://rustup.rs/)) for the Windows app.
 

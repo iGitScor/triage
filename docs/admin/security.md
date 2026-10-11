@@ -42,8 +42,8 @@ details. It covers the macOS app and, where it differs, the Windows app (in prev
 | Question | Answer |
 |---|---|
 | Is AI used by default? | Only on-device: Apple's NaturalLanguage framework on macOS, keyword rules on Windows. Nothing is sent. |
-| Generative AI | Claude is optional and **off by default**. The organization can forbid it, keep chosen tools away from it and limit the models. [What reaches Claude](./data-flows#what-reaches-claude) lists every field sent. |
-| Prompt injection | Inbox items are sent as marked data that Claude is told not to obey; its answers are shown as plain text and never act on their own. |
+| Generative AI | The assistant (Claude, or an OpenAI-compatible server) is optional and **off by default**. The organization can forbid it and choose or limit its servers; on macOS also keep chosen tools away from it and limit the models. [What reaches the assistant](./data-flows#what-reaches-claude) lists every field sent. |
+| Prompt injection | Inbox items are sent as marked data that the model is told not to obey; its answers are shown as plain text and never act on their own. |
 | Claude Code | Remora runs only a program named `claude` that only the user (or the system) can change, checks it is Claude Code, and runs it with no tools, plugins or saved session. |
 
 ## Access control
@@ -51,7 +51,7 @@ details. It covers the macOS app and, where it differs, the Windows app (in prev
 | Question | Answer |
 |---|---|
 | Can IT restrict it? | Yes. macOS: a configuration profile (MDM). Windows: Group Policy or Intune, under `HKLM\SOFTWARE\Policies\Remora`. See [Managing the policy](./mdm). |
-| What can be enforced? | Which tools may connect, external AI on or off, avatars. On macOS also the tools kept from the assistant, the allowed models, hidden notification content, the refresh interval, opening in desktop apps and the Claude Code path. |
+| What can be enforced? | Which tools may connect, external AI on or off, the assistant's servers (`AllowedAIServers`, `AIServer`, `AllowLocalAI`), avatars and updates. On macOS also the tools kept from the assistant, the allowed models, hidden notification content, the refresh interval, opening in desktop apps and the Claude Code path. |
 | What if a policy value is wrong? | It is applied as strictly as possible: an unreadable list allows nothing, an unreadable switch is off. |
 | Transport | HTTPS only, with the system's TLS. Plain HTTP is refused, except to `localhost`. Redirects to another host are refused, so a token never follows one. |
 

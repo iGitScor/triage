@@ -12,6 +12,7 @@ import datetime
 import html
 import json
 import pathlib
+import plistlib
 import re
 
 ROOT = pathlib.Path(__file__).parent / "public"
@@ -19,7 +20,10 @@ ORIGIN = "https://triage.iscor.me"
 REPO = "https://github.com/iGitScor/triage"
 DMG = REPO + "/releases/latest/download/Remora.dmg"
 EXE = REPO + "/releases/latest/download/Remora-Setup.exe"
-VERSION = "0.2.0"
+# The released version, from the source `make version` sets, so the page's structured data never goes stale.
+VERSION = plistlib.loads((pathlib.Path(__file__).parent.parent / "macos/Resources/Info.plist").read_bytes())[
+    "CFBundleShortVersionString"
+]
 LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 DOCS = {"en": "/docs/", "fr": "/docs/fr/"}
 
@@ -88,7 +92,7 @@ T = {
     "en": {
         "locale": "en_US",
         "tagline": "Everything that needs you. Nothing that doesn’t.",
-        "description": "Remora is a menu bar inbox for your Mac: code reviews, merge requests, Slack mentions and Linear issues, sorted by what you have to do. On-device, no account, only the tools you allow.",
+        "description": "Remora is an inbox in your Mac’s menu bar or the Windows system tray: code reviews, merge requests, Slack mentions and Linear issues, sorted by what you have to do. On-device, no account, only the tools you allow.",
         "skip": "Skip to content",
         "nav": {"features": "Features", "privacy": "Privacy & compliance"},
         "nav_label": "Main navigation",
@@ -98,7 +102,7 @@ T = {
         "get_windows": "Download for Windows",
         "get_short": "Download",
         "source": "Source on GitHub",
-        "footer_blurb": "A menu bar inbox for everything that needs you. It runs on your Mac and talks only to the tools you allow.",
+        "footer_blurb": "An inbox in the menu bar or the system tray for everything that needs you. It runs on your computer and talks only to the tools you allow.",
         "footer": {
             "product": (
                 "Product",
@@ -139,11 +143,11 @@ T = {
         "seo": {
             "home": (
                 "Remora — Menu bar inbox for GitHub, GitLab, Slack and Linear",
-                "Code reviews, merge requests, Slack mentions and Linear issues in one Mac menu bar inbox, sorted by what to do. Free, open source, on-device, no account.",
+                "Code reviews, merge requests, Slack mentions and Linear issues in one inbox in your Mac’s menu bar or the Windows tray, sorted by what to do. Free, open source, on-device, no account.",
             ),
             "features": (
                 "Features — Remora, the menu bar inbox for developers",
-                "Verbs instead of apps, Done and Pin, snooze with a reason, reminders dragged from the menu bar, review prep and sessions, a waiting assistant. All of Remora.",
+                "Verbs instead of apps, Done and Pin, snooze with a reason, reminders from the menu bar or a shortcut, review prep and sessions, a waiting assistant. All of Remora.",
             ),
             "privacy": (
                 "Privacy & compliance — Remora sends nothing but to your tools",
@@ -160,7 +164,7 @@ T = {
     "fr": {
         "locale": "fr_FR",
         "tagline": "Tout ce qui a besoin de vous. Rien de plus.",
-        "description": "Remora est une boîte de réception dans la barre des menus du Mac : relectures de code, merge requests, mentions Slack et tickets Linear, rangés par ce que vous avez à faire. Sur l’appareil, sans compte, seulement les outils autorisés.",
+        "description": "Remora est une boîte de réception dans la barre des menus du Mac ou la zone de notification de Windows : relectures de code, merge requests, mentions Slack et tickets Linear, rangés par ce que vous avez à faire. Sur l’appareil, sans compte, seulement les outils autorisés.",
         "skip": "Aller au contenu",
         "nav": {"features": "Fonctionnalités", "privacy": "Confidentialité et conformité"},
         "nav_label": "Navigation principale",
@@ -170,7 +174,7 @@ T = {
         "get_windows": "Télécharger pour Windows",
         "get_short": "Télécharger",
         "source": "Code source sur GitHub",
-        "footer_blurb": "Une boîte de réception dans la barre des menus pour tout ce qui a besoin de vous. Elle tourne sur votre Mac et ne parle qu’aux outils autorisés.",
+        "footer_blurb": "Une boîte de réception dans la barre des menus ou la zone de notification pour tout ce qui a besoin de vous. Elle tourne sur votre ordinateur et ne parle qu’aux outils autorisés.",
         "footer": {
             "product": (
                 "Produit",
@@ -210,12 +214,12 @@ T = {
         "og_alt": "Remora : tout ce qui a besoin de vous, dans la barre des menus du Mac. La boîte avec réponses, relectures et tâches rangées par ce qu’il faut faire.",
         "seo": {
             "home": (
-                "Remora — Boîte de réception GitHub, GitLab, Slack et Linear pour Mac",
-                "Relectures de code, merge requests, mentions Slack et tickets Linear dans une seule boîte, dans la barre des menus du Mac. Gratuit, open source, sans compte.",
+                "Remora — Boîte de réception GitHub, GitLab, Slack et Linear pour Mac et Windows",
+                "Relectures de code, merge requests, mentions Slack et tickets Linear dans une seule boîte, dans la barre des menus du Mac ou la zone de notification de Windows. Gratuit, open source, sans compte.",
             ),
             "features": (
                 "Fonctionnalités — Remora, la boîte de réception des développeurs",
-                "Des verbes plutôt que des applis, Terminé et Épingler, reporter avec une raison, des rappels tirés de la barre des menus, préparer ses relectures. Tout Remora.",
+                "Des verbes plutôt que des applis, Terminé et Épingler, reporter avec une raison, des rappels depuis la barre des menus ou un raccourci, préparer ses relectures. Tout Remora.",
             ),
             "privacy": (
                 "Confidentialité et conformité — Remora n’envoie rien ailleurs",
@@ -335,7 +339,7 @@ def header(lang: str, page: str) -> str:
         <nav class="site-nav" aria-label="{t["nav_label"]}"><ul>{items}</ul></nav>
         <div class="header-actions">
           <nav class="lang-switch" aria-label="{t["lang_label"]}">{switch}</nav>
-          <a class="btn btn-primary btn-sm" href="{DMG}">{t["get_short"]}</a>
+          <a class="btn btn-primary btn-sm" href="{DMG}" data-download="mac">{t["get_short"]}</a>
         </div>
       </div>
     </header>"""
@@ -406,11 +410,11 @@ def section_head(eyebrow: str, title: str, lead: str = "", tag: str = "h2", iden
 
 
 def cta_button(lang: str, cls: str = "btn btn-primary btn-lg") -> str:
-    return f'<a class="{cls}" href="{DMG}">{T[lang]["get"]} {icon("drag", 20)}</a>'
+    return f'<a class="{cls}" href="{DMG}" data-download="mac">{T[lang]["get"]} {icon("drag", 20)}</a>'
 
 
 def windows_button(lang: str, cls: str = "btn btn-secondary btn-lg") -> str:
-    return f'<a class="{cls}" href="{EXE}">{T[lang]["get_windows"]}</a>'
+    return f'<a class="{cls}" href="{EXE}" data-download="windows">{T[lang]["get_windows"]}</a>'
 
 
 def faq(items: list[tuple[str, str]]) -> str:
@@ -474,7 +478,7 @@ def home(lang: str) -> str:
         c = dict(
             eyebrow="Menu bar inbox · macOS · Windows",
             h1='Everything that<br /><span class="mark">needs you.</span>',
-            lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions and Linear issues, in one inbox in your menu bar. Sorted by what you have to do, not by where it came from.",
+            lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions and Linear issues, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
             secondary="Privacy & compliance",
             note="Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway.",
             notice="Remora speaks English and French, and so does on-device sorting.",
@@ -495,7 +499,7 @@ def home(lang: str) -> str:
             ],
             verbs_eyebrow="Verbs, not apps",
             verbs_title='Sorted by <span class="mark">what to do.</span>',
-            verbs_lead="A Slack question and a GitLab comment both land in To reply. Messages are sorted on your Mac with keyword rules and Apple’s on-device language model. No generative AI, nothing sent.",
+            verbs_lead="A Slack question and a GitLab comment both land in To reply. Messages are sorted on your computer with keyword rules, plus Apple’s on-device language model on the Mac. No generative AI, nothing sent.",
             verbs=[
                 ("reply", "To reply"),
                 ("review", "To review"),
@@ -511,7 +515,7 @@ def home(lang: str) -> str:
             line_eyebrow="Reminders",
             line_title='Cast a reminder <span class="mark">from the menu bar.</span>',
             line_lead="Grab the fish and pull down. The further you drag, the later it comes back: minutes, then hours, then days. Release, type what to remember, press Enter. Esc cancels.",
-            line_more="Or press + in the inbox. Due reminders arrive as notifications with Snooze buttons.",
+            line_more="Or press + in the inbox; on Windows, Ctrl+Alt+R from anywhere. Due reminders arrive as notifications, with Snooze buttons on the Mac.",
             features_eyebrow="Features",
             features_title='Less noise, <span class="mark">more done.</span>',
             features_lead="Every feature has one job: fewer things on your mind at once.",
@@ -539,12 +543,12 @@ def home(lang: str) -> str:
                 (
                     "bell",
                     "Notifications that act",
-                    "Approved, changes requested, checks failed, a reminder due. Mark it done or snooze it right from the notification.",
+                    "Approved, changes requested, checks failed, a reminder due. On the Mac, mark it done or snooze it right from the notification; on Windows, a click opens it.",
                 ),
                 (
                     "star",
                     "Learns your habits",
-                    "What you handle fast and what you push back, learned on your Mac. It breaks ties, and a small star says why.",
+                    "What you handle fast and what you push back, learned on your computer. It breaks ties, and a small star says why.",
                 ),
             ],
             features_more="All features",
@@ -562,15 +566,15 @@ def home(lang: str) -> str:
                 ("linear", "Linear", "Issues assigned to you with their priority and due date, plus unread mentions."),
                 (
                     "claude",
-                    "Claude (optional)",
-                    "A short brief on what to handle first. Off by default, and only if your organization allows it.",
+                    "Claude or OpenAI (optional)",
+                    "A short brief on what to handle first, with Claude or an OpenAI-compatible model. Off by default, and only if your organization allows it.",
                 ),
                 ("notion", "Notion", "Tasks assigned to you in the databases you pick."),
             ],
             soon={},
             privacy_eyebrow="Privacy & compliance",
             privacy_title="Built for teams with rules.",
-            privacy_lead="No data leaves your Mac except to the tools you allow. Enforced in code, checked by tests, lockable by your IT.",
+            privacy_lead="No data leaves your computer except to the tools you allow. Enforced in code, checked by tests, lockable by your IT.",
             privacy=[
                 (
                     "shield",
@@ -580,7 +584,7 @@ def home(lang: str) -> str:
                 (
                     "sparkle",
                     "External AI off by default",
-                    "Claude is opt-in. Your organization can forbid it, and then every AI feature disappears.",
+                    "The assistant is opt-in. Your organization can forbid it, and then every AI feature disappears.",
                 ),
                 (
                     "building",
@@ -593,11 +597,11 @@ def home(lang: str) -> str:
             faq=[
                 (
                     "Is my data sent to a Remora server?",
-                    "There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain. No telemetry, no analytics, no crash reports.",
+                    "There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain or the Windows Credential Manager. No telemetry, no analytics, no crash reports.",
                 ),
                 (
-                    "Do I need Claude?",
-                    "No. Sorting, ranking, snooze advice and review prep all run on your Mac without generative AI. Claude only adds optional briefs and summaries, and it is off until you, and your organization, allow it.",
+                    "Do I need an AI assistant?",
+                    "No. Sorting, ranking, snooze advice and review prep all run on your computer without generative AI. The assistant (Claude or an OpenAI-compatible model) only adds optional briefs and summaries, and it is off until you, and your organization, allow it.",
                 ),
                 (
                     "Does it work with GitHub Enterprise and self-hosted GitLab?",
@@ -605,7 +609,7 @@ def home(lang: str) -> str:
                 ),
                 (
                     "Is there a Windows version?",
-                    f'Yes, in preview: <a href="{EXE}">Remora-Setup.exe</a> for Windows 10 or 11, installed for your user only (no admin rights). Same rules, the same tools and the Claude assistant, same compliance model, with the policy in the registry for Group Policy or Intune. It sorts messages with keywords only. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway.',
+                    f'Yes, in preview: <a href="{EXE}">Remora-Setup.exe</a> for Windows 10 or 11, installed for your user only (no admin rights). Same rules, the same tools and the same assistant (Claude or OpenAI-compatible), same compliance model, with the policy in the registry for Group Policy or Intune. It sorts messages with keywords only. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway.',
                 ),
                 (
                     "Why does macOS ask for my Keychain password?",
@@ -627,7 +631,7 @@ def home(lang: str) -> str:
         c = dict(
             eyebrow="Barre des menus · macOS · Windows",
             h1='Tout ce qui a<br /><span class="mark">besoin de vous.</span>',
-            lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack et tickets Linear, dans une seule boîte de réception, dans la barre des menus. Rangés par ce que vous avez à faire, pas par leur provenance.",
+            lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack et tickets Linear, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
             secondary="Confidentialité et conformité",
             note="Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même.",
             notice="Remora parle français et anglais, tout comme le tri sur l’appareil.",
@@ -656,7 +660,7 @@ def home(lang: str) -> str:
             ],
             verbs_eyebrow="Des verbes, pas des applis",
             verbs_title='Rangé par <span class="mark">ce qu’il faut faire.</span>',
-            verbs_lead="Une question sur Slack et un commentaire GitLab finissent tous deux dans À répondre. Les messages sont triés sur votre Mac par des règles de mots-clés et le modèle de langue d’Apple embarqué. Pas d’IA générative, rien n’est envoyé.",
+            verbs_lead="Une question sur Slack et un commentaire GitLab finissent tous deux dans À répondre. Les messages sont triés sur votre ordinateur par des règles de mots-clés, plus le modèle de langue d’Apple embarqué sur le Mac. Pas d’IA générative, rien n’est envoyé.",
             verbs=[
                 ("reply", "À répondre"),
                 ("review", "À relire"),
@@ -672,7 +676,7 @@ def home(lang: str) -> str:
             line_eyebrow="Rappels",
             line_title='Lancez un rappel <span class="mark">depuis la barre des menus.</span>',
             line_lead="Attrapez le poisson et tirez vers le bas. Plus vous descendez, plus il revient tard : des minutes, puis des heures, puis des jours. Relâchez, tapez ce qu’il faut retenir, Entrée. Échap annule.",
-            line_more="Ou appuyez sur + dans la boîte. À l’heure dite, une notification arrive, avec des boutons pour reporter.",
+            line_more="Ou appuyez sur + dans la boîte ; sous Windows, Ctrl+Alt+R depuis n’importe où. À l’heure dite, une notification arrive, avec des boutons pour reporter sur le Mac.",
             features_eyebrow="Fonctionnalités",
             features_title='Moins de bruit, <span class="mark">plus de fait.</span>',
             features_lead="Chaque fonctionnalité a un seul but : moins de choses en tête à la fois.",
@@ -700,12 +704,12 @@ def home(lang: str) -> str:
                 (
                     "bell",
                     "Des notifications qui agissent",
-                    "Approuvée, modifications demandées, tests en échec, un rappel à l’heure. Terminez ou reportez directement depuis la notification.",
+                    "Approuvée, modifications demandées, tests en échec, un rappel à l’heure. Sur le Mac, terminez ou reportez directement depuis la notification ; sous Windows, un clic l’ouvre.",
                 ),
                 (
                     "star",
                     "Apprend vos habitudes",
-                    "Ce que vous traitez vite et ce que vous repoussez, appris sur votre Mac. Ça départage, et une petite étoile dit pourquoi.",
+                    "Ce que vous traitez vite et ce que vous repoussez, appris sur votre ordinateur. Ça départage, et une petite étoile dit pourquoi.",
                 ),
             ],
             features_more="Toutes les fonctionnalités",
@@ -731,15 +735,15 @@ def home(lang: str) -> str:
                 ),
                 (
                     "claude",
-                    "Claude (facultatif)",
-                    "Un court brief sur quoi traiter d’abord. Désactivé par défaut, et seulement si votre organisation l’autorise.",
+                    "Claude ou OpenAI (facultatif)",
+                    "Un court brief sur quoi traiter d’abord, avec Claude ou un modèle OpenAI-compatible. Désactivé par défaut, et seulement si votre organisation l’autorise.",
                 ),
                 ("notion", "Notion", "Les tâches qui vous sont assignées dans les bases choisies."),
             ],
             soon={},
             privacy_eyebrow="Confidentialité et conformité",
             privacy_title="Pensé pour les équipes qui ont des règles.",
-            privacy_lead="Aucune donnée ne quitte votre Mac, sauf vers les outils autorisés. Appliqué dans le code, vérifié par des tests, verrouillable par votre DSI.",
+            privacy_lead="Aucune donnée ne quitte votre ordinateur, sauf vers les outils autorisés. Appliqué dans le code, vérifié par des tests, verrouillable par votre DSI.",
             privacy=[
                 (
                     "shield",
@@ -749,7 +753,7 @@ def home(lang: str) -> str:
                 (
                     "sparkle",
                     "IA externe désactivée par défaut",
-                    "Claude est facultatif. Votre organisation peut l’interdire, et toutes les fonctions d’IA disparaissent.",
+                    "L’assistant est facultatif. Votre organisation peut l’interdire, et toutes les fonctions d’IA disparaissent.",
                 ),
                 (
                     "building",
@@ -762,11 +766,11 @@ def home(lang: str) -> str:
             faq=[
                 (
                     "Mes données passent-elles par un serveur Remora ?",
-                    "Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS. Pas de télémétrie, pas d’analytics, pas de rapports de plantage.",
+                    "Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS ou le Gestionnaire d’identification de Windows. Pas de télémétrie, pas d’analytics, pas de rapports de plantage.",
                 ),
                 (
-                    "Faut-il Claude ?",
-                    "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre Mac, sans IA générative. Claude n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas.",
+                    "Faut-il un assistant d’IA ?",
+                    "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre ordinateur, sans IA générative. L’assistant (Claude ou un modèle OpenAI-compatible) n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas.",
                 ),
                 (
                     "Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?",
@@ -774,7 +778,7 @@ def home(lang: str) -> str:
                 ),
                 (
                     "Existe-t-il une version Windows ?",
-                    f'Oui, en aperçu : <a href="{EXE}">Remora-Setup.exe</a> pour Windows 10 ou 11, installée pour votre utilisateur seulement (sans droits d’administrateur). Mêmes règles, les mêmes outils et l’assistant Claude, même modèle de conformité, avec la politique dans le registre pour la stratégie de groupe ou Intune. Elle trie les messages par mots-clés seulement. L’installeur n’est pas encore signé : si SmartScreen prévient, cliquez sur Informations complémentaires → Exécuter quand même.',
+                    f'Oui, en aperçu : <a href="{EXE}">Remora-Setup.exe</a> pour Windows 10 ou 11, installée pour votre utilisateur seulement (sans droits d’administrateur). Mêmes règles, les mêmes outils et le même assistant (Claude ou OpenAI-compatible), même modèle de conformité, avec la politique dans le registre pour la stratégie de groupe ou Intune. Elle trie les messages par mots-clés seulement. L’installeur n’est pas encore signé : si SmartScreen prévient, cliquez sur Informations complémentaires → Exécuter quand même.',
                 ),
                 (
                     "Pourquoi macOS demande-t-il le mot de passe du trousseau ?",
@@ -960,7 +964,7 @@ def features(lang: str) -> str:
                     (
                         "reply",
                         "Verbs",
-                        "To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others. Messages are classified on your Mac, in English and French; when unsure, To reply.",
+                        "To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others. Messages are classified on your computer, in English and French; when unsure, To reply.",
                     ),
                     (
                         "done",
@@ -976,30 +980,34 @@ def features(lang: str) -> str:
                     (
                         "read",
                         "Five at a time",
-                        "Long bundles show their top five and “Show N more”. A smart summary of the rest when Claude is allowed.",
+                        "Long bundles show their top five and “Show N more”. A smart summary of the rest when the assistant is allowed.",
                     ),
                 ],
             ),
             (
                 "menubar",
-                "The menu bar",
-                "Remora lives in the menu bar: no window to keep open.",
+                "The menu bar and the tray",
+                "Remora lives in the Mac’s menu bar or the Windows system tray: no window to keep open.",
                 [
                     (
                         "menu",
                         "One count per tool",
-                        "The fish and a single number, or one count per tool, ordered by the most pressing verb. Start a task and it shows alone, with how long you’ve been on it.",
+                        "The fish and a single number, or on the Mac one count per tool, ordered by the most pressing verb. Start a task and it shows alone, with how long you’ve been on it.",
                     ),
                     (
                         "drag",
                         "Drag to remind",
-                        "Pull the fish down to cast a reminder; a bubble shows when it comes back. Further down means later.",
+                        "Pull the fish down to cast a reminder; a bubble shows when it comes back. Further down means later. On Windows, Ctrl+Alt+R.",
                     ),
-                    ("swipe", "Gestures", "Two fingers on the trackpad: right to mark done, left to snooze."),
+                    (
+                        "swipe",
+                        "Gestures",
+                        "Two fingers on the trackpad: right to mark done, left to snooze. On Windows, buttons on each row.",
+                    ),
                     (
                         "link",
                         "Opens in the right app",
-                        "Slack and Linear items open in their desktop app when it’s installed (⌥-click for the web), with the browser as fallback.",
+                        "Slack and Linear items open in their desktop app when it’s installed (⌥-click, or Shift-click on Windows, for the web), with the browser as fallback.",
                     ),
                 ],
             ),
@@ -1026,7 +1034,7 @@ def features(lang: str) -> str:
                     (
                         "bell",
                         "Notifications with buttons",
-                        "New review requests, mentions, approvals, failed checks, due reminders. Done or Snooze without opening Remora. Hide the message text per tool, for screen shares.",
+                        "New review requests, mentions, approvals, failed checks, due reminders. On the Mac, Done or Snooze without opening Remora; on Windows, a click opens the item. Hide the message text per tool, for screen shares.",
                     ),
                 ],
             ),
@@ -1082,7 +1090,7 @@ def features(lang: str) -> str:
         ]
         shots = {"time": "snoozed", "reviews": "waiting"}
         page_title = "Features — Remora"
-        description = "Everything Remora does: verbs, Done and Pin, snooze with a reason, reminders from the menu bar, review prep and sessions, the waiting assistant, and an optional Claude brief."
+        description = "Everything Remora does: verbs, Done and Pin, snooze with a reason, reminders from the menu bar or a shortcut, review prep and sessions, the waiting assistant, and an optional AI brief."
     else:
         title, lead = (
             'Une boîte de réception <span class="mark">qui apaise.</span>',
@@ -1102,7 +1110,7 @@ def features(lang: str) -> str:
                     (
                         "reply",
                         "Des verbes",
-                        "À répondre, À relire, À corriger, Prêtes à fusionner, À faire, Rappels, À lire, En attente des autres. Les messages sont classés sur votre Mac, en français et en anglais ; dans le doute, À répondre.",
+                        "À répondre, À relire, À corriger, Prêtes à fusionner, À faire, Rappels, À lire, En attente des autres. Les messages sont classés sur votre ordinateur, en français et en anglais ; dans le doute, À répondre.",
                     ),
                     (
                         "done",
@@ -1118,34 +1126,34 @@ def features(lang: str) -> str:
                     (
                         "read",
                         "Cinq à la fois",
-                        "Les longues listes montrent leurs cinq premiers et « Afficher N de plus ». Un résumé du reste quand Claude est autorisé.",
+                        "Les longues listes montrent leurs cinq premiers et « Afficher N de plus ». Un résumé du reste quand l’assistant est autorisé.",
                     ),
                 ],
             ),
             (
                 "menubar",
-                "La barre des menus",
-                "Remora vit dans la barre des menus : aucune fenêtre à garder ouverte.",
+                "La barre des menus et la zone de notification",
+                "Remora vit dans la barre des menus du Mac ou la zone de notification de Windows : aucune fenêtre à garder ouverte.",
                 [
                     (
                         "menu",
                         "Un compteur par outil",
-                        "Le poisson et un seul nombre, ou un compteur par outil, dans l’ordre du verbe le plus pressant. Commencez une tâche : elle s’affiche seule, avec le temps passé dessus.",
+                        "Le poisson et un seul nombre, ou sur le Mac un compteur par outil, dans l’ordre du verbe le plus pressant. Commencez une tâche : elle s’affiche seule, avec le temps passé dessus.",
                     ),
                     (
                         "drag",
                         "Tirer pour un rappel",
-                        "Tirez le poisson vers le bas pour lancer un rappel ; une bulle indique quand il revient. Plus bas, c’est plus tard.",
+                        "Tirez le poisson vers le bas pour lancer un rappel ; une bulle indique quand il revient. Plus bas, c’est plus tard. Sous Windows, Ctrl+Alt+R.",
                     ),
                     (
                         "swipe",
                         "Gestes",
-                        "Deux doigts sur le trackpad : à droite pour terminer, à gauche pour reporter.",
+                        "Deux doigts sur le trackpad : à droite pour terminer, à gauche pour reporter. Sous Windows, des boutons sur chaque ligne.",
                     ),
                     (
                         "link",
                         "S’ouvre dans la bonne appli",
-                        "Les éléments Slack et Linear s’ouvrent dans leur appli quand elle est installée (⌥-clic pour le web), sinon dans le navigateur.",
+                        "Les éléments Slack et Linear s’ouvrent dans leur appli quand elle est installée (⌥-clic, ou Maj-clic sous Windows, pour le web), sinon dans le navigateur.",
                     ),
                 ],
             ),
@@ -1172,7 +1180,7 @@ def features(lang: str) -> str:
                     (
                         "bell",
                         "Des notifications avec boutons",
-                        "Nouvelles relectures, mentions, approbations, tests en échec, rappels. Terminer ou Reporter sans ouvrir Remora. Masquez le texte des messages par outil, pour les partages d’écran.",
+                        "Nouvelles relectures, mentions, approbations, tests en échec, rappels. Sur le Mac, Terminer ou Reporter sans ouvrir Remora ; sous Windows, un clic ouvre l’élément. Masquez le texte des messages par outil, pour les partages d’écran.",
                     ),
                 ],
             ),
@@ -1228,7 +1236,7 @@ def features(lang: str) -> str:
         ]
         shots = {"time": "snoozed", "reviews": "waiting"}
         page_title = "Fonctionnalités — Remora"
-        description = "Tout ce que fait Remora : verbes, Terminé et Épingler, reporter avec une raison, rappels depuis la barre des menus, préparation et sessions de relecture, assistant d’attente, et un brief Claude facultatif."
+        description = "Tout ce que fait Remora : verbes, Terminé et Épingler, reporter avec une raison, rappels depuis la barre des menus ou un raccourci, préparation et sessions de relecture, assistant d’attente, et un brief d’IA facultatif."
 
     subnav = "".join(f'<li><a href="#{key}">{name}</a></li>' for key, name, _, _ in groups)
     body = ""
@@ -1279,13 +1287,13 @@ def privacy(lang: str) -> str:
     if lang == "en":
         c = dict(
             title="Privacy & compliance — Remora",
-            description="Remora sends nothing anywhere except to the tools you allow. Every data flow, what stays on your Mac, how it is enforced, and how IT can lock the policy with MDM.",
+            description="Remora sends nothing anywhere except to the tools you allow. Every data flow, what stays on your computer, how it is enforced, and how IT can lock the policy with MDM or Group Policy.",
             eyebrow="Privacy & compliance",
             h1='Only the tools <span class="mark">you allow.</span>',
             lead="Remora has no server, no account and no telemetry. It talks directly to the tools you connect, and to nothing else. Built for organizations with strict data rules.",
             out_eyebrow="On the network",
-            out_title="What leaves your Mac",
-            out_lead="Read requests to your own tools, with your own tokens. Data comes back and stays on your Mac.",
+            out_title="What leaves your computer",
+            out_lead="Read requests to your own tools, with your own tokens. Data comes back and stays on your computer.",
             out_cols=("Flow", "Destination", "What is sent", "Default"),
             out_rows=[
                 (
@@ -1325,16 +1333,19 @@ def privacy(lang: str) -> str:
                     "<strong>Off</strong>, except a server on your computer",
                 ),
             ],
-            stay_eyebrow="On your Mac",
+            stay_eyebrow="On your computer",
             stay_title="What stays where",
             stay_cols=("Data", "Where"),
             stay_rows=[
                 (
                     "Inbox cache, states, reminders, snooze history, preferences",
-                    "<code>~/Library/Application Support/Remora</code>, protected by FileVault",
+                    "<code>~/Library/Application Support/Remora</code>, protected by FileVault; on Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code>",
                 ),
-                ("Tokens", "One item in your login Keychain"),
-                ("What you handle fast or snooze", "<code>learning.json</code>, used for ranking on this Mac only"),
+                ("Tokens", "One item in your login Keychain; one entry in the Credential Manager on Windows"),
+                (
+                    "What you handle fast or snooze",
+                    "<code>learning.json</code>, used for ranking on this computer only",
+                ),
                 ("Review prep", "File paths and line counts only; code is never stored"),
                 ("Drafted messages", "Written from templates, copied to your clipboard, never sent"),
             ],
@@ -1354,12 +1365,12 @@ def privacy(lang: str) -> str:
                 (
                     "sparkle",
                     "External AI off by default",
-                    "Claude plugins are refused until external AI is allowed; then the brief, summaries and triage appear.",
+                    "Assistant plugins are refused until external AI is allowed, except a server on your computer; then the brief, summaries and triage appear.",
                 ),
                 (
                     "chip",
                     "On-device intelligence",
-                    "Sorting messages, topic similarity, ranking and snooze advice use Apple’s on-device language models. Nothing is sent.",
+                    "Sorting messages, topic similarity, ranking and snooze advice run on your computer: with Apple’s on-device language models on the Mac, with keyword rules on Windows. Nothing is sent.",
                 ),
                 (
                     "eyeoff",
@@ -1409,13 +1420,13 @@ def privacy(lang: str) -> str:
     else:
         c = dict(
             title="Confidentialité et conformité — Remora",
-            description="Remora n’envoie rien ailleurs que vers les outils autorisés. Chaque flux de données, ce qui reste sur votre Mac, comment c’est appliqué, et comment la DSI verrouille la politique par MDM.",
+            description="Remora n’envoie rien ailleurs que vers les outils autorisés. Chaque flux de données, ce qui reste sur votre ordinateur, comment c’est appliqué, et comment la DSI verrouille la politique par MDM ou stratégie de groupe.",
             eyebrow="Confidentialité et conformité",
             h1='Seulement les outils <span class="mark">que vous autorisez.</span>',
             lead="Remora n’a ni serveur, ni compte, ni télémétrie. Elle parle directement aux outils connectés, et à rien d’autre. Pensée pour les organisations aux règles strictes sur les données.",
             out_eyebrow="Sur le réseau",
-            out_title="Ce qui quitte votre Mac",
-            out_lead="Des requêtes de lecture vers vos propres outils, avec vos propres jetons. Les données reviennent et restent sur votre Mac.",
+            out_title="Ce qui quitte votre ordinateur",
+            out_lead="Des requêtes de lecture vers vos propres outils, avec vos propres jetons. Les données reviennent et restent sur votre ordinateur.",
             out_cols=("Flux", "Destination", "Ce qui est envoyé", "Par défaut"),
             out_rows=[
                 (
@@ -1455,18 +1466,21 @@ def privacy(lang: str) -> str:
                     "<strong>Désactivé</strong>, sauf un serveur sur votre ordinateur",
                 ),
             ],
-            stay_eyebrow="Sur votre Mac",
+            stay_eyebrow="Sur votre ordinateur",
             stay_title="Ce qui reste, et où",
             stay_cols=("Données", "Emplacement"),
             stay_rows=[
                 (
                     "Cache, états, rappels, historique des reports, préférences",
-                    "<code>~/Library/Application Support/Remora</code>, protégé par FileVault",
+                    "<code>~/Library/Application Support/Remora</code>, protégé par FileVault ; sous Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code>",
                 ),
-                ("Jetons", "Un seul élément de votre trousseau de session"),
+                (
+                    "Jetons",
+                    "Un seul élément de votre trousseau de session ; une entrée du Gestionnaire d’identification sous Windows",
+                ),
                 (
                     "Ce que vous traitez vite ou reportez",
-                    "<code>learning.json</code>, pour le classement sur ce Mac seulement",
+                    "<code>learning.json</code>, pour le classement sur cet ordinateur seulement",
                 ),
                 ("Préparation des relectures", "Chemins et nombre de lignes seulement ; le code n’est jamais stocké"),
                 ("Messages rédigés", "Écrits à partir de modèles, copiés dans le presse-papiers, jamais envoyés"),
@@ -1487,12 +1501,12 @@ def privacy(lang: str) -> str:
                 (
                     "sparkle",
                     "IA externe désactivée par défaut",
-                    "Les extensions Claude sont refusées tant que l’IA externe n’est pas autorisée ; ensuite seulement apparaissent brief, résumés et tri.",
+                    "Les extensions d’assistant sont refusées tant que l’IA externe n’est pas autorisée, sauf un serveur sur votre ordinateur ; ensuite seulement apparaissent brief, résumés et tri.",
                 ),
                 (
                     "chip",
                     "Intelligence sur l’appareil",
-                    "Le tri des messages, la similarité des sujets, le classement et les conseils de report utilisent les modèles de langue embarqués d’Apple. Rien n’est envoyé.",
+                    "Le tri des messages, la similarité des sujets, le classement et les conseils de report tournent sur votre ordinateur : avec les modèles de langue embarqués d’Apple sur le Mac, avec des règles de mots-clés sous Windows. Rien n’est envoyé.",
                 ),
                 (
                     "eyeoff",

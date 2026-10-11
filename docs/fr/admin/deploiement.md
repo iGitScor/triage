@@ -1,6 +1,6 @@
 ---
 title: Déployer Remora
-description: Distribuer Remora sur vos Mac. Le DMG de chaque version et son empreinte, Gatekeeper et la demande du trousseau avec la signature actuelle, les mises à jour, et une copie signée avec votre Developer ID.
+description: Distribuer Remora sur vos Mac et PC Windows. Le DMG et l’installeur Windows de chaque version et leurs empreintes, Gatekeeper et la demande du trousseau avec la signature actuelle, les mises à jour, et une copie signée avec votre Developer ID.
 ---
 
 # Déployer Remora
@@ -88,3 +88,7 @@ jour (même *Vérifier maintenant*) si vous redéployez chaque version vous-mêm
 Quittez Remora et supprimez l’app. Ses données sont dans `~/Library/Application Support/Remora` et un élément du
 trousseau de session (service `fr.igitscor.remora`) ; Réglages → Confidentialité → *Effacer les données locales…*
 supprime les deux avant de désinstaller.
+
+Sous Windows, désinstallez Remora depuis Paramètres → Applications ; l’option « supprimer les données de l’app » du
+désinstalleur retire `%LOCALAPPDATA%\fr.igitscor.remora`. Les jetons restent dans le Gestionnaire d’identification,
+sauf si *Effacer les données locales…* a été lancé avant.

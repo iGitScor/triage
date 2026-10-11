@@ -1,6 +1,6 @@
 ---
 title: Snooze and reminders
-description: Snooze an item until later, with a reason that picks the return time; drag a reminder out of Remora's menu bar icon; insights on what you keep putting off.
+description: Snooze an item until later, with a reason that picks the return time; drag a reminder out of Remora's menu bar icon (Ctrl+Alt+R on Windows); insights on what you keep putting off.
 ---
 
 # Snooze and reminders
@@ -16,8 +16,9 @@ Pick a preset (*Later today*, *This evening*, *Tomorrow*, *Next week*) or drag t
 in minutes, then hours, then days, so short and long snoozes are both one gesture. The slider follows the day you
 picked: choose *Tomorrow*, then fine-tune the hour.
 
-When it comes back, the item carries a *Reminder* chip until you open it. Reminders are scheduled with macOS, so
-they fire even when Remora isn’t running.
+When it comes back, the item carries a *Reminder* chip until you open it. On a Mac, reminders are scheduled with
+macOS, so they fire even when Remora isn’t running; on Windows, Remora checks for due ones every 30 seconds while it
+runs.
 
 ### Say why
 
@@ -37,7 +38,7 @@ you usually pick there.
 **Bring snoozed items back early on new activity** (Settings → General → Snooze) wakes a hidden item as soon as
 something changes on it. *Until there’s news* does that for one item, whatever the setting.
 
-**Snooze all** on a verb’s header snoozes the whole group at once.
+**Snooze all** on a verb’s header (Mac) snoozes the whole group at once.
 
 ### Insights
 
@@ -48,14 +49,14 @@ The *Snoozed* tab shows **one insight at a time**, when there’s something wort
 - **A loop**: the same item snoozed three times in a month. Do it now, or let it go.
 - **Putting something off**: a repository or channel you keep snoozing.
 - **A pile-up**: four or more items coming back at the same time. *Spread them* staggers them.
-- **Same topic**: snoozed items about the same thing (similar titles, compared on your Mac). Handle them together.
+- **Same topic**: snoozed items about the same thing (similar titles, compared on your computer). Handle them together.
 - **Gone quiet**: items with no activity for three weeks. Maybe they don’t need you any more.
 
-With Claude allowed, **Triage with Claude** proposes, for each snoozed item, to keep it, reschedule it, let it go
-or do it now. You confirm every change: only new return times are ticked for you; letting go and doing now are
-yours to tick, and applying opens at most one item. See [The assistant](./assistant).
+With the assistant connected, **Triage with the assistant** (**Ask**, on Windows) proposes, for each snoozed item, to
+keep it, reschedule it, let it go or do it now. You confirm every change: only new return times are ticked for you;
+letting go and doing now are yours to tick, and applying opens at most one item. See [The assistant](./assistant).
 
-Your snooze history (the last 500 snoozes) stays on your Mac.
+Your snooze history (the last 500 snoozes) stays on your computer.
 
 ## Reminders
 
@@ -65,15 +66,17 @@ Remora also holds your own reminders, Gestimer style:
    reminder will come back: the further down, the later (minutes, then hours, then days).
 2. **Release**, type what to remember, press **Enter**. **Esc** cancels at any point.
 
-The **+ Reminder** button at the bottom of the inbox does the same with the time picker, and so does
-right-click on the fish → **New reminder**.
+On Windows, tray icons can’t be dragged: press **Ctrl+Alt+R** from anywhere instead. The **+ Reminder** button at the
+bottom of the inbox does the same with the time picker, and so does right-click on the fish or the tray icon →
+**New reminder**.
 
-When it’s due, a notification arrives with **Start**, **Done** and **10 more minutes**, and the reminder appears at the top
-of *My turn*.
+When it’s due, a notification arrives, with **Start**, **Done** and **10 more minutes** on a Mac, and the reminder
+appears at the top of *My turn*.
 
 ## In progress
 
-**Start** a reminder (from its notification, or on any item: hover → **Start**, or right-click) to say you’re on it.
-It moves to an **In progress** tab, the menu bar shows *1 in progress (25 min)* with a swimming fish, and the inbox opens on that tab
-until you mark it **Done** or **Stop** it (which puts it back where it was). With one task running, right-clicking
-the fish offers **Done** and **Stop** too. On Windows, the tray icon turns dark and its tooltip shows the task.
+**Start** a reminder (from its notification on a Mac, or on any item: hover → **Start**, or right-click on a Mac) to
+say you’re on it. It moves to an **In progress** tab, the menu bar shows *1 in progress (25 min)* with a swimming
+fish, and the inbox opens on that tab until you mark it **Done** or **Stop** it (which puts it back where it was).
+With one task running, right-clicking the fish offers **Done** and **Stop** too. On Windows, the tray icon turns dark
+and its tooltip shows the task.

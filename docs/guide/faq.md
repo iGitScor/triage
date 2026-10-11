@@ -7,9 +7,10 @@ description: Answers about Remora's privacy, the Keychain prompt, macOS refusing
 
 ## Is my data sent to a Remora server?
 
-There is no Remora server. The app talks directly to the tools you connect, keeps its data in
-`~/Library/Application Support/Remora` and your tokens in the Keychain. No telemetry, no analytics, no crash
-reports. Every flow is listed in [Data flows](/admin/data-flows).
+There is no Remora server. The app talks directly to the tools you connect, keeps its data in `~/Library/Application
+Support/Remora` and your tokens in the Keychain (on Windows, in `%LOCALAPPDATA%\fr.igitscor.remora` and the
+Credential Manager). No telemetry, no analytics, no crash reports. Every flow is listed in [Data
+flows](/admin/data-flows).
 
 ## macOS says it can’t check the app, or won’t open it
 
@@ -38,21 +39,25 @@ setting says so.
 
 ## I don’t get notifications
 
-System Settings → Notifications → Remora: allow them. Then Settings → General → Notifications in Remora. The first
+System Settings → Notifications → Remora on a Mac, or Settings → System → Notifications on Windows: allow them. Then
+Settings → General → Notifications in Remora. The first
 sync of a new account is silent on purpose.
 
 ## Can I use it on Windows?
 
-Yes, in preview: [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe), for Windows 10 or 11, installed for your user only. It has the same rules,
-the same five tools, the Claude assistant and the same compliance model; see
+Yes, in preview: [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe),
+for Windows 10 or 11, installed for your user only. It has the same rules, the same five tools, the assistant (Claude
+or an OpenAI-compatible server) and the same compliance model; see
 [Getting started](./getting-started#on-windows-preview) for what it doesn’t do yet.
 
 ## How do I erase everything?
 
 Settings → Privacy → **Erase local data…** disconnects every account, deletes the cache, history, settings and
-notifications, and removes the tokens from the Keychain. Then drag Remora to the Bin.
+notifications, and removes the tokens from the Keychain (the Credential Manager on Windows). Then drag Remora to the
+Bin, or uninstall it from Windows Settings → Apps.
 
 ## How much does it cost?
 
 Nothing. Remora is free software under the GPL-3.0-or-later licence; the source is on
-[GitHub](https://github.com/iGitScor/triage). Questions and bugs: [GitHub issues](https://github.com/iGitScor/triage/issues).
+[GitHub](https://github.com/iGitScor/triage). Questions and bugs: [GitHub
+issues](https://github.com/iGitScor/triage/issues).

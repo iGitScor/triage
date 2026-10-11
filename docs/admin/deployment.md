@@ -1,6 +1,6 @@
 ---
 title: Deploying Remora
-description: Distribute Remora to your Macs. The release DMG and its checksum, Gatekeeper and the Keychain prompt with the current ad hoc signature, updates, and building a Developer ID signed copy.
+description: Distribute Remora to your Macs and Windows PCs. The release DMG and Windows installer and their checksums, Gatekeeper and the Keychain prompt with the current ad hoc signature, updates, and building a Developer ID signed copy.
 ---
 
 # Deploying Remora
@@ -83,3 +83,6 @@ off entirely (not even *Check now*) when you redeploy each version yourself. Wat
 
 Quit Remora and delete the app. Its data is in `~/Library/Application Support/Remora` and one login Keychain item
 (service `fr.igitscor.remora`); Settings → Privacy → *Erase local data…* removes both before uninstalling.
+
+On Windows, uninstall Remora from Settings → Apps; the uninstaller's “delete app data” option removes
+`%LOCALAPPDATA%\fr.igitscor.remora`. The tokens stay in the Credential Manager unless *Erase local data…* ran first.

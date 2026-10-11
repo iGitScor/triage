@@ -1,6 +1,6 @@
 ---
 title: Gérer la politique par MDM
-description: Verrouiller les outils que Remora peut connecter, l’IA externe et le chargement des avatars par un profil de configuration (Jamf, Kandji, Intune, Mosyle, Apple Business Essentials). Les clés et un profil complet.
+description: Verrouiller les outils que Remora peut connecter, l’IA externe, les serveurs que l’assistant peut utiliser et le chargement des avatars, par un profil de configuration sur macOS (Jamf, Kandji, Intune, Mosyle, Apple Business Essentials) ou des valeurs de registre sous Windows (stratégie de groupe, Intune). Les clés et un profil complet.
 ---
 
 # Gérer la politique par MDM
@@ -149,9 +149,10 @@ actualisation : un changement s’applique dans l’intervalle d’actualisation
 *Géré par votre organisation* dans Réglages → Confidentialité. Un utilisateur ne peut pas écrire sous
 `HKLM\SOFTWARE\Policies`, donc pas assouplir ce qu’elle fixe.
 
-Une erreur de saisie n’ouvre jamais rien. `AllowedPlugins` accepte aussi une liste en `REG_SZ` (`github, slack`), et
-les interrupteurs un `REG_SZ` `0` ou `1`. Tout autre type, ou une valeur illisible, est appliqué de la façon la
-plus stricte (aucun outil, pas d’IA externe, pas d’avatars, pas de mises à jour), et Réglages → Confidentialité indique la valeur à
+Une erreur de saisie n’ouvre jamais rien. `AllowedPlugins` et `AllowedAIServers` acceptent aussi une liste en
+`REG_SZ` (`github, slack`), et les interrupteurs un `REG_SZ` `0` ou `1`. Tout autre type, ou une valeur illisible,
+est appliqué de la façon la plus stricte (aucun outil, pas d’IA externe, aucun serveur d’IA, pas de serveur local,
+pas d’avatars, pas de mises à jour), et Réglages → Confidentialité indique la valeur à
 corriger.
 
 ## Vérifier sur un Mac
@@ -168,6 +169,6 @@ interrupteurs IA et avatars verrouillés.
 
 ::: info Pourquoi `defaults write` ne suffit pas
 Remora n’applique que les valeurs que macOS signale comme gérées (imposées) par un profil. Un `defaults write` de
-l’utilisateur est ignoré pour ces trois clés : un utilisateur ne peut pas assouplir la politique, et un test ne peut
+l’utilisateur est ignoré pour toutes ces clés : un utilisateur ne peut pas assouplir la politique, et un test ne peut
 pas la verrouiller par accident.
 :::

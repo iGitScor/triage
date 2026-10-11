@@ -93,12 +93,13 @@ Then:
 |---|---|
 | `fields` | The connect form. `.token(…)` and fields with `isSecret: true` go to the Keychain; the others to `accounts.json`. `.host(default)` for self-hosted tools. |
 | `setupSteps`, `setupLabel`, `setupURL` | The numbered guide and the button at the top of the form. `setupURL` gets the config, so it can point at the user’s own host. |
-| `egress` | Hosts and a one-sentence description, shown in Settings → Privacy and enforced. `externalAI: true` for plugins that send inbox content to an AI provider: they stay off until it’s allowed. |
+| `egress` | Hosts and a one-sentence description, shown in Settings → Privacy and enforced. `externalAI: true` for plugins that send inbox content to an AI provider: they stay off until it’s allowed. An assistant whose server the user types (OpenAI-compatible) names that setting in `serverField`, so the policy can check it (`AllowedAIServers`, `AIServer`, `AllowLocalAI`). |
 | `isComingSoon` | Listed with a *Soon* badge, not connectable. |
 | `logo` | The SVG in `Resources/Logos`, shown in the menu bar counters. |
 
 A plugin built on a local program uses `CommandRunner` (see `ClaudeCodePlugin`). Assistant plugins implement
-`AssistantPlugin` (`brief`, `digest`, `triage`) and go in `PluginRegistry.assistants`.
+`AssistantPlugin` (`brief`, `digest`, `triage`) and go in `PluginRegistry.assistants`; `ClaudePlugin` and
+`OpenAIPlugin` share the prompts (`BriefPrompt`) and the retry rule (`AssistantRetry`).
 
 ## Tests
 

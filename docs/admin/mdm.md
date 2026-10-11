@@ -1,6 +1,6 @@
 ---
 title: Managing the policy with MDM
-description: Lock which tools Remora may connect, whether external AI is allowed, and whether avatars load, with a configuration profile (Jamf, Kandji, Intune, Mosyle, Apple Business Essentials). Keys and a complete profile.
+description: Lock which tools Remora may connect, whether external AI is allowed, which servers the assistant may use, and whether avatars load, with a configuration profile on macOS (Jamf, Kandji, Intune, Mosyle, Apple Business Essentials) or registry values on Windows (Group Policy, Intune). Keys and a complete profile.
 ---
 
 # Managing the policy with MDM
@@ -146,9 +146,9 @@ Check it with `reg query HKLM\SOFTWARE\Policies\Remora`. Remora reads the policy
 a change applies within the refresh interval, without a restart, and users see *Managed by your organization* in
 Settings → Privacy. Users can’t write under `HKLM\SOFTWARE\Policies`, so they can’t loosen what it sets.
 
-A typing mistake never opens things up. `AllowedPlugins` also accepts a `REG_SZ` list (`github, slack`), and the
-switches a `REG_SZ` `0` or `1`. Any other type, or a value Remora can’t read, is applied as strictly as possible (no
-tool, no external AI, no avatars, no updates), and Settings → Privacy names the value to fix.
+A typing mistake never opens things up. `AllowedPlugins` and `AllowedAIServers` also accept a `REG_SZ` list
+(`github, slack`), and the switches a `REG_SZ` `0` or `1`. Any other type, or a value Remora can’t read, is applied as
+strictly as possible (no tool, no external AI, no AI server, no local server, no avatars, no updates), and Settings → Privacy names the value to fix.
 
 ## Checking it on a Mac
 
@@ -164,5 +164,5 @@ avatar switches locked.
 
 ::: info Why `defaults write` isn’t enough
 Remora only applies values that macOS reports as managed (forced) by a profile. A `defaults write` by the user is
-ignored for these three keys, so a user can’t loosen the policy, and a test can’t accidentally lock it.
+ignored for all these keys, so a user can’t loosen the policy, and a test can’t accidentally lock it.
 :::

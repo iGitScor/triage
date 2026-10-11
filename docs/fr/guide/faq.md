@@ -8,7 +8,8 @@ description: Réponses sur la confidentialité de Remora, la demande du troussea
 ## Mes données passent-elles par un serveur Remora ?
 
 Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans
-`~/Library/Application Support/Remora` et vos jetons dans le trousseau. Pas de télémétrie, pas d’analytics, pas de
+`~/Library/Application Support/Remora` et vos jetons dans le trousseau (sous Windows, dans
+`%LOCALAPPDATA%\fr.igitscor.remora` et le Gestionnaire d’identification). Pas de télémétrie, pas d’analytics, pas de
 rapports de plantage. Chaque flux est listé dans [Flux de données](/fr/admin/flux-de-donnees).
 
 ## macOS dit qu’il ne peut pas vérifier l’app, ou refuse de l’ouvrir
@@ -41,20 +42,23 @@ sur votre boîte n’est envoyé. Si votre organisation gère les mises à jour,
 
 ## Je ne reçois pas de notifications
 
-Réglages Système → Notifications → Remora : autorisez-les. Puis Réglages → Général → Notifications dans Remora. La
+Réglages Système → Notifications → Remora sur Mac, ou Paramètres → Système → Notifications sous Windows :
+autorisez-les. Puis Réglages → Général → Notifications dans Remora. La
 première synchronisation d’un nouveau compte est volontairement silencieuse.
 
 ## Remora existe-t-elle sur Windows ?
 
-Oui, en aperçu : [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe), pour Windows 10 ou 11, installée pour votre utilisateur seulement. Mêmes
-règles, mêmes cinq outils, l’assistant Claude et le même modèle de conformité ; voir
+Oui, en aperçu : [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe),
+pour Windows 10 ou 11, installée pour votre utilisateur seulement. Mêmes règles, mêmes cinq outils, l’assistant
+(Claude ou un serveur OpenAI-compatible) et le même modèle de conformité ; voir
 [Premiers pas](./premiers-pas#sous-windows-apercu) pour ce qu’elle ne fait pas encore.
 
 ## Comment tout effacer ?
 
 Réglages → Confidentialité → **Effacer les données locales…** déconnecte tous les comptes, supprime le cache,
-l’historique, les réglages et les notifications, et retire les jetons du trousseau. Ensuite, glissez Remora à la
-Corbeille.
+l’historique, les réglages et les notifications, et retire les jetons du trousseau (du Gestionnaire d’identification
+sous Windows). Ensuite, glissez Remora à la Corbeille, ou désinstallez-la depuis Paramètres → Applications sous
+Windows.
 
 ## Combien ça coûte ?
 

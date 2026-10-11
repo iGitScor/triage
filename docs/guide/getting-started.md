@@ -1,12 +1,13 @@
 ---
 title: Getting started
-description: Install Remora on your Mac, open it the first time, connect a first tool and find your way around the menu bar inbox.
+description: Install Remora on your Mac or Windows PC, open it the first time, connect a first tool and find your way around the inbox.
 ---
 
 # Getting started
 
-Remora lives in your Mac’s menu bar. It gathers what needs you from GitHub, GitLab, Slack and Linear, and sorts
-it by what you have to do. There is no account to create and no server: everything happens on your Mac.
+Remora lives in your Mac’s menu bar, or in the notification area of the Windows taskbar. It gathers what needs you
+from GitHub, GitLab, Slack, Linear and Notion, and sorts it by what you have to do. There is no account to create and
+no server: everything happens on your computer.
 
 ## Install
 
@@ -28,7 +29,8 @@ Settings → General → **Open at login**, so Remora is there every morning.
 
 ## On Windows (preview)
 
-1. [Download Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe). It needs Windows 10 or 11.
+1. [Download Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe). It
+   needs Windows 10 or 11.
 2. Run it. It installs Remora for your user only, with no admin rights.
 3. The installer isn’t signed yet: if Windows says it protected your PC, click **More info** → **Run anyway**.
 
@@ -37,28 +39,31 @@ keep it visible). Click it to open the inbox; right-click it for the menu. Tray 
 new reminder is **Ctrl+Alt+R**, from anywhere. Settings → General → **Start with Windows** starts it at sign-in.
 
 The Windows version has what the Mac has: the five tools, snooze with reasons and insights, review prep and sessions,
-the waiting assistant and the Claude assistant. It sorts messages with keywords only, and its notifications have no
-buttons yet; the full list is in [Remora for Windows](/develop/windows#what-windows-has-and-what-it-doesn-t-yet).
+the waiting assistant and the assistant (Claude or an OpenAI-compatible server). It sorts messages with keywords
+only, and its notifications have no buttons yet; the full list is in [Remora for
+Windows](/develop/windows#what-windows-has-and-what-it-doesn-t-yet).
 
 ## Connect a first tool
 
-Click the fish, then the gear (Settings) → **Sources**, and pick a tool. Each one has a button that opens the
-right page of the tool to create a token, and numbered steps; [Connecting your tools](./connecting-tools) has
-the details for each.
+Click the fish (the tray icon on Windows), then the gear (Settings) → **Sources**, and pick a tool. Each one has a
+button that opens the right page of the tool to create a token, and numbered steps; [Connecting your
+tools](./connecting-tools) has the details for each.
 
 The first sync is silent: connecting a tool never floods you with notifications. After that, Remora checks every
-5 minutes (Settings → General → **Check every**), when your Mac wakes up, and when you open the inbox.
+5 minutes (Settings → General → **Check every**); on a Mac, also when it wakes up and when you open the inbox.
 
-The first time it saves a token, macOS asks whether Remora may use its Keychain item. Choose **Always Allow**.
+The first time it saves a token, macOS asks whether Remora may use its Keychain item. Choose **Always Allow**. On
+Windows, tokens go to the Credential Manager without asking.
 
 ## Find your way around
 
 <Screenshot name="myturn" alt="The inbox: tabs, search, then bundles of items grouped by verb" />
 
-- **The fish** in the menu bar shows how many things need you. Settings → General → **One counter per source**
-  shows one count per tool instead, ordered by what’s most pressing.
-- **Click** the fish to open the inbox. **Right-click** it for Refresh, New reminder, Settings and Quit.
-- **Drag the fish down** to set a reminder: see [Snooze and reminders](./snooze-and-reminders#reminders).
+- **The fish** in the menu bar, or the tray icon on Windows, shows how many things need you. On a Mac, Settings →
+  General → **One counter per source** shows one count per tool instead, ordered by what’s most pressing.
+- **Click** it to open the inbox. **Right-click** it for Refresh, New reminder, Settings and Quit.
+- **Drag the fish down** to set a reminder, or press **Ctrl+Alt+R** on Windows: see
+  [Snooze and reminders](./snooze-and-reminders#reminders).
 - The **tabs**: *My turn* (someone waits on you), *Waiting* (you wait on others), *Snoozed* and *Done*.
 - Each **item** opens its link on click: in the Slack or Linear app when it’s installed, in the browser
   otherwise. Its buttons pin it, snooze it, or mark it done.
@@ -67,7 +72,7 @@ Next: [the inbox](./inbox), and how Remora decides what goes where.
 
 ## Try it without connecting anything
 
-Remora has a demo mode with sample data, opened as a window. Nothing is saved:
+Remora has a demo mode with sample data, opened as a window. Nothing is saved. On a Mac:
 
 ```sh
 open /Applications/Remora.app --args --demo
@@ -75,5 +80,5 @@ open /Applications/Remora.app --args --demo
 
 ## Languages
 
-Remora speaks English and French and follows your Mac’s language. To use another language for Remora only:
-System Settings → General → Language & Region → Applications → **+** → Remora.
+Remora speaks English and French and follows your system’s language. On a Mac, to use another language for Remora
+only: System Settings → General → Language & Region → Applications → **+** → Remora.

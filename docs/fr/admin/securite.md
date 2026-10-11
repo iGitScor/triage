@@ -42,8 +42,8 @@ la page qui donne le détail. Elle couvre l’app macOS et, quand elle diffère,
 | Question | Réponse |
 |---|---|
 | L’IA est-elle utilisée par défaut ? | Uniquement sur l’appareil : le framework NaturalLanguage d’Apple sur macOS, des règles de mots-clés sur Windows. Rien n’est envoyé. |
-| IA générative | Claude est facultatif et **désactivé par défaut**. L’organisation peut l’interdire, lui cacher certains outils et limiter les modèles. [Ce qui parvient à Claude](./flux-de-donnees#ce-qui-parvient-a-claude) liste chaque champ envoyé. |
-| Injection de prompt | Les éléments de la boîte sont envoyés comme des données balisées auxquelles Claude ne doit pas obéir ; ses réponses s’affichent en texte brut et n’agissent jamais d’elles-mêmes. |
+| IA générative | L’assistant (Claude, ou un serveur OpenAI-compatible) est facultatif et **désactivé par défaut**. L’organisation peut l’interdire et choisir ou limiter ses serveurs ; sur macOS aussi lui cacher certains outils et limiter les modèles. [Ce qui parvient à l’assistant](./flux-de-donnees#ce-qui-parvient-a-claude) liste chaque champ envoyé. |
+| Injection de prompt | Les éléments de la boîte sont envoyés comme des données balisées auxquelles le modèle ne doit pas obéir ; ses réponses s’affichent en texte brut et n’agissent jamais d’elles-mêmes. |
 | Claude Code | Remora n’exécute qu’un programme nommé `claude` que seul l’utilisateur (ou le système) peut modifier, vérifie que c’est Claude Code, et le lance sans outils, sans plugins et sans session enregistrée. |
 
 ## Contrôle d’accès
@@ -51,7 +51,7 @@ la page qui donne le détail. Elle couvre l’app macOS et, quand elle diffère,
 | Question | Réponse |
 |---|---|
 | La DSI peut-elle restreindre l’app ? | Oui. macOS : un profil de configuration (MDM). Windows : stratégie de groupe ou Intune, sous `HKLM\SOFTWARE\Policies\Remora`. Voir [Gérer la politique](./mdm). |
-| Que peut-on imposer ? | Les outils autorisés, l’IA externe, les avatars. Sur macOS aussi les outils cachés à l’assistant, les modèles autorisés, le contenu masqué des notifications, la fréquence d’actualisation, l’ouverture dans les apps et le chemin de Claude Code. |
+| Que peut-on imposer ? | Les outils autorisés, l’IA externe, les serveurs de l’assistant (`AllowedAIServers`, `AIServer`, `AllowLocalAI`), les avatars et les mises à jour. Sur macOS aussi les outils cachés à l’assistant, les modèles autorisés, le contenu masqué des notifications, la fréquence d’actualisation, l’ouverture dans les apps et le chemin de Claude Code. |
 | Et si une valeur de la politique est erronée ? | Elle est appliquée le plus strictement possible : une liste illisible n’autorise rien, un interrupteur illisible est désactivé. |
 | Transport | HTTPS uniquement, avec le TLS du système. Le HTTP en clair est refusé, sauf vers `localhost`. Les redirections vers un autre hôte sont refusées : un jeton ne les suit jamais. |
 

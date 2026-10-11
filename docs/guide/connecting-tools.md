@@ -1,12 +1,13 @@
 ---
 title: Connecting your tools
-description: Step by step, connect GitHub (and Enterprise), GitLab (and self-hosted), Slack and Linear to Remora, and optionally Claude. Which token, which permission, and what Remora reads.
+description: Step by step, connect GitHub (and Enterprise), GitLab (and self-hosted), Slack, Linear and Notion to Remora, and optionally the assistant. Which token, which permission, and what Remora reads.
 ---
 
 # Connecting your tools
 
 Open the inbox, then the gear → **Settings** → **Sources**. Each tool has a button that opens the right page to
-create a token, and the steps to follow. Tokens are stored in your Mac’s Keychain, never in a file.
+create a token, and the steps to follow. Tokens are stored in your Mac’s Keychain or the Windows Credential Manager,
+never in a file.
 
 Remora only reads. It never posts, comments, approves or changes anything in your tools. What each connection
 can reach is listed in [Data flows](/admin/data-flows).
@@ -57,7 +58,8 @@ Some workspaces require an admin to approve new apps. Slack then shows **Request
 admin approves it, come back to step 3.
 :::
 
-Slack items open in the Slack app, on the conversation. ⌥-click opens the exact message on the web.
+Slack items open in the Slack app, on the conversation. ⌥-click (Shift-click on Windows) opens the exact message on
+the web.
 
 An app created before thread replies only has `search:read`: Settings says so next to the account. Add the two
 history permissions to the app (*OAuth & Permissions* → *User Token Scopes*), reinstall it, and connect the new
@@ -77,7 +79,7 @@ due-today issues get a notification.
 
 ## Notion
 
-Open tasks assigned to you, from the Notion databases you choose (on Mac).
+Open tasks assigned to you, from the Notion databases you choose.
 
 1. Settings → Sources → **Notion** → **Create a token**: in Notion, **New token**, name it Remora, keep the *Notion
    API* capability, pick an expiration. Copy it (Notion shows it once) and paste it.
@@ -90,16 +92,17 @@ Open tasks assigned to you, from the Notion databases you choose (on Mac).
 No **New token** button? Your workspace lets only owners create tokens: ask one, or paste the secret of an
 internal connection an owner made, and add **Your Notion email** so Remora finds your tasks.
 
-## Claude (optional)
+## The assistant (optional)
 
 The assistant adds a short brief of what to handle first, two-sentence summaries of long bundles, and help to triage
-what you keep snoozing. It stays off until external AI is allowed, in Settings → Privacy or by your organization.
-See [The assistant](./assistant).
+what you keep snoozing. It stays off until external AI is allowed, in Settings → Privacy or by your organization (a
+server on your computer excepted). See [The assistant](./assistant).
 
-- **Claude Code** (recommended): uses the Claude Code installed and signed in on your Mac, on your Claude plan.
+- **Claude Code** (recommended): uses the Claude Code installed and signed in on your computer, on your Claude plan.
   Settings → Sources, under *Assistant* → Claude Code → **Connect**. Anthropic's installer is the simplest: it
-  doesn't need Node.js. Installs through Homebrew, npm (nvm, volta), bun, mise or asdf are found too; otherwise,
-  paste the output of `which claude` into *Path to claude*. Settings → Privacy shows which `claude` Remora runs.
+  doesn't need Node.js. On a Mac, installs through Homebrew, npm (nvm, volta), bun, mise or asdf are found too, and
+  Settings → Privacy shows which `claude` Remora runs. Otherwise, paste the output of `which claude` (`where.exe
+  claude` on Windows) into *Path to claude*.
 - **Claude API**: an API key from the Claude Console. Settings → Sources, under *Assistant* → Claude API.
 - **OpenAI-compatible**: OpenAI, Azure OpenAI, Mistral, or a server on your computer such as Ollama or LM Studio.
   Settings → Sources, under *Assistant* → OpenAI-compatible: the server address up to `/v1`, the API key and the

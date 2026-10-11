@@ -34,7 +34,7 @@ first:
 
 When a pull request and a Linear issue have a similar title (“Fix the CSV export” and “ENG-42 CSV export broken”),
 Remora links them, even if nobody did: each one shows the other as a chip (the issue key or the repository and
-number), and clicking the chip opens it. The comparison runs on your Mac.
+number), and clicking the chip opens it. The comparison runs on your computer.
 
 ## Waiting on reviewers
 
@@ -47,5 +47,5 @@ For your own merge requests in *Waiting*, Remora helps when they’re stuck:
 - **Reviewers silent for a day or more**: **Draft a nudge** writes a friendly reminder that says how long it has
   been waiting, and that it’s small or green when it is.
 
-The drafts are written on your Mac from templates and copied to your clipboard. Remora never sends anything:
+The drafts are written on your computer from templates and copied to your clipboard. Remora never sends anything:
 you paste the message where you want.

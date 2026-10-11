@@ -14,8 +14,8 @@ description: Comment Remora range ce qui a besoin de vous. À moi et En attente,
 | **Reportés** | Ce que vous avez mis de côté. Voir [Reporter et rappels](./reporter-et-rappels). |
 | **Terminés** | Ce que vous avez terminé, jusqu’à ce qu’il y ait du nouveau. |
 
-Le compteur de la barre des menus ne compte que *À moi*, sans ce qui est discret (*À lire*, priorité basse).
-Réglages → Général → **Compteur** peut tout compter, ou rien.
+Le compteur de la barre des menus ou de l’icône de la zone de notification ne compte que *À moi*, sans ce qui est
+discret (*À lire*, priorité basse). Réglages → Général → **Compteur** peut tout compter, ou rien.
 
 ## Des verbes, pas des applis
 
@@ -32,9 +32,9 @@ Dans *À moi*, les éléments sont rangés par ce que vous avez à faire, quel q
 | **À lire** | Une info, une annonce. Affiché en dernier, jamais compté |
 | **En attente des autres** | Dans l’onglet *En attente* |
 
-Les messages sont rangés dans *À répondre* ou *À lire* sur votre Mac : d’abord par des règles de mots-clés en
-français et en anglais (« pourrais-tu… », « can you… », « pour info », « FYI »), puis par le modèle de langue
-embarqué d’Apple. Pas d’IA générative, rien n’est envoyé. Dans le doute, Remora choisit *À répondre* : mieux vaut
+Les messages sont rangés dans *À répondre* ou *À lire* sur votre ordinateur : d’abord par des règles de mots-clés en
+français et en anglais (« pourrais-tu… », « can you… », « pour info », « FYI »), puis, sur Mac, par le modèle de
+langue embarqué d’Apple. Pas d’IA générative, rien n’est envoyé. Dans le doute, Remora choisit *À répondre* : mieux vaut
 une question à écarter qu’une question manquée. Les messages des applications Slack (Google Agenda, Jira…) vont
 dans *À lire*, et le rappel d’un événement envoyé par une application quitte la boîte dès que l’événement commence
 (sauf si vous l’avez épinglé ou démarré).
@@ -61,7 +61,7 @@ Dans chaque verbe, Remora place d’abord :
 3. l’échéance la plus proche ;
 4. l’activité la plus récente.
 
-Après une vingtaine de vos actions, Remora apprend aussi, sur votre Mac, ce que vous traitez vite et ce que vous
+Après une vingtaine de vos actions, Remora apprend aussi, sur votre ordinateur, ce que vous traitez vite et ce que vous
 repoussez, et s’en sert pour départager. Une petite étoile sur un élément dit pourquoi il est remonté.
 
 Un verbe chargé montre ses cinq premiers éléments, et **Afficher N de plus** pour le reste. La boîte ne montre
@@ -70,10 +70,11 @@ jamais plus que ce qu’on peut saisir d’un coup d’œil.
 ## Recherche, gestes, clavier
 
 - **La recherche** filtre tous les onglets par titre, contexte (dépôt, canal, clé de ticket), auteur et aperçu.
-- **Deux doigts sur le trackpad** : vers la droite pour terminer, vers la gauche pour reporter.
-- **Clic droit sur un élément** pour toutes les actions : Ouvrir, Ouvrir dans le navigateur, Copier le lien,
+- **Deux doigts sur le trackpad** (Mac) : vers la droite pour terminer, vers la gauche pour reporter. Sous Windows,
+  chaque ligne a ses boutons.
+- **Clic droit sur un élément** (Mac) pour toutes les actions : Ouvrir, Ouvrir dans le navigateur, Copier le lien,
   Épingler, Reporter…, Marquer comme terminé.
-- **Clavier** : ↑ ↓ ou J K pour passer d’un élément à l’autre, ⏎ pour ouvrir (⌥⏎ dans le navigateur), E pour
+- **Clavier** (Mac) : ↑ ↓ ou J K pour passer d’un élément à l’autre, ⏎ pour ouvrir (⌥⏎ dans le navigateur), E pour
   terminer, S pour reporter, P pour épingler. ⌘F pour chercher (ou tapez directement), Échap pour quitter la
   recherche, ⌘R pour actualiser, ⌘Z pour annuler. Le bouton clavier en bas les rappelle.
 - **VoiceOver** lit chaque élément comme un seul bouton ; le rotor des actions propose Marquer comme terminé,
@@ -106,10 +107,10 @@ La première synchronisation d’un nouveau compte ne notifie jamais : connecter
 | Réglage | Effet |
 |---|---|
 | Vérifier toutes les | La fréquence d’actualisation (5 minutes par défaut) |
-| Ouvrir dans les applications installées | Slack et Linear s’ouvrent dans leur appli ; ⌥-clic ouvre la page web |
-| Ouvrir à la connexion | Lancer Remora avec votre Mac |
+| Ouvrir dans les applications installées | Slack et Linear s’ouvrent dans leur appli ; ⌥-clic (Maj-clic sous Windows) ouvre la page web |
+| Ouvrir à la connexion (Lancer au démarrage de Windows) | Lancer Remora à l’ouverture de session |
 | Compteur | *À moi*, toute ma boîte, ou rien |
-| Un compteur par source | Un compteur par outil dans la barre des menus, dans l’ordre du verbe le plus pressant |
-| Pastille citron quand quelque chose m’attend | Met en valeur l’icône quand *À moi* n’est pas vide |
+| Un compteur par source (Mac) | Un compteur par outil dans la barre des menus, dans l’ordre du verbe le plus pressant |
+| Pastille citron quand quelque chose m’attend (Mac) | Met en valeur l’icône quand *À moi* n’est pas vide |
 | Thème | Système, clair ou sombre |
 | Taille du texte (Mac) | Par défaut, grande ou plus grande ; aucun texte sous 11 pt |

@@ -1,6 +1,6 @@
 ---
 title: Reporter et rappels
-description: Reporter un élément à plus tard, avec une raison qui choisit l’heure de retour ; tirer un rappel depuis l’icône de Remora dans la barre des menus ; des conseils sur ce que vous repoussez.
+description: Reporter un élément à plus tard, avec une raison qui choisit l’heure de retour ; tirer un rappel depuis l’icône de Remora dans la barre des menus (Ctrl+Alt+R sous Windows) ; des conseils sur ce que vous repoussez.
 ---
 
 # Reporter et rappels
@@ -16,8 +16,9 @@ Choisissez un raccourci (*Plus tard*, *Ce soir*, *Demain*, *Semaine prochaine*) 
 début compte en minutes, puis en heures, puis en jours, donc un report court ou long tient en un seul geste. Le
 curseur suit le jour choisi : prenez *Demain*, puis ajustez l’heure.
 
-À son retour, l’élément porte une pastille *Rappel* jusqu’à ce que vous l’ouvriez. Les rappels sont programmés
-auprès de macOS : ils arrivent même quand Remora n’est pas lancée.
+À son retour, l’élément porte une pastille *Rappel* jusqu’à ce que vous l’ouvriez. Sur Mac, les rappels sont
+programmés auprès de macOS : ils arrivent même quand Remora n’est pas lancée ; sous Windows, Remora vérifie toutes les
+30 secondes, tant qu’elle tourne, ceux qui sont arrivés à échéance.
 
 ### Dites pourquoi
 
@@ -37,7 +38,7 @@ retour que vous choisissez d’habitude.
 **Faire revenir les éléments reportés en cas de nouvelle activité** (Réglages → Général → Reporter) réveille un
 élément masqué dès qu’il change. *Jusqu’à du nouveau* le fait pour un seul élément, quel que soit le réglage.
 
-**Tout reporter**, sur l’en-tête d’un verbe, reporte tout le groupe d’un coup.
+**Tout reporter**, sur l’en-tête d’un verbe (Mac), reporte tout le groupe d’un coup.
 
 ### Les conseils
 
@@ -48,17 +49,17 @@ L’onglet *Reportés* montre **un conseil à la fois**, quand il y a quelque ch
 - **Une boucle** : le même élément reporté trois fois en un mois. Faites-le maintenant, ou laissez tomber.
 - **Repousser quelque chose** : un dépôt ou un canal que vous reportez sans cesse.
 - **Un embouteillage** : quatre éléments ou plus qui reviennent en même temps. *Les espacer* les échelonne.
-- **Un même sujet** : des éléments reportés qui parlent de la même chose (titres proches, comparés sur votre Mac).
-  Traitez-les ensemble.
+- **Un même sujet** : des éléments reportés qui parlent de la même chose (titres proches, comparés sur votre
+  ordinateur). Traitez-les ensemble.
 - **Devenus silencieux** : des éléments sans activité depuis trois semaines. Peut-être n’ont-ils plus besoin de
   vous.
 
-Si Claude est autorisé, **Trier avec Claude** propose pour chaque élément reporté de le garder, le reprogrammer, le
-laisser tomber ou le faire maintenant. Vous validez chaque changement : seules les nouvelles heures de retour sont
-cochées d’avance ; laisser tomber et faire maintenant sont à cocher vous-même, et appliquer ouvre au plus un élément.
-Voir [L’assistant](./assistant).
+Si l’assistant est connecté, **Trier avec l’assistant** (**Demander**, sous Windows) propose pour chaque élément
+reporté de le garder, le reprogrammer, le laisser tomber ou le faire maintenant. Vous validez chaque changement :
+seules les nouvelles heures de retour sont cochées d’avance ; laisser tomber et faire maintenant sont à cocher
+vous-même, et appliquer ouvre au plus un élément. Voir [L’assistant](./assistant).
 
-Votre historique de reports (les 500 derniers) reste sur votre Mac.
+Votre historique de reports (les 500 derniers) reste sur votre ordinateur.
 
 ## Rappels
 
@@ -69,16 +70,18 @@ Remora garde aussi vos propres rappels, à la façon de Gestimer :
    jours).
 2. **Relâchez**, tapez ce qu’il faut retenir, appuyez sur **Entrée**. **Échap** annule à tout moment.
 
-Le bouton **+ Rappel** en bas de la boîte fait la même chose avec le sélecteur d’heure, tout comme clic droit sur
-le poisson → **Nouveau rappel**.
+Sous Windows, les icônes de la zone de notification ne se tirent pas : appuyez sur **Ctrl+Alt+R**, de partout. Le
+bouton **+ Rappel** en bas de la boîte fait la même chose avec le sélecteur d’heure, tout comme clic droit sur le
+poisson ou l’icône de la zone de notification → **Nouveau rappel**.
 
-À l’échéance, une notification arrive avec **Commencer**, **Terminé** et **Encore 10 minutes**, et le rappel apparaît en haut de
-*À moi*.
+À l’échéance, une notification arrive, avec **Commencer**, **Terminé** et **Encore 10 minutes** sur Mac, et le rappel
+apparaît en haut de *À moi*.
 
 ## En cours
 
-**Commencez** un rappel (depuis sa notification, ou sur n’importe quel élément : survol → **Commencer**, ou clic
-droit) pour dire que vous êtes dessus. Il passe dans un onglet **En cours**, la barre des menus affiche *1 en
-cours (25 min)* avec un poisson qui nage, et la boîte s’ouvre sur cet onglet jusqu’à ce que vous le marquiez **Terminé** ou l’**Arrêtiez** (il
-retrouve alors sa place). Avec une seule tâche en cours, le clic droit sur le poisson propose aussi **Terminé** et
-**Arrêter**. Sous Windows, l’icône de la barre des tâches passe en sombre et son info-bulle affiche la tâche.
+**Commencez** un rappel (depuis sa notification sur Mac, ou sur n’importe quel élément : survol → **Commencer**, ou
+clic droit sur Mac) pour dire que vous êtes dessus. Il passe dans un onglet **En cours**, la barre des menus affiche
+*1 en cours (25 min)* avec un poisson qui nage, et la boîte s’ouvre sur cet onglet jusqu’à ce que vous le marquiez
+**Terminé** ou l’**Arrêtiez** (il retrouve alors sa place). Avec une seule tâche en cours, le clic droit sur le
+poisson propose aussi **Terminé** et **Arrêter**. Sous Windows, l’icône de la barre des tâches passe en sombre et son
+info-bulle affiche la tâche.

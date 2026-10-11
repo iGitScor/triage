@@ -1,13 +1,13 @@
 ---
 title: Connecter vos outils
-description: Pas à pas, connecter GitHub (et Enterprise), GitLab (et auto-hébergé), Slack et Linear à Remora, et Claude en option. Quel jeton, quelle permission, et ce que Remora lit.
+description: Pas à pas, connecter GitHub (et Enterprise), GitLab (et auto-hébergé), Slack, Linear et Notion à Remora, et l’assistant en option. Quel jeton, quelle permission, et ce que Remora lit.
 ---
 
 # Connecter vos outils
 
 Ouvrez la boîte, puis la roue dentée → **Réglages** → **Sources**. Chaque outil a un bouton qui ouvre la bonne page
-pour créer un jeton, et les étapes à suivre. Les jetons sont gardés dans le trousseau de votre Mac, jamais dans un
-fichier.
+pour créer un jeton, et les étapes à suivre. Les jetons sont gardés dans le trousseau de votre Mac ou le Gestionnaire
+d’identification de Windows, jamais dans un fichier.
 
 Remora ne fait que lire. Elle ne publie, ne commente, n’approuve et ne modifie jamais rien dans vos outils. Ce que
 chaque connexion peut joindre est listé dans [Flux de données](/fr/admin/flux-de-donnees).
@@ -59,7 +59,8 @@ Certains espaces de travail exigent qu’un administrateur approuve les nouvelle
 **Request to install** : une fois l’app approuvée, reprenez à l’étape 3.
 :::
 
-Les éléments Slack s’ouvrent dans l’appli Slack, sur la conversation. ⌥-clic ouvre le message exact sur le web.
+Les éléments Slack s’ouvrent dans l’appli Slack, sur la conversation. ⌥-clic (Maj-clic sous Windows) ouvre le
+message exact sur le web.
 
 Une app créée avant les réponses dans les fils n’a que `search:read` : les Réglages l’indiquent à côté du compte.
 Ajoutez les deux permissions d’historique à l’app (*OAuth & Permissions* → *User Token Scopes*), réinstallez-la et
@@ -79,7 +80,7 @@ retard ou à rendre aujourd’hui déclenchent une notification.
 
 ## Notion
 
-Les tâches ouvertes qui vous sont assignées, dans les bases Notion que vous choisissez (sur Mac).
+Les tâches ouvertes qui vous sont assignées, dans les bases Notion que vous choisissez.
 
 1. Réglages → Sources → **Notion** → **Créer un jeton** : dans Notion, **New token**, nommez-le Remora, gardez la
    capacité *Notion API*, choisissez une expiration. Copiez-le (Notion ne l’affiche qu’une fois) et collez-le.
@@ -93,17 +94,18 @@ Pas de bouton **New token** ? Votre espace ne laisse que les propriétaires cré
 d’eux, ou collez le secret d’une connexion interne créée par un propriétaire, et ajoutez **votre e-mail Notion**
 pour que Remora trouve vos tâches.
 
-## Claude (facultatif)
+## L’assistant (facultatif)
 
 L’assistant ajoute un court brief de quoi traiter d’abord, des résumés en deux phrases des listes chargées, et une aide
 pour trier ce que vous reportez sans cesse. Il reste désactivé tant que l’IA externe n’est pas autorisée, dans
-Réglages → Confidentialité ou par votre organisation. Voir [L’assistant](./assistant).
+Réglages → Confidentialité ou par votre organisation (sauf un serveur sur votre ordinateur). Voir
+[L’assistant](./assistant).
 
-- **Claude Code** (recommandé) : utilise le Claude Code installé et connecté sur votre Mac, sur votre abonnement
-  Claude. Réglages → Sources, section *Assistant* → Claude Code → **Connecter**. L’installeur d’Anthropic est le
-  plus simple : il n’a pas besoin de Node.js. Les installations par Homebrew, npm (nvm, volta), bun, mise ou asdf
-  sont trouvées aussi ; sinon, collez le résultat de `which claude` dans *Chemin de claude*. Réglages →
-  Confidentialité indique quel `claude` Remora lance.
+- **Claude Code** (recommandé) : utilise le Claude Code installé et connecté sur votre ordinateur, sur votre
+  abonnement Claude. Réglages → Sources, section *Assistant* → Claude Code → **Connecter**. L’installeur d’Anthropic
+  est le plus simple : il n’a pas besoin de Node.js. Sur Mac, les installations par Homebrew, npm (nvm, volta), bun,
+  mise ou asdf sont trouvées aussi, et Réglages → Confidentialité indique quel `claude` Remora lance. Sinon, collez le
+  résultat de `which claude` (`where.exe claude` sous Windows) dans *Chemin de claude*.
 - **API Claude** : une clé d’API de la Claude Console. Réglages → Sources, section *Assistant* → Claude API.
 - **OpenAI-compatible** : OpenAI, Azure OpenAI, Mistral, ou un serveur sur votre ordinateur comme Ollama ou
   LM Studio. Réglages → Sources, section *Assistant* → OpenAI-compatible : l’adresse du serveur jusqu’à `/v1`, la
