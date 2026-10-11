@@ -18,6 +18,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Mac: a refresh still running when you erase local data, disconnect a tool or block it in Privacy settings no
+  longer brings its items back on screen and on disk.
 - A brief, summary or triage still being written when you erase local data, remove the assistant or turn AI off
   is now dropped, instead of coming back on screen and on disk.
 - In the docs, *Français* and *English* lead to the same page in the other language, instead of a missing page.

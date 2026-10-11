@@ -88,6 +88,8 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
     static let assistantAnswer =
         #"{"choices": [{"message": {"content": "{\"summary\": \"Two reviews wait.\", \"focus\": []}", "refusal": null}, "finish_reason": "stop"}]}"#
     var whileAnswering: (@Sendable () async -> Void)?
+    /// What happens while a tool's request is answered, once.
+    var whileFetching: (@Sendable () async -> Void)?
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         requests += 1
@@ -98,6 +100,10 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
                 Data(Self.assistantAnswer.utf8),
                 HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
             )
+        }
+        if let hook = whileFetching {
+            whileFetching = nil
+            await hook()
         }
         if offline { throw URLError(.notConnectedToInternet) }
         if let status {

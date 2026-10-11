@@ -555,6 +555,7 @@ final class InboxModel {
         let jobs = due.map { account in
             (account.id, Result { try sourcePlugin(account, secrets: environment.secrets.secrets(for: account.id)) })
         }
+        var kept = 0
         await withTaskGroup(of: (UUID, Result<SourceSnapshot, Error>).self) { group in
             for (id, made) in jobs {
                 group.addTask {
@@ -569,6 +570,10 @@ final class InboxModel {
                 }
             }
             for await (id, result) in group {
+                // Fetches run while the main actor is free: an account erased, disconnected or blocked by the policy
+                // meanwhile must not come back (SEC-26, as SEC-09 on Windows). A reconnected account has a new id.
+                guard let account = account(id), refusal(for: account) == nil else { continue }
+                kept += 1
                 switch result {
                 case .success(let snapshot):
                     backoff[id] = nil
@@ -591,6 +596,8 @@ final class InboxModel {
             }
         }
         lastRefresh = .now
+        // Nothing to store: in particular, nothing written back after Erase.
+        guard kept > 0 else { return }
         persist(cacheStore, itemsByAccount)
         pruneStates()
         refreshInsights()

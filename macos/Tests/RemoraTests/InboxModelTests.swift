@@ -291,6 +291,37 @@ struct InboxModelTests {
         #expect(harness.model().accounts.isEmpty, "saved")
     }
 
+    /// SEC-26: a refresh started before Erase finishes after it, and used to write the inbox back.
+    @Test func aRefreshThatFinishesAfterEraseWritesNothing() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let posted = harness.notifier.posted.count
+        harness.server.whileFetching = { await MainActor.run { try? model.eraseLocalData() } }
+        await model.refresh(manual: true)
+        #expect(model.allItems.isEmpty && model.errors.isEmpty)
+        #expect(harness.writtenText().isEmpty, "nothing back on disk")
+        #expect(harness.notifier.posted.count == posted)
+    }
+
+    @Test func resultsForAnAccountDisconnectedDuringARefreshAreDropped() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let account = try #require(model.accounts.first)
+        harness.server.whileFetching = { await MainActor.run { model.disconnect(account) } }
+        await model.refresh(manual: true)
+        #expect(model.allItems.isEmpty)
+        #expect(!harness.writtenText().contains("Fix CSV export"))
+    }
+
+    @Test func aToolBlockedDuringARefreshKeepsNothing() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        harness.server.whileFetching = { await MainActor.run { model.preferences.allowedPlugins = ["github"] } }
+        await model.refresh(manual: true)
+        #expect(model.allItems.isEmpty)
+        #expect(!harness.writtenText().contains("Fix CSV export"))
+    }
+
     /// When the Keychain refuses (Deny), connecting fails and no account is added.
     @Test func aRefusedTokenFailsTheConnection() async throws {
         let harness = Harness()
