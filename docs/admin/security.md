@@ -51,7 +51,7 @@ details. It covers the macOS app and, where it differs, the Windows app (in prev
 | Question | Answer |
 |---|---|
 | Can IT restrict it? | Yes. macOS: a configuration profile (MDM). Windows: Group Policy or Intune, under `HKLM\SOFTWARE\Policies\Remora`. See [Managing the policy](./mdm). |
-| What can be enforced? | Which tools may connect, external AI on or off, the assistant's servers (`AllowedAIServers`, `AIServer`, `AllowLocalAI`), the tools kept from the assistant, the allowed models, avatars and updates. On macOS also hidden notification content, the refresh interval, opening in desktop apps and the Claude Code path. |
+| What can be enforced? | Which tools may connect, external AI on or off, the assistant's servers (`AllowedAIServers`, `AIServer`, `AllowLocalAI`), the tools kept from the assistant, the allowed models, hidden notification content, the refresh interval, opening in desktop apps, the Claude Code path, avatars and updates, on macOS (profile), Windows (registry) and Linux (policy file). Ready-to-import files come with each release. |
 | What if a policy value is wrong? | It is applied as strictly as possible: an unreadable list allows nothing, an unreadable switch is off. |
 | Transport | HTTPS only, with the system's TLS. Plain HTTP is refused, except to `localhost`. Redirects to another host are refused, so a token never follows one. |
 

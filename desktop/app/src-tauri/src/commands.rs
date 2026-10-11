@@ -164,6 +164,14 @@ pub fn open_setup(app: AppHandle, plugin_id: String, host: Option<String>) -> Re
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 
+/// Settings → Updates: the licences of what the app bundles (DEP-07), shipped next to it.
+#[tauri::command]
+pub fn open_notices(app: AppHandle) -> Result<()> {
+    use tauri::Manager;
+    let path = app.path().resource_dir().map_err(|e| e.to_string())?.join("THIRD-PARTY-NOTICES.txt");
+    app.opener().open_path(path.to_string_lossy(), None::<&str>).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn sources(state: State<'_, AppState>) -> Result<Vec<SourceInfo>> {
     Ok(state.inbox.lock().await.sources())

@@ -1,6 +1,8 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
+    "Your organization’s Claude Code path can’t be read, so Claude Code is off. Ask your IT team to check it.": "Le chemin de Claude Code fixé par votre organisation est illisible : Claude Code est désactivé. Demandez à votre service informatique de le vérifier.",
+    "Third-party licences": "Licences tierces",
     # Linux
     "Remora only runs a program named claude that you or the system own, from a folder on this computer, which %@ isn’t.": "Remora n’exécute qu’un programme nommé claude qui vous appartient ou appartient au système, depuis un dossier de cet ordinateur, ce que %@ n’est pas.",
     "Inbox cache, settings and snooze history in %@. Tokens are in the system keyring.": "Cache de la boîte, réglages et historique des reports dans %@. Les jetons sont dans le trousseau du système.",

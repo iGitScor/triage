@@ -7,6 +7,9 @@ on:
       - "desktop/**"
       - "macos/scripts/translations_fr.py"
       - "scripts/make-emoji.py"
+      - "scripts/make-policy-files.py"
+      - "policy/**"
+      - "scripts/make-notices.py"
       - "macos/Resources/Logos/**"
       - "site/public/site/tokens.css"
       - ".github/workflows/desktop.yml"
@@ -15,6 +18,9 @@ on:
       - "desktop/**"
       - "macos/scripts/translations_fr.py"
       - "scripts/make-emoji.py"
+      - "scripts/make-policy-files.py"
+      - "policy/**"
+      - "scripts/make-notices.py"
       - "macos/Resources/Logos/**"
       - "site/public/site/tokens.css"
       - ".github/workflows/desktop.yml"
@@ -61,6 +67,17 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace
+      # The licences of what the app bundles (DEP-07), with cargo-about pinned by checksum.
+      - name: Third-party notices
+        shell: bash
+        env:
+          ABOUT: https://github.com/EmbarkStudios/cargo-about/releases/download/0.9.2/cargo-about-0.9.2-x86_64-pc-windows-msvc.tar.gz
+          ABOUT_SHA256: 1c03e5890238562497c2d89a3b75b02560af349c1fc3e713d3284f532a5cd748
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/about.tgz" "$ABOUT"
+          echo "$ABOUT_SHA256  $RUNNER_TEMP/about.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/about.tgz" -C "$RUNNER_TEMP"
+          CARGO_ABOUT="$RUNNER_TEMP/cargo-about-0.9.2-x86_64-pc-windows-msvc/cargo-about.exe" python ../scripts/make-notices.py
       - name: Build the installer
         run: npx tauri build
         working-directory: desktop/app
@@ -100,10 +117,22 @@ jobs:
         working-directory: desktop/app
       - name: Formatting (rustfmt.toml)
         run: cargo fmt --all --check
+      - name: The policy files match scripts/make-policy-files.py
+        run: python3 ../scripts/make-policy-files.py --check
       - name: Lint
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace
+      # The licences of what the app bundles (DEP-07), with cargo-about pinned by checksum.
+      - name: Third-party notices
+        env:
+          ABOUT: https://github.com/EmbarkStudios/cargo-about/releases/download/0.9.2/cargo-about-0.9.2-x86_64-unknown-linux-musl.tar.gz
+          ABOUT_SHA256: 9099a59e820c38a68b9d65f300662a567d56562f9a10f6aa4c7e86c17c2566af
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/about.tgz" "$ABOUT"
+          echo "$ABOUT_SHA256  $RUNNER_TEMP/about.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/about.tgz" -C "$RUNNER_TEMP"
+          CARGO_ABOUT="$RUNNER_TEMP/cargo-about-0.9.2-x86_64-unknown-linux-musl/cargo-about" python3 ../scripts/make-notices.py
       - name: Build the AppImage and the .deb
         run: npx tauri build --bundles appimage,deb
         working-directory: desktop/app

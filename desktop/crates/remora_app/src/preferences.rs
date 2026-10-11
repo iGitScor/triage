@@ -49,6 +49,14 @@ pub struct Preferences {
     pub welcomed: bool,
 }
 
+impl Preferences {
+    /// Whether notifications from this source hide what was written: the user's choice or the organization's (`*`:
+    /// every source).
+    pub fn hides_content(&self, plugin_id: &str) -> bool {
+        self.hidden_content_plugins.iter().any(|p| p == plugin_id || p == "*")
+    }
+}
+
 impl Default for Preferences {
     fn default() -> Self {
         Preferences {

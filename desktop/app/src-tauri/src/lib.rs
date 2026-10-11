@@ -184,6 +184,7 @@ pub fn run() {
             commands::discard_triage,
             commands::hide,
             commands::quit,
+            commands::open_notices,
         ])
         .setup(move |app| {
             let window = main_window(app.handle());
@@ -358,7 +359,7 @@ async fn background(app: AppHandle) {
     loop {
         refresh(&app, manual).await;
         manual = false;
-        let minutes = app.state::<AppState>().inbox.lock().await.preferences.refresh_minutes.max(1);
+        let minutes = app.state::<AppState>().inbox.lock().await.effective_preferences().refresh_minutes.max(1);
         let deadline = tokio::time::Instant::now() + Duration::from_secs(u64::from(minutes) * 60);
         loop {
             let state = app.state::<AppState>();

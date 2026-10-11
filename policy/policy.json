@@ -1,0 +1,9 @@
+{
+  "AllowedPlugins": [
+    "github",
+    "gitlab",
+    "linear"
+  ],
+  "AllowExternalAI": false,
+  "AllowRemoteImages": true
+}

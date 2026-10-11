@@ -9,6 +9,8 @@ DerivedData/
 *.xcodeproj
 
 # Rust and Tauri (desktop/)
+# Written by scripts/make-notices.py (or a placeholder by build.rs).
+desktop/app/src-tauri/notices/
 target/
 node_modules/
 dist/

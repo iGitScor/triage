@@ -47,9 +47,25 @@ pub const COMMANDS: &[&str] = &[
     "discard_triage",
     "hide",
     "quit",
+    "open_notices",
 ];
 
+/// THIRD-PARTY-NOTICES.txt is written by scripts/make-notices.py in CI and releases; a local build ships a note
+/// saying so, since the bundle needs the file.
+fn notices() {
+    let path = std::path::Path::new("notices/THIRD-PARTY-NOTICES.txt");
+    if !path.exists() {
+        std::fs::create_dir_all("notices").expect("the notices folder");
+        std::fs::write(
+            path,
+            "This development build doesn't list third-party licences: releases do (scripts/make-notices.py).\n",
+        )
+        .expect("the placeholder notices");
+    }
+}
+
 fn main() {
+    notices();
     tauri_build::try_build(
         tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(COMMANDS)),
     )

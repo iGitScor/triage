@@ -51,7 +51,7 @@ la page qui donne le détail. Elle couvre l’app macOS et, quand elle diffère,
 | Question | Réponse |
 |---|---|
 | La DSI peut-elle restreindre l’app ? | Oui. macOS : un profil de configuration (MDM). Windows : stratégie de groupe ou Intune, sous `HKLM\SOFTWARE\Policies\Remora`. Voir [Gérer la politique](./mdm). |
-| Que peut-on imposer ? | Les outils autorisés, l’IA externe, les serveurs de l’assistant (`AllowedAIServers`, `AIServer`, `AllowLocalAI`), les outils cachés à l’assistant, les modèles autorisés, les avatars et les mises à jour. Sur macOS aussi le contenu masqué des notifications, la fréquence d’actualisation, l’ouverture dans les apps et le chemin de Claude Code. |
+| Que peut-on imposer ? | Les outils autorisés, l’IA externe, les serveurs de l’assistant (`AllowedAIServers`, `AIServer`, `AllowLocalAI`), les outils cachés à l’assistant, les modèles autorisés, le contenu masqué des notifications, la fréquence d’actualisation, l’ouverture dans les apps, le chemin de Claude Code, les avatars et les mises à jour, sur macOS (profil), Windows (registre) et Linux (fichier de politique). Des fichiers prêts à importer accompagnent chaque version. |
 | Et si une valeur de la politique est erronée ? | Elle est appliquée le plus strictement possible : une liste illisible n’autorise rien, un interrupteur illisible est désactivé. |
 | Transport | HTTPS uniquement, avec le TLS du système. Le HTTP en clair est refusé, sauf vers `localhost`. Les redirections vers un autre hôte sont refusées : un jeton ne les suit jamais. |
 

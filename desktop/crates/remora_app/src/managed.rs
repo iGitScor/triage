@@ -11,7 +11,9 @@ use std::collections::HashSet;
 /// For the OpenAI-compatible assistant (AI-23): `AllowedAIServers` (REG_MULTI_SZ of URL prefixes), `AIServer`
 /// (REG_SZ, the server, locked in Settings) and `AllowLocalAI` (REG_DWORD 0/1, a server on this computer).
 /// For every assistant, as on macOS: `AIExcludedSources` (REG_MULTI_SZ of plugin IDs, or `reminders`), added to the
-/// user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs).
+/// user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs). And the Mac's other
+/// settings: `HiddenContentSources` (REG_MULTI_SZ, added to the user's), `RefreshMinutes` (REG_DWORD, 1 to 60),
+/// `OpenInApps` (REG_DWORD 0/1) and `ClaudeCodePath` (REG_SZ).
 /// A key that is set wins over the user's own choice.
 ///
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -33,6 +35,14 @@ pub struct Managed {
     pub ai_excluded_sources: Option<Vec<String>>,
     /// The models the assistant may use, by any provider's ids.
     pub allowed_ai_models: Option<Vec<String>>,
+    /// Sources whose notifications don't show what was written, on top of the user's. `*`: every source (an
+    /// unreadable value).
+    pub hidden_content_sources: Option<Vec<String>>,
+    /// The refresh interval, 1 to 60 minutes; another number is ignored.
+    pub refresh_minutes: Option<u32>,
+    pub open_in_apps: Option<bool>,
+    /// Where Claude Code is, locked in Settings. Empty: unreadable, so Claude Code is refused.
+    pub claude_code_path: Option<String>,
     /// Names of the values that were present but unreadable, applied as "deny".
     pub unreadable: Vec<String>,
 }
@@ -40,7 +50,7 @@ pub struct Managed {
 pub const POLICY_KEY: &str = r"SOFTWARE\Policies\Remora";
 /// Linux: the same values as a root-owned JSON file (LINUX-05).
 pub const POLICY_FILE: &str = "/etc/remora/policy.json";
-pub const VALUES: [&str; 9] = [
+pub const VALUES: [&str; 13] = [
     "AllowedPlugins",
     "AllowExternalAI",
     "AllowRemoteImages",
@@ -50,6 +60,10 @@ pub const VALUES: [&str; 9] = [
     "AllowLocalAI",
     "AIExcludedSources",
     "AllowedAIModels",
+    "HiddenContentSources",
+    "RefreshMinutes",
+    "OpenInApps",
+    "ClaudeCodePath",
 ];
 
 /// A registry value as found, before interpretation.
@@ -247,6 +261,23 @@ impl Managed {
             unreadable.push("AllowedAIModels".to_string());
             None
         });
+        let hidden_content_sources = plugin_list(value("HiddenContentSources")).unwrap_or_else(|()| {
+            unreadable.push("HiddenContentSources".to_string());
+            Some(vec!["*".to_string()])
+        });
+        let refresh_minutes = match value("RefreshMinutes") {
+            RawValue::Missing => None,
+            RawValue::Number(n) => u32::try_from(n).ok().filter(|n| (1..=60).contains(n)),
+            RawValue::String(text) => text.trim().parse().ok().filter(|n| (1..=60).contains(n)),
+            RawValue::MultiString(_) | RawValue::Other => {
+                unreadable.push("RefreshMinutes".to_string());
+                None
+            }
+        };
+        let claude_code_path = text(value("ClaudeCodePath")).unwrap_or_else(|()| {
+            unreadable.push("ClaudeCodePath".to_string());
+            Some(String::new())
+        });
         let mut flag = |name: &str| match switch(value(name)) {
             Ok(on) => on,
             Err(()) => {
@@ -259,6 +290,7 @@ impl Managed {
         // Unreadable means off: an update the organization didn't plan is the riskier side.
         let automatic_updates = flag("AutomaticUpdates");
         let allow_local_ai = flag("AllowLocalAI");
+        let open_in_apps = flag("OpenInApps");
         Managed {
             allowed_plugins,
             allow_external_ai,
@@ -269,6 +301,10 @@ impl Managed {
             allow_local_ai,
             ai_excluded_sources,
             allowed_ai_models,
+            hidden_content_sources,
+            refresh_minutes,
+            open_in_apps,
+            claude_code_path,
             unreadable,
         }
     }
@@ -300,6 +336,20 @@ impl Managed {
     /// so no assistant runs, on this computer or elsewhere.
     fn ai_lists_unreadable(&self) -> bool {
         self.unreadable.iter().any(|name| name == "AIExcludedSources" || name == "AllowedAIModels")
+    }
+
+    /// What Remora acts on: the user's preferences with the organization's settings in place. Hidden content is
+    /// only ever added to.
+    pub fn effective(&self, preferences: &Preferences) -> Preferences {
+        let mut effective = preferences.clone();
+        for id in self.hidden_content_sources.iter().flatten() {
+            if !effective.hidden_content_plugins.contains(id) {
+                effective.hidden_content_plugins.push(id.clone());
+            }
+        }
+        effective.refresh_minutes = self.refresh_minutes.unwrap_or(effective.refresh_minutes);
+        effective.open_in_apps = self.open_in_apps.unwrap_or(effective.open_in_apps);
+        effective
     }
 
     /// What the assistant may read and use: the user's exclusions plus the organization's, and the organization's
@@ -561,5 +611,42 @@ mod tests {
 
         std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o666)).unwrap();
         assert_eq!(Managed::read_file(&file, false).unreadable.len(), VALUES.len(), "writable by others");
+    }
+
+    /// SEC-20 on Windows and Linux: the Mac's other managed settings, with the same rules.
+    #[test]
+    fn the_macs_other_settings_are_read() {
+        let it = Managed::from_values(values(&[
+            ("HiddenContentSources", RawValue::MultiString(vec!["Slack".into()])),
+            ("RefreshMinutes", RawValue::Number(15)),
+            ("OpenInApps", RawValue::Number(0)),
+            ("ClaudeCodePath", RawValue::String(" /opt/claude/bin/claude ".into())),
+        ]));
+        assert!(it.unreadable.is_empty());
+        let user = Preferences { hidden_content_plugins: vec!["github".into()], ..Preferences::default() };
+        let effective = it.effective(&user);
+        assert_eq!(effective.hidden_content_plugins, ["github", "slack"], "added to the user's");
+        assert_eq!((effective.refresh_minutes, effective.open_in_apps), (15, false));
+        assert_eq!(it.claude_code_path.as_deref(), Some("/opt/claude/bin/claude"));
+        assert!(!it.is_managed(), "the Privacy settings stay the user's");
+
+        let odd = Managed::from_values(values(&[("RefreshMinutes", RawValue::Number(0))]));
+        assert_eq!(odd.effective(&Preferences::default()).refresh_minutes, 5, "out of range: ignored");
+        assert!(odd.unreadable.is_empty());
+    }
+
+    #[test]
+    fn the_macs_other_settings_fail_closed() {
+        let broken = Managed::from_values(values(&[
+            ("HiddenContentSources", RawValue::Number(1)),
+            ("RefreshMinutes", RawValue::Other),
+            ("OpenInApps", RawValue::String("maybe".into())),
+            ("ClaudeCodePath", RawValue::Number(1)),
+        ]));
+        assert_eq!(broken.unreadable, ["HiddenContentSources", "RefreshMinutes", "ClaudeCodePath", "OpenInApps"]);
+        let effective = broken.effective(&Preferences::default());
+        assert!(effective.hides_content("slack") && effective.hides_content("linear"), "every source hidden");
+        assert!(!effective.open_in_apps && effective.refresh_minutes == 5);
+        assert_eq!(broken.claude_code_path.as_deref(), Some(""), "Claude Code refused");
     }
 }

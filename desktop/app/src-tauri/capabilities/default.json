@@ -38,6 +38,7 @@
     "allow-install-update",
     "allow-hide",
     "allow-quit",
+    "allow-open-notices",
     "allow-snooze-advice",
     "allow-dismiss-insight",
     "allow-spread",

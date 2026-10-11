@@ -4,7 +4,7 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture i18n i18n-check test-counts \
-	docs docs-build a11y links site site-preview screenshots deploy clean
+	policy-files docs docs-build a11y links site site-preview screenshots deploy clean
 
 help: ## List the targets
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-13s %s\n", $$1, $$2}'
@@ -82,6 +82,9 @@ desktop-fixture: ## Regenerate the Windows and Linux preview's demo data (a test
 i18n: ## Regenerate the French strings of both apps from the dictionary
 	python3 macos/scripts/make-strings.py
 	python3 desktop/app/scripts/make-i18n.py
+
+policy-files: ## Write the ready-to-import policy files in policy/ (profile, .reg, ADMX/ADML, Jamf, Linux)
+	python3 scripts/make-policy-files.py
 
 test-counts: ## Write the number of tests into the READMEs and the Windows docs (the pre-commit hook does it too)
 	python3 scripts/test-counts.py

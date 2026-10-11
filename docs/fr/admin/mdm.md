@@ -75,6 +75,19 @@ autorise `openai` devrait définir l’une des deux.
 Un compte déjà connecté à un outil que la politique n’autorise plus cesse d’être actualisé à la synchronisation
 suivante.
 
+## Des fichiers prêts à importer
+
+Pour ne rien saisir à la main, chaque version publiée joint **`Remora-policy-files.zip`** (aussi dans le dossier
+[`policy/`](https://github.com/iGitScor/triage/tree/main/policy) du dépôt) :
+
+- `Remora.mobileconfig` : le profil ci-dessous, prêt à envoyer (remplacez les identifiants et les UUID par les
+  vôtres) ;
+- `Remora.jamf.json` : un schéma Jamf Pro, pour que *Application & Custom Settings* affiche chaque clé en formulaire ;
+- `Remora.admx` avec `Remora.adml` en `en-US` et `fr-FR` : les modèles de stratégie de groupe (chaque clé sous
+  *Remora*, pour l’ordinateur ou l’utilisateur), importables aussi dans Intune ;
+- `Remora.reg` : la même politique que le profil, pour `reg import` ;
+- `policy.json` : la même pour Linux.
+
 ## Un profil complet
 
 Ce profil autorise GitHub, GitLab et Linear, interdit l’IA externe et garde les avatars. Remplacez les deux UUID par
@@ -133,6 +146,10 @@ puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par 
 | `AllowLocalAI` | `REG_DWORD` | `1` pour autoriser un serveur sur cet ordinateur, `0` pour le refuser |
 | `AIExcludedSources` | `REG_MULTI_SZ` | Les outils dont les éléments ne parviennent jamais à l’assistant, un identifiant par ligne (`reminders` pour les rappels) ; verrouillé dans les Réglages |
 | `AllowedAIModels` | `REG_MULTI_SZ` | Les modèles que l’assistant peut utiliser, un identifiant par ligne |
+| `HiddenContentSources` | `REG_MULTI_SZ` | Les outils dont les notifications ne montrent pas ce qui a été écrit, un identifiant par ligne |
+| `RefreshMinutes` | `REG_DWORD` | La fréquence de vérification des outils, de 1 à 60 |
+| `OpenInApps` | `REG_DWORD` | `1` pour ouvrir Slack et Linear dans leur app, `0` pour la page web |
+| `ClaudeCodePath` | `REG_SZ` | Le `claude.exe` (ou `claude.cmd`) que Remora exécute |
 
 Déployez-les par une préférence de stratégie de groupe (Configuration ordinateur → Préférences → Paramètres Windows →
 Registre), un script de correction ou de configuration Intune, ou un fichier `.reg`. La même politique que le profil

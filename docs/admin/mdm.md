@@ -73,6 +73,18 @@ should set one of them.
 
 An account that is already connected to a tool the policy no longer allows stops refreshing at the next sync.
 
+## Ready-to-import files
+
+So nothing has to be typed by hand, each release attaches **`Remora-policy-files.zip`** (also in the repository’s
+[`policy/`](https://github.com/iGitScor/triage/tree/main/policy) folder):
+
+- `Remora.mobileconfig`: the profile below, ready to upload (replace the identifiers and UUIDs with yours);
+- `Remora.jamf.json`: a Jamf Pro schema, so *Application & Custom Settings* shows every key as a form;
+- `Remora.admx` with `en-US` and `fr-FR` `Remora.adml`: Group Policy templates (every key under *Remora*, for the
+  computer or the user), also importable in Intune;
+- `Remora.reg`: the same policy as the profile, for `reg import`;
+- `policy.json`: the same for Linux.
+
 ## A complete profile
 
 This profile allows GitHub, GitLab and Linear, forbids external AI, and keeps avatars. Replace the two UUIDs with
@@ -131,6 +143,10 @@ then from `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` for user-scoped policies 
 | `AllowLocalAI` | `REG_DWORD` | `1` to allow a server on this computer, `0` to refuse it |
 | `AIExcludedSources` | `REG_MULTI_SZ` | Tools whose items never reach the assistant, one ID per line (`reminders` for reminders); locked in Settings |
 | `AllowedAIModels` | `REG_MULTI_SZ` | The models the assistant may use, one ID per line |
+| `HiddenContentSources` | `REG_MULTI_SZ` | Tools whose notifications don’t show what was written, one ID per line |
+| `RefreshMinutes` | `REG_DWORD` | How often tools are checked, 1 to 60 |
+| `OpenInApps` | `REG_DWORD` | `1` to open Slack and Linear in their app, `0` for the web page |
+| `ClaudeCodePath` | `REG_SZ` | The `claude.exe` (or `claude.cmd`) Remora runs |
 
 Deploy them with a Group Policy Preference (Computer Configuration → Preferences → Windows Settings → Registry), an
 Intune remediation or configuration script, or a `.reg` file. The same policy as the profile above, in PowerShell

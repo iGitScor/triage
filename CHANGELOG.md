@@ -7,6 +7,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- For IT: ready-to-import policy files with each release (`Remora-policy-files.zip`): a configuration profile, a Jamf
+  schema, Group Policy templates (ADMX, English and French), a `.reg` file and the Linux `policy.json`.
+- Windows and Linux: the organization can also hide message content in notifications, set the refresh interval,
+  choose whether items open in desktop apps, and fix the Claude Code path, as on Macs.
+- Windows and Linux: the licences of everything the app bundles ship with it (Settings → Updates → Third-party
+  licences).
 - Linux, in preview and community supported: an AppImage, which updates itself, and a .deb for Ubuntu and Debian.
   Tokens stay in the system keyring (GNOME Keyring, KWallet or KeePassXC), data in a folder only you can read, and
   IT can set the policy in `/etc/remora/policy.json`. Open it from the tray menu; on a desktop without a tray it

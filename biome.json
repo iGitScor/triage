@@ -10,6 +10,7 @@
       "**/*.{ts,js,mjs,svelte,css,json,jsonc}",
       "!**/package-lock.json",
       "!desktop/app/src/i18n/fr.json",
+      "!policy",
       "!desktop/app/src-tauri/gen"
     ]
   },

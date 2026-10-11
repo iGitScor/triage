@@ -88,6 +88,10 @@ pub struct OpenPlan {
     pub web: Option<String>,
 }
 
+/// Shown when the organization's `ClaudeCodePath` can't be read: Claude Code isn't run at all.
+pub const CLAUDE_CODE_PATH_UNREADABLE: &str =
+    "Your organization’s Claude Code path can’t be read, so Claude Code is off. Ask your IT team to check it.";
+
 /// Everything the inbox knows, and every action on it. Ported from the macOS app's `InboxModel`.
 pub struct Inbox {
     store: Option<JsonStore>,
@@ -379,7 +383,7 @@ impl Inbox {
             return vec![];
         }
         let mut out = vec![];
-        let interval = chrono::Duration::minutes(i64::from(self.preferences.refresh_minutes.max(1)));
+        let interval = chrono::Duration::minutes(i64::from(self.effective_preferences().refresh_minutes.max(1)));
         // Every source failed to connect: that's the network, not the tools. Said once, and no slow-down for it. With a
         // single source, an unreachable server and no network look the same: it says it can't reach the server.
         let offline = results.len() > 1
@@ -479,6 +483,7 @@ impl Inbox {
     /// Ends snoozes whose time has come: the item comes back marked as a reminder, with a notification.
     pub fn tick(&mut self, now: DateTime<Utc>) -> Vec<Notice> {
         let items = self.all_items();
+        let preferences = self.effective_preferences();
         let mut out = vec![];
         for (id, state) in self.states.iter_mut() {
             let Some(snooze) = state.snooze.clone().filter(|s| s.until <= now) else { continue };
@@ -487,7 +492,7 @@ impl Inbox {
             state.done = None;
             if let Some(item) = items.iter().find(|i| &i.id == id) {
                 let reminder = item.bundle == InboxBundle::reminders();
-                let hidden = self.preferences.hidden_content_plugins.contains(&item.plugin_id);
+                let hidden = preferences.hides_content(&item.plugin_id);
                 let notice = Notice {
                     kind: NoticeKind::Reminder,
                     item_id: id.clone(),
@@ -509,7 +514,7 @@ impl Inbox {
     /// Hides what was written when the user doesn't want that integration's content on screen.
     fn respecting_privacy(&self, notice: Notice, plugin_id: Option<&str>) -> Notice {
         match plugin_id {
-            Some(id) if self.preferences.hidden_content_plugins.iter().any(|p| p == id) => notice.redacted(),
+            Some(id) if self.effective_preferences().hides_content(id) => notice.redacted(),
             _ => notice,
         }
     }
@@ -699,6 +704,27 @@ impl Inbox {
         account
     }
 
+    /// The user's preferences with the organization's settings in place: what Remora acts on.
+    pub fn effective_preferences(&self) -> Preferences {
+        self.managed.effective(&self.preferences)
+    }
+
+    /// The organization's Claude Code path wins over the account's, and still passes the plugin's own checks; one
+    /// that can't be read turns Claude Code off.
+    fn with_managed_claude_code_path(&self, account: &mut Account) -> Result<(), String> {
+        if account.plugin_id != claude::code::ID {
+            return Ok(());
+        }
+        match self.managed.claude_code_path.as_deref() {
+            Some("") => Err(CLAUDE_CODE_PATH_UNREADABLE.to_string()),
+            Some(path) => {
+                account.settings.insert("path".into(), path.to_string());
+                Ok(())
+            }
+            None => Ok(()),
+        }
+    }
+
     /// What the assistant may read and use: everything but the sources you or your organization keep from it, with the
     /// organization's models.
     pub fn assistant_policy(&self) -> AssistantPolicy {
@@ -739,6 +765,7 @@ impl Inbox {
             manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
         let mut constrained = account.clone();
         constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
+        self.with_managed_claude_code_path(&mut constrained)?;
         claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.to_string())
     }
 
@@ -1077,7 +1104,8 @@ impl Inbox {
         let item = self.item(id).ok_or("This item is gone.")?;
         self.opened(id);
         let http_hosts = links::http_hosts(self.accounts.iter().find(|a| a.id == item.account_id));
-        let app = item.app_url.filter(|url| !in_browser && self.preferences.open_in_apps && links::is_app_link(url));
+        let opens_apps = self.effective_preferences().open_in_apps;
+        let app = item.app_url.filter(|url| !in_browser && opens_apps && links::is_app_link(url));
         let web = item.url.filter(|url| links::is_web_link(url, &http_hosts));
         Ok(OpenPlan { app, web })
     }
@@ -1141,6 +1169,7 @@ impl Inbox {
             manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
         let mut constrained = account.clone();
         constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
+        self.with_managed_claude_code_path(&mut constrained)?;
         let plugin = claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.to_string())?;
         Ok((account, plugin))
     }
@@ -2156,6 +2185,27 @@ mod tests {
             connect_openai(&inbox, "http://llm.lan/v1").err().as_deref(),
             Some("Only a server on this computer can use http: use https."),
         );
+    }
+
+    /// The organization's Claude Code path wins; one it can't read turns Claude Code off.
+    #[test]
+    fn the_organizations_claude_code_path() {
+        let mut inbox = inbox();
+        inbox.preferences.allow_external_ai = true;
+        let connect = |inbox: &Inbox| {
+            inbox
+                .prepare_assistant_connect(
+                    "claude-code",
+                    None,
+                    HashMap::new(),
+                    &HashMap::new(),
+                    Arc::new(NoNetwork),
+                    "en",
+                )
+                .map(|(account, _)| account)
+        };
+        inbox.managed.claude_code_path = Some(String::new());
+        assert_eq!(connect(&inbox).err().as_deref(), Some(CLAUDE_CODE_PATH_UNREADABLE));
     }
 
     /// `AllowedAIModels` keeps both of its models within the list; an empty summary model too.

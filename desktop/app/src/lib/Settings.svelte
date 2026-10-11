@@ -154,12 +154,12 @@ onMount(() => {
       <label class="row line">
         {t('Check every')}
         <span class="spacer"></span>
-        <select class="field small" value={p.refreshMinutes} onchange={(e) => save({ refreshMinutes: Number(e.currentTarget.value) })}>
+        <select class="field small" value={settings.managed.refreshMinutes ?? p.refreshMinutes} disabled={settings.managed.refreshMinutes != null} title={settings.managed.refreshMinutes != null ? t('Managed by your organization') : undefined} onchange={(e) => save({ refreshMinutes: Number(e.currentTarget.value) })}>
           {#each [1, 5, 10, 15, 30, 60] as m}<option value={m}>{t('%d min', m)}</option>{/each}
         </select>
       </label>
       <label class="toggle"><input type="checkbox" checked={settings.autostart} onchange={async (e) => { await api.setAutostart(e.currentTarget.checked); await load() }} />{linux ? t('Start at login') : t('Start with Windows')}</label>
-      <label class="toggle"><input type="checkbox" checked={p.openInApps} onchange={(e) => save({ openInApps: e.currentTarget.checked })} />{t('Open in desktop apps when installed')}</label>
+      <label class="toggle"><input type="checkbox" checked={settings.managed.openInApps ?? p.openInApps} disabled={settings.managed.openInApps != null} onchange={(e) => save({ openInApps: e.currentTarget.checked })} />{t('Open in desktop apps when installed')}</label>
       <p class="help">{t('Slack and Linear open in their app; Shift-click opens the web page instead.')}</p>
       {#if settings.wayland}<p class="notice">{t('Your desktop doesn’t let apps listen for a shortcut: in your system’s keyboard settings, add one that runs %@.', REMINDER_COMMAND)}</p>
       {:else if !settings.shortcutRegistered}<p class="notice warn">{t('Ctrl+Alt+R is used by another app: use + Reminder in the inbox instead.')}</p>{/if}
@@ -181,7 +181,8 @@ onMount(() => {
       <label class="toggle"><input type="checkbox" checked={p.notifyStatusChanges} onchange={(e) => save({ notifyStatusChanges: e.currentTarget.checked })} />{t('Status changes (approved, changes requested, checks failed)')}</label>
       <h3 class="subsection">{t('Hide message content')}</h3>
       {#each notifying as source (source.id)}
-        <label class="toggle"><input type="checkbox" checked={p.hiddenContentPlugins.includes(source.id)} onchange={(e) => setHidden(source.id, e.currentTarget.checked)} />{source.name}</label>
+        {@const forced = settings.managed.hiddenContentSources?.some((id) => id === source.id || id === '*') ?? false}
+        <label class="toggle" title={forced ? t('Managed by your organization') : undefined}><input type="checkbox" checked={forced || p.hiddenContentPlugins.includes(source.id)} disabled={forced} onchange={(e) => setHidden(source.id, e.currentTarget.checked)} />{source.name}</label>
       {/each}
       <p class="help">{t('Notifications still say where something happened (mention, channel, repository), not what was written.')}</p>
 
@@ -221,7 +222,7 @@ onMount(() => {
         </select>
       </label>
       <h2 class="section-title">{t('Updates')}</h2>
-      <p class="help">{t('Version')} {settings.version}</p>
+      <p class="help">{t('Version')} {settings.version} · <button type="button" class="link" onclick={() => api.openNotices()}>{t('Third-party licences')}</button></p>
       {#if update.state === 'unsupported'}
         <p class="help">{t('This copy of Remora doesn’t update itself: download new versions from the releases page.')}</p>
       {:else if update.state === 'managed'}

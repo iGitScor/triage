@@ -246,6 +246,13 @@ export interface Managed {
   aiExcludedSources?: string[] | null
   /** SEC-29: the models the assistant may use. */
   allowedAiModels?: string[] | null
+  /** Sources whose notifications hide what was written, on top of the user's; `*` for every source. */
+  hiddenContentSources?: string[] | null
+  /** The refresh interval, 1 to 60 minutes. */
+  refreshMinutes?: number | null
+  openInApps?: boolean | null
+  /** Where Claude Code is, locked in Settings; empty when it can't be read. */
+  claudeCodePath?: string | null
   /** Policy values present but unreadable, applied as "deny". */
   unreadable: string[]
 }
@@ -328,6 +335,7 @@ export const api = {
   stopRepeating: (id: string) => call<void>('stop_repeating', { id }),
   openItem: (id: string, inBrowser = false) => call<void>('open_item', { id, inBrowser }),
   openSetup: (pluginId: string, host?: string) => call<void>('open_setup', { pluginId, host: host ?? null }, QUIET),
+  openNotices: () => call<void>('open_notices'),
   sources: () => call<Source[]>('sources'),
   accounts: () => call<Account[]>('accounts'),
   connect: (pluginId: string, name: string, settings: Record<string, string>, secrets: Record<string, string>) =>

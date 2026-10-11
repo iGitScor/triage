@@ -16,6 +16,8 @@ let {
 const fields = $derived(account ? manifest.fields.filter((f) => f.isSecret) : manifest.fields)
 // The organization's AI server (AIServer): shown and locked; the app uses it whatever the form sends.
 const lockedServer = $derived(manifest.id === 'openai' ? managed?.aiServer || null : null)
+// The organization's Claude Code path (ClaudeCodePath): shown and locked, like the server.
+const lockedPath = $derived(manifest.id === 'claude-code' ? managed?.claudeCodePath || null : null)
 
 // Seeded once from the manifest: the form is created anew for each tool.
 let values: Record<string, string> = $state(
@@ -23,6 +25,7 @@ let values: Record<string, string> = $state(
 )
 $effect(() => {
   if (lockedServer) values.host = lockedServer
+  if (lockedPath) values.path = lockedPath
 })
 let name = $state('')
 let busy = $state(false)
@@ -56,7 +59,7 @@ const ready = $derived(fields.every((f) => f.isOptional || values[f.key]?.trim()
     <button type="button" class="pill" onclick={() => api.openSetup(manifest.id, account?.settings.host ?? values.host).catch((e) => (error = t(String(e))))}>{t(manifest.setupLabel)}</button>
   {/if}
   {#each fields as field (field.key)}
-    {@const locked = field.key === 'host' && !!lockedServer}
+    {@const locked = (field.key === 'host' && !!lockedServer) || (field.key === 'path' && !!lockedPath)}
     <label class="stack">
       {t(field.label)}
       <input class="field" type={field.isSecret ? 'password' : 'text'} placeholder={t(field.placeholder)} bind:value={values[field.key]} disabled={locked} autocomplete="off" spellcheck="false" />
