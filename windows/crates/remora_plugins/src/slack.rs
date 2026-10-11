@@ -154,8 +154,9 @@ impl SlackPlugin {
             let reply = replies
                 .messages
                 .into_iter()
+                // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
                 .filter(|r| {
-                    r.ts != thread.ts
+                    r.date() > thread.date()
                         && r.user.as_deref() != Some(me)
                         && r.bot_id.is_none()
                         && !r.text.contains(&mention)
@@ -876,6 +877,22 @@ mod tests {
             ["C1 1700000100.0 1700000200.0"],
             "one call, from your last message, no DM"
         );
+    }
+
+    /// FEAT-07: Slack sends the thread's first message whatever `oldest` says; it isn't a reply to you.
+    #[tokio::test]
+    async fn the_first_message_of_a_thread_is_not_a_reply() {
+        let mine = r#"{"ok": true, "messages": {"matches": [
+          {"ts": "1700000200.0", "text": "I can take it", "channel": {"id": "C1", "name": "design"},
+           "permalink": "https://acme.slack.com/archives/C1/p1700000200?thread_ts=1700000100.0"}
+        ]}}"#;
+        let replies = r#"{"ok": true, "messages": [
+          {"ts": "1700000100.0", "text": "Who can review the mockups?", "user": "U2"},
+          {"ts": "1700000200.0", "text": "I can take it", "user": "UME"}
+        ]}"#;
+        let http = Arc::new(SlackStub { mine, replies, asked: Default::default() });
+        let items = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap().items;
+        assert!(!items.iter().any(|i| i.context.starts_with("Thread")), "the ball is in their court");
     }
 
     #[tokio::test]

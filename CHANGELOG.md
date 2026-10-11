@@ -18,6 +18,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Slack: after you reply in someone else's thread, its first message no longer shows up as a new reply to you.
 - Mac: a refresh still running when you erase local data, disconnect a tool or block it in Privacy settings no
   longer brings its items back on screen and on disk.
 - A brief, summary or triage still being written when you erase local data, remove the assistant or turn AI off

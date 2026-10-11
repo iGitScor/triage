@@ -167,6 +167,27 @@ struct SlackPluginTests {
         #expect(await http.repliesAsked == ["C1 1700000100.0 1700000200.0"], "one call, from your last message, no DM")
     }
 
+    /// FEAT-07: Slack sends the thread's first message whatever `oldest` says; it isn't a reply to you.
+    @Test func theFirstMessageOfAThreadIsNotAReply() async throws {
+        let mine = """
+            {"ok": true, "messages": {"matches": [
+              {"ts": "1700000200.0", "text": "I can take it", "channel": {"id": "C1", "name": "design"},
+               "permalink": "https://acme.slack.com/archives/C1/p1700000200?thread_ts=1700000100.0"}
+            ]}}
+            """
+        let replies = """
+            {"ok": true, "messages": [
+              {"ts": "1700000100.0", "text": "Who can review the mockups?", "user": "U2"},
+              {"ts": "1700000200.0", "text": "I can take it", "user": "UME"}
+            ]}
+            """
+        let items = try await SlackPlugin(
+            config: config(["token": "xoxp"]), http: SlackStub(mine: mine, replies: replies)
+        )
+        .fetch().items
+        #expect(!items.contains { $0.context.hasPrefix("Thread") }, "the ball is in their court")
+    }
+
     @Test func threadsWithoutTheHistoryScopeSaySo() async throws {
         let mine =
             #"{"ok": true, "messages": {"matches": [{"ts": "1.0", "text": "x", "channel": {"id": "C1", "name": "a"}}]}}"#

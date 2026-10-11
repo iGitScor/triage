@@ -113,8 +113,9 @@ public struct SlackPlugin: SourcePlugin {
             } catch {
                 continue
             }
+            // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
             let others = replies.messages.filter {
-                $0.ts != mineLast.ts && $0.user != me && $0.botId == nil && !$0.text.contains("<@\(me)>")
+                $0.date > mineLast.date && $0.user != me && $0.botId == nil && !$0.text.contains("<@\(me)>")
             }
             guard let reply = others.max(by: { $0.date < $1.date }) else { continue }
             items.append(reply.item(in: mineLast, accountID: accountID, me: me, teamID: teamID))
