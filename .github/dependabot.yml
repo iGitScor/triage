@@ -3,7 +3,7 @@
 version: 2
 updates:
   - package-ecosystem: cargo
-    directory: /windows
+    directory: /desktop
     schedule: { interval: weekly }
     groups:
       rust:
