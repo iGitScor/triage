@@ -134,5 +134,5 @@ Il lance, dans l’ordre : `python3 site/build.py` (pages de présentation → `
 `site/public/docs`), puis `npx wrangler deploy`.
 
 `npm --prefix docs run dev` sert la documentation en local avec rechargement à chaud. `make a11y` construit la
-documentation et vérifie chaque page avec axe, en clair et en sombre (WCAG 2.1 AA), comme le workflow Website à
-chaque modification.
+documentation et vérifie chaque page avec axe, en clair et en sombre (WCAG 2.1 AA), et `make links` que chaque lien
+interne, menu des langues compris, mène à une page, comme le workflow Website à chaque modification.

@@ -15,6 +15,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - A brief, summary or triage still being written when you erase local data, remove the assistant or turn AI off
   is now dropped, instead of coming back on screen and on disk.
+- In the docs, *Français* and *English* lead to the same page in the other language, instead of a missing page.
 
 ## 0.5.0 (2026-10-11)
 

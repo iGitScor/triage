@@ -1,7 +1,7 @@
 name: Website
 
 # Accessibility of the marketing pages and the docs: every page, light and dark, against WCAG 2.1 AA with axe
-# (scripts/a11y.mjs). Locally: `make a11y`.
+# (scripts/a11y.mjs), and every internal link (scripts/check-links.py). Locally: `make a11y` and `make links`.
 on:
   workflow_dispatch:
   push:
@@ -9,6 +9,7 @@ on:
       - "site/**"
       - "docs/**"
       - "scripts/a11y.mjs"
+      - "scripts/check-links.py"
       - "package-lock.json"
       - ".github/workflows/site.yml"
   pull_request:
@@ -16,6 +17,7 @@ on:
       - "site/**"
       - "docs/**"
       - "scripts/a11y.mjs"
+      - "scripts/check-links.py"
       - "package-lock.json"
       - ".github/workflows/site.yml"
 
@@ -49,5 +51,7 @@ jobs:
         run: npm --prefix docs run build
       - name: The docs' CSP in site/public/_headers covers their inline scripts
         run: python3 site/csp.py --check
+      - name: Every internal link leads to a page, the language menu included
+        run: python3 scripts/check-links.py
       - name: Check every page
         run: node scripts/a11y.mjs

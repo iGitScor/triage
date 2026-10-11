@@ -1,4 +1,5 @@
 import { cpSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, type DefaultTheme, type HeadConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 
@@ -122,6 +123,10 @@ for (const [en, fr] of [
     for (const [i, item] of group.items!.entries())
       PAIRS.set(item.link!.slice(1).replace(/\/$/, '/index'), fr[g].items![i].link!.slice(1).replace(/\/$/, '/index'))
 
+/** The same page in the other language, if it has one. */
+const twinOf = (path: string) =>
+  path.startsWith('fr/') ? [...PAIRS].find(([, fr]) => fr === path)?.[0] : PAIRS.get(path)
+
 /** The URL of a page, as cleanUrls serves it. */
 const urlOf = (path: string) => `${SITE}/docs/${path.replace(/(^|\/)index$/, '$1')}`
 
@@ -132,11 +137,16 @@ const DESCRIPTIONS = {
 
 export default withMermaid(
   defineConfig({
+    // The language menu leads to the page's twin (theme/langs.ts), not to the same slug under the other prefix.
+    transformPageData(pageData) {
+      const twin = twinOf(pageData.relativePath.replace(/\.md$/, ''))
+      if (twin !== undefined) pageData.frontmatter.translation = `/${twin.replace(/(^|\/)index$/, '$1')}`
+    },
     transformHead({ pageData }) {
       const path = pageData.relativePath.replace(/\.md$/, '')
       const fr = path.startsWith('fr/')
-      const en = fr ? [...PAIRS].find(([, f]) => f === path)?.[0] : path
-      const twin = en === undefined ? undefined : fr ? en : PAIRS.get(en)
+      const twin = twinOf(path)
+      const en = fr ? twin : path
       const title = pageData.title ? `${pageData.title} | Remora` : 'Remora'
       const description = pageData.description || DESCRIPTIONS[fr ? 'fr' : 'en']
       const head: HeadConfig[] = [
@@ -165,7 +175,18 @@ export default withMermaid(
     cleanUrls: true,
     lastUpdated: true,
     srcExclude: ['README.md'],
-    vite: { plugins: [siteFiles()], build: { chunkSizeWarningLimit: 700 } },
+    vite: {
+      plugins: [siteFiles()],
+      build: { chunkSizeWarningLimit: 700 },
+      resolve: {
+        alias: [
+          {
+            find: /^.*\/composables\/langs$/,
+            replacement: fileURLToPath(new URL('./theme/langs.ts', import.meta.url)),
+          },
+        ],
+      },
+    },
     head: [
       ['link', { rel: 'icon', href: '/docs/favicon.svg', type: 'image/svg+xml' }],
       ['meta', { name: 'theme-color', media: '(prefers-color-scheme: light)', content: '#f0f0e8' }],
