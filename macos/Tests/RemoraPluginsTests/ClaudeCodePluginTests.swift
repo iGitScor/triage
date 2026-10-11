@@ -60,10 +60,11 @@ struct ClaudeCodePluginTests {
 
     @Test func runsClaudeWithItsOwnFoldersFirstOnPATH() async throws {
         let runner = RecordingRunner(output: #"{"is_error": false, "structured_output": {"summary": "ok"}}"#)
-        _ = try await ClaudeCodePlugin(config: config(["path": fakeClaude()]), runner: runner).digest(
+        let claude = fakeClaude()
+        _ = try await ClaudeCodePlugin(config: config(["path": claude]), runner: runner).digest(
             [item], topic: "x", now: .now)
         let path = try #require(await runner.environment?["PATH"])
-        #expect(path.hasPrefix(URL(fileURLWithPath: fakeClaude()).deletingLastPathComponent().path + ":"))
+        #expect(path.hasPrefix(URL(fileURLWithPath: claude).deletingLastPathComponent().path + ":"))
     }
 
     /// An npm `claude` is a link into node_modules and starts with `env node`: Node sits next to the link.
@@ -112,7 +113,8 @@ struct ClaudeCodePluginTests {
         ) {
             try await plugin.digest([item], topic: "x", now: .now)
         }
-        #expect(ClaudeCodePlugin.locate(fakeClaude())?.path == fakeClaude())
+        let claude = fakeClaude()
+        #expect(ClaudeCodePlugin.locate(claude)?.path == claude)
     }
 
     // MARK: Only Claude Code
@@ -165,13 +167,10 @@ struct ClaudeCodePluginTests {
     }
 }
 
-/// A `claude` in a folder of its own, for tests that don't run it (a `RecordingRunner` answers instead).
+/// A `claude` in a folder of its own, for tests that don't run it (a `RecordingRunner` answers instead). One per
+/// call: tests run in parallel, and a shared one could be looked for while another test was still writing it.
 func fakeClaude() -> String {
-    let path = FileManager.default.temporaryDirectory.appending(path: "remora-fake-claude/claude").path
-    if !FileManager.default.fileExists(atPath: path) {
-        _ = try? makeProgram(named: "claude", permissions: 0o755, at: path)
-    }
-    return path
+    (try? makeProgram(named: "claude", permissions: 0o755)) ?? ""
 }
 
 @discardableResult

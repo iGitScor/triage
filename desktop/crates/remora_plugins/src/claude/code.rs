@@ -557,7 +557,9 @@ mod tests {
         &arguments[arguments.iter().position(|a| a == flag).unwrap() + 1]
     }
 
-    /// LINUX-12: Linux also looks in Linuxbrew, the system's `/usr/bin` and the session's PATH, once each.
+    /// LINUX-12: Linux also looks in Linuxbrew, the system's `/usr/bin` and the session's PATH, once each. Unix paths:
+    /// on Windows `/nix/profile/bin` isn't absolute.
+    #[cfg(unix)]
     #[test]
     fn linux_looks_in_linuxbrew_the_system_and_the_path() {
         let env = SearchEnv {
