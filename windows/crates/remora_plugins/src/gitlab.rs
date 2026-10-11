@@ -1,5 +1,8 @@
 use crate::code_review::{Checks, CodeReview};
-use crate::{decode, url_with_query, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
+use crate::{
+    decode, url_with_query, AccountCache, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot,
+    IDENTITY_LIFETIME,
+};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
@@ -40,6 +43,7 @@ pub struct GitLabPlugin {
     host: String,
     token: String,
     http: Arc<dyn HttpClient>,
+    cache: Arc<AccountCache>,
 }
 
 impl GitLabPlugin {
@@ -49,6 +53,7 @@ impl GitLabPlugin {
             host: config.url("host")?,
             token: config.required("token")?,
             http,
+            cache: config.cache.clone(),
         })
     }
 
@@ -199,7 +204,7 @@ impl GitLabPlugin {
 #[async_trait]
 impl SourcePlugin for GitLabPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
-        let user: User = self.get("user", &[]).await?;
+        let user: User = self.cache.value("user", IDENTITY_LIFETIME, || self.get("user", &[])).await?;
         let authored_query = [("scope", "created_by_me"), ("state", "opened"), ("per_page", "50")];
         let reviewing_query =
             [("scope", "all"), ("state", "opened"), ("per_page", "50"), ("reviewer_username", user.username.as_str())];
@@ -461,6 +466,18 @@ mod tests {
         assert_eq!(changes.file_count, 1);
         let stored = serde_json::to_string(review).unwrap();
         assert!(!stored.contains("secret code"), "diff text is never kept");
+    }
+
+    /// PERF-09: who the token belongs to is asked once, not at every refresh.
+    #[tokio::test]
+    async fn the_user_is_asked_once_across_refreshes() {
+        let stub = StubHttp::paths(&[("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", "[]")]);
+        let http = Arc::new(Recording::new(stub));
+        let config = config(&[("host", "gitlab.acme.io"), ("token", "t")]);
+        for _ in 0..2 {
+            GitLabPlugin::new(&config, http.clone()).unwrap().fetch().await.unwrap();
+        }
+        assert_eq!(http.paths().iter().filter(|p| p.ends_with("/user")).count(), 1);
     }
 
     /// One GraphQL request instead of two REST calls per merge request.

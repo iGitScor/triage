@@ -275,7 +275,7 @@ mod tests {
     impl HttpClient for Recorder {
         async fn send(&self, request: Request) -> Result<Response, PluginError> {
             self.requests.lock().unwrap().push(request);
-            self.body.clone().map(|body| Response { status: self.status, body })
+            self.body.clone().map(|body| Response { status: self.status, body, etag: None })
         }
     }
 
@@ -421,7 +421,7 @@ mod tests {
             *self.calls.lock().unwrap() += 1;
             let mut statuses = self.statuses.lock().unwrap();
             let status = if statuses.is_empty() { 200 } else { statuses.remove(0) };
-            Ok(Response { status, body: answer(r#"{"summary":"Fine.","focus":[]}"#, "end_turn") })
+            Ok(Response { status, body: answer(r#"{"summary":"Fine.","focus":[]}"#, "end_turn"), etag: None })
         }
     }
 

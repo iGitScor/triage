@@ -1,4 +1,4 @@
-use crate::{github, gitlab, linear, notion, slack, HttpClient, PluginConfig, PluginError, SourcePlugin};
+use crate::{github, gitlab, linear, notion, slack, AccountCache, HttpClient, PluginConfig, PluginError, SourcePlugin};
 use remora_core::{Account, PluginManifest};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -24,15 +24,17 @@ pub fn allowed_hosts(account: &Account, manifest: &PluginManifest) -> Vec<String
     hosts
 }
 
-/// Builds a plugin. `http` must already be the guarded client for this account.
+/// Builds a plugin. `http` must already be the guarded client for this account; `cache` is what it kept from the last
+/// refresh (a new one for a plugin that starts from nothing).
 pub fn make(
     account: &Account,
     secrets: &HashMap<String, String>,
     http: Arc<dyn HttpClient>,
+    cache: Arc<AccountCache>,
 ) -> Result<Box<dyn SourcePlugin>, PluginError> {
     let mut values = account.settings.clone();
     values.extend(secrets.clone());
-    let config = PluginConfig { account_id: account.id.clone(), values };
+    let config = PluginConfig { account_id: account.id.clone(), values, cache };
     Ok(match account.plugin_id.as_str() {
         "github" => Box::new(github::GitHubPlugin::new(&config, http)?),
         "gitlab" => Box::new(gitlab::GitLabPlugin::new(&config, http)?),

@@ -1,4 +1,7 @@
-use crate::{decode, url_with_query, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
+use crate::{
+    decode, url_with_query, AccountCache, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot,
+    IDENTITY_LIFETIME,
+};
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, TimeZone, Utc};
 use regex::Regex;
@@ -58,6 +61,7 @@ pub struct SlackPlugin {
     token: String,
     days: i64,
     http: Arc<dyn HttpClient>,
+    cache: Arc<AccountCache>,
 }
 
 impl SlackPlugin {
@@ -67,6 +71,7 @@ impl SlackPlugin {
             token: config.required("token")?,
             days: config.get("days").parse().unwrap_or(3).max(1),
             http,
+            cache: config.cache.clone(),
         })
     }
 
@@ -170,7 +175,7 @@ const MISSING_HISTORY: &str = "Slack: replies in your threads need the channels:
 #[async_trait]
 impl SourcePlugin for SlackPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
-        let auth: Auth = self.call("auth.test", &[]).await?;
+        let auth: Auth = self.cache.value("auth.test", IDENTITY_LIFETIME, || self.call("auth.test", &[])).await?;
         let since = (Utc::now() - Duration::days(self.days)).format("%Y-%m-%d").to_string();
         let me = format!("<@{}>", auth.user_id);
         let mentions_query = format!("{me} -from:{me} after:{since}");
@@ -200,7 +205,7 @@ impl SourcePlugin for SlackPlugin {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct Auth {
     user_id: String,
     user: String,
@@ -837,7 +842,7 @@ mod tests {
                 _ if value("query").contains("is:thread") => self.mine.to_string(),
                 _ => r#"{"ok": true, "messages": {"matches": []}}"#.to_string(),
             };
-            Ok(crate::Response { status: 200, body })
+            Ok(crate::Response { status: 200, body, etag: None })
         }
     }
 

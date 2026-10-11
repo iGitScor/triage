@@ -42,6 +42,7 @@ public struct NotionPlugin: SourcePlugin {
     private let assignee: String
     private let doneValues: Set<String>
     private let http: HTTPClient
+    private let cache: any AccountCache
     private let api = URL(string: "https://api.notion.com/v1")!
 
     public init(config: PluginConfig, http: HTTPClient) throws {
@@ -53,11 +54,14 @@ public struct NotionPlugin: SourcePlugin {
         doneValues = Set(
             config["doneValues"].split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() })
         self.http = http
+        cache = config.cache
     }
 
     public func fetch() async throws -> SourceSnapshot {
         // Without knowing who you are, the query would return everyone's tasks: better say so.
-        guard let me = try await currentUser() else {
+        guard
+            let me = try await cache.value("me", lifetime: CacheLifetime.identity, load: { try await currentUser() })
+        else {
             throw HTTPError.api(
                 L("Remora can’t tell which Notion user you are: add your Notion email to this account."))
         }

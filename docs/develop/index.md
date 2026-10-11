@@ -53,7 +53,10 @@ flowchart TB
   example sentences; answers only when the two classes are clearly apart, otherwise *To reply*).
 
 **Infrastructure**: `HTTPClient` (a protocol, so plugins are testable with a stub), `GuardedHTTPClient` (refuses
-hosts a plugin doesn’t declare), and JSON helpers.
+hosts a plugin doesn’t declare), `ConditionalHTTPClient` (sends `If-None-Match` and serves a 304 from the last
+answer), `MemoryAccountCache` (the `AccountCache` a refresh hands its plugin), and JSON helpers. Both keep their
+answers in memory, one set per account, dropped when the account’s settings or token change, or it is disconnected
+or erased.
 
 ## Whose turn
 

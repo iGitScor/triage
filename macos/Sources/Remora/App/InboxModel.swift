@@ -93,6 +93,8 @@ final class InboxModel {
     @ObservationIgnored private let learningStore: JSONStore<[ActionRecord]>
     @ObservationIgnored private let reviewTimesStore: JSONStore<[ReviewTiming]>
     @ObservationIgnored let advisor = SnoozeAdvisor(similarity: [KeywordSimilarity(), EmbeddingSimilarity()])
+    /// Per account, in memory: what a refresh may reuse from the last one (PERF-09).
+    @ObservationIgnored private var sessions: [UUID: AccountSession] = [:]
     @ObservationIgnored private var triageKey: (ids: [String], at: Date)?
     @ObservationIgnored private let linkFinder = LinkFinder(
         similarity: [
@@ -309,9 +311,27 @@ final class InboxModel {
         }
     }
 
-    /// The only way to build a plugin: it must be allowed, and it can only reach its declared hosts.
-    private func sourcePlugin(_ account: Account, secrets: [String: String]) throws -> any SourcePlugin {
-        try PluginRegistry.make(account, secrets: secrets, http: guardedClient(for: account))
+    /// The only way to build a plugin: it must be allowed, and it can only reach its declared hosts. A refresh
+    /// reuses what the account kept (PERF-09); connecting starts from nothing, so the token is really tested.
+    private func sourcePlugin(_ account: Account, secrets: [String: String], remembering: Bool = true) throws
+        -> any SourcePlugin
+    {
+        guard remembering else {
+            return try PluginRegistry.make(account, secrets: secrets, http: guardedClient(for: account))
+        }
+        let session = session(for: account, secrets: secrets)
+        return try PluginRegistry.make(
+            account, secrets: secrets,
+            http: guardedClient(for: account, through: ConditionalHTTPClient(http, store: session.etags)),
+            cache: session.cache)
+    }
+
+    private func session(for account: Account, secrets: [String: String]) -> AccountSession {
+        let fingerprint = AccountSession.fingerprint(settings: account.settings, secrets: secrets)
+        if let session = sessions[account.id], session.fingerprint == fingerprint { return session }
+        let session = AccountSession(fingerprint: fingerprint)
+        sessions[account.id] = session
+        return session
     }
 
     /// Built with its model fields kept within the organization's allowed models, if any.
@@ -331,12 +351,13 @@ final class InboxModel {
         return try PluginRegistry.makeAssistant(constrained, secrets: secrets, http: guardedClient(for: account))
     }
 
-    private func guardedClient(for account: Account) throws -> HTTPClient {
+    /// `base` is what the guard lets requests through to: the network, or a layer in front of it.
+    private func guardedClient(for account: Account, through base: HTTPClient? = nil) throws -> HTTPClient {
         guard let manifest = PluginRegistry.manifest(account.pluginID) else {
             throw PluginError.unknownPlugin(account.pluginID)
         }
         if let refusal = refusal(for: account) { throw EgressError.blockedPlugin(refusal) }
-        return GuardedHTTPClient(http, allowing: allowedHosts(for: account, manifest: manifest))
+        return GuardedHTTPClient(base ?? http, allowing: allowedHosts(for: account, manifest: manifest))
     }
 
     func allowedHosts(for account: Account, manifest: PluginManifest) -> [String] {
@@ -1145,7 +1166,7 @@ final class InboxModel {
             persist(accountsStore, accounts)
             return
         }
-        let plugin = try sourcePlugin(account, secrets: secrets)
+        let plugin = try sourcePlugin(account, secrets: secrets, remembering: false)
         var snapshot = try await plugin.fetch()
         let (classifier, fetched) = (classifier, snapshot.items)
         snapshot.items = await Task.detached { fetched.map(classifier.classify) }.value
@@ -1185,6 +1206,7 @@ final class InboxModel {
         let keychain = Result { try environment.secrets.deleteAll() }
         environment.notifications.removeAll()
         accounts = []
+        sessions = [:]
         itemsByAccount = [:]
         reminders = []
         states = [:]
@@ -1222,6 +1244,7 @@ final class InboxModel {
         }
         undoPoint = nil
         accounts.removeAll { $0.id == account.id }
+        sessions[account.id] = nil
         if PluginRegistry.isAssistant(account.pluginID) {
             store(nil)
             bundleSummaries = [:]

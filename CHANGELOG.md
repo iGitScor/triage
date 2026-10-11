@@ -3,6 +3,14 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Changed
+
+- Fewer requests to your tools: GitLab, Slack and Notion are asked who you are once an hour instead of at every
+  refresh, and a list the server marks as unchanged comes back without its content. Less chance of hitting a rate
+  limit.
+
 ## 0.5.0 (2026-10-11)
 
 ### Added

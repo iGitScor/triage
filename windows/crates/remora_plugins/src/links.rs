@@ -43,7 +43,11 @@ pub fn setup_url(manifest: &PluginManifest, host: Option<&str>) -> Option<String
         let typed = host.map(str::trim).filter(|h| !h.is_empty());
         let default = manifest.fields.iter().find(|f| f.key == "host").map(|f| f.default_value.clone());
         let raw = typed.map(str::to_string).or(default)?;
-        let config = PluginConfig { account_id: String::new(), values: HashMap::from([("host".to_string(), raw)]) };
+        let config = PluginConfig {
+            account_id: String::new(),
+            values: HashMap::from([("host".to_string(), raw)]),
+            cache: Default::default(),
+        };
         template.replace("{host}", &config.url("host").ok()?)
     } else {
         template.to_string()

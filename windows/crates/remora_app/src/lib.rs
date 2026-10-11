@@ -6,6 +6,7 @@ pub mod inbox;
 pub mod managed;
 pub mod paths;
 pub mod preferences;
+mod session;
 pub mod store;
 pub mod tray;
 pub mod vault;

@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use remora_core::host_matches;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
@@ -66,6 +67,8 @@ pub fn url_with_query(base: &str, path: &str, query: &[(&str, &str)]) -> String 
 pub struct Response {
     pub status: u16,
     pub body: String,
+    /// The answer's `ETag`, for `ConditionalHttpClient`.
+    pub etag: Option<String>,
 }
 
 /// Errors are English sentences, translated by the UI.
@@ -229,7 +232,9 @@ impl HttpClient for ReqwestClient {
         if let Some(resume) = rate_limit(status, header, chrono::Utc::now()) {
             return Err(PluginError::RateLimited(resume));
         }
-        if response.status().is_redirection() {
+        let etag = header("etag");
+        // 304 is a 3xx too, but the answer to a conditional request (`ConditionalHttpClient`), not a redirect.
+        if response.status().is_redirection() && status != 304 {
             // Only refused redirects get here (see `redirect_allowed`).
             let location =
                 response.headers().get(reqwest::header::LOCATION).and_then(|v| v.to_str().ok()).unwrap_or_default();
@@ -237,7 +242,7 @@ impl HttpClient for ReqwestClient {
             return Err(PluginError::BlockedRedirect(target.unwrap_or_else(|| "?".into())));
         }
         let body = read_capped(response, MAX_BODY).await?;
-        Ok(Response { status, body: String::from_utf8_lossy(&body).into_owned() })
+        Ok(Response { status, body: String::from_utf8_lossy(&body).into_owned(), etag })
     }
 }
 
@@ -322,6 +327,93 @@ impl HttpClient for GuardedHttpClient {
     }
 }
 
+/// Conditional requests (PERF-09): a GET whose last answer carried an `ETag` is sent with `If-None-Match`, and a 304
+/// is answered with the copy kept from that last time, as a 200. Unchanged lists then cost the server no body, and
+/// GitHub doesn't count them against the rate limit. Sits behind the egress guard, so only allowed hosts are kept.
+pub struct ConditionalHttpClient {
+    base: Arc<dyn HttpClient>,
+    store: Arc<ETagStore>,
+}
+
+impl ConditionalHttpClient {
+    pub fn new(base: Arc<dyn HttpClient>, store: Arc<ETagStore>) -> Self {
+        ConditionalHttpClient { base, store }
+    }
+}
+
+#[async_trait]
+impl HttpClient for ConditionalHttpClient {
+    async fn send(&self, mut request: Request) -> Result<Response, PluginError> {
+        if request.method != Method::Get {
+            return self.base.send(request).await;
+        }
+        let url = request.url.clone();
+        let kept = self.store.answer(&url);
+        if let Some((etag, _)) = &kept {
+            request = request.header("If-None-Match", etag.clone());
+        }
+        let response = self.base.send(request).await?;
+        match (response.status, kept) {
+            (304, Some((etag, body))) => Ok(Response { status: 200, body, etag: Some(etag) }),
+            (200..=299, _) if response.etag.is_some() => {
+                self.store.keep(&url, response.etag.clone().unwrap_or_default(), response.body.clone());
+                Ok(response)
+            }
+            (_, kept) => {
+                if kept.is_some() {
+                    self.store.forget(&url);
+                }
+                Ok(response)
+            }
+        }
+    }
+}
+
+/// The last answer to each GET of one account that came with an `ETag`. In memory only: it holds message content,
+/// which must not outlive "Erase local data". Bounded, the oldest answers going first.
+pub struct ETagStore {
+    limit: usize,
+    answers: std::sync::Mutex<(HashMap<String, Answer>, VecDeque<String>)>,
+}
+
+/// An `ETag` and the body it names.
+type Answer = (String, String);
+
+impl Default for ETagStore {
+    fn default() -> Self {
+        ETagStore::with_limit(256)
+    }
+}
+
+impl ETagStore {
+    pub fn with_limit(limit: usize) -> Self {
+        ETagStore { limit, answers: Default::default() }
+    }
+
+    /// The `ETag` and body kept for `url`.
+    fn answer(&self, url: &str) -> Option<Answer> {
+        self.answers.lock().unwrap().0.get(url).cloned()
+    }
+
+    fn keep(&self, url: &str, etag: String, body: String) {
+        let (answers, order) = &mut *self.answers.lock().unwrap();
+        if answers.insert(url.to_string(), (etag, body)).is_none() {
+            order.push_back(url.to_string());
+        }
+        while order.len() > self.limit {
+            if let Some(oldest) = order.pop_front() {
+                answers.remove(&oldest);
+            }
+        }
+    }
+
+    fn forget(&self, url: &str) {
+        let (answers, order) = &mut *self.answers.lock().unwrap();
+        answers.remove(url);
+        order.retain(|kept| kept != url);
+    }
+}
+
 /// Sends and decodes JSON, mapping HTTP failures to `PluginError`.
 pub async fn decode<T: DeserializeOwned>(http: &dyn HttpClient, request: Request) -> Result<T, PluginError> {
     let response = http.send(request).await?;
@@ -354,6 +446,82 @@ mod tests {
             client.send(Request::get("https://api.linear.app.evil.com/x")).await.err(),
             Some(PluginError::BlockedHost("api.linear.app.evil.com".into()))
         );
+    }
+
+    /// A server whose answer carries `ETag: "v1"`, and that answers 304 when asked with it. Records the
+    /// `If-None-Match` of each request.
+    struct Versioned {
+        etag: Option<&'static str>,
+        asked: std::sync::Mutex<Vec<Option<String>>>,
+    }
+
+    #[async_trait]
+    impl HttpClient for Versioned {
+        async fn send(&self, request: Request) -> Result<Response, PluginError> {
+            let condition =
+                request.headers.iter().find(|(name, _)| name == "If-None-Match").map(|(_, value)| value.clone());
+            self.asked.lock().unwrap().push(condition.clone());
+            if condition.is_some() && condition.as_deref() == self.etag {
+                return Ok(Response { status: 304, body: String::new(), etag: None });
+            }
+            Ok(Response { status: 200, body: format!("body of {}", request.url), etag: self.etag.map(str::to_string) })
+        }
+    }
+
+    fn versioned(etag: Option<&'static str>) -> Arc<Versioned> {
+        Arc::new(Versioned { etag, asked: Default::default() })
+    }
+
+    const LIST: &str = "https://gitlab.acme.io/api/v4/merge_requests";
+
+    #[tokio::test]
+    async fn an_unchanged_answer_is_served_from_memory() {
+        let server = versioned(Some("\"v1\""));
+        let client = ConditionalHttpClient::new(server.clone(), Arc::new(ETagStore::default()));
+        let first = client.send(Request::get(LIST)).await.unwrap();
+        let second = client.send(Request::get(LIST)).await.unwrap();
+        assert_eq!(*server.asked.lock().unwrap(), vec![None, Some("\"v1\"".to_string())]);
+        assert_eq!((second.status, second.body), (200, first.body));
+    }
+
+    #[tokio::test]
+    async fn only_gets_with_an_etag_are_conditional() {
+        let server = versioned(Some("\"v1\""));
+        let client = ConditionalHttpClient::new(server.clone(), Arc::new(ETagStore::default()));
+        let post = || Request::post_json(LIST, &serde_json::json!({"query": "x"})).unwrap();
+        client.send(post()).await.unwrap();
+        client.send(post()).await.unwrap();
+        let plain = versioned(None);
+        let without = ConditionalHttpClient::new(plain.clone(), Arc::new(ETagStore::default()));
+        without.send(Request::get(LIST)).await.unwrap();
+        without.send(Request::get(LIST)).await.unwrap();
+        assert!(server.asked.lock().unwrap().iter().chain(plain.asked.lock().unwrap().iter()).all(Option::is_none));
+    }
+
+    #[test]
+    fn the_store_keeps_the_latest_answers_only() {
+        let store = ETagStore::with_limit(2);
+        for url in ["a", "b", "c"] {
+            store.keep(url, "e".into(), String::new());
+        }
+        assert!(store.answer("a").is_none());
+        assert!(store.answer("c").is_some());
+    }
+
+    /// A 304 reaches the conditional client instead of failing as a refused redirect.
+    #[tokio::test]
+    async fn not_modified_is_not_a_redirect() {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0u8; 1024];
+            let _ = socket.read(&mut request).await;
+            let _ = socket.write_all(b"HTTP/1.1 304 Not Modified\r\nETag: \"v1\"\r\nConnection: close\r\n\r\n").await;
+        });
+        let response = ReqwestClient::new().send(Request::get(format!("http://{address}/"))).await.unwrap();
+        assert_eq!((response.status, response.etag.as_deref()), (304, Some("\"v1\"")));
     }
 
     /// A local server answering one request with `body`, without announcing its length (read until the connection

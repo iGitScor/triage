@@ -2,12 +2,54 @@ use crate::PluginError;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use remora_core::{Brief, InboxItem, SnoozedItem, TriageSuggestion};
+use std::any::Any;
 use std::collections::HashMap;
+use std::future::Future;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
-/// The values a user entered for one account of a plugin, secrets included.
+/// The values a user entered for one account of a plugin, secrets included, and what the plugin may keep between
+/// refreshes of that account.
 pub struct PluginConfig {
     pub account_id: String,
     pub values: HashMap<String, String>,
+    pub cache: Arc<AccountCache>,
+}
+
+/// Who the token belongs to changes rarely; an hour keeps a renamed user from going unnoticed for long.
+pub const IDENTITY_LIFETIME: Duration = Duration::from_secs(3600);
+
+/// What a plugin may keep between refreshes of one account, such as who the token belongs to: asking for it every
+/// few minutes costs a request and counts against the tool's rate limit (PERF-09). In memory only, and dropped by the
+/// app when the account is reconnected, changed, disconnected or erased. A new one keeps nothing yet, so a plugin
+/// built outside a refresh (tests, connecting) asks every time.
+#[derive(Default)]
+pub struct AccountCache {
+    entries: Mutex<HashMap<String, Kept>>,
+}
+
+/// A value and when it was loaded.
+type Kept = (Instant, Arc<dyn Any + Send + Sync>);
+
+impl AccountCache {
+    /// The value kept under `key` if younger than `lifetime`, else what `load` returns, kept for next time. A failed
+    /// `load` keeps nothing.
+    pub async fn value<T, F, Fut>(&self, key: &str, lifetime: Duration, load: F) -> Result<T, PluginError>
+    where
+        T: Clone + Send + Sync + 'static,
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = Result<T, PluginError>>,
+    {
+        let kept = self.entries.lock().unwrap().get(key).cloned();
+        if let Some((at, value)) = kept {
+            if let (true, Some(value)) = (at.elapsed() < lifetime, value.downcast_ref::<T>()) {
+                return Ok(value.clone());
+            }
+        }
+        let value = load().await?;
+        self.entries.lock().unwrap().insert(key.to_string(), (Instant::now(), Arc::new(value.clone())));
+        Ok(value)
+    }
 }
 
 impl PluginConfig {
@@ -86,6 +128,29 @@ mod tests {
 
     fn host(value: &str) -> Result<String, PluginError> {
         config(&[("host", value)]).url("host")
+    }
+
+    #[tokio::test]
+    async fn the_cache_keeps_a_value_for_its_lifetime_and_never_a_failure() {
+        use super::AccountCache;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::time::Duration;
+        let cache = AccountCache::default();
+        let loads = AtomicUsize::new(0);
+        let load = || async {
+            loads.fetch_add(1, Ordering::SeqCst);
+            Ok("alice".to_string())
+        };
+        assert_eq!(cache.value("user", Duration::from_secs(60), load).await.unwrap(), "alice");
+        assert_eq!(cache.value("user", Duration::from_secs(60), load).await.unwrap(), "alice");
+        assert_eq!(loads.load(Ordering::SeqCst), 1);
+        cache.value("user", Duration::ZERO, load).await.unwrap();
+        assert_eq!(loads.load(Ordering::SeqCst), 2, "an expired value is asked again");
+
+        let refused =
+            cache.value("other", Duration::from_secs(60), || async { Err::<String, _>(PluginError::Unauthorized) });
+        assert_eq!(refused.await, Err(PluginError::Unauthorized));
+        assert_eq!(cache.value("other", Duration::from_secs(60), load).await.unwrap(), "alice");
     }
 
     #[test]

@@ -86,10 +86,12 @@ public struct ConfigField: Sendable, Identifiable, Hashable {
 public struct PluginConfig: Sendable {
     public var accountID: UUID
     public var values: [String: String]
+    public var cache: any AccountCache
 
-    public init(accountID: UUID, values: [String: String]) {
+    public init(accountID: UUID, values: [String: String], cache: any AccountCache = NoAccountCache()) {
         self.accountID = accountID
         self.values = values
+        self.cache = cache
     }
 
     public subscript(key: String) -> String {

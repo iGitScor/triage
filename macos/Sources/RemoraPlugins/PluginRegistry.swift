@@ -41,10 +41,11 @@ public enum PluginRegistry {
         sources.first { $0.manifest.id == id }
     }
 
-    public static func make(_ account: Account, secrets: [String: String], http: HTTPClient) throws -> any SourcePlugin
-    {
+    public static func make(
+        _ account: Account, secrets: [String: String], http: HTTPClient, cache: any AccountCache = NoAccountCache()
+    ) throws -> any SourcePlugin {
         guard let type = source(account.pluginID) else { throw PluginError.unknownPlugin(account.pluginID) }
         let values = account.settings.merging(secrets) { _, secret in secret }
-        return try type.init(config: PluginConfig(accountID: account.id, values: values), http: http)
+        return try type.init(config: PluginConfig(accountID: account.id, values: values, cache: cache), http: http)
     }
 }

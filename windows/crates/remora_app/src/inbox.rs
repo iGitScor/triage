@@ -1,3 +1,4 @@
+use crate::session::AccountSession;
 use crate::{JsonStore, Managed, Preferences, Secrets, Vault};
 use chrono::{DateTime, Utc};
 use remora_core::{
@@ -8,7 +9,8 @@ use remora_core::{
     SourcesHealth, TriageAction, TriageSuggestion, VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
 };
 use remora_plugins::{
-    claude, links, registry, AssistantPlugin, GuardedHttpClient, HttpClient, PluginError, SourcePlugin, SourceSnapshot,
+    claude, links, registry, AssistantPlugin, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError,
+    SourcePlugin, SourceSnapshot,
 };
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
@@ -118,6 +120,8 @@ pub struct Inbox {
     pub last_refresh: Option<DateTime<Utc>>,
     /// The states and reminders before the last Done or Clear all, until the next one.
     undo_point: Option<(HashMap<String, ItemState>, Vec<InboxItem>)>,
+    /// Per account, in memory: what a refresh may reuse from the last one (PERF-09).
+    sessions: HashMap<String, AccountSession>,
 }
 
 impl Inbox {
@@ -152,6 +156,7 @@ impl Inbox {
             secrets: None,
             last_refresh: None,
             undo_point: None,
+            sessions: HashMap::new(),
         };
         inbox.recompute_links();
         inbox
@@ -184,6 +189,7 @@ impl Inbox {
             secrets: None,
             last_refresh: None,
             undo_point: None,
+            sessions: HashMap::new(),
         }
     }
 
@@ -342,9 +348,13 @@ impl Inbox {
                 self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, refusal));
                 continue;
             }
+            let account_secrets = secrets.get(&account.id).cloned().unwrap_or_default();
+            let (cache, etags) =
+                AccountSession::current(&mut self.sessions, &account.id, &account.settings, &account_secrets);
+            let conditional: Arc<dyn HttpClient> = Arc::new(ConditionalHttpClient::new(http.clone(), etags));
             let guarded: Arc<dyn HttpClient> =
-                Arc::new(GuardedHttpClient::new(http.clone(), registry::allowed_hosts(&account, &manifest)));
-            match registry::make(&account, secrets.get(&account.id).unwrap_or(&HashMap::new()), guarded) {
+                Arc::new(GuardedHttpClient::new(conditional, registry::allowed_hosts(&account, &manifest)));
+            match registry::make(&account, &account_secrets, guarded, cache) {
                 Ok(plugin) => jobs.push(FetchJob { account_id: account.id.clone(), plugin }),
                 Err(error) => {
                     self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, error.to_string()));
@@ -1063,7 +1073,7 @@ impl Inbox {
         };
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
-        let plugin = registry::make(&account, secrets, guarded).map_err(|e| e.to_string())?;
+        let plugin = registry::make(&account, secrets, guarded, Default::default()).map_err(|e| e.to_string())?;
         Ok((account, plugin))
     }
 
@@ -1210,7 +1220,7 @@ impl Inbox {
         }
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
-        registry::make(account, secrets, guarded).map_err(|e| e.to_string())
+        registry::make(account, secrets, guarded, Default::default()).map_err(|e| e.to_string())
     }
 
     /// Saves the new token of an account whose fetch worked with it, and its items.
@@ -1293,6 +1303,7 @@ impl Inbox {
         self.undo_point = None;
         self.secrets = Some(saved);
         self.accounts.retain(|a| a.id != account_id);
+        self.sessions.remove(account_id);
         self.items.remove(account_id);
         self.recompute_links();
         self.errors.remove(account_id);

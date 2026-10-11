@@ -1,5 +1,8 @@
 use crate::linear::{due_badge, due_date};
-use crate::{decode, url_with_query, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
+use crate::{
+    decode, url_with_query, AccountCache, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot,
+    IDENTITY_LIFETIME,
+};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::try_join_all;
@@ -74,6 +77,7 @@ pub struct NotionPlugin {
     assignee: String,
     done_values: HashSet<String>,
     http: Arc<dyn HttpClient>,
+    cache: Arc<AccountCache>,
 }
 
 impl NotionPlugin {
@@ -92,6 +96,7 @@ impl NotionPlugin {
             assignee,
             done_values,
             http,
+            cache: config.cache.clone(),
         })
     }
 
@@ -191,7 +196,7 @@ impl NotionPlugin {
 #[async_trait]
 impl SourcePlugin for NotionPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
-        let Some((me, label)) = self.current_user().await? else {
+        let Some((me, label)) = self.cache.value("me", IDENTITY_LIFETIME, || self.current_user()).await? else {
             return Err(PluginError::Api(UNKNOWN_USER.into()));
         };
         let mut found = vec![];
@@ -467,7 +472,7 @@ mod tests {
                 } else {
                     r#"{"results": [], "next_cursor": "c2"}"#
                 };
-                Ok(crate::Response { status: 200, body: body.into() })
+                Ok(crate::Response { status: 200, body: body.into(), etag: None })
             }
         }
         let http = Arc::new(Capture(std::sync::Mutex::new(vec![])));
@@ -553,7 +558,11 @@ mod tests {
         #[async_trait]
         impl HttpClient for Rejecting {
             async fn send(&self, _: Request) -> Result<crate::Response, PluginError> {
-                Ok(crate::Response { status: 401, body: r#"{"object": "error", "code": "unauthorized"}"#.into() })
+                Ok(crate::Response {
+                    status: 401,
+                    body: r#"{"object": "error", "code": "unauthorized"}"#.into(),
+                    etag: None,
+                })
             }
         }
         let plugin =

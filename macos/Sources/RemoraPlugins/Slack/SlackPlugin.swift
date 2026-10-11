@@ -46,6 +46,7 @@ public struct SlackPlugin: SourcePlugin {
     private let token: String
     private let days: Int
     private let http: HTTPClient
+    private let cache: any AccountCache
     private let api = URL(string: "https://slack.com/api")!
 
     public init(config: PluginConfig, http: HTTPClient) throws {
@@ -53,10 +54,13 @@ public struct SlackPlugin: SourcePlugin {
         token = try config.required("token")
         days = max(1, Int(config["days"]) ?? 3)
         self.http = http
+        cache = config.cache
     }
 
     public func fetch() async throws -> SourceSnapshot {
-        let auth: Auth = try await call("auth.test")
+        let auth: Auth = try await cache.value("auth.test", lifetime: CacheLifetime.identity) {
+            try await call("auth.test")
+        }
         let since = Date.now.addingTimeInterval(-Double(days) * 86_400).formatted(.iso8601.year().month().day())
         let me = "<@\(auth.userId)>"
         async let mentions: Search = call("search.messages", ["query": "\(me) -from:\(me) after:\(since)"])

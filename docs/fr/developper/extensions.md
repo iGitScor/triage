@@ -23,6 +23,12 @@ public protocol SourcePlugin: Sendable {
 
 `http` est un `GuardedHTTPClient` limité aux adresses que déclare le manifeste, plus celle du compte pour les outils
 auto-hébergés. Une requête vers toute autre adresse échoue avec « Bloqué : … n’est pas une destination autorisée ».
+Pendant une actualisation, un GET dont la dernière réponse avait un `ETag` part sous condition : un 304 revient à
+l’extension sous la forme de cette dernière réponse.
+
+`config.cache` garde une valeur d’une actualisation du compte à l’autre, pour ce qui change rarement, comme le
+titulaire du jeton : `try await config.cache.value("user", lifetime: CacheLifetime.identity) { try await get("user") }`.
+Un chargement qui échoue ne garde rien.
 
 ## Une extension minimale
 

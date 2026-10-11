@@ -67,6 +67,16 @@ struct GitLabPluginTests {
         let review = snapshot.items[1]
         #expect(review.changes?.files == [ChangedFile(path: "app/models/user.rb", additions: 12, deletions: 3)])
     }
+
+    /// PERF-09: who the token belongs to is asked once, not at every refresh.
+    @Test func theUserIsAskedOnceAcrossRefreshes() async throws {
+        let http = RecordingHTTP(
+            StubHTTP(routes: ["/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[]"]))
+        let config = PluginConfig(
+            accountID: UUID(), values: ["host": "gitlab.acme.io", "token": "t"], cache: MemoryAccountCache())
+        for _ in 1...2 { _ = try await GitLabPlugin(config: config, http: http).fetch() }
+        #expect(await http.paths.filter { $0.hasSuffix("/user") }.count == 1)
+    }
 }
 
 /// Records the paths a plugin requests, then answers with `base`.

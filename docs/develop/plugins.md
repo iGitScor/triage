@@ -21,7 +21,12 @@ public protocol SourcePlugin: Sendable {
 ```
 
 `http` is a `GuardedHTTPClient` limited to the hosts the manifest declares, plus the account’s own host for
-self-hosted tools. A request anywhere else throws “Blocked: … is not an allowed destination”.
+self-hosted tools. A request anywhere else throws “Blocked: … is not an allowed destination”. During a refresh, a
+GET whose last answer had an `ETag` is sent conditionally: a 304 comes back to the plugin as that last answer.
+
+`config.cache` keeps a value between refreshes of the account, for what rarely changes, such as who the token belongs
+to: `try await config.cache.value("user", lifetime: CacheLifetime.identity) { try await get("user") }`. A failed load
+keeps nothing.
 
 ## A minimal plugin
 

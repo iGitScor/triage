@@ -296,7 +296,7 @@ mod tests {
             self.requests.lock().unwrap().push(request);
             let mut statuses = self.statuses.lock().unwrap();
             let status = if statuses.is_empty() { 200 } else { statuses.remove(0) };
-            Ok(Response { status, body: self.body.clone() })
+            Ok(Response { status, body: self.body.clone(), etag: None })
         }
     }
 

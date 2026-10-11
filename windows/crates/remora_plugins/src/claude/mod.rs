@@ -38,7 +38,7 @@ pub fn make_assistant(
 ) -> Result<Box<dyn AssistantPlugin>, PluginError> {
     let mut values = account.settings.clone();
     values.extend(secrets.clone());
-    let config = PluginConfig { account_id: account.id.clone(), values };
+    let config = PluginConfig { account_id: account.id.clone(), values, cache: Default::default() };
     Ok(match account.plugin_id.as_str() {
         code::ID => Box::new(ClaudeCodePlugin::new(&config, language)),
         api::ID => Box::new(ClaudePlugin::new(&config, http, language)?),

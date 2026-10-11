@@ -35,16 +35,18 @@ public struct GitLabPlugin: SourcePlugin {
     private let host: URL
     private let token: String
     private let http: HTTPClient
+    private let cache: any AccountCache
 
     public init(config: PluginConfig, http: HTTPClient) throws {
         accountID = config.accountID
         host = try config.url("host")
         token = try config.required("token")
         self.http = http
+        cache = config.cache
     }
 
     public func fetch() async throws -> SourceSnapshot {
-        let user: User = try await get("user")
+        let user: User = try await cache.value("user", lifetime: CacheLifetime.identity) { try await get("user") }
         async let authored: [MergeRequest] = get(
             "merge_requests",
             [
