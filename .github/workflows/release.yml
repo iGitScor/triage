@@ -120,7 +120,7 @@ jobs:
         with:
           subject-path: macos/build/Remora.dmg
       - name: SBOM attestation
-        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
         with:
           subject-path: macos/build/Remora.dmg
           sbom-path: macos/build/Remora.dmg.cdx.json
@@ -269,7 +269,7 @@ jobs:
         with:
           subject-path: desktop/Remora-Setup.exe
       - name: SBOM attestation
-        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
         with:
           subject-path: desktop/Remora-Setup.exe
           sbom-path: desktop/Remora-Setup.exe.cdx.json
@@ -337,7 +337,7 @@ jobs:
             desktop/Remora-x86_64.AppImage
             desktop/Remora-amd64.deb
       - name: SBOM attestation
-        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
         with:
           subject-path: |
             desktop/Remora-x86_64.AppImage
