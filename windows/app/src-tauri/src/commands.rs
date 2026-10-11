@@ -1,10 +1,10 @@
 //! What the interface may ask. Each command locks the inbox briefly; network calls run without the lock.
 
 use crate::{changed, save_secrets, AppState, REMINDER_SHORTCUT};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, Local, NaiveDate, TimeZone, Utc};
 use remora_app::view::{inbox_view, InboxView};
 use remora_app::{paths, AccountInfo, Managed, Preferences, SourceInfo};
-use remora_core::{CompliancePolicy, Preset, SnoozeClock, SnoozeMode, SnoozeReason};
+use remora_core::{CompliancePolicy, Preset, RecurrenceRule, SnoozeClock, SnoozeMode, SnoozeReason};
 use remora_plugins::{links, registry};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -26,11 +26,12 @@ pub async fn refresh(state: State<'_, AppState>) -> Result<()> {
     Ok(())
 }
 
+/// The next occurrence when the item is a repeating reminder.
 #[tauri::command]
-pub async fn toggle_done(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
-    state.inbox.lock().await.toggle_done(&id, Utc::now());
+pub async fn toggle_done(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<Option<DateTime<Utc>>> {
+    let next = state.inbox.lock().await.toggle_done(&id, Utc::now());
     changed(&app).await;
-    Ok(())
+    Ok(next)
 }
 
 #[tauri::command]
@@ -109,9 +110,26 @@ pub fn slider_progress(date: DateTime<Utc>, from: Option<DateTime<Utc>>) -> f64 
     SnoozeClock::progress_for((date - from.unwrap_or_else(Utc::now)).num_seconds())
 }
 
+/// `until` is the last day (a date in this computer's time zone).
 #[tauri::command]
-pub async fn add_reminder(app: AppHandle, state: State<'_, AppState>, title: String, at: DateTime<Utc>) -> Result<()> {
-    state.inbox.lock().await.add_reminder(&title, at, Utc::now())?;
+pub async fn add_reminder(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    title: String,
+    at: DateTime<Utc>,
+    repeat: Option<RecurrenceRule>,
+    until: Option<NaiveDate>,
+) -> Result<()> {
+    let until = until.and_then(|day| Local.from_local_datetime(&day.and_time(chrono::NaiveTime::MIN)).earliest());
+    let until = until.map(|date| date.with_timezone(&Utc));
+    state.inbox.lock().await.add_reminder(&title, at, repeat, until, Utc::now())?;
+    changed(&app).await;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn stop_repeating(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
+    state.inbox.lock().await.stop_repeating(&id);
     changed(&app).await;
     Ok(())
 }

@@ -26,6 +26,8 @@ struct TimePicker: View {
     @State private var text = ""
     @State private var reason: SnoozeReason?
     @State private var untilNews = true
+    @State private var rule: Recurrence.Rule?
+    @State private var repeatUntil: Date?
     @FocusState private var focused: Bool
 
     private let clock = SnoozeClock()
@@ -88,11 +90,19 @@ struct TimePicker: View {
 
                 Scrubber(date: $date, clock: clock)
 
+                if isReminder {
+                    RepeatPicker(rule: $rule, until: $repeatUntil, start: date)
+                }
+
                 Button(action: confirm) {
                     Text(confirmLabel).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PillButtonStyle())
-                .disabled(isReminder && text.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(
+                    isReminder
+                        && (text.trimmingCharacters(in: .whitespaces).isEmpty
+                            || RepeatPicker.endsBeforeStart(rule: rule, until: repeatUntil, start: date))
+                )
                 .keyboardShortcut(.defaultAction)
             }
             .padding(16)
@@ -170,7 +180,7 @@ struct TimePicker: View {
         case .newReminder:
             let title = text.trimmingCharacters(in: .whitespaces)
             guard !title.isEmpty else { return }
-            model.addReminder(title, at: date)
+            model.addReminder(title, at: date, repeating: rule, until: repeatUntil)
         }
         dismiss()
     }

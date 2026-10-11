@@ -1,7 +1,7 @@
 <script lang="ts">
 // Presets (Later today, This evening, Tomorrow, Next week) and a slider that counts from the preset
 // picked, or from now: minutes first, then hours, then days (SnoozeClock in remora_core).
-import { onMount } from 'svelte'
+import { onMount, type Snippet } from 'svelte'
 import { api, type Preset, type SnoozeMode } from './api'
 import { t } from './i18n'
 import { when } from './time'
@@ -13,12 +13,15 @@ let {
   onpick,
   date = $bindable(''),
   start = null,
+  children,
 }: {
   confirm: string
   showMode?: boolean
   onpick: (date: string, mode: SnoozeMode) => void
   date?: string
   start?: string | null
+  /** More choices, shown above the confirm button (the quick reminder's Repeat). */
+  children?: Snippet
 } = $props()
 
 let presets: Preset[] = $state([])
@@ -67,6 +70,7 @@ $effect(() => {
       </div>
     {/if}
   </div>
+  {@render children?.()}
   <button type="button" class="pill primary confirm" disabled={!date} onclick={() => onpick(date, mode)}>{confirm}</button>
 </div>
 

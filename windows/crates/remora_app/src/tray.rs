@@ -162,7 +162,9 @@ mod tests {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
         let ids = titles
             .iter()
-            .map(|t| inbox.add_reminder(t, now() - Duration::minutes(1), now() - Duration::hours(1)).unwrap())
+            .map(|t| {
+                inbox.add_reminder(t, now() - Duration::minutes(1), None, None, now() - Duration::hours(1)).unwrap()
+            })
             .collect();
         inbox.tick(now());
         (inbox, ids)

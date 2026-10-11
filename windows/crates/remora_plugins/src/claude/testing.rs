@@ -35,6 +35,7 @@ pub fn item(id: &str) -> InboxItem {
         expires: None,
         changes: None,
         suggested_people: None,
+        recurrence: None,
     }
 }
 

@@ -73,6 +73,10 @@ bottom of the inbox does the same with the time picker, and so does right-click 
 When it’s due, a notification arrives, with **Start**, **Done** and **10 more minutes** on a Mac, and the reminder
 appears at the top of *My turn*.
 
+**Repeat** (under the time) makes it come back **every day**, **every weekday** or **every week** at the same time,
+with an optional **Until** date. Its row says how it repeats. Marking it **Done** puts it away until the next one;
+an occurrence you miss is skipped, not stacked. **Stop repeating** on the row keeps this one and ends the series.
+
 ## In progress
 
 **Start** a reminder (from its notification on a Mac, or on any item: hover → **Start**, or right-click on a Mac) to

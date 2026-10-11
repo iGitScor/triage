@@ -700,6 +700,10 @@ final class InboxModel {
         guard let point = undoPoint else { return }
         undoPoint = nil
         let cancelled = point.states.filter { id, state in state.snooze != nil && states[id]?.snooze != state.snooze }
+        // Snoozes the action set (a repeating reminder's next time) lose their notification.
+        for (id, state) in states where state.snooze != nil && point.states[id]?.snooze == nil {
+            environment.notifications.cancel(id)
+        }
         states = point.states
         reminders = point.reminders
         snoozeHistory = point.history
@@ -723,13 +727,37 @@ final class InboxModel {
     }
 
     func toggleDone(_ item: InboxItem) {
-        if state(of: item).done == nil { remember(L("Marked as done")) }
+        if state(of: item).done == nil {
+            if let next = nextOccurrence(of: item) {
+                remember(L("Next reminder %@", next.formatted(.dateTime.weekday(.wide).hour().minute())))
+            } else {
+                remember(L("Marked as done"))
+            }
+        }
         markDone(item)
+    }
+
+    /// When a repeating reminder comes back after this one is done, if it does.
+    private func nextOccurrence(of item: InboxItem) -> Date? {
+        guard item.bundle == .reminders else { return nil }
+        return item.recurrence?.next(after: .now)
     }
 
     private func markDone(_ item: InboxItem) {
         if item.bundle == .reminders, state(of: item).done == nil {
-            removeReminder(item)
+            if let next = nextOccurrence(of: item) {
+                // Hidden until its next time, like a new reminder; never counted as a snooze.
+                update(item) { state in
+                    state.done = nil
+                    state.remindedAt = nil
+                    state.startedAt = nil
+                    state.snooze = Snooze(until: next, mode: .hide, fingerprint: item.fingerprint)
+                }
+                scheduleReturn(of: item, at: next, note: nil)
+                refreshInsights()
+            } else {
+                removeReminder(item)
+            }
             return
         }
         let markingDone = state(of: item).done == nil
@@ -1035,8 +1063,9 @@ final class InboxModel {
         }
     }
 
-    func addReminder(_ title: String, at date: Date) {
-        let item = InboxItem(
+    /// A reminder hidden until `date`; with a rule, it comes back after each Done until `until`'s day.
+    func addReminder(_ title: String, at date: Date, repeating rule: Recurrence.Rule? = nil, until: Date? = nil) {
+        var item = InboxItem(
             id: "reminder/\(UUID().uuidString)",
             accountID: UUID(),
             pluginID: "reminders",
@@ -1046,9 +1075,21 @@ final class InboxModel {
             context: "Reminder",
             date: .now
         )
+        if let rule {
+            let recurrence = Recurrence(rule: rule, anchor: date, until: until)
+            guard !recurrence.endsBeforeStart() else { return }
+            item.recurrence = recurrence
+        }
         reminders.append(item)
         persist(remindersStore, reminders)
         snooze(item, until: date, mode: .hide, note: nil)
+    }
+
+    /// This reminder stays as it is, but won't come back after Done.
+    func stopRepeating(_ item: InboxItem) {
+        guard let index = reminders.firstIndex(where: { $0.id == item.id }) else { return }
+        reminders[index].recurrence = nil
+        persist(remindersStore, reminders)
     }
 
     private func removeReminder(_ item: InboxItem) {

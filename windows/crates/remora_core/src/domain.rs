@@ -42,6 +42,9 @@ pub struct InboxItem {
     /// People the tool suggests as reviewers, for the waiting assistant.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub suggested_people: Option<Vec<Person>>,
+    /// How a reminder repeats. Reminders only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub recurrence: Option<crate::Recurrence>,
 }
 
 /// What a pull or merge request changes: paths and line counts only.

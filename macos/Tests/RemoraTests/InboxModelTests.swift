@@ -312,6 +312,55 @@ struct InboxModelTests {
         #expect(harness.model().reminders.count == 1, "saved")
     }
 
+    /// Done on a repeating reminder hides it until its next time instead of removing it; Undo puts it back.
+    @Test func aRepeatingReminderComesBackAfterDone() async throws {
+        let harness = Harness()
+        let model = harness.model()
+        let first = Date.now.addingTimeInterval(-60)
+        model.addReminder("Stand-up", at: first, repeating: .daily)
+        let reminder = try #require(model.reminders.first)
+        #expect(reminder.recurrence == Recurrence(rule: .daily, anchor: first))
+        model.unsnooze(reminder)
+        model.toggleDone(reminder)
+
+        let next = try #require(Recurrence(rule: .daily, anchor: first).next(after: .now))
+        #expect(model.reminders.map(\.title) == ["Stand-up"], "kept")
+        #expect(model.state(of: reminder).snooze?.until == next)
+        #expect(model.state(of: reminder).done == nil)
+        #expect(harness.notifier.scheduled.last?.at == next)
+        #expect(model.undoPoint?.message.hasPrefix("Next reminder") == true)
+        #expect(model.snoozeCount(reminder) == 0, "not counted as a snooze")
+
+        model.undo()
+        #expect(model.state(of: reminder).snooze == nil)
+        #expect(harness.notifier.cancelled.last == reminder.id, "the next time's notification goes")
+        #expect(harness.model().reminders.first?.recurrence?.rule == .daily, "saved")
+    }
+
+    /// Past its last day, or once it stops repeating, Done removes the reminder as before.
+    @Test func aRepeatingReminderEnds() async throws {
+        let harness = Harness()
+        let model = harness.model()
+        let first = Date.now.addingTimeInterval(-60)
+        model.addReminder("Today only", at: first, repeating: .weekly, until: first)
+        model.addReminder("Daily", at: first, repeating: .daily)
+        #expect(model.reminders.count == 2)
+        model.toggleDone(try #require(model.reminders.first { $0.title == "Today only" }))
+        #expect(model.reminders.map(\.title) == ["Daily"])
+
+        let daily = try #require(model.reminders.first)
+        model.stopRepeating(daily)
+        #expect(model.reminders.first?.recurrence == nil)
+        model.toggleDone(try #require(model.reminders.first))
+        #expect(model.reminders.isEmpty)
+    }
+
+    @Test func anEndBeforeTheFirstReminderIsRefused() {
+        let model = Harness().model()
+        model.addReminder("Never", at: .now.addingTimeInterval(86_400 * 3), repeating: .daily, until: .now)
+        #expect(model.reminders.isEmpty)
+    }
+
     @Test func anUndoOfferExpiresAndIsReplaced() async throws {
         let harness = Harness()
         let model = try await harness.connected()

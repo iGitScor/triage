@@ -77,6 +77,11 @@ poisson ou l’icône de la zone de notification → **Nouveau rappel**.
 À l’échéance, une notification arrive, avec **Commencer**, **Terminé** et **Encore 10 minutes** sur Mac, et le rappel
 apparaît en haut de *À moi*.
 
+**Répéter** (sous l’heure) le fait revenir **tous les jours**, **tous les jours ouvrés** ou **toutes les semaines** à la
+même heure, avec une date de fin facultative (**Jusqu’au**). Sa ligne indique comment il se répète. Le marquer
+**Terminé** le range jusqu’au suivant ; un rappel manqué est sauté, pas empilé. **Ne plus répéter**, sur la ligne,
+garde celui-ci et arrête la série.
+
 ## En cours
 
 **Commencez** un rappel (depuis sa notification sur Mac, ou sur n’importe quel élément : survol → **Commencer**, ou

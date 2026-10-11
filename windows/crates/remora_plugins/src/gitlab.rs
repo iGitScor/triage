@@ -191,6 +191,7 @@ impl GitLabPlugin {
                 ChangeSet::new(files.collect(), None)
             }),
             suggested_people: None,
+            recurrence: None,
         }
     }
 }

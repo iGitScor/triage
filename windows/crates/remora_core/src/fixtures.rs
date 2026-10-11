@@ -27,6 +27,7 @@ pub fn item(id: &str, bundle: InboxBundle) -> InboxItem {
         expires: None,
         changes: None,
         suggested_people: None,
+        recurrence: None,
     }
 }
 

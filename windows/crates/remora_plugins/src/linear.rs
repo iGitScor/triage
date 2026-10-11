@@ -222,6 +222,7 @@ impl Issue {
             expires: None,
             changes: None,
             suggested_people: None,
+            recurrence: None,
         }
     }
 }
@@ -304,6 +305,7 @@ impl Notification {
             expires: None,
             changes: None,
             suggested_people: None,
+            recurrence: None,
         }
     }
 }

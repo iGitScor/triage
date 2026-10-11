@@ -28,6 +28,8 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     /// When it stops being worth showing (an app's reminder of an event that has started): it then leaves the
     /// inbox as if cleared, unless you pinned or started it.
     public var expires: Date?
+    /// How a reminder repeats. Set on reminders only; not part of the fingerprint.
+    public var recurrence: Recurrence?
 
     public init(
         id: String,

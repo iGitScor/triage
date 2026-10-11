@@ -271,6 +271,7 @@ impl Reply {
             expires: None,
             changes: None,
             suggested_people: None,
+            recurrence: None,
         }
     }
 }
@@ -438,6 +439,7 @@ impl Match {
             expires: self.expires(),
             changes: None,
             suggested_people: None,
+            recurrence: None,
         }
     }
 

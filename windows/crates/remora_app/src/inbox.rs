@@ -3,9 +3,9 @@ use chrono::{DateTime, Utc};
 use remora_core::{
     notices, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief, BundleSummary, CompliancePolicy,
     Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder, Mark, Notice,
-    NoticeKind, PersonalRanker, PluginManifest, ReviewPace, ReviewPrep, ReviewTiming, Snooze, SnoozeAdvisor,
-    SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion,
-    VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
+    NoticeKind, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule, ReviewPace, ReviewPrep, ReviewTiming,
+    Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth,
+    TriageAction, TriageSuggestion, VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
 };
 use remora_plugins::{
     claude, links, registry, AssistantPlugin, GuardedHttpClient, HttpClient, PluginError, SourcePlugin, SourceSnapshot,
@@ -512,17 +512,22 @@ impl Inbox {
         }
     }
 
-    /// Done until it changes. A reminder marked done is gone for good.
-    pub fn toggle_done(&mut self, id: &str, now: DateTime<Utc>) {
-        let Some(item) = self.item(id) else { return };
+    /// Done until it changes. A reminder marked done is gone for good, unless it repeats: it is then hidden until
+    /// its next occurrence, which is returned.
+    pub fn toggle_done(&mut self, id: &str, now: DateTime<Utc>) -> Option<DateTime<Utc>> {
+        let item = self.item(id)?;
         self.remember();
         let marking = self.states.get(id).and_then(|s| s.done.as_ref()).is_none();
         if item.bundle == InboxBundle::reminders() && marking {
+            if let Some(next) = item.recurrence.as_ref().and_then(|r| r.next_after(now)) {
+                self.snooze(id, next, SnoozeMode::Hide, None, false);
+                return Some(next);
+            }
             self.reminders.retain(|r| r.id != id);
             self.states.remove(id);
             self.persist(REMINDERS, &self.reminders);
             self.persist(STATES, &self.states);
-            return;
+            return None;
         }
         let fingerprint = item.fingerprint();
         let started = self.states.get(id).and_then(|s| s.started_at);
@@ -546,6 +551,7 @@ impl Inbox {
                 self.persist(HISTORY, &self.snooze_history);
             }
         }
+        None
     }
 
     /// Empties the Done tab; cleared items still come back on new activity.
@@ -765,7 +771,9 @@ impl Inbox {
                         self.reschedule(&suggestion.id, until);
                     }
                 }
-                TriageAction::Done => self.toggle_done(&suggestion.id, now),
+                TriageAction::Done => {
+                    self.toggle_done(&suggestion.id, now);
+                }
                 TriageAction::Now => {
                     self.unsnooze(&suggestion.id);
                     open.get_or_insert_with(|| suggestion.id.clone());
@@ -925,10 +933,22 @@ impl Inbox {
         self.update(id, |s| s.snooze = None);
     }
 
-    /// A reminder is an item of its own, hidden until its time. It needs a title.
-    pub fn add_reminder(&mut self, title: &str, at: DateTime<Utc>, now: DateTime<Utc>) -> Result<String, String> {
+    /// A reminder is an item of its own, hidden until its time. It needs a title. With `repeat`, Done brings it
+    /// back at the next occurrence, up to `until` (the last day, inclusive).
+    pub fn add_reminder(
+        &mut self,
+        title: &str,
+        at: DateTime<Utc>,
+        repeat: Option<RecurrenceRule>,
+        until: Option<DateTime<Utc>>,
+        now: DateTime<Utc>,
+    ) -> Result<String, String> {
         if title.trim().is_empty() {
             return Err("Type what to remember.".into());
+        }
+        let recurrence = repeat.map(|rule| Recurrence::new(rule, at, until));
+        if recurrence.as_ref().is_some_and(Recurrence::ends_before_start) {
+            return Err("The end is before the first reminder.".into());
         }
         let id = format!("reminder/{}", uuid::Uuid::new_v4());
         self.reminders.push(InboxItem {
@@ -951,10 +971,21 @@ impl Inbox {
             expires: None,
             changes: None,
             suggested_people: None,
+            recurrence,
         });
         self.persist(REMINDERS, &self.reminders);
         self.snooze(&id, at, SnoozeMode::Hide, None, false);
         Ok(id)
+    }
+
+    /// The reminder stays as it is, but Done will end it.
+    pub fn stop_repeating(&mut self, id: &str) -> bool {
+        let Some(reminder) = self.reminders.iter_mut().find(|r| r.id == id && r.recurrence.is_some()) else {
+            return false;
+        };
+        reminder.recurrence = None;
+        self.persist(REMINDERS, &self.reminders);
+        true
     }
 
     /// Saves the preferences. True when the refresh interval changed, so the next refresh is rescheduled.
@@ -1099,6 +1130,7 @@ impl Inbox {
             expires: None,
             changes: None,
             suggested_people: None,
+            recurrence: None,
         }
     }
 
@@ -1325,6 +1357,7 @@ mod tests {
             expires: None,
             changes: None,
             suggested_people: None,
+            recurrence: None,
         }
     }
 
@@ -1379,7 +1412,9 @@ mod tests {
     #[test]
     fn opening_ends_the_reminder() {
         let mut inbox = inbox();
-        let id = inbox.add_reminder("Call the bank", now() - Duration::minutes(1), now() - Duration::hours(1)).unwrap();
+        let id = inbox
+            .add_reminder("Call the bank", now() - Duration::minutes(1), None, None, now() - Duration::hours(1))
+            .unwrap();
         inbox.tick(now());
         assert!(inbox.states[&id].reminded_at.is_some());
         inbox.open_plan(&id, false).unwrap();
@@ -1391,8 +1426,9 @@ mod tests {
     fn done_and_clear_all_can_be_undone() {
         let mut inbox = inbox();
         inbox.apply(snapshot(vec![item("1", InboxBundle::reviews()), item("2", InboxBundle::reviews())]), now());
-        let reminder =
-            inbox.add_reminder("Call the bank", now() - Duration::minutes(1), now() - Duration::hours(1)).unwrap();
+        let reminder = inbox
+            .add_reminder("Call the bank", now() - Duration::minutes(1), None, None, now() - Duration::hours(1))
+            .unwrap();
         inbox.tick(now());
         assert!(!inbox.undo(), "nothing to undo yet");
 
@@ -1416,7 +1452,59 @@ mod tests {
     #[test]
     fn a_reminder_needs_a_title() {
         let mut inbox = inbox();
-        assert_eq!(inbox.add_reminder("   ", now(), now()), Err("Type what to remember.".into()));
+        assert_eq!(inbox.add_reminder("   ", now(), None, None, now()), Err("Type what to remember.".into()));
+        assert!(inbox.reminders.is_empty());
+    }
+
+    /// Done on a repeating reminder hides it until the next occurrence, undoably; past the last day it ends.
+    #[test]
+    fn a_repeating_reminder_comes_back_after_done() {
+        let mut inbox = inbox();
+        let at = now() - Duration::minutes(1);
+        let id =
+            inbox.add_reminder("Stand-up", at, Some(RecurrenceRule::Daily), None, now() - Duration::hours(1)).unwrap();
+        inbox.tick(now());
+
+        let next = inbox.toggle_done(&id, now()).expect("a next occurrence");
+        assert!((23..=25).contains(&(next - at).num_hours()), "the same time the next day");
+        assert!(inbox.item(&id).is_some(), "still there");
+        let state = &inbox.states[&id];
+        assert_eq!(state.snooze.as_ref().map(|s| s.until), Some(next));
+        assert!(state.reminded_at.is_none() && state.done.is_none());
+        assert!(inbox.snooze_history.is_empty(), "a reminder isn't counted as a snooze");
+
+        assert!(inbox.undo());
+        assert!(inbox.states[&id].reminded_at.is_some() && inbox.states[&id].snooze.is_none());
+
+        let last =
+            inbox.add_reminder("Once more", at, Some(RecurrenceRule::Daily), Some(at), now() - Duration::hours(1));
+        let last = last.unwrap();
+        inbox.tick(now());
+        assert_eq!(inbox.toggle_done(&last, now()), None);
+        assert!(inbox.item(&last).is_none(), "past its last day, it ends");
+    }
+
+    #[test]
+    fn stop_repeating_keeps_the_reminder() {
+        let mut inbox = inbox();
+        let at = now() - Duration::minutes(1);
+        let id =
+            inbox.add_reminder("Stand-up", at, Some(RecurrenceRule::Weekly), None, now() - Duration::hours(1)).unwrap();
+        inbox.tick(now());
+        assert!(inbox.stop_repeating(&id));
+        assert!(!inbox.stop_repeating(&id), "already stopped");
+        assert_eq!(inbox.item(&id).map(|i| i.recurrence), Some(None));
+        assert!(inbox.states[&id].reminded_at.is_some(), "nothing else changes");
+        assert_eq!(inbox.toggle_done(&id, now()), None);
+        assert!(inbox.item(&id).is_none());
+    }
+
+    #[test]
+    fn a_repeating_reminder_cannot_end_before_it_starts() {
+        let mut inbox = inbox();
+        let at = now() + Duration::days(3);
+        let ended = inbox.add_reminder("Stand-up", at, Some(RecurrenceRule::Daily), Some(now()), now());
+        assert_eq!(ended, Err("The end is before the first reminder.".into()));
         assert!(inbox.reminders.is_empty());
     }
 
@@ -1528,7 +1616,7 @@ mod tests {
     #[test]
     fn reminders_hide_until_due_then_done_removes_them() {
         let mut inbox = inbox();
-        let id = inbox.add_reminder("  Call the bank ", now() + Duration::minutes(10), now()).unwrap();
+        let id = inbox.add_reminder("  Call the bank ", now() + Duration::minutes(10), None, None, now()).unwrap();
         assert_eq!(inbox.layout(now(), "").snoozed.len(), 1);
         let notices = inbox.tick(now() + Duration::minutes(10));
         assert_eq!((notices[0].title.as_str(), notices[0].body.as_str()), ("Reminder", "Call the bank"));
@@ -1587,7 +1675,7 @@ mod tests {
             saved.accounts = inbox().accounts;
             saved.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
             saved.toggle_pin("1");
-            saved.add_reminder("Stand-up notes", now() + Duration::hours(1), now()).unwrap();
+            saved.add_reminder("Stand-up notes", now() + Duration::hours(1), None, None, now()).unwrap();
             saved.set_preferences(Preferences { refresh_minutes: 15, ..Preferences::default() });
         }
         let mut reopened = Inbox::open(store.clone(), vault, Managed::default());
@@ -1816,7 +1904,7 @@ mod tests {
     #[test]
     fn reminders_are_not_learned_from() {
         let mut inbox = inbox();
-        let id = inbox.add_reminder("Call the bank", Utc::now() + Duration::hours(1), Utc::now()).unwrap();
+        let id = inbox.add_reminder("Call the bank", Utc::now() + Duration::hours(1), None, None, Utc::now()).unwrap();
         inbox.snooze(&id, Utc::now() + Duration::hours(2), SnoozeMode::Hide, None, false);
         assert!(inbox.snooze_history.is_empty() && inbox.action_records.is_empty());
     }

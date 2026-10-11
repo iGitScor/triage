@@ -997,7 +997,7 @@ def features(lang: str) -> str:
                     (
                         "drag",
                         "Drag to remind",
-                        "Pull the fish down to cast a reminder; a bubble shows when it comes back. Further down means later. On Windows, Ctrl+Alt+R.",
+                        "Pull the fish down to cast a reminder; a bubble shows when it comes back. Further down means later. On Windows, Ctrl+Alt+R. Repeat it every day, weekday or week.",
                     ),
                     (
                         "swipe",
@@ -1143,7 +1143,7 @@ def features(lang: str) -> str:
                     (
                         "drag",
                         "Tirer pour un rappel",
-                        "Tirez le poisson vers le bas pour lancer un rappel ; une bulle indique quand il revient. Plus bas, c’est plus tard. Sous Windows, Ctrl+Alt+R.",
+                        "Tirez le poisson vers le bas pour lancer un rappel ; une bulle indique quand il revient. Plus bas, c’est plus tard. Sous Windows, Ctrl+Alt+R. Répétez-le chaque jour, jour ouvré ou semaine.",
                     ),
                     (
                         "swipe",

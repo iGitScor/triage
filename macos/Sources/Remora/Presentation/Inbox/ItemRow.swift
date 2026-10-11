@@ -83,6 +83,9 @@ struct ItemRow: View {
             if state.snooze != nil {
                 Button(L("Unsnooze")) { model.unsnooze(item) }
             }
+            if item.recurrence != nil {
+                Button(L("Stop repeating")) { model.stopRepeating(item) }
+            }
             ForEach(model.linkedItems(item)) { other in
                 Button(L("Linked: %@", other.title)) { model.open(other) }
             }
@@ -278,6 +281,7 @@ struct ItemRow: View {
         }
         Button("Snooze…", action: onSnooze)
         if state.snooze != nil { Button("Unsnooze") { model.unsnooze(item) } }
+        if item.recurrence != nil { Button("Stop repeating") { model.stopRepeating(item) } }
         Button(L(state.done == nil ? "Mark as done" : "Move to inbox")) { model.toggleDone(item) }
         if state.done != nil { Button("Clear") { model.clear([item]) } }
     }

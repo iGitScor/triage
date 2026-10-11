@@ -216,7 +216,31 @@ extension InboxItem {
     /// The context as shown: a reminder's is stored as "Reminder" and translated here, at display, so a
     /// language change applies to reminders saved before it.
     var shownContext: String {
-        bundle == .reminders && context == "Reminder" ? L("Reminder") : context
+        guard bundle == .reminders, context == "Reminder" else { return context }
+        return [L("Reminder"), recurrence?.title].compactMap { $0 }.joined(separator: " · ")
+    }
+}
+
+extension Recurrence.Rule {
+    var title: String {
+        switch self {
+        case .daily: L("Every day")
+        case .weekdays: L("Every weekday")
+        case .weekly: L("Every week")
+        }
+    }
+}
+
+extension Recurrence {
+    /// "Every day", or "Every day until 30 Oct".
+    var title: String {
+        guard let until else { return rule.title }
+        let day = until.formatted(.dateTime.day().month(.abbreviated))
+        return switch rule {
+        case .daily: L("Every day until %@", day)
+        case .weekdays: L("Every weekday until %@", day)
+        case .weekly: L("Every week until %@", day)
+        }
     }
 }
 

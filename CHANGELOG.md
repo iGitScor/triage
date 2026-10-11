@@ -5,6 +5,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Added
+
+- Recurring reminders: every day, every weekday or every week, with an optional end. Done puts one away until
+  the next; Stop repeating ends the series.
+
 ### Changed
 
 - Mac: GitLab avatars from Gravatar appear, as on Windows; avatars load over https only.

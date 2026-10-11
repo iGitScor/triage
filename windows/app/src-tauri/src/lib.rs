@@ -130,6 +130,7 @@ pub fn run() {
             commands::slider_date,
             commands::slider_progress,
             commands::add_reminder,
+            commands::stop_repeating,
             commands::open_item,
             commands::open_setup,
             commands::sources,

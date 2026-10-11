@@ -37,6 +37,15 @@ export interface Item {
   due?: string | null
   changes?: { files: ChangedFile[]; fileCount: number } | null
   suggestedPeople?: Person[] | null
+  /** Reminders only. */
+  recurrence?: Recurrence | null
+}
+export type RecurrenceRule = 'daily' | 'weekdays' | 'weekly'
+export interface Recurrence {
+  rule: RecurrenceRule
+  anchor: string
+  /** The last day, inclusive. */
+  until?: string | null
 }
 export interface Group {
   bundle: Bundle
@@ -264,7 +273,8 @@ const QUIET = { quiet: true }
 export const api = {
   inbox: (query: string) => call<InboxView>('inbox', { query }, QUIET),
   refresh: () => call<void>('refresh'),
-  toggleDone: (id: string) => call<void>('toggle_done', { id }),
+  /** The next occurrence when the item is a repeating reminder. */
+  toggleDone: (id: string) => call<string | null>('toggle_done', { id }),
   togglePin: (id: string) => call<void>('toggle_pin', { id }),
   start: (id: string) => call<void>('start', { id }),
   stop: (id: string) => call<void>('stop', { id }),
@@ -290,7 +300,10 @@ export const api = {
   presets: () => call<Preset[]>('presets', undefined, QUIET),
   sliderDate: (progress: number, from: string | null) => call<string>('slider_date', { progress, from }, QUIET),
   sliderProgress: (date: string, from: string | null) => call<number>('slider_progress', { date, from }, QUIET),
-  addReminder: (title: string, at: string) => call<void>('add_reminder', { title, at }, QUIET),
+  /** `until`: the last day, as YYYY-MM-DD. */
+  addReminder: (title: string, at: string, repeat: RecurrenceRule | null = null, until: string | null = null) =>
+    call<void>('add_reminder', { title, at, repeat, until }, QUIET),
+  stopRepeating: (id: string) => call<void>('stop_repeating', { id }),
   openItem: (id: string, inBrowser = false) => call<void>('open_item', { id, inBrowser }),
   openSetup: (pluginId: string, host?: string) => call<void>('open_setup', { pluginId, host: host ?? null }, QUIET),
   sources: () => call<Source[]>('sources'),

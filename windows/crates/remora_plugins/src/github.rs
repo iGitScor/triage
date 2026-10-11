@@ -328,6 +328,7 @@ impl PullRequest {
             expires: None,
             changes,
             suggested_people,
+            recurrence: None,
         }
     }
 }

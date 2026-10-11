@@ -6,6 +6,7 @@ import { offer } from './failures'
 import { selectsIn } from './announce'
 import { avatarSrc, describe, mark, shown } from './people'
 import { reasonLabel } from './reasons'
+import { repeatLabel } from './recurrence'
 import { t, translateMessage } from './i18n'
 import { ago, when } from './time'
 
@@ -44,8 +45,8 @@ const reviewers = $derived(shown(item.participants ?? []))
 /** Done, with Undo for a few seconds. Moving an item back to the inbox needs none. */
 async function markDone() {
   const marking = !done
-  await api.toggleDone(item.id)
-  if (marking) offer(t('Marked as done'), t('Undo'), api.undo)
+  const next = await api.toggleDone(item.id)
+  if (marking) offer(next ? t('Next reminder %@', when(next)) : t('Marked as done'), t('Undo'), api.undo)
 }
 
 function open(event: MouseEvent) {
@@ -63,7 +64,7 @@ function open(event: MouseEvent) {
     <span class="body">
       <span class="row meta">
         <Logo id={item.pluginId} size={12} />
-        <span class="context">{translateMessage(item.context)}{account ? ` · ${account}` : ''}</span>
+        <span class="context">{translateMessage(item.context)}{item.recurrence ? ` · ${repeatLabel(item.recurrence)}` : ''}{account ? ` · ${account}` : ''}</span>
         <span class="spacer"></span>
         {#if snoozed}<span class="back"><Icon name="moon" size={12} /> {when(snoozed)}</span>{:else}
           {#if extras?.ranking}<span class="star" title={extras.ranking} aria-label={extras.ranking}>★</span>{/if}
@@ -137,7 +138,8 @@ function open(event: MouseEvent) {
     </div>
   {/if}
   <div class="actions">
-    <button type="button" class="action" onclick={() => api.togglePin(item.id)}><Icon name="pin" size={14} />{t(itemState?.pinned ? 'Unpin' : 'Pin')}</button>
+    <!-- Pin and Stop repeating are icons only, so the bar fits on one line in French too. -->
+    <button type="button" class="action" onclick={() => api.togglePin(item.id)} aria-label={t(itemState?.pinned ? 'Unpin' : 'Pin')} title={t(itemState?.pinned ? 'Unpin' : 'Pin')}><Icon name="pin" size={14} /></button>
     {#if itemState?.startedAt}
       <button type="button" class="action" onclick={() => api.stop(item.id)}><Icon name="stop" size={14} />{t('Stop')}</button>
     {:else}
@@ -147,6 +149,9 @@ function open(event: MouseEvent) {
       <button type="button" class="action" onclick={() => api.unsnooze(item.id)}><Icon name="moon" size={14} />{t('Unsnooze')}</button>
     {:else}
       <button type="button" class="action" onclick={() => onsnooze(item)}><Icon name="moon" size={14} />{t('Snooze…')}</button>
+    {/if}
+    {#if item.recurrence}
+      <button type="button" class="action" onclick={() => api.stopRepeating(item.id)} aria-label={t('Stop repeating')} title={t('Stop repeating')}><Icon name="repeat" size={14} /></button>
     {/if}
     <button type="button" class="action" onclick={markDone}><Icon name="done" size={14} />{t(done ? 'Move to inbox' : 'Done')}</button>
   </div>
@@ -354,6 +359,9 @@ function open(event: MouseEvent) {
     right: 8px;
     bottom: 8px;
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100% - 16px);
     gap: 4px;
     padding: 4px;
     border-radius: 10px;

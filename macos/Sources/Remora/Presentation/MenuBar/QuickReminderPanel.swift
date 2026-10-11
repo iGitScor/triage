@@ -21,8 +21,8 @@ final class QuickReminderPanel {
 
     func show(at point: NSPoint, date: Date) {
         panel.host(
-            QuickReminderView(date: date) { [weak self] title in
-                self?.model.addReminder(title, at: date)
+            QuickReminderView(date: date) { [weak self] title, rule, until in
+                self?.model.addReminder(title, at: date, repeating: rule, until: until)
                 self?.close()
             } cancel: { [weak self] in
                 self?.close()
@@ -46,10 +46,12 @@ final class QuickReminderPanel {
 
 private struct QuickReminderView: View {
     let date: Date
-    let save: (String) -> Void
+    let save: (String, Recurrence.Rule?, Date?) -> Void
     let cancel: () -> Void
 
     @State private var title = ""
+    @State private var rule: Recurrence.Rule?
+    @State private var until: Date?
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -69,6 +71,7 @@ private struct QuickReminderView: View {
                 .focused($focused)
                 .onSubmit(submit)
                 .onExitCommand(perform: cancel)
+            RepeatPicker(rule: $rule, until: $until, start: date)
             Text("Enter to save · Esc to cancel").font(Myna.font(10.5)).foregroundStyle(Myna.muted)
         }
         .padding(14)
@@ -82,6 +85,7 @@ private struct QuickReminderView: View {
     private func submit() {
         let trimmed = title.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return cancel() }
-        save(trimmed)
+        guard !RepeatPicker.endsBeforeStart(rule: rule, until: until, start: date) else { return }
+        save(trimmed, rule, until)
     }
 }

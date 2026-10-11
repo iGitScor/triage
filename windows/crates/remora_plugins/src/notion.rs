@@ -393,6 +393,7 @@ impl Page {
             expires: None,
             changes: None,
             suggested_people: None,
+            recurrence: None,
         }
     }
 }
