@@ -8,7 +8,7 @@ import { avatarSrc, describe, mark, shown } from './people'
 import { reasonLabel } from './reasons'
 import { repeatLabel } from './recurrence'
 import { t, translateMessage } from './i18n'
-import { ago, when } from './time'
+import { ago, relative, when } from './time'
 
 let {
   item,
@@ -68,7 +68,8 @@ function open(event: MouseEvent) {
         <span class="spacer"></span>
         {#if snoozed}<span class="back"><Icon name="moon" size={12} /> {when(snoozed)}</span>{:else}
           {#if extras?.ranking}<span class="star" title={extras.ranking} aria-label={extras.ranking}>★</span>{/if}
-          <span class="muted">{ago(item.date)}</span>
+          <span class="muted" aria-hidden="true">{ago(item.date)}</span>
+          <span class="visually-hidden">{relative(item.date)}</span>
         {/if}
       </span>
       <span class="title">{item.title}</span>
@@ -90,7 +91,7 @@ function open(event: MouseEvent) {
         <span class="chips">
           {#if itemState?.snooze?.reason}<span class="chip">{t(reasonLabel(itemState.snooze.reason))}</span>{/if}
           {#if (extras?.snoozedTimes ?? 0) >= 2}<span class="chip warning">{t('Snoozed %d×', extras?.snoozedTimes ?? 0)}</span>{/if}
-          {#if itemState?.startedAt}<span class="chip accent">{t('Started %@', ago(itemState.startedAt))}</span>{/if}
+          {#if itemState?.startedAt}<span class="chip accent">{t('Started %@', relative(itemState.startedAt))}</span>{/if}
           {#if itemState?.remindedAt}<span class="chip accent">{t('Reminder')}</span>{/if}
           {#if itemState?.pinned}<span class="chip">{t('Pinned')}</span>{/if}
           {#each item.badges as badge (badge.id)}<span class="chip {badge.tone}">{t(badge.label)}</span>{/each}

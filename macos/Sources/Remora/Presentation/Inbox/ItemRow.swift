@@ -108,7 +108,8 @@ struct ItemRow: View {
     private var accessibilityText: String {
         var parts = [
             model.accountLabel(for: item), item.shownContext, item.title, item.preview, item.author?.name,
-            item.date.shortRelative,
+            // In words: VoiceOver reads the corner's "5m" as metres.
+            item.date.formatted(.relative(presentation: .named)),
         ]
         if state.pinned { parts.append(L("Pinned")) }
         if let startedAt = state.startedAt {

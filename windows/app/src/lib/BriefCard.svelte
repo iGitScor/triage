@@ -4,7 +4,7 @@
 import { onMount } from 'svelte'
 import { api, type AssistantView, type Item } from './api'
 import { t, translateMessage } from './i18n'
-import { ago } from './time'
+import { relative } from './time'
 
 let { assistant, items }: { assistant: AssistantView; items: Item[] } = $props()
 let busy = $state(false)
@@ -44,7 +44,7 @@ const byId = $derived(new Map(items.map((i) => [i.id, i])))
         {#if item}<li><button type="button" class="link" onclick={() => api.openItem(item.id)}>{item.title}</button> <span class="reason">{focus.reason}</span></li>{/if}
       {/each}
     </ol>
-    <p class="footer">{t('Written %@', ago(assistant.brief.createdAt))}</p>
+    <p class="footer">{t('Written %@', relative(assistant.brief.createdAt))}</p>
   {:else}
     <p>{t('The assistant is reading your inbox…')}</p>
   {/if}

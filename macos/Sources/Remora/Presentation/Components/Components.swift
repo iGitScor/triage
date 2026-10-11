@@ -245,6 +245,7 @@ extension Recurrence {
 }
 
 extension Date {
+    /// "5m", "2h", "3d": only for the visible corner of a row. Sentences and VoiceOver get a named relative date.
     var shortRelative: String {
         let seconds = -timeIntervalSinceNow
         switch seconds {

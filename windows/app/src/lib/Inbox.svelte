@@ -16,7 +16,7 @@ import { announce } from './announce'
 import { offer } from './failures'
 import { t, translateMessage } from './i18n'
 import { tablist } from './tablist'
-import { ago } from './time'
+import { relative } from './time'
 
 type Tab = 'inProgress' | 'myTurn' | 'waiting' | 'snoozed' | 'done'
 let {
@@ -191,7 +191,7 @@ async function clearAll() {
     <!-- Offline is said once and calmly; a rejected token asks for reconnecting; the rest opens Settings to see why
          (a button, not only a tooltip). -->
     {#if view?.health.state === 'offline'}
-      <span class="muted"><Icon name="offline" size={14} /> {view.lastRefresh ? t('Offline · updated %@', ago(view.lastRefresh)) : t('Offline')}</span>
+      <span class="muted"><Icon name="offline" size={14} /> {view.lastRefresh ? t('Offline · updated %@', relative(view.lastRefresh)) : t('Offline')}</span>
     {:else if view?.health.state === 'reconnect'}
       {@const names = view.reconnectNames}
       <button type="button" class="link warn" onclick={onsettings} title={view.errors.map(translateMessage).join('\n')}>
@@ -202,7 +202,7 @@ async function clearAll() {
         {view.health.count === 1 ? t('1 source failing') : t('%d sources failing', view.health.count)}
       </button>
     {:else}
-      <span class="muted">{view?.lastRefresh ? t('Updated %@', ago(view.lastRefresh)) : ''}</span>
+      <span class="muted">{view?.lastRefresh ? t('Updated %@', relative(view.lastRefresh)) : ''}</span>
       {#if view?.remarks.length}
         <!-- A list cut at its limit, a missing permission: the details are in Settings. -->
         {@const said = view.remarks.map(translateMessage).join('\n')}
