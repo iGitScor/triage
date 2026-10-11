@@ -399,6 +399,7 @@ impl Page {
             changes: None,
             suggested_people: None,
             recurrence: None,
+            reactions: None,
         }
     }
 }

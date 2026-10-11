@@ -4,7 +4,8 @@
 use crate::{Inbox, Managed, MemoryVault};
 use chrono::{DateTime, Duration, Utc};
 use remora_core::{
-    Account, Badge, InboxBundle, InboxItem, ItemState, Person, Snooze, SnoozeClock, SnoozeMode, SnoozeReason, Tone,
+    Account, Badge, InboxBundle, InboxItem, ItemState, Person, Reaction, Snooze, SnoozeClock, SnoozeMode, SnoozeReason,
+    Tone,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -62,7 +63,15 @@ impl Demo {
             changes: None,
             suggested_people: None,
             recurrence: None,
+            reactions: None,
         });
+    }
+
+    fn edit(&mut self, n: u32, change: impl FnOnce(&mut InboxItem)) {
+        let id = format!("demo/{n}");
+        if let Some(item) = self.items.values_mut().flatten().find(|i| i.id == id) {
+            change(item);
+        }
     }
 }
 
@@ -226,6 +235,25 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         &["erin", "bob"],
         None,
     );
+    // Reactions as Slack shows them, and a question of yours waiting, acknowledged with a 👍. As on macOS.
+    demo.edit(3, |i| i.reactions = Some(vec![Reaction::new("eyes", 2, false)]));
+    demo.edit(4, |i| i.reactions = Some(vec![Reaction::new("+1", 2, true)]));
+    demo.add(
+        15,
+        "slack",
+        InboxBundle::awaiting(),
+        "Can someone proofread the new onboarding copy?",
+        "Thread in #design",
+        55,
+        "you",
+        vec![],
+        &[],
+        None,
+    );
+    demo.edit(15, |i| {
+        i.needs_action = false;
+        i.reactions = Some(vec![Reaction::new("+1", 1, false)]);
+    });
 
     let monday = SnoozeClock::presets(now.with_timezone(&chrono::Local))
         .into_iter()

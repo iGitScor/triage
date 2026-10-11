@@ -41,6 +41,18 @@ of an event leaves the inbox once the event starts (unless you pinned or started
 On Windows, only the keyword rules run (the language model is Apple's): a message without one of those words goes
 to *To reply*.
 
+## Slack reactions
+
+Remora reads reactions as answers, and shows them under each Slack item (yours outlined):
+
+- **Your ✅** (or ✔️, ☑️, 👌) on a mention, a direct message or a reply moves it to **Done**; your **👀** to **In
+  progress**. Remove the reaction in Slack to bring the item back. A pin or a reminder keeps it where you put it.
+- **A question you asked** in a thread, that nobody answered yet, waits in the **Waiting** tab. A 👍 from them
+  shows they saw it; their ✅ closes it; their ❓ or 🤔 makes it yours to answer, in *To reply*. A message of yours
+  that asked nothing (an FYI) doesn't wait.
+- A workspace's own emoji counts as the standard one it stands for, or by a word of its name (`:approved:`,
+  `:lgtm:` are ✅; `:merci:` is 👍), in English and French.
+
 ## Done, Pin
 
 - **Done** hides an item until something changes on it: a new commit, an approval, a comment, a reply. Then it

@@ -30,6 +30,8 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     public var expires: Date?
     /// How a reminder repeats. Set on reminders only; not part of the fingerprint.
     public var recurrence: Recurrence?
+    /// Emoji reactions on the message (Slack); nil for tools without them. Not in the fingerprint.
+    public var reactions: [Reaction]?
 
     public init(
         id: String,

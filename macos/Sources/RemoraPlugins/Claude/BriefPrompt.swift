@@ -52,7 +52,7 @@ enum BriefPrompt {
                 kind: snoozed.item.bundle.title,
                 title: snoozed.item.title,
                 context: snoozed.item.context,
-                status: snoozed.item.badges.map(\.label),
+                status: snoozed.item.badges.map(\.label) + snoozed.item.reactionNotes,
                 lastActivityDaysAgo: Int(now.timeIntervalSince(snoozed.item.date) / 86_400),
                 returnsAt: snoozed.snooze.until.ISO8601Format(),
                 reason: snoozed.snooze.reason?.rawValue,
@@ -113,7 +113,7 @@ enum BriefPrompt {
                 title: item.title,
                 context: item.context,
                 from: item.author?.name,
-                status: item.badges.map(\.label),
+                status: item.badges.map(\.label) + item.reactionNotes,
                 ageHours: Int(now.timeIntervalSince(item.date) / 3_600)
             )
         }

@@ -7,6 +7,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- Slack reactions: react ✅ to a mention, a direct message or a reply and it moves to Done; 👀 moves it to In
+  progress. A question you asked in a thread waits in the Waiting tab until someone answers; their 👍 shows they
+  saw it, their ✅ closes it, and their ❓ makes it yours to answer. Reactions show under each Slack item, a
+  workspace's own emoji included, and the ranking and the assistant take them into account. Reconnect Slack with
+  the new `reactions:read` and `emoji:read` permissions to turn them on.
 - Windows: the organization can keep tools away from the assistant and limit its models, with the
   `AIExcludedSources` and `AllowedAIModels` registry values, as on Macs.
 

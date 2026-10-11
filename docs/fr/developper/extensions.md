@@ -95,6 +95,9 @@ Ensuite :
   `priority.urgent`…).
 - **`changes`** (chemins de fichiers et nombres de lignes) active la préparation des relectures. Ne stockez jamais
   de code.
+- **`reactions`** quand l’outil a des réactions emoji : votre ✅ range l’élément dans Terminés et votre 👀 dans En
+  cours, et le classement et l’assistant lisent ce qu’elles veulent dire. Elles sont hors de l’empreinte : un
+  nouveau 👍 ne fait rien revenir.
 - **`url`** s’ouvre dans le navigateur ; **`appURL`** (`slack://…`, `linear://…`) ouvre l’app de bureau quand elle
   est installée.
 

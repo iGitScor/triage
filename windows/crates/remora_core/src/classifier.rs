@@ -181,6 +181,21 @@ impl VerbClassifier {
                 item.bundle = if intent == TextIntent::Request { InboxBundle::reply() } else { InboxBundle::read() };
                 item.needs_action = intent == TextIntent::Request;
             }
+            "chat.asked" => {
+                // Your own message: a question or request waits on the others; anything else (an FYI, "done!")
+                // waits on nobody and is cleared. Unsure means not a question, so Waiting doesn't fill with chatter.
+                let text = [Some(item.title.as_str()), item.preview.as_deref()]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                let intent = KeywordIntentClassifier::intent(&text);
+                item.bundle = InboxBundle::awaiting();
+                item.needs_action = false;
+                if intent != Some(TextIntent::Request) {
+                    item.expires = Some(item.date);
+                }
+            }
             _ => {}
         }
         item

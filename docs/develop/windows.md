@@ -11,11 +11,11 @@ same. Each release attaches `Remora-Setup.exe` (per-user install, no admin right
 
 | Part | What | Tests |
 |---|---|---|
-| `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 100 |
-| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 106 |
+| `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 107 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 112 |
 | `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 72 |
 | `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 3 |
-| `app/src` | The Svelte interface, in English and French | type-checked, 35 |
+| `app/src` | The Svelte interface, in English and French | type-checked, 37 |
 
 ## What Windows has, and what it doesn’t yet
 
@@ -28,6 +28,7 @@ same. Each release attaches `Remora-Setup.exe` (per-user install, no admin right
 | Waiting assistant: suggested reviewers, nudge drafts to copy | ✓ | ✓ |
 | Reviewers and approvals on rows | ✓ | ✓ |
 | Personal ranking (what you handle quickly) | ✓ | ✓ |
+| Slack reactions (✅ to Done, 👀 to In progress, your questions in Waiting) | ✓ | ✓ |
 | Links between tools (a PR and its ticket) | Ticket keys, words and on-device embeddings | Ticket keys and words: fewer links |
 | Sorting messages by meaning | Keywords, then an on-device language model | Keywords only: without one, a message goes to *To reply* |
 | Updates (opt-in), offline and reconnect, privacy policy | ✓ | ✓ |

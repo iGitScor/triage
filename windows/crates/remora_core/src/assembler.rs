@@ -70,7 +70,7 @@ impl InboxAssembler {
         if item.expires.is_some_and(|expires| expires <= now) && !kept {
             return Placement::Cleared;
         }
-        let Some(state) = state else { return Placement::Inbox };
+        let Some(state) = state else { return Self::by_your_reaction(item, None) };
         if state.started_at.is_some() {
             return Placement::InProgress;
         }
@@ -88,7 +88,20 @@ impl InboxAssembler {
                 return if done.cleared_at.is_none() { Placement::Done } else { Placement::Cleared };
             }
         }
-        Placement::Inbox
+        Self::by_your_reaction(item, Some(state))
+    }
+
+    /// Your reaction in the tool says what you did: ✅ handled it (Done), 👀 are on it (In progress). A pin or a
+    /// reminder keeps the item where you put it; removing the reaction brings it back.
+    fn by_your_reaction(item: &InboxItem, state: Option<&ItemState>) -> Placement {
+        if state.is_some_and(|s| s.pinned || s.reminded_at.is_some()) {
+            return Placement::Inbox;
+        }
+        match item.your_reaction() {
+            Some(crate::ReactionMeaning::Done) => Placement::Done,
+            Some(crate::ReactionMeaning::Started) => Placement::InProgress,
+            _ => Placement::Inbox,
+        }
     }
 
     /// Your turn when its verb says so (or, for unclassified kinds, when it needs action), or when a

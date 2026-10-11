@@ -120,6 +120,7 @@ struct ItemRow: View {
             parts.append(L("Snoozed until %@", snooze.until.formatted(.dateTime.weekday(.wide).hour().minute())))
         }
         parts += item.badges.map(\.label)
+        if let reactions = item.reactions, !reactions.isEmpty { parts.append(ReactionChips.spoken(reactions)) }
         return parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
     }
 
@@ -193,7 +194,9 @@ struct ItemRow: View {
         let reason = state.snooze?.reason
         let linked = model.linkedItems(item)
         let times = state.snooze == nil ? 0 : model.snoozeCount(item)
-        if !badges.isEmpty || !item.participants.isEmpty || state.remindedAt != nil || state.startedAt != nil
+        let reactions = item.reactions ?? []
+        if !badges.isEmpty || !reactions.isEmpty || !item.participants.isEmpty || state.remindedAt != nil
+            || state.startedAt != nil
             || state.pinned || reason != nil || times >= 2 || !linked.isEmpty
         {
             HStack(spacing: 4) {
@@ -217,6 +220,7 @@ struct ItemRow: View {
                             tone: .warning))
                 }
                 ForEach(badges) { BadgeChip(badge: $0) }
+                if !reactions.isEmpty { ReactionChips(reactions: reactions) }
                 ForEach(linked) { other in
                     Button {
                         model.open(other)

@@ -88,7 +88,7 @@ struct Digest<'a> {
     context: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
     from: Option<&'a str>,
-    status: Vec<&'a str>,
+    status: Vec<String>,
     age_hours: i64,
 }
 
@@ -99,12 +99,17 @@ struct TriageDigest<'a> {
     kind: &'a str,
     title: &'a str,
     context: &'a str,
-    status: Vec<&'a str>,
+    status: Vec<String>,
     last_activity_days_ago: i64,
     returns_at: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     reason: Option<serde_json::Value>,
     times_snoozed: u32,
+}
+
+/// An item's badges, then what its reactions mean (never who reacted).
+fn status(item: &InboxItem) -> Vec<String> {
+    item.badges.iter().map(|b| b.label.clone()).chain(item.reaction_notes()).collect()
 }
 
 /// The inbox, at most 120 items: what Claude reads for the brief.
@@ -118,7 +123,7 @@ pub fn message(items: &[InboxItem], now: DateTime<Utc>) -> String {
             title: &item.title,
             context: &item.context,
             from: item.author.as_ref().map(|a| a.name.as_str()),
-            status: item.badges.iter().map(|b| b.label.as_str()).collect(),
+            status: status(item),
             age_hours: (now - item.date).num_seconds() / 3_600,
         })
         .collect();
@@ -139,7 +144,7 @@ pub fn triage_message(items: &[SnoozedItem], now: DateTime<Utc>) -> String {
             kind: &snoozed.item.bundle.title,
             title: &snoozed.item.title,
             context: &snoozed.item.context,
-            status: snoozed.item.badges.iter().map(|b| b.label.as_str()).collect(),
+            status: status(&snoozed.item),
             last_activity_days_ago: (now - snoozed.item.date).num_seconds() / 86_400,
             returns_at: iso8601(snoozed.snooze.until),
             reason: snoozed.snooze.reason.and_then(|r| serde_json::to_value(r).ok()),
@@ -302,6 +307,15 @@ pub fn snoozed_ids(items: &[SnoozedItem]) -> HashSet<String> {
 mod tests {
     use super::*;
     use crate::claude::testing::{hostile, item, now, snoozed};
+
+    /// The assistant reads what reactions mean and how many, never who reacted. Same as macOS.
+    #[test]
+    fn the_assistant_reads_what_reactions_mean() {
+        let mut reacted = item("a");
+        reacted.reactions = Some(vec![remora_core::Reaction::new("eyes", 2, true)]);
+        let message = message(&[reacted], now());
+        assert!(message.contains("you reacted: started") && message.contains("others reacted: started ×1"));
+    }
 
     /// Inbox content is written by other people; the prompts treat it as data.
     #[test]

@@ -19,6 +19,16 @@ export interface Bundle {
   title: string
   rank: number
 }
+/** An emoji reaction: Slack's name for it, how many reacted, whether you did, and a workspace emoji's picture. */
+export interface Reaction {
+  name: string
+  /** 👍, or `:name:` for a workspace's own emoji. */
+  emoji: string
+  count: number
+  mine: boolean
+  image?: string | null
+}
+
 export interface Item {
   id: string
   accountId: string
@@ -39,6 +49,8 @@ export interface Item {
   suggestedPeople?: Person[] | null
   /** Reminders only. */
   recurrence?: Recurrence | null
+  /** Emoji reactions on the message (Slack). */
+  reactions?: Reaction[] | null
 }
 export type RecurrenceRule = 'daily' | 'weekdays' | 'weekly'
 export interface Recurrence {

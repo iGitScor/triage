@@ -25,8 +25,11 @@ flowchart TB
   quelque chose de vous : leur arrivée est annoncée.
 - `Badge` : une pastille avec un `Tone`. Un badge avec `notify` déclenche une notification la première fois qu’il
   apparaît sur un élément (par exemple *Approuvée* sur votre propre MR).
-- `InboxBundle` : les catégories communes (`reviews`, `mentions`, `directMessages`, `authored`, `tasks`,
+- `InboxBundle` : les catégories communes (`reviews`, `mentions`, `directMessages`, `authored`, `asked`, `tasks`,
   `reminders`). Les extensions en choisissent une ; elles n’inventent jamais d’interface.
+- `Reaction` : une réaction emoji sur le message d’un élément (Slack), avec son nombre et si elle est de vous.
+  Hors de l’empreinte. `ReactionMeaning` (done, started, ack, question) vient d’une table et, pour un emoji propre
+  à l’espace de travail, d’un mot de son nom (les deux générés par `scripts/make-emoji.py`).
 - `ItemState` : ce que l’utilisateur a décidé (épinglé, terminé, reporté). Stocké en local, jamais envoyé à une
   source.
 - `Account` : une instance d’extension connectée. Réglages non secrets seulement.
@@ -58,7 +61,8 @@ flowchart TB
   des messages passe par des `TextIntentClassifier`, dans l’ordre : `KeywordIntentClassifier` (formulations
   anglaises et françaises), puis `EmbeddingIntentClassifier` (Infrastructure, embeddings de phrases
   NaturalLanguage d’Apple comparés à des phrases d’exemple ; il ne répond que lorsque les deux classes sont
-  nettement séparées, sinon *À répondre*).
+  nettement séparées, sinon *À répondre*). Votre propre message resté sans réponse dans un fil (`asked`) suit le
+  même chemin : une demande attend les autres, le reste est effacé.
 
 **Infrastructure** : `HTTPClient` (un protocole, pour tester les extensions avec un stub), `GuardedHTTPClient`
 (refuse les adresses qu’une extension ne déclare pas), `ConditionalHTTPClient` (envoie `If-None-Match` et répond à
@@ -82,6 +86,7 @@ Chaque élément a une **empreinte** (date de dernière activité + identifiants
 | Reporté (masquer) | Onglet Reportés | l’heure arrive, ou à la moindre activité si *Faire revenir les éléments reportés en cas de nouvelle activité* est activé |
 | Reporté (rappel) | Boîte | reste visible ; une notification part à l’heure dite |
 | Épinglé | Section Épinglés | jusqu’à ce qu’on le désépingle |
+| Votre réaction ✅ / 👀 | Onglet Terminés / En cours | la réaction est retirée (un épinglage ou un rappel l’emporte) |
 
 À la fin d’un report, l’élément porte une pastille *Rappel* jusqu’à ce que vous l’ouvriez. Les notifications de
 rappel sont programmées auprès du système : elles arrivent même si Remora n’est pas lancée.

@@ -5,11 +5,11 @@ interface on WebView2, the macOS app's design and rules. Product overview: [../R
 
 | Part | What | Tests |
 |---|---|---|
-| `crates/remora_core` | Domain and rules, ported from the macOS `RemoraCore`: verbs, My turn / Waiting, prioritizer, Done and snooze rules, notifications, snooze clock and advisor, review prep, waiting assistant, ranking, links, the assistant's policy, compliance policy | 100 |
-| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant through Claude Code, the Claude API or an OpenAI-compatible server; an HTTP client limited to each plugin's declared hosts | 106 |
+| `crates/remora_core` | Domain and rules, ported from the macOS `RemoraCore`: verbs, My turn / Waiting, prioritizer, Done and snooze rules, notifications, snooze clock and advisor, review prep, waiting assistant, ranking, links, the assistant's policy, compliance policy | 107 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant through Claude Code, the Claude API or an OpenAI-compatible server; an HTTP client limited to each plugin's declared hosts | 112 |
 | `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\fr.igitscor.remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 72 |
 | `app/src-tauri` | The tray icon and its popup, notifications, start with Windows, the Ctrl+Alt+R reminder shortcut, the commands the interface calls | 3 |
-| `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked, 35 |
+| `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked, 37 |
 
 Not yet on Windows: sorting by meaning (messages are sorted with keyword rules only; without one, a message goes
 to *To reply*), links found by on-device embeddings (ticket keys and shared words only), notification buttons, a text

@@ -100,6 +100,56 @@ struct BadgeChip: View {
     }
 }
 
+/// An item's reactions, as in the tool: each emoji (a workspace's own as its picture, where pictures may load) with
+/// how many people reacted, yours outlined; four at most, then "+n". VoiceOver hears them in one sentence.
+struct ReactionChips: View {
+    @Environment(InboxModel.self) private var model
+    let reactions: [Reaction]
+    var limit = 4
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(reactions.prefix(limit), id: \.name) { reaction in
+                HStack(spacing: 2) {
+                    if let image = reaction.image, model.allowsImage(image) {
+                        AsyncImage(url: image) {
+                            $0.resizable().scaledToFit()
+                        } placeholder: {
+                            Color.clear
+                        }
+                        .frame(width: 13, height: 13)
+                    } else {
+                        Text(reaction.emoji).font(.system(size: 11)).lineLimit(1)
+                    }
+                    if reaction.count > 1 {
+                        Text("\(reaction.count)").font(Myna.font(10, .semibold)).foregroundStyle(Myna.inkSoft)
+                    }
+                }
+                .fixedSize()
+                .padding(.horizontal, 5)
+                .padding(.vertical, 1.5)
+                .background(reaction.mine ? Myna.accentSoft : Myna.line, in: Capsule())
+                .overlay(Capsule().strokeBorder(reaction.mine ? Myna.accentText : .clear, lineWidth: 1))
+            }
+            if reactions.count > limit {
+                Text("+\(reactions.count - limit)").font(Myna.font(10, .semibold)).foregroundStyle(Myna.muted)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Self.spoken(reactions))
+    }
+
+    /// "Reactions: 👍 2, ✅ 1 including yours"; a workspace's own emoji by its name.
+    static func spoken(_ reactions: [Reaction]) -> String {
+        let parts = reactions.map { reaction in
+            let emoji =
+                reaction.emoji.hasPrefix(":") ? reaction.name.replacingOccurrences(of: "_", with: " ") : reaction.emoji
+            return reaction.mine ? L("%@ %d including yours", emoji, reaction.count) : "\(emoji) \(reaction.count)"
+        }
+        return L("Reactions: %@", parts.joined(separator: ", "))
+    }
+}
+
 struct IconButton: View {
     let symbol: String
     let help: String

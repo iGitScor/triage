@@ -77,6 +77,11 @@ public struct PersonalRanker: Sendable {
         var features = ["tool:\(item.pluginID)", "verb:\(item.bundle.id)", "place:\(item.context.contextKey)"]
         if let author = item.author?.name { features.append("from:\(author)") }
         features += item.badges.map { "badge:\($0.id)" }
+        features += Set(
+            (item.reactions ?? []).compactMap { reaction in
+                reaction.meaning.map { reaction.mine ? "reacted:\($0.rawValue)" : "their:\($0.rawValue)" }
+            }
+        ).sorted()
         features += EmbeddingSimilarity.words(LinkFinder.normalized(item.title)).prefix(6).map { "word:\($0)" }
         return features
     }

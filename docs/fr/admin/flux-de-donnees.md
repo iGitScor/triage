@@ -16,13 +16,13 @@ Intune).
 |---|---|---|---|
 | GitHub | `api.github.com`, `github.com`, `avatars.githubusercontent.com`, ou l’adresse GitHub Enterprise | Le jeton de l’utilisateur ; des lectures de ses pull requests, demandes de relecture, et des chemins et nombres de lignes des fichiers modifiés | Autorisé |
 | GitLab | L’adresse GitLab configurée | Le jeton ; des lectures de ses merge requests, puis une requête GraphQL pour leurs approbations, pipelines, et les chemins et nombres de lignes des fichiers modifiés. Le texte des diffs dans les réponses n’est jamais décodé ni stocké | Autorisé |
-| Slack | `slack.com` | Le jeton utilisateur ; des recherches de ses mentions, messages directs et messages dans des fils, puis les réponses d’au plus 10 de ces fils (`conversations.replies`, permissions d’historique en lecture seule) | Autorisé |
+| Slack | `slack.com` | Le jeton utilisateur ; des recherches de ses mentions, messages directs et messages dans des fils, puis les réponses d’au plus 10 de ces fils (`conversations.replies`, permissions d’historique en lecture seule) ; les messages auxquels l’utilisateur a réagi (`reactions.list`), les réactions d’au plus 15 messages récents (`reactions.get`, chacune gardée 10 minutes) et les emoji propres à l’espace de travail (`emoji.list`, une fois par jour) | Autorisé |
 | Linear | `api.linear.app`, `public.linear.app` | La clé d’API ; des lectures des tickets assignés et des notifications | Autorisé |
 | Notion | `api.notion.com` | Le jeton ; l’identité de l’utilisateur, puis des requêtes des bases choisies pour les tâches qui lui sont assignées | Autorisé |
 | Claude Code | Anthropic, via le programme local `claude` | Quelques champs de chaque élément : voir [Ce qui parvient à l’assistant](#ce-qui-parvient-a-claude) | **Désactivé** |
 | API Claude | `api.anthropic.com` | La clé d’API, et les mêmes champs que Claude Code | **Désactivé** |
 | OpenAI-compatible | Le serveur choisi dans le compte ou par `AIServer` : OpenAI, Azure OpenAI, Mistral…, ou un serveur sur cet ordinateur | La clé d’API s’il y en a une, et les mêmes champs que Claude Code. Les conditions du fournisseur (conservation, entraînement) s’appliquent à ce qu’il reçoit | **Désactivé** ; un serveur sur cet ordinateur est autorisé sauf si l’organisation le refuse (`AllowLocalAI`) |
-| Avatars | Les hébergeurs d’images des outils autorisés et connectés seulement, en https ; les avatars GitLab aussi depuis Gravatar (`secure.gravatar.com`, `www.gravatar.com`) | Une requête d’image, jamais avec un jeton | Autorisé |
+| Avatars | Les hébergeurs d’images des outils autorisés et connectés seulement, en https ; les avatars GitLab aussi depuis Gravatar (`secure.gravatar.com`, `www.gravatar.com`), et les emoji propres à un espace Slack depuis `emoji.slack-edge.com` | Une requête d’image, jamais avec un jeton | Autorisé |
 | Mises à jour | `github.com`, et les serveurs de téléchargement de GitHub (`*.githubusercontent.com`) | Une requête de `latest.json` par jour, et la nouvelle version quand l’utilisateur l’installe. Aucun identifiant, jeton ni contenu | **Désactivé** (`AutomaticUpdates`) |
 
 Les données des outils **reviennent** sur l’ordinateur et y restent. **Pas de télémétrie, pas d’analytics, pas de rapports
@@ -38,6 +38,8 @@ OpenAI-compatibles reçoivent les mêmes champs. Pour chaque élément :
 - son verbe (*À répondre*, *À relire*…), son **titre**, son contexte (dépôt, canal ou clé de ticket), son auteur, ses
   statuts (vérifications, approbations, taille du changement) et son âge, plus un identifiant interne pour que la
   réponse puisse renvoyer à l’élément ;
+- pour un élément **Slack**, ce que ses réactions veulent dire et combien (« you reacted: done », « others reacted:
+  ack ×2 »), jamais qui a réagi ;
 - pour un message **Slack**, le titre est la **première ligne du message** (la suite, affichée en aperçu dans la
   boîte, n’est pas envoyée) ;
 - pour le **tri** de l’onglet Reportés, aussi la date de retour, la raison du report choisie par l’utilisateur
@@ -54,7 +56,7 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
   contiennent ; les réponses s’affichent en texte brut, et les suggestions de tri qui masquent ou ouvrent des
   éléments ne sont jamais cochées d’avance.
 - **Envoyer à l’assistant** (Réglages → Général) tient les éléments d’un outil entièrement à l’écart de
-  l’assistant ; sur macOS, l’organisation peut faire de même et limiter les modèles avec des
+  l’assistant ; l’organisation peut faire de même et limiter les modèles avec des
   [clés MDM](./mdm#les-cles) (`AIExcludedSources`, `AllowedAIModels`).
 - **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications :
   les titres de cet outil peuvent toujours parvenir à l’assistant : c’est le rôle d’*Envoyer à l’assistant*.
@@ -118,8 +120,8 @@ seulement. Rien n’est envoyé.
 3. **IA externe désactivée par défaut.** Un assistant qui envoie du contenu hors de l’ordinateur (Claude, ou un
    serveur OpenAI-compatible ailleurs) est refusé tant que l’IA externe n’est pas autorisée ; brief, résumés et tri
    n’apparaissent qu’ensuite. Un serveur sur cet ordinateur suit `AllowLocalAI` à la place.
-4. **Avatars** chargés seulement depuis les outils autorisés et connectés, et les images Gravatar de GitLab : aucun
-   autre tiers.
+4. **Avatars** chargés seulement depuis les outils autorisés et connectés, les images Gravatar de GitLab et les emoji
+   des espaces Slack : aucun autre tiers.
 5. **Réglages → Confidentialité** affiche les destinations de chaque compte connecté et s’il est autorisé.
 
 L’organisation peut verrouiller tout cela : [Gérer la politique par MDM](./mdm).

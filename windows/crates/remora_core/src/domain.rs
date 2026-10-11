@@ -45,6 +45,9 @@ pub struct InboxItem {
     /// How a reminder repeats. Reminders only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub recurrence: Option<crate::Recurrence>,
+    /// Emoji reactions on the message (Slack); None for tools without them. Not in the fingerprint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reactions: Option<Vec<crate::Reaction>>,
 }
 
 /// What a pull or merge request changes: paths and line counts only.
@@ -202,12 +205,16 @@ impl InboxBundle {
     pub fn authored() -> Self {
         Self::of("code.authored", "Your merge requests", 9)
     }
+    /// Your last message in a chat thread nobody answered yet: `VerbClassifier` keeps the questions, as Waiting.
+    pub fn asked() -> Self {
+        Self::of("chat.asked", "Your questions", 9)
+    }
 
     /// Whose turn the bundle is, when the bundle alone tells. Kinds leave it to `needs_action`.
     pub fn is_mine(&self) -> Option<bool> {
         match self.id.as_str() {
             "verb.awaiting" => Some(false),
-            "code.authored" | "chat.mentions" | "chat.direct" => None,
+            "code.authored" | "chat.mentions" | "chat.direct" | "chat.asked" => None,
             _ => Some(true),
         }
     }

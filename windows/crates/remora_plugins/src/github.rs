@@ -329,6 +329,7 @@ impl PullRequest {
             changes,
             suggested_people,
             recurrence: None,
+            reactions: None,
         }
     }
 }

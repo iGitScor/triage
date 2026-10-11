@@ -59,7 +59,7 @@ public struct InboxAssembler: Sendable {
         if let expires = item.expires, expires <= now, state?.startedAt == nil, state?.pinned != true {
             return .cleared
         }
-        guard let state else { return .inbox }
+        guard let state else { return placement(byYourReaction: item, state: nil) }
         if state.startedAt != nil { return .inProgress }
         if let snooze = state.snooze, snooze.mode == .hide, snooze.until > now {
             let untouched = snooze.fingerprint == item.fingerprint
@@ -69,7 +69,18 @@ public struct InboxAssembler: Sendable {
         if let done = state.done, done.fingerprint == item.fingerprint {
             return done.clearedAt == nil ? .done : .cleared
         }
-        return .inbox
+        return placement(byYourReaction: item, state: state)
+    }
+
+    /// Your reaction in the tool says what you did: ✅ handled it (Done), 👀 are on it (In progress). A pin or a
+    /// reminder keeps the item where you put it; removing the reaction brings it back.
+    private func placement(byYourReaction item: InboxItem, state: ItemState?) -> Placement {
+        guard state?.pinned != true, state?.remindedAt == nil else { return .inbox }
+        switch item.yourReaction {
+        case .done: return .done
+        case .started: return .inProgress
+        default: return .inbox
+        }
     }
 
     /// Your turn when its verb says so (or, for unclassified kinds, when it needs action),

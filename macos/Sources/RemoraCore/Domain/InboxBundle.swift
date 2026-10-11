@@ -19,7 +19,7 @@ public struct InboxBundle: Hashable, Codable, Sendable, Identifiable {
     public var isMine: Bool? {
         switch id {
         case Self.awaiting.id: false
-        case Self.authored.id, Self.mentions.id, Self.directMessages.id: nil
+        case Self.authored.id, Self.mentions.id, Self.directMessages.id, Self.asked.id: nil
         default: true
         }
     }
@@ -52,4 +52,7 @@ extension InboxBundle {
         id: "chat.direct", title: "Direct messages", symbol: "bubble.left.and.bubble.right", rank: 7)
     public static let authored = InboxBundle(
         id: "code.authored", title: "Your merge requests", symbol: "arrow.triangle.pull", rank: 9)
+    /// Your last message in a chat thread nobody answered yet: `VerbClassifier` keeps the questions, as Waiting.
+    public static let asked = InboxBundle(
+        id: "chat.asked", title: "Your questions", symbol: "questionmark.bubble", rank: 9)
 }

@@ -12,11 +12,11 @@ mêmes données de test et les mêmes tests, pour que les deux apps se comporten
 
 | Partie | Contenu | Tests |
 |---|---|---|
-| `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 100 |
-| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 106 |
+| `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 107 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 112 |
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 72 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 3 |
-| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 35 |
+| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 37 |
 
 ## Ce que Windows a, et ce qu’il n’a pas encore
 
@@ -29,6 +29,7 @@ mêmes données de test et les mêmes tests, pour que les deux apps se comporten
 | Assistant d’attente : relecteurs suggérés, relances rédigées à copier | ✓ | ✓ |
 | Relecteurs et approbations sur les lignes | ✓ | ✓ |
 | Classement personnel (ce que vous traitez vite) | ✓ | ✓ |
+| Réactions Slack (✅ vers Terminés, 👀 vers En cours, vos questions en attente) | ✓ | ✓ |
 | Liens entre outils (une PR et son ticket) | Clés de ticket, mots et embeddings sur l’appareil | Clés de ticket et mots : moins de liens |
 | Tri des messages par le sens | Mots-clés, puis un modèle de langue sur l’appareil | Mots-clés seulement : sans correspondance, un message va dans *À répondre* |
 | Mises à jour (sur option), hors ligne et reconnexion, politique de confidentialité | ✓ | ✓ |

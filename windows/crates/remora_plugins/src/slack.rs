@@ -5,7 +5,7 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, TimeZone, Utc};
 use regex::Regex;
-use remora_core::{ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest};
+use remora_core::{ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Reaction, ReactionMeaning};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -19,7 +19,7 @@ pub fn manifest() -> PluginManifest {
         fields: vec![
             ConfigField::token(
                 "User OAuth token",
-                "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies.",
+                "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies, and reactions:read and emoji:read for reactions.",
             ),
             ConfigField {
                 key: "days".into(),
@@ -48,10 +48,10 @@ pub fn manifest() -> PluginManifest {
     }
 }
 
-/// Opens Slack's "create app" flow pre-filled with the read-only scopes Remora needs: search, and the channels'
-/// history for replies in your threads.
+/// Opens Slack's "create app" flow pre-filled with the read-only scopes Remora needs: search, the channels'
+/// history for replies in your threads, and reactions.
 pub fn app_manifest_url() -> String {
-    let manifest = r#"{"display_information":{"name":"Remora","description":"Mentions and DMs in your inbox"},"oauth_config":{"scopes":{"user":["search:read","channels:history","groups:history"]}},"settings":{"org_deploy_enabled":false,"socket_mode_enabled":false,"token_rotation_enabled":false}}"#;
+    let manifest = r#"{"display_information":{"name":"Remora","description":"Mentions and DMs in your inbox"},"oauth_config":{"scopes":{"user":["search:read","channels:history","groups:history","reactions:read","emoji:read"]}},"settings":{"org_deploy_enabled":false,"socket_mode_enabled":false,"token_rotation_enabled":false}}"#;
     url_with_query("https://api.slack.com", "apps", &[("new_app", "1"), ("manifest_json", manifest)])
 }
 
@@ -95,36 +95,105 @@ impl SlackPlugin {
     }
 
     fn snapshot(
-        mentions: Vec<Match>,
-        direct: Vec<Match>,
+        mentions: &[Match],
+        direct: &[Match],
         identity: String,
         me: &str,
         team: Option<&str>,
         account_id: &str,
+        reactions: &HashMap<String, Vec<Reaction>>,
     ) -> SourceSnapshot {
+        let with_reactions = |m: &Match, mut item: InboxItem| {
+            item.reactions = reactions.get(&format!("{}/{}", m.channel.id, m.ts)).cloned();
+            item
+        };
         let mut items: Vec<InboxItem> = mentions
             .iter()
             .filter(|m| !m.channel.is_direct())
-            .map(|m| m.item(account_id, InboxBundle::mentions(), &format!("{}/{}", m.channel.id, m.ts), me, team))
+            .map(|m| {
+                let item = m.item(account_id, InboxBundle::mentions(), &format!("{}/{}", m.channel.id, m.ts), me, team);
+                with_reactions(m, item)
+            })
             .collect();
-        let mut latest: HashMap<&str, &Match> = HashMap::new();
-        for m in direct.iter().filter(|m| m.channel.is_direct()) {
-            let entry = latest.entry(m.channel.id.as_str()).or_insert(m);
-            if m.date() > entry.date() {
-                *entry = m;
-            }
-        }
-        items.extend(
-            latest.values().map(|m| m.item(account_id, InboxBundle::direct_messages(), &m.channel.id, me, team)),
-        );
+        items.extend(latest_per_conversation(direct).into_iter().map(|m| {
+            let item = m.item(account_id, InboxBundle::direct_messages(), &m.channel.id, me, team);
+            with_reactions(m, item)
+        }));
         SourceSnapshot { identity, items, remarks: vec![] }
     }
 
-    /// Replies in the threads you wrote in lately, posted after your last message there: what search
-    /// can't find, since nobody mentioned you. The 10 most recent channel threads, one `conversations.replies` each;
-    /// replies that mention you are already mentions, and direct messages are already there. Without the history
-    /// scopes, a remark says how to add them. Same rules as macOS.
-    async fn thread_replies(&self, mine: Vec<Match>, me: &str, team: Option<&str>) -> (Vec<InboxItem>, Vec<String>) {
+    /// The workspace's own emoji, by name: `alias:white_check_mark` for another name of a standard one, else the
+    /// picture's address. Asked once a day; without the emoji:read permission there are none, and reactions with
+    /// a workspace emoji show as `:name:`, their meaning taken from the name.
+    async fn custom_emoji(&self) -> HashMap<String, String> {
+        let load = || async {
+            Ok(self.call::<CustomEmoji>("emoji.list", &[]).await.map(|list| list.emoji).unwrap_or_default())
+        };
+        self.cache.value("emoji.list", EMOJI_LIFETIME, load).await.unwrap_or_default()
+    }
+
+    /// The messages you reacted to lately, by `channel/ts`, with everyone's reactions: one request for every item.
+    /// Without the reactions:read permission, a remark says how to add it.
+    async fn reacted_by_you(
+        &self,
+        me: &str,
+        custom: &HashMap<String, String>,
+    ) -> (HashMap<String, Vec<Reaction>>, Option<String>) {
+        match self.call::<Reacted>("reactions.list", &[("count", "100"), ("full", "true")]).await {
+            Ok(reacted) => {
+                let by_message = reacted
+                    .items
+                    .into_iter()
+                    .filter_map(|item| serde_json::from_value::<ReactedItem>(item).ok())
+                    .filter_map(|item| {
+                        let message = item.message?;
+                        let reactions = reactions(&message.reactions, me, custom)?;
+                        Some((format!("{}/{}", item.channel?, message.ts?), reactions))
+                    })
+                    .collect();
+                (by_message, None)
+            }
+            Err(PluginError::Api(message)) if message.ends_with("missing_scope") => {
+                (HashMap::new(), Some(MISSING_REACTIONS.to_string()))
+            }
+            Err(_) => (HashMap::new(), None),
+        }
+    }
+
+    /// The reactions on these messages, by `channel/ts`. A message whose reactions can't be read just has none.
+    async fn reactions_on(
+        &self,
+        messages: &[&Match],
+        me: &str,
+        custom: &HashMap<String, String>,
+    ) -> HashMap<String, Vec<Reaction>> {
+        let asked = messages.iter().map(|m| async move {
+            let key = format!("{}/{}", m.channel.id, m.ts);
+            let query = [("channel", m.channel.id.as_str()), ("timestamp", m.ts.as_str()), ("full", "true")];
+            let got = self
+                .cache
+                .value(&format!("reactions.get {key}"), REACTIONS_LIFETIME, || {
+                    self.call::<Got>("reactions.get", &query)
+                })
+                .await
+                .ok();
+            (key, got.and_then(|g| g.message).and_then(|m| reactions(&m.reactions, me, custom)))
+        });
+        futures::future::join_all(asked).await.into_iter().filter_map(|(key, r)| Some((key, r?))).collect()
+    }
+
+    /// The threads you wrote in lately, as of your last message there: what search can't find, since nobody
+    /// mentioned you. The 10 most recent channel threads, one `conversations.replies` each. A newer reply is to
+    /// read or answer (one that mentions you is already a mention); without one, their reactions on your message
+    /// speak: ❓ is a question for you, ✅ an answer, and otherwise your message waits (if it asked something, as
+    /// `VerbClassifier` decides). Without the history scopes, a remark says how to add them. Same rules as macOS.
+    async fn thread_replies(
+        &self,
+        mine: Vec<Match>,
+        me: &str,
+        team: Option<&str>,
+        custom: &HashMap<String, String>,
+    ) -> (Vec<InboxItem>, Vec<String>) {
         let mut latest: HashMap<(String, String), Match> = HashMap::new();
         for message in mine.into_iter().filter(|m| !m.channel.is_direct()) {
             let key = (message.channel.id.clone(), message.thread_ts());
@@ -141,6 +210,7 @@ impl SlackPlugin {
                 ("channel", thread.channel.id.as_str()),
                 ("ts", thread_ts.as_str()),
                 ("oldest", thread.ts.as_str()),
+                ("inclusive", "true"),
                 ("limit", "50"),
             ];
             let replies = match self.call::<Replies>("conversations.replies", &query).await {
@@ -151,23 +221,117 @@ impl SlackPlugin {
                 Err(_) => continue,
             };
             let mention = format!("<@{me}>");
-            let reply = replies
+            // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
+            let after: Vec<&Reply> = replies
                 .messages
-                .into_iter()
-                // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
-                .filter(|r| {
-                    r.date() > thread.date()
-                        && r.user.as_deref() != Some(me)
-                        && r.bot_id.is_none()
-                        && !r.text.contains(&mention)
-                })
-                .max_by_key(Reply::date);
-            if let Some(reply) = reply {
-                items.push(reply.item(&thread, &self.account_id, me, team));
+                .iter()
+                .filter(|r| r.date() > thread.date() && r.user.as_deref() != Some(me) && r.bot_id.is_none())
+                .collect();
+            if let Some(reply) = after.iter().filter(|r| !r.text.contains(&mention)).max_by_key(|r| r.date()) {
+                let mut item = reply.item(&thread, &self.account_id, me, team);
+                item.reactions = reactions(&reply.reactions, me, custom);
+                items.push(item);
+                continue;
             }
+            if !after.is_empty() {
+                continue;
+            }
+            let yours = replies.messages.iter().find(|r| r.ts == thread.ts);
+            let on_yours = yours.and_then(|r| reactions(&r.reactions, me, custom));
+            items.extend(unanswered(&thread, on_yours, &self.account_id, me, team));
         }
         (items, vec![])
     }
+}
+
+/// How many messages that need you get their reactions asked for, each kept 10 minutes: Slack's search doesn't
+/// return them, and one request per message adds up.
+pub const REACTIONS_ASKED: usize = 15;
+const REACTIONS_LIFETIME: std::time::Duration = std::time::Duration::from_secs(600);
+const EMOJI_LIFETIME: std::time::Duration = std::time::Duration::from_secs(86_400);
+
+/// Shown when the token can't read reactions. Same text on macOS.
+const MISSING_REACTIONS: &str = "Slack: reactions need the reactions:read permission. Add it to the Remora app in Slack, reinstall it, and paste the new token.";
+
+/// The newest messages that need you, as they become items: mentions, and the last message of each conversation.
+/// Apps' messages aren't asked about.
+fn needing_you<'a>(mentions: &'a [Match], direct: &'a [Match]) -> Vec<&'a Match> {
+    let mut all: Vec<&Match> = mentions
+        .iter()
+        .filter(|m| !m.channel.is_direct())
+        .chain(latest_per_conversation(direct))
+        .filter(|m| !m.is_from_app())
+        .collect();
+    all.sort_by_key(|m| std::cmp::Reverse(m.date()));
+    all.truncate(REACTIONS_ASKED);
+    all
+}
+
+fn latest_per_conversation(direct: &[Match]) -> Vec<&Match> {
+    let mut latest: HashMap<&str, &Match> = HashMap::new();
+    for m in direct.iter().filter(|m| m.channel.is_direct()) {
+        let entry = latest.entry(m.channel.id.as_str()).or_insert(m);
+        if m.date() > entry.date() {
+            *entry = m;
+        }
+    }
+    latest.into_values().collect()
+}
+
+/// Slack's reactions as items carry them, one per emoji, a workspace emoji resolved; None when there are none.
+fn reactions(wire: &[WireReaction], me: &str, custom: &HashMap<String, String>) -> Option<Vec<Reaction>> {
+    if wire.is_empty() {
+        return None;
+    }
+    let count = |r: &WireReaction| r.count.unwrap_or(r.users.len() as u32);
+    Some(Reaction::merged(
+        wire.iter()
+            .map(|r| resolve(Reaction::new(&r.name, count(r), r.users.iter().any(|u| u == me)), custom))
+            .collect(),
+    ))
+}
+
+/// A reaction with a workspace emoji: an alias becomes the emoji it stands for, another gets its picture.
+pub fn resolve(reaction: Reaction, custom: &HashMap<String, String>) -> Reaction {
+    let mut name = reaction.name.clone();
+    for _ in 0..3 {
+        match custom.get(&name).and_then(|value| value.strip_prefix("alias:")) {
+            Some(target) => name = target.to_string(),
+            None => break,
+        }
+    }
+    let image = custom.get(&name).filter(|value| !value.starts_with("alias:")).cloned();
+    Reaction { image, ..Reaction::new(&name, reaction.count, reaction.mine) }
+}
+
+/// Your last message in a thread nobody wrote back in: their ❓ makes it yours to answer, their ✅ closes it, and
+/// otherwise it waits on them (`chat.asked`, which `VerbClassifier` keeps only when it asked something).
+fn unanswered(
+    yours: &Match,
+    reactions: Option<Vec<Reaction>>,
+    account_id: &str,
+    me: &str,
+    team: Option<&str>,
+) -> Option<InboxItem> {
+    let theirs: Vec<&Reaction> = reactions.iter().flatten().filter(|r| r.others() > 0).collect();
+    if theirs.iter().any(|r| r.meaning() == Some(ReactionMeaning::Done)) {
+        return None;
+    }
+    let questions: Vec<String> =
+        theirs.iter().filter(|r| r.meaning() == Some(ReactionMeaning::Question)).map(|r| r.emoji.clone()).collect();
+    let id = format!("{}/thread/{}", yours.channel.id, yours.thread_ts());
+    let mut item = yours.item(account_id, InboxBundle::asked(), &id, me, team);
+    item.bundle = InboxBundle::asked();
+    item.expires = None;
+    item.context = format!("Thread in {}", yours.channel.label());
+    item.needs_action = false;
+    if !questions.is_empty() {
+        item.context = format!("{} on your message in {}", questions.join(" "), yours.channel.label());
+        item.bundle = InboxBundle::reply();
+        item.needs_action = true;
+    }
+    item.reactions = reactions;
+    Some(item)
 }
 
 /// Shown when the token can't read threads. Same text on macOS.
@@ -185,23 +349,35 @@ impl SourcePlugin for SlackPlugin {
         let direct_params = [("query", direct_query.as_str())];
         let mine_query = format!("from:{me} is:thread after:{since}");
         let mine_params = [("query", mine_query.as_str())];
-        let (mentions, direct, mine) = futures::join!(
+        // The workspace's own emoji first (kept a day): an alias of ✅ must count as ✅ wherever reactions decide.
+        let custom = self.custom_emoji().await;
+        let (mentions, direct, mine, (by_you, reactions_remark)) = futures::join!(
             self.call::<Search>("search.messages", &mentions_params),
             self.call::<Search>("search.messages", &direct_params),
-            self.call::<Search>("search.messages", &mine_params)
+            self.call::<Search>("search.messages", &mine_params),
+            self.reacted_by_you(&auth.user_id, &custom)
         );
+        let (mentions, direct) = (mentions?.messages.matches, direct?.messages.matches);
+        // Search results carry no reactions: ask for those of the newest messages that need you, unless the token
+        // can't read reactions at all.
+        let mut reactions = by_you;
+        if reactions_remark.is_none() {
+            reactions.extend(self.reactions_on(&needing_you(&mentions, &direct), &auth.user_id, &custom).await);
+        }
         let mut snapshot = Self::snapshot(
-            mentions?.messages.matches,
-            direct?.messages.matches,
+            &mentions,
+            &direct,
             format!("{} · {}", auth.user, auth.team),
             &auth.user_id,
             auth.team_id.as_deref(),
             &self.account_id,
+            &reactions,
         );
         let mine = mine.map(|s| s.messages.matches).unwrap_or_default();
-        let (threads, remarks) = self.thread_replies(mine, &auth.user_id, auth.team_id.as_deref()).await;
+        let (threads, remarks) = self.thread_replies(mine, &auth.user_id, auth.team_id.as_deref(), &custom).await;
         snapshot.items.extend(threads);
         snapshot.remarks.extend(remarks);
+        snapshot.remarks.extend(reactions_remark);
         Ok(snapshot)
     }
 }
@@ -219,6 +395,50 @@ struct Search {
     messages: Messages,
 }
 
+/// A reaction as Slack sends it: on a message from `conversations.replies`, `reactions.list` or `reactions.get`.
+#[derive(Deserialize, Clone)]
+struct WireReaction {
+    name: String,
+    #[serde(default)]
+    users: Vec<String>,
+    count: Option<u32>,
+}
+
+/// `reactions.list`: the messages you reacted to, newest first. Files and other kinds have no message; each
+/// item is read on its own, so one odd item doesn't drop the others.
+#[derive(Deserialize)]
+struct Reacted {
+    #[serde(default)]
+    items: Vec<serde_json::Value>,
+}
+
+#[derive(Deserialize)]
+struct ReactedItem {
+    channel: Option<String>,
+    message: Option<Reactions>,
+}
+
+/// A message's reactions, from `reactions.list` or `reactions.get`.
+#[derive(Deserialize, Clone)]
+struct Reactions {
+    ts: Option<String>,
+    #[serde(default, deserialize_with = "lenient")]
+    reactions: Vec<WireReaction>,
+}
+
+/// `reactions.get`.
+#[derive(Deserialize, Clone)]
+struct Got {
+    message: Option<Reactions>,
+}
+
+/// `emoji.list`: the workspace's own emoji.
+#[derive(Deserialize)]
+struct CustomEmoji {
+    #[serde(default)]
+    emoji: HashMap<String, String>,
+}
+
 /// A thread's messages from `conversations.replies`, the root first.
 #[derive(Deserialize)]
 struct Replies {
@@ -234,6 +454,8 @@ struct Reply {
     bot_id: Option<String>,
     #[serde(default)]
     user_profile: Option<Profile>,
+    #[serde(default, deserialize_with = "lenient")]
+    reactions: Vec<WireReaction>,
 }
 
 #[derive(Deserialize)]
@@ -278,6 +500,7 @@ impl Reply {
             changes: None,
             suggested_people: None,
             recurrence: None,
+            reactions: None,
         }
     }
 }
@@ -353,8 +576,8 @@ struct Match {
     blocks: serde_json::Value,
 }
 
-/// Attachments in a shape we don't expect are ignored rather than failing the whole search.
-fn lenient<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Vec<Attachment>, D::Error> {
+/// Attachments or reactions in a shape we don't expect are ignored rather than failing the whole search.
+fn lenient<'de, D: serde::Deserializer<'de>, T: DeserializeOwned>(deserializer: D) -> Result<Vec<T>, D::Error> {
     let value = serde_json::Value::deserialize(deserializer)?;
     Ok(serde_json::from_value(value).unwrap_or_default())
 }
@@ -446,6 +669,7 @@ impl Match {
             changes: None,
             suggested_people: None,
             recurrence: None,
+            reactions: None,
         }
     }
 
@@ -809,15 +1033,29 @@ mod tests {
         let json: serde_json::Value = serde_json::from_str(&manifest).unwrap();
         assert_eq!(
             json["oauth_config"]["scopes"]["user"],
-            serde_json::json!(["search:read", "channels:history", "groups:history"])
+            serde_json::json!(["search:read", "channels:history", "groups:history", "reactions:read", "emoji:read"])
         );
     }
 
     /// Answers Slack by method, and the searches by their query: your own thread messages, or nothing.
+    /// Answers Slack by method, and the searches by their query: your own thread messages, mentions of you, or
+    /// nothing. Reactions: what `reactions.list` and `emoji.list` say, and `reactions.get` by message.
+    #[derive(Default)]
     struct SlackStub {
         mine: &'static str,
         replies: &'static str,
         asked: std::sync::Mutex<Vec<String>>,
+        mentions: Option<String>,
+        reacted: Option<&'static str>,
+        got: HashMap<&'static str, &'static str>,
+        emoji: Option<&'static str>,
+        methods: std::sync::Mutex<Vec<String>>,
+    }
+
+    impl SlackStub {
+        fn calls(&self, method: &str) -> usize {
+            self.methods.lock().unwrap().iter().filter(|m| *m == method).count()
+        }
     }
 
     #[async_trait]
@@ -827,7 +1065,10 @@ mod tests {
             let value = |name: &str| {
                 url.query_pairs().find(|(k, _)| k == name).map(|(_, v)| v.into_owned()).unwrap_or_default()
             };
-            let body = match url.path().rsplit('/').next().unwrap_or_default() {
+            let method = url.path().rsplit('/').next().unwrap_or_default().to_string();
+            self.methods.lock().unwrap().push(method.clone());
+            let none = r#"{"ok": true, "messages": {"matches": []}}"#.to_string();
+            let body = match method.as_str() {
                 "auth.test" => {
                     r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme", "team_id": "T1"}"#.to_string()
                 }
@@ -840,8 +1081,15 @@ mod tests {
                     ));
                     self.replies.to_string()
                 }
+                "reactions.list" => self.reacted.unwrap_or(r#"{"ok": true, "items": []}"#).to_string(),
+                "reactions.get" => {
+                    let key = format!("{}/{}", value("channel"), value("timestamp"));
+                    self.got.get(key.as_str()).unwrap_or(&r#"{"ok": true, "message": {}}"#).to_string()
+                }
+                "emoji.list" => self.emoji.unwrap_or(r#"{"ok": true, "emoji": {}}"#).to_string(),
                 _ if value("query").contains("is:thread") => self.mine.to_string(),
-                _ => r#"{"ok": true, "messages": {"matches": []}}"#.to_string(),
+                _ if value("query").starts_with("<@UME>") => self.mentions.clone().unwrap_or(none),
+                _ => none,
             };
             Ok(crate::Response { status: 200, body, etag: None })
         }
@@ -864,7 +1112,7 @@ mod tests {
           {"ts": "1700000400.0", "text": "Great, *thanks*! Tomorrow then", "user": "U2", "user_profile": {"display_name": "erin"}},
           {"ts": "1700000500.0", "text": "<@UME> also this", "user": "U3"}
         ]}"#;
-        let http = Arc::new(SlackStub { mine, replies, asked: Default::default() });
+        let http = Arc::new(SlackStub { mine, replies, ..Default::default() });
         let items = SlackPlugin::new(&config(&[("token", "xoxp")]), http.clone()).unwrap().fetch().await.unwrap().items;
         let thread = items.iter().find(|i| i.context.starts_with("Thread")).unwrap();
         assert_eq!(thread.title, "Great, thanks! Tomorrow then");
@@ -890,19 +1138,157 @@ mod tests {
           {"ts": "1700000100.0", "text": "Who can review the mockups?", "user": "U2"},
           {"ts": "1700000200.0", "text": "I can take it", "user": "UME"}
         ]}"#;
-        let http = Arc::new(SlackStub { mine, replies, asked: Default::default() });
+        let http = Arc::new(SlackStub { mine, replies, ..Default::default() });
         let items = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap().items;
-        assert!(!items.iter().any(|i| i.context.starts_with("Thread")), "the ball is in their court");
+        let thread = items.iter().find(|i| i.context.starts_with("Thread")).unwrap();
+        assert!(
+            thread.bundle == InboxBundle::asked() && !thread.needs_action,
+            "the ball is in their court: your message waits"
+        );
+    }
+
+    /// Your last message in a thread, as Slack returns it with `inclusive`: the reactions on it decide.
+    const YOUR_THREAD: &str = r#"{"ok": true, "messages": {"matches": [
+      {"ts": "1700000200.0", "text": "Can someone review the mockups?", "channel": {"id": "C1", "name": "design"},
+       "permalink": "https://acme.slack.com/archives/C1/p1700000200?thread_ts=1700000100.0"}
+    ]}}"#;
+
+    fn replies_with(reactions: &str) -> &'static str {
+        Box::leak(
+            format!(
+                r#"{{"ok": true, "messages": [
+              {{"ts": "1700000100.0", "text": "Mockups are up", "user": "U2"}},
+              {{"ts": "1700000200.0", "text": "Can someone review the mockups?", "user": "UME", "reactions": {reactions}}}
+            ]}}"#
+            )
+            .into_boxed_str(),
+        )
+    }
+
+    async fn thread(reactions: &str, emoji: Option<&'static str>) -> Option<InboxItem> {
+        let http =
+            Arc::new(SlackStub { mine: YOUR_THREAD, replies: replies_with(reactions), emoji, ..Default::default() });
+        let items = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap().items;
+        items.into_iter().find(|i| i.id.contains("/thread/"))
+    }
+
+    /// Nobody wrote back: their reactions on your message speak for them. Same cases as macOS.
+    #[tokio::test]
+    async fn their_reactions_on_your_message() {
+        let waiting = thread("[]", None).await.unwrap();
+        assert!(waiting.bundle == InboxBundle::asked() && !waiting.needs_action);
+        assert_eq!(waiting.title, "Can someone review the mockups?");
+        assert!(waiting.id.ends_with("/C1/thread/1700000100.0"), "the same item as a reply would be");
+
+        let seen = thread(r#"[{"name": "+1::skin-tone-2", "users": ["U2"], "count": 1}]"#, None).await.unwrap();
+        assert!(seen.bundle == InboxBundle::asked() && seen.others_reacted(ReactionMeaning::Ack));
+
+        let question = thread(r#"[{"name": "thinking_face", "users": ["U2", "U3"], "count": 2}]"#, None).await.unwrap();
+        assert!(question.bundle == InboxBundle::reply() && question.needs_action);
+        assert_eq!(question.context, "🤔 on your message in #design");
+        assert_eq!(question.title, "Can someone review the mockups?");
+
+        assert!(thread(r#"[{"name": "white_check_mark", "users": ["U2"], "count": 1}]"#, None).await.is_none());
+        let own = thread(r#"[{"name": "white_check_mark", "users": ["UME"], "count": 1}]"#, None).await.unwrap();
+        assert_eq!(own.bundle, InboxBundle::asked(), "your own ✅ answers nothing");
+    }
+
+    /// A reply keeps its reactions; your ✅ on it is what moves it to Done.
+    #[tokio::test]
+    async fn a_reply_carries_its_reactions() {
+        let replies = r#"{"ok": true, "messages": [
+          {"ts": "1700000200.0", "text": "Can someone review the mockups?", "user": "UME"},
+          {"ts": "1700000400.0", "text": "On it tomorrow", "user": "U2",
+           "reactions": [{"name": "white_check_mark", "users": ["UME"], "count": 1}]}
+        ]}"#;
+        let http = Arc::new(SlackStub { mine: YOUR_THREAD, replies, ..Default::default() });
+        let items = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap().items;
+        let reply = items.iter().find(|i| i.context.starts_with("Thread")).unwrap();
+        assert_eq!(reply.title, "On it tomorrow");
+        assert_eq!(reply.your_reaction(), Some(ReactionMeaning::Done));
+    }
+
+    fn mention(ts: &str) -> String {
+        format!(
+            r#"{{"ts": "{ts}", "text": "<@UME> can you look?", "username": "erin", "channel": {{"id": "C9", "name": "ops"}}}}"#
+        )
+    }
+
+    /// Search returns no reactions: the messages you reacted to come in one request, and the newest that need you
+    /// are asked about one by one, at most 15, each kept 10 minutes.
+    #[tokio::test]
+    async fn reactions_on_mentions() {
+        let matches: Vec<String> = (1..=20).map(|n| mention(&format!("17000000{}.0", n + 10))).collect();
+        let reacted = r#"{"ok": true, "items": [
+          {"type": "message", "channel": "C9", "message": {"ts": "1700000011.0",
+           "reactions": [{"name": "white_check_mark", "users": ["UME", "U2"], "count": 2}]}},
+          {"type": "file", "file": {"id": "F1"}}
+        ]}"#;
+        let http = Arc::new(SlackStub {
+            mine: r#"{"ok": true, "messages": {"matches": []}}"#,
+            replies: "{}",
+            mentions: Some(format!(r#"{{"ok": true, "messages": {{"matches": [{}]}}}}"#, matches.join(","))),
+            reacted: Some(reacted),
+            got: HashMap::from([(
+                "C9/1700000030.0",
+                r#"{"ok": true, "message": {"reactions": [{"name": "eyes", "users": ["U4"], "count": 1}]}}"#,
+            )]),
+            ..Default::default()
+        });
+        let plugin = SlackPlugin::new(&config(&[("token", "xoxp")]), http.clone()).unwrap();
+        let items = plugin.fetch().await.unwrap().items;
+        let handled = items.iter().find(|i| i.id.ends_with("C9/1700000011.0")).unwrap();
+        assert_eq!(handled.your_reaction(), Some(ReactionMeaning::Done));
+        assert_eq!(handled.reactions.as_ref().unwrap()[0].count, 2);
+        let looked = items.iter().find(|i| i.id.ends_with("C9/1700000030.0")).unwrap();
+        assert!(looked.your_reaction().is_none() && looked.others_reacted(ReactionMeaning::Started));
+        assert_eq!(http.calls("reactions.get"), REACTIONS_ASKED);
+        assert_eq!(http.calls("reactions.list"), 1);
+
+        plugin.fetch().await.unwrap();
+        assert_eq!(http.calls("reactions.get"), REACTIONS_ASKED, "kept");
+    }
+
+    #[tokio::test]
+    async fn reactions_without_their_permission_say_so() {
+        let http = Arc::new(SlackStub {
+            mine: r#"{"ok": true, "messages": {"matches": []}}"#,
+            replies: "{}",
+            mentions: Some(format!(r#"{{"ok": true, "messages": {{"matches": [{}]}}}}"#, mention("1700000011.0"))),
+            reacted: Some(r#"{"ok": false, "error": "missing_scope"}"#),
+            ..Default::default()
+        });
+        let snapshot = SlackPlugin::new(&config(&[("token", "xoxp")]), http.clone()).unwrap().fetch().await.unwrap();
+        assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].contains("reactions:read"));
+        assert_eq!(snapshot.items.len(), 1, "everything else works");
+        assert_eq!(http.calls("reactions.get"), 0);
+    }
+
+    /// A workspace's own emoji: an alias is the emoji it stands for; another has its picture and a meaning from
+    /// its name.
+    #[tokio::test]
+    async fn workspace_emoji() {
+        let picture = "https://emoji.slack-edge.com/T1/approved-by-design/abc.png";
+        let emoji = r#"{"ok": true, "emoji": {"yes": "alias:white_check_mark",
+          "approved-by-design": "https://emoji.slack-edge.com/T1/approved-by-design/abc.png"}}"#;
+        assert!(
+            thread(r#"[{"name": "yes", "users": ["U2"], "count": 1}]"#, Some(emoji)).await.is_none(),
+            "✅ by alias"
+        );
+
+        let custom = HashMap::from([("approved-by-design".to_string(), picture.to_string())]);
+        let resolved = resolve(Reaction::new("approved-by-design", 1, false), &custom);
+        assert_eq!(resolved.image.as_deref(), Some(picture));
+        assert_eq!(resolved.meaning(), Some(ReactionMeaning::Done));
+        assert_eq!(resolved.emoji, ":approved-by-design:");
+        assert_eq!(resolve(Reaction::new("yes", 1, false), &HashMap::new()).meaning(), Some(ReactionMeaning::Ack));
     }
 
     #[tokio::test]
     async fn threads_without_the_history_scope_say_so() {
         let mine = r#"{"ok": true, "messages": {"matches": [{"ts": "1.0", "text": "x", "channel": {"id": "C1", "name": "a"}}]}}"#;
-        let http = Arc::new(SlackStub {
-            mine,
-            replies: r#"{"ok": false, "error": "missing_scope"}"#,
-            asked: Default::default(),
-        });
+        let http =
+            Arc::new(SlackStub { mine, replies: r#"{"ok": false, "error": "missing_scope"}"#, ..Default::default() });
         let snapshot = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap();
         assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].contains("channels:history"));
         assert!(!snapshot.items.iter().any(|i| i.context.starts_with("Thread")));

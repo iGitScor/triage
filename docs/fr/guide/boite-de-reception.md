@@ -42,6 +42,19 @@ dans *À lire*, et le rappel d’un événement envoyé par une application quit
 Sur Windows, seules les règles de mots-clés s’appliquent (le modèle de langue est celui d’Apple) : un message sans
 l’un de ces mots va dans *À répondre*.
 
+## Les réactions Slack
+
+Remora lit les réactions comme des réponses, et les affiche sous chaque élément Slack (les vôtres entourées) :
+
+- **Votre ✅** (ou ✔️, ☑️, 👌) sur une mention, un message direct ou une réponse le range dans **Terminés** ; votre
+  **👀** dans **En cours**. Retirez la réaction dans Slack pour le faire revenir. Un élément épinglé ou rappelé reste
+  où vous l’avez mis.
+- **Une question que vous avez posée** dans un fil, sans réponse pour l’instant, attend dans l’onglet **En
+  attente**. Un 👍 de leur part montre qu’ils l’ont vue ; leur ✅ la clôt ; leur ❓ ou 🤔 vous la renvoie, dans *À
+  répondre*. Un message de vous qui ne demandait rien (un « pour info ») n’attend pas.
+- Un emoji propre à l’espace de travail compte comme l’emoji standard qu’il remplace, ou d’après un mot de son nom
+  (`:approved:`, `:lgtm:` valent ✅ ; `:merci:` vaut 👍), en français et en anglais.
+
 ## Terminé, Épingler
 
 - **Terminé** masque un élément jusqu’à ce qu’il change : un commit, une approbation, un commentaire, une réponse.

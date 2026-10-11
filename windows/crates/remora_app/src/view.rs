@@ -291,9 +291,11 @@ fn image_hosts(inbox: &Inbox) -> HashMap<String, Vec<String>> {
         .collect()
 }
 
-/// Hosts a tool's avatars come from without the tool ever being asked anything there: GitLab serves most
-/// avatars from Gravatar. Images only, and only while the policy allows them; never a request with a token.
-const IMAGE_ONLY_HOSTS: &[(&str, &str)] = &[("gitlab", "secure.gravatar.com"), ("gitlab", "www.gravatar.com")];
+/// Hosts a tool's pictures come from without the tool ever being asked anything there: GitLab serves most
+/// avatars from Gravatar, Slack a workspace's own emoji (in reactions) from its edge. Images only, and only while
+/// the policy allows them; never a request with a token. Same list on macOS (`InboxModel.imageOnlyHosts`).
+const IMAGE_ONLY_HOSTS: &[(&str, &str)] =
+    &[("gitlab", "secure.gravatar.com"), ("gitlab", "www.gravatar.com"), ("slack", "emoji.slack-edge.com")];
 
 /// Whether an avatar may be shown, and so fetched: an https URL on one of an account's hosts, while the policy
 /// allows images. The window's avatars come only through this check.
@@ -332,6 +334,10 @@ mod tests {
         let github = inbox("github", &[("host", "https://github.com")]);
         assert!(image_allowed(&github, "https://avatars.githubusercontent.com/u/1?v=4"));
         assert!(!image_allowed(&github, "https://secure.gravatar.com/avatar/abc"), "Gravatar is GitLab's only");
+
+        let slack = inbox("slack", &[]);
+        assert!(image_allowed(&slack, "https://emoji.slack-edge.com/T1/approved/abc.png"), "a workspace's emoji");
+        assert!(!image_allowed(&github, "https://emoji.slack-edge.com/T1/approved/abc.png"));
 
         let mut off = gitlab;
         off.preferences = Preferences { allow_remote_images: false, ..Preferences::default() };

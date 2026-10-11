@@ -34,6 +34,13 @@ public struct VerbClassifier: Sendable {
             let intent = intent(of: [item.title, item.preview].compactMap { $0 }.joined(separator: "\n")) ?? fallback
             item.bundle = intent == .request ? .reply : .read
             item.needsAction = intent == .request
+        case InboxBundle.asked.id:
+            // Your own message: a question or request waits on the others; anything else (an FYI, "done!") waits on
+            // nobody and is cleared. Unsure means not a question, so the Waiting tab doesn't fill with chatter.
+            let intent = intent(of: [item.title, item.preview].compactMap { $0 }.joined(separator: "\n"))
+            item.bundle = .awaiting
+            item.needsAction = false
+            if intent != .request { item.expires = item.date }
         default:
             break
         }

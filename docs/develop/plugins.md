@@ -89,6 +89,9 @@ Then:
 - **`badges`**: status chips with a `Tone`. A badge with `notify` set announces itself the first time it appears
   (*Approved*, *Checks failed*). Keep badge IDs stable (`approved`, `checks.failing`, `priority.urgent`…).
 - **`changes`** (file paths and line counts) turn on review prep. Never store code.
+- **`reactions`** when the tool has emoji reactions: your ✅ moves the item to Done and your 👀 to In progress,
+  and the ranker and the assistant read what they mean. They aren't in the fingerprint, so a new 👍 brings nothing
+  back.
 - **`url`** opens in the browser; **`appURL`** (`slack://…`, `linear://…`) opens the desktop app when it’s
   installed.
 

@@ -44,11 +44,12 @@ Shows your merge requests, the ones you review, their approvals and pipelines.
 Shows mentions, direct messages and replies in your threads from the last few days. Mentions are one item per
 message; a direct conversation is one item, so a new message brings it back even after you marked it done. A
 thread you wrote in is one item too, when someone replied after you, even without mentioning you (the 10 most
-recent threads).
+recent threads), or, when nobody did, as a question waiting on others. Reactions count too: see
+[Slack reactions](./inbox#slack-reactions).
 
 1. Settings → Sources → Slack → **Create the Slack app**. Slack opens with an app named Remora, already set up
-   with the read-only permissions it needs, as you: `search:read`, and `channels:history` and `groups:history`
-   to read the threads you wrote in.
+   with the read-only permissions it needs, as you: `search:read`, `channels:history` and `groups:history` to read
+   the threads you wrote in, and `reactions:read` and `emoji:read` for reactions.
 2. Pick your workspace, then **Next** → **Create**.
 3. On the app page: **Install App** → *Install to your workspace* → **Allow**.
 4. Copy the **User OAuth Token** (it starts with `xoxp-`) and paste it in Remora.
@@ -61,9 +62,10 @@ admin approves it, come back to step 3.
 Slack items open in the Slack app, on the conversation. ⌥-click (Shift-click on Windows) opens the exact message on
 the web.
 
-An app created before thread replies only has `search:read`: Settings says so next to the account. Add the two
-history permissions to the app (*OAuth & Permissions* → *User Token Scopes*), reinstall it, and connect the new
-token again: the account is updated, nothing is lost.
+An app created earlier may lack some of these permissions: Settings says so next to the account. Add the missing
+ones to the app (*OAuth & Permissions* → *User Token Scopes*), reinstall it, and connect the new token again: the
+account is updated, nothing is lost. Without `emoji:read`, reactions still work; a workspace's own emoji then
+shows as `:name:`.
 
 ## Linear
 

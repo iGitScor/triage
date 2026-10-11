@@ -185,7 +185,148 @@ struct SlackPluginTests {
             config: config(["token": "xoxp"]), http: SlackStub(mine: mine, replies: replies)
         )
         .fetch().items
-        #expect(!items.contains { $0.context.hasPrefix("Thread") }, "the ball is in their court")
+        let thread = try #require(items.first { $0.context.hasPrefix("Thread") })
+        #expect(thread.bundle == .asked && !thread.needsAction, "the ball is in their court: your message waits")
+    }
+
+    /// Your last message in a thread, as Slack returns it with `inclusive`: the reactions on it decide.
+    static let yourThread = """
+        {"ok": true, "messages": {"matches": [
+          {"ts": "1700000200.0", "text": "Can someone review the mockups?", "channel": {"id": "C1", "name": "design"},
+           "permalink": "https://acme.slack.com/archives/C1/p1700000200?thread_ts=1700000100.0"}
+        ]}}
+        """
+
+    static func replies(reactions: String) -> String {
+        """
+        {"ok": true, "messages": [
+          {"ts": "1700000100.0", "text": "Mockups are up", "user": "U2"},
+          {"ts": "1700000200.0", "text": "Can someone review the mockups?", "user": "UME", "reactions": \(reactions)}
+        ]}
+        """
+    }
+
+    func thread(reactions: String) async throws -> InboxItem? {
+        let http = SlackStub(mine: Self.yourThread, replies: Self.replies(reactions: reactions))
+        return try await SlackPlugin(config: config(["token": "xoxp"]), http: http).fetch().items
+            .first { $0.id.contains("/thread/") }
+    }
+
+    /// Nobody wrote back: their reactions on your message speak for them.
+    @Test func theirReactionsOnYourMessage() async throws {
+        let waiting = try #require(try await thread(reactions: "[]"))
+        #expect(waiting.bundle == .asked && !waiting.needsAction && waiting.title == "Can someone review the mockups?")
+        #expect(waiting.id.hasSuffix("/C1/thread/1700000100.0"), "the same item as a reply would be")
+
+        let seen = try #require(
+            try await thread(reactions: #"[{"name": "+1::skin-tone-2", "users": ["U2"], "count": 1}]"#))
+        #expect(seen.bundle == .asked && seen.othersReacted(.ack), "acknowledged, still waiting")
+
+        let question = try #require(
+            try await thread(reactions: #"[{"name": "thinking_face", "users": ["U2", "U3"], "count": 2}]"#))
+        #expect(question.bundle == .reply && question.needsAction)
+        #expect(
+            question.context == "🤔 on your message in #design" && question.title == "Can someone review the mockups?")
+
+        #expect(
+            try await thread(reactions: #"[{"name": "white_check_mark", "users": ["U2"], "count": 1}]"#) == nil,
+            "answered")
+        #expect(
+            try await thread(reactions: #"[{"name": "white_check_mark", "users": ["UME"], "count": 1}]"#)?.bundle
+                == .asked, "your own ✅ answers nothing")
+    }
+
+    /// A reply keeps its reactions; your ✅ on it is what moves it to Done.
+    @Test func aReplyCarriesItsReactions() async throws {
+        let replies = """
+            {"ok": true, "messages": [
+              {"ts": "1700000200.0", "text": "Can someone review the mockups?", "user": "UME"},
+              {"ts": "1700000400.0", "text": "On it tomorrow", "user": "U2",
+               "reactions": [{"name": "white_check_mark", "users": ["UME"], "count": 1}]}
+            ]}
+            """
+        let http = SlackStub(mine: Self.yourThread, replies: replies)
+        let items = try await SlackPlugin(config: config(["token": "xoxp"]), http: http).fetch().items
+        let reply = try #require(items.first { $0.context.hasPrefix("Thread") })
+        #expect(reply.title == "On it tomorrow" && reply.yourReaction == .done)
+    }
+
+    static func mention(_ ts: String) -> String {
+        #"{"ts": "\#(ts)", "text": "<@UME> can you look?", "username": "erin", "channel": {"id": "C9", "name": "ops"}}"#
+    }
+
+    /// Search returns no reactions: the messages you reacted to come in one request, and the newest that need you
+    /// are asked about one by one, at most 15, each kept 10 minutes.
+    @Test func reactionsOnMentions() async throws {
+        let mentions =
+            #"{"ok": true, "messages": {"matches": ["#
+            + (1...20).map { Self.mention("17000000\($0 + 10).0") }.joined(separator: ",") + "]}}"
+        let reacted = """
+            {"ok": true, "items": [
+              {"type": "message", "channel": "C9", "message": {"ts": "1700000011.0",
+               "reactions": [{"name": "white_check_mark", "users": ["UME", "U2"], "count": 2}]}},
+              {"type": "file", "file": {"id": "F1"}}
+            ]}
+            """
+        let got = [
+            "C9/1700000030.0":
+                #"{"ok": true, "message": {"reactions": [{"name": "eyes", "users": ["U4"], "count": 1}]}}"#
+        ]
+        let http = SlackStub(
+            mine: #"{"ok": true, "messages": {"matches": []}}"#, replies: "{}", mentions: mentions, reacted: reacted,
+            got: got)
+        let plugin = try SlackPlugin(
+            config: PluginConfig(accountID: UUID(), values: ["token": "xoxp"], cache: MemoryAccountCache()), http: http)
+        let items = try await plugin.fetch().items
+        let handled = try #require(items.first { $0.id.hasSuffix("C9/1700000011.0") })
+        #expect(handled.yourReaction == .done && handled.reactions?.first?.count == 2)
+        let looked = try #require(items.first { $0.id.hasSuffix("C9/1700000030.0") })
+        #expect(looked.yourReaction == nil && looked.othersReacted(.started))
+        #expect(await http.methods.filter { $0 == "reactions.get" }.count == SlackPlugin.reactionsAsked)
+        #expect(await http.methods.filter { $0 == "reactions.list" }.count == 1)
+
+        _ = try await plugin.fetch()
+        #expect(await http.methods.filter { $0 == "reactions.get" }.count == SlackPlugin.reactionsAsked, "kept")
+    }
+
+    @Test func reactionsWithoutTheirPermissionSaySo() async throws {
+        let http = SlackStub(
+            mine: #"{"ok": true, "messages": {"matches": []}}"#, replies: "{}",
+            mentions: #"{"ok": true, "messages": {"matches": [\#(Self.mention("1700000011.0"))]}}"#,
+            reacted: #"{"ok": false, "error": "missing_scope"}"#)
+        let snapshot = try await SlackPlugin(config: config(["token": "xoxp"]), http: http).fetch()
+        #expect(snapshot.remarks.count == 1 && snapshot.remarks[0].contains("reactions:read"))
+        #expect(snapshot.items.count == 1, "everything else works")
+        #expect(await !http.methods.contains("reactions.get"))
+    }
+
+    /// A workspace's own emoji: an alias is the emoji it stands for; another has its picture and a meaning from
+    /// its name.
+    @Test func workspaceEmoji() async throws {
+        let picture = "https://emoji.slack-edge.com/T1/approved-by-design/abc.png"
+        let emoji = #"{"ok": true, "emoji": {"yes": "alias:white_check_mark", "approved-by-design": "\#(picture)"}}"#
+        let alias = SlackStub(
+            mine: Self.yourThread, replies: Self.replies(reactions: #"[{"name": "yes", "users": ["U2"], "count": 1}]"#),
+            emoji: emoji)
+        let items = try await SlackPlugin(config: config(["token": "xoxp"]), http: alias).fetch().items
+        #expect(!items.contains { $0.id.contains("/thread/") }, "✅ through its alias: answered")
+
+        let custom = SlackPlugin.resolve(
+            Reaction(name: "approved-by-design", count: 1, mine: false), custom: ["approved-by-design": picture])
+        #expect(custom.image?.host == "emoji.slack-edge.com" && custom.meaning == .done)
+        #expect(custom.emoji == ":approved-by-design:")
+        #expect(SlackPlugin.resolve(Reaction(name: "yes", count: 1, mine: false), custom: [:]).meaning == .ack)
+    }
+
+    /// The assistant reads what reactions mean and how many, never who reacted.
+    @Test func theAssistantReadsWhatReactionsMean() {
+        var item = InboxItem(
+            id: "a", accountID: UUID(), pluginID: "slack", bundle: .reply, title: "Can you look?", context: "#ops",
+            date: .now)
+        item.reactions = [Reaction(name: "eyes", count: 2, mine: true)]
+        let message = BriefPrompt.message(items: [item], now: .now)
+        #expect(message.contains("you reacted: started") && message.contains("others reacted: started ×1"))
+        #expect(!message.contains("UME"))
     }
 
     @Test func threadsWithoutTheHistoryScopeSaySo() async throws {
@@ -206,32 +347,52 @@ struct SlackPluginTests {
         let manifest = try #require(items.first { $0.name == "manifest_json" }?.value)
         let json = try JSONSerialization.jsonObject(with: Data(manifest.utf8)) as? [String: Any]
         let scopes = ((json?["oauth_config"] as? [String: Any])?["scopes"] as? [String: Any])?["user"] as? [String]
-        #expect(scopes == ["search:read", "channels:history", "groups:history"])
+        #expect(scopes == ["search:read", "channels:history", "groups:history", "reactions:read", "emoji:read"])
     }
 }
 
-/// Answers Slack by method, and the searches by their query: your own thread messages, or nothing.
+/// Answers Slack by method, and the searches by their query: your own thread messages, mentions of you, or nothing.
+/// Reactions: what `reactions.list` and `emoji.list` say, and `reactions.get` by message.
 actor SlackStub: HTTPClient {
     let mine: String
     let replies: String
+    let mentions: String?
+    let reacted: String?
+    let got: [String: String]
+    let emoji: String?
     private(set) var repliesAsked: [String] = []
+    private(set) var methods: [String] = []
 
-    init(mine: String, replies: String) {
+    init(
+        mine: String, replies: String, mentions: String? = nil, reacted: String? = nil, got: [String: String] = [:],
+        emoji: String? = nil
+    ) {
         self.mine = mine
         self.replies = replies
+        self.mentions = mentions
+        self.reacted = reacted
+        self.got = got
+        self.emoji = emoji
     }
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         let url = request.url!
         let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let value = { (name: String) in query.first { $0.name == name }?.value ?? "" }
+        let none = #"{"ok": true, "messages": {"matches": []}}"#
+        methods.append(url.lastPathComponent)
         let body: String
         switch url.lastPathComponent {
         case "auth.test": body = #"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme", "team_id": "T1"}"#
         case "conversations.replies":
             repliesAsked.append("\(value("channel")) \(value("ts")) \(value("oldest"))")
             body = replies
-        default: body = value("query").contains("is:thread") ? mine : #"{"ok": true, "messages": {"matches": []}}"#
+        case "reactions.list": body = reacted ?? #"{"ok": true, "items": []}"#
+        case "reactions.get": body = got["\(value("channel"))/\(value("timestamp"))"] ?? #"{"ok": true, "message": {}}"#
+        case "emoji.list": body = emoji ?? #"{"ok": true, "emoji": {}}"#
+        default:
+            let search = value("query")
+            body = search.contains("is:thread") ? mine : search.hasPrefix("<@UME>") ? (mentions ?? none) : none
         }
         return (Data(body.utf8), HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
     }

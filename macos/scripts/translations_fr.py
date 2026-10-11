@@ -1,6 +1,11 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
+    # Reactions
+    "%@ %d including yours": "%@ %d, dont la vôtre",
+    "%@ on your message in %@": "%@ sur votre message dans %@",
+    "Reactions: %@": "Réactions : %@",
+    "Slack: reactions need the reactions:read permission. Add it to the Remora app in Slack, reinstall it, and paste the new token.": "Slack : les réactions demandent la permission reactions:read. Ajoutez-la à l’app Remora dans Slack, réinstallez-la et collez le nouveau jeton.",
     # Tabs and bundles
     "My turn": "À moi",
     "Waiting": "En attente",
@@ -18,6 +23,7 @@ FR = {
     "Mentions": "Mentions",
     "Direct messages": "Messages directs",
     "Your merge requests": "Vos merge requests",
+    "Your questions": "Vos questions",
     "Pinned": "Épinglés",
     # Inbox
     "Search": "Rechercher",
@@ -48,7 +54,7 @@ FR = {
     "Someone": "Quelqu’un",
     "Slack: replies in your threads need the channels:history and groups:history permissions. Add them to the Remora app in Slack, reinstall it, and paste the new token.": "Slack : les réponses dans vos fils demandent les permissions channels:history et groups:history. Ajoutez-les à l’app Remora dans Slack, réinstallez-la, puis collez le nouveau jeton.",
     "Mentions, direct messages and replies in your threads from the last few days.": "Mentions, messages directs et réponses dans vos fils des derniers jours.",
-    "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies.": "Un jeton utilisateur (xoxp-…) avec search:read, plus channels:history et groups:history pour les réponses dans les fils.",
+    "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies, and reactions:read and emoji:read for reactions.": "Un jeton utilisateur (xoxp-…) avec search:read, plus channels:history et groups:history pour les réponses dans les fils, et reactions:read et emoji:read pour les réactions.",
     "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in.": "Cherche vos mentions et messages directs récents dans Slack, et lit les fils où vous avez écrit.",
     "%@ has more than Remora shows: only the latest 50 of each list are listed.": "%@ en contient davantage : seuls les 50 plus récents de chaque liste sont affichés.",
     "macOS needs your approval: allow Remora in System Settings → General → Login Items.": "macOS demande votre accord : autorisez Remora dans Réglages Système → Général → Ouverture.",

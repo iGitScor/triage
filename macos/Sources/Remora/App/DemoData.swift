@@ -96,6 +96,15 @@ enum DemoData {
                 author: "you", badges: [passing, diff(140, 22)]),
         ]
         items[13].suggestedPeople = [person("dave")]
+        // Reactions as Slack shows them, and a question of yours waiting, acknowledged with a 👍.
+        items[2].reactions = [Reaction(name: "eyes", count: 2, mine: false)]
+        items[3].reactions = [Reaction(name: "+1", count: 2, mine: true)]
+        var question = item(
+            15, .awaiting, "Can someone proofread the new onboarding copy?", L("Thread in %@", "#design"),
+            minutes: 55, author: "you", plugin: "slack")
+        question.needsAction = false
+        question.reactions = [Reaction(name: "+1", count: 1, mine: false)]
+        items.append(question)
         items[0].changes = passkeyFiles
         items[1].changes = queueFiles
         return [account: items]

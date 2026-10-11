@@ -197,6 +197,7 @@ impl GitLabPlugin {
             }),
             suggested_people: None,
             recurrence: None,
+            reactions: None,
         }
     }
 }

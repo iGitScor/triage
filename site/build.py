@@ -499,7 +499,7 @@ def home(lang: str) -> str:
             ],
             verbs_eyebrow="Verbs, not apps",
             verbs_title='Sorted by <span class="mark">what to do.</span>',
-            verbs_lead="A Slack question and a GitLab comment both land in To reply. Messages are sorted on your computer with keyword rules, plus Apple’s on-device language model on the Mac. No generative AI, nothing sent.",
+            verbs_lead="A Slack question and a GitLab comment both land in To reply. Messages are sorted on your computer with keyword rules, plus Apple’s on-device language model on the Mac. No generative AI, nothing sent. React ✅ in Slack and the item moves to Done.",
             verbs=[
                 ("reply", "To reply"),
                 ("review", "To review"),
@@ -660,7 +660,7 @@ def home(lang: str) -> str:
             ],
             verbs_eyebrow="Des verbes, pas des applis",
             verbs_title='Rangé par <span class="mark">ce qu’il faut faire.</span>',
-            verbs_lead="Une question sur Slack et un commentaire GitLab finissent tous deux dans À répondre. Les messages sont triés sur votre ordinateur par des règles de mots-clés, plus le modèle de langue d’Apple embarqué sur le Mac. Pas d’IA générative, rien n’est envoyé.",
+            verbs_lead="Une question sur Slack et un commentaire GitLab finissent tous deux dans À répondre. Les messages sont triés sur votre ordinateur par des règles de mots-clés, plus le modèle de langue d’Apple embarqué sur le Mac. Pas d’IA générative, rien n’est envoyé. Réagissez ✅ dans Slack et l’élément passe dans Terminés.",
             verbs=[
                 ("reply", "À répondre"),
                 ("review", "À relire"),

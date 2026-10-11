@@ -106,7 +106,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 |---|---|---|
 | GitHub (+ Enterprise) | Pull requests you opened, review requests | Classic token: `repo`, `read:org` |
 | GitLab (+ self-hosted) | Merge requests you opened or review, approvals, pipelines | Token: `read_api` |
-| Slack | Mentions and DMs from the last N days | User token `xoxp-…`: `search:read` |
+| Slack | Mentions, DMs and replies in your threads from the last N days; your questions still waiting; reactions (✅ moves an item to Done) | User token `xoxp-…`: `search:read`, `channels:history`, `groups:history`, `reactions:read`, `emoji:read` |
 | Linear | Issues assigned to you (priority, due date), unread mentions and comments | Personal API key |
 | Notion | Open tasks assigned to you in chosen databases | Personal access token, or an internal connection's secret |
 | Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this computer |
@@ -147,8 +147,8 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 
 | Suite | Tests | What it covers |
 |---|---|---|
-| macOS (Swift Testing) | 284 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
-| Windows (`cargo test`) | 281 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
+| macOS (Swift Testing) | 297 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
+| Windows (`cargo test`) | 294 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 

@@ -6,6 +6,7 @@ import { offer } from './failures'
 import { selectsIn } from './announce'
 import { avatarSrc, describe, mark, shown } from './people'
 import { reasonLabel } from './reasons'
+import { shownReactions, spokenReactions } from './reactions'
 import { repeatLabel } from './recurrence'
 import { t, translateMessage } from './i18n'
 import { ago, relative, when } from './time'
@@ -87,7 +88,7 @@ function open(event: MouseEvent) {
           {#if reviewers.more}<span class="more muted">+{reviewers.more}</span>{/if}
         </span>
       {/if}
-      {#if item.badges.length || itemState?.remindedAt || itemState?.startedAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2}
+      {#if item.badges.length || item.reactions?.length || itemState?.remindedAt || itemState?.startedAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2}
         <span class="chips">
           {#if itemState?.snooze?.reason}<span class="chip">{t(reasonLabel(itemState.snooze.reason))}</span>{/if}
           {#if (extras?.snoozedTimes ?? 0) >= 2}<span class="chip warning">{t('Snoozed %d×', extras?.snoozedTimes ?? 0)}</span>{/if}
@@ -95,6 +96,19 @@ function open(event: MouseEvent) {
           {#if itemState?.remindedAt}<span class="chip accent">{t('Reminder')}</span>{/if}
           {#if itemState?.pinned}<span class="chip">{t('Pinned')}</span>{/if}
           {#each item.badges as badge (badge.id)}<span class="chip {badge.tone}">{t(badge.label)}</span>{/each}
+          {#if item.reactions?.length}
+            {@const reactions = shownReactions(item.reactions)}
+            <!-- As in Slack: each emoji (a workspace's own as its picture) and how many, yours outlined. -->
+            <span class="reactions" role="img" aria-label={spokenReactions(item.reactions)}>
+              {#each reactions.reactions as reaction (reaction.name)}
+                <span class="reaction" class:mine={reaction.mine}>
+                  {#if reaction.image}<img src={avatarSrc(reaction.image)} alt="" />{:else}{reaction.emoji}{/if}
+                  {#if reaction.count > 1}<span class="count">{reaction.count}</span>{/if}
+                </span>
+              {/each}
+              {#if reactions.more}<span class="more muted">+{reactions.more}</span>{/if}
+            </span>
+          {/if}
         </span>
       {/if}
     </span>
@@ -159,6 +173,44 @@ function open(event: MouseEvent) {
 </article>
 
 <style>
+  .reactions {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .reaction {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 20px;
+    padding: 0 6px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--card-2);
+    font-size: 12px;
+  }
+  .reaction.mine {
+    border-color: var(--accent-text);
+    background: var(--accent-soft);
+  }
+  .reaction img {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+  }
+  .reaction .count {
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  @media (forced-colors: active) {
+    .reaction {
+      border-color: CanvasText;
+    }
+    .reaction.mine {
+      border-color: Highlight;
+    }
+  }
   .item {
     position: relative;
     padding: 0;

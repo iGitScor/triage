@@ -12,7 +12,7 @@ public struct SlackPlugin: SourcePlugin {
             .token(
                 "User OAuth token",
                 help:
-                    "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies."
+                    "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies, and reactions:read and emoji:read for reactions."
             ),
             ConfigField(key: "days", label: "Look back (days)", placeholder: "3", defaultValue: "3"),
         ],
@@ -30,11 +30,11 @@ public struct SlackPlugin: SourcePlugin {
         logo: "slack"
     )
 
-    /// Opens Slack's "create app" flow pre-filled with the read-only scopes Remora needs: search, and the channels'
-    /// history for replies in your threads.
+    /// Opens Slack's "create app" flow pre-filled with the read-only scopes Remora needs: search, the channels'
+    /// history for replies in your threads, and reactions.
     static let appManifestURL: URL? = {
         let manifest =
-            #"{"display_information":{"name":"Remora","description":"Mentions and DMs in your menu bar"},"oauth_config":{"scopes":{"user":["search:read","channels:history","groups:history"]}},"settings":{"org_deploy_enabled":false,"socket_mode_enabled":false,"token_rotation_enabled":false}}"#
+            #"{"display_information":{"name":"Remora","description":"Mentions and DMs in your menu bar"},"oauth_config":{"scopes":{"user":["search:read","channels:history","groups:history","reactions:read","emoji:read"]}},"settings":{"org_deploy_enabled":false,"socket_mode_enabled":false,"token_rotation_enabled":false}}"#
         var components = URLComponents(string: "https://api.slack.com/apps")!
         components.queryItems = [
             URLQueryItem(name: "new_app", value: "1"), URLQueryItem(name: "manifest_json", value: manifest),
@@ -66,26 +66,148 @@ public struct SlackPlugin: SourcePlugin {
         async let mentions: Search = call("search.messages", ["query": "\(me) -from:\(me) after:\(since)"])
         async let direct: Search = call("search.messages", ["query": "to:me -from:\(me) after:\(since)"])
         async let mine: Search? = try? call("search.messages", ["query": "from:\(me) is:thread after:\(since)"])
-        var snapshot = try await Self.snapshot(
-            mentions: mentions.messages.matches,
-            direct: direct.messages.matches,
+        // The workspace's own emoji first (kept a day): an alias of ✅ must count as ✅ wherever reactions decide.
+        let custom = await customEmoji()
+        async let yours = reactedByYou(me: auth.userId, custom: custom)
+        let mentioned = try await mentions.messages.matches
+        let written = try await direct.messages.matches
+        let (byYou, reactionsRemark) = await yours
+        // Search results carry no reactions: ask for those of the newest messages that need you, unless the token
+        // can't read reactions at all.
+        let shown =
+            reactionsRemark == nil
+            ? await reactions(
+                on: Self.needingYou(mentions: mentioned, direct: written), me: auth.userId, custom: custom)
+            : [:]
+        var snapshot = Self.snapshot(
+            mentions: mentioned,
+            direct: written,
             identity: "\(auth.user) · \(auth.team)",
             me: auth.userId,
             teamID: auth.teamId,
-            accountID: accountID
+            accountID: accountID,
+            reactions: byYou.merging(shown) { _, asked in asked }
         )
         let threads = await threadReplies(
-            mine: await mine?.messages.matches ?? [], me: auth.userId, teamID: auth.teamId)
+            mine: await mine?.messages.matches ?? [], me: auth.userId, teamID: auth.teamId, custom: custom)
         snapshot.items += threads.items
-        snapshot.remarks += threads.remarks
+        snapshot.remarks += threads.remarks + [reactionsRemark].compactMap { $0 }
         return snapshot
     }
 
-    /// Replies in the threads you wrote in lately, posted after your last message there: what search
-    /// can't find, since nobody mentioned you. The 10 most recent channel threads, one `conversations.replies` each;
-    /// replies that mention you are already mentions, and direct messages are already there. Without the history
-    /// scopes, a remark says how to add them.
-    func threadReplies(mine: [Match], me: String, teamID: String?) async -> (items: [InboxItem], remarks: [String]) {
+    /// The workspace's own emoji, by name: `alias:white_check_mark` for another name of a standard one, else the
+    /// picture's address. Asked once a day; without the emoji:read permission there are none, and reactions with
+    /// a workspace emoji show as `:name:`, their meaning taken from the name.
+    func customEmoji() async -> [String: String] {
+        let lifetime: TimeInterval = 86_400
+        return
+            (try? await cache.value("emoji.list", lifetime: lifetime) {
+                let list: CustomEmoji? = try? await call("emoji.list")
+                return list?.emoji ?? [:]
+            }) ?? [:]
+    }
+
+    /// A reaction with a workspace emoji: an alias becomes the emoji it stands for, another gets its picture.
+    static func resolve(_ reaction: Reaction, custom: [String: String]) -> Reaction {
+        var name = reaction.name
+        for _ in 0..<3 {
+            guard let value = custom[name], value.hasPrefix("alias:") else { break }
+            name = String(value.dropFirst("alias:".count))
+        }
+        let picture = custom[name].flatMap { $0.hasPrefix("alias:") ? nil : URL(string: $0) }
+        return Reaction(name: name, count: reaction.count, mine: reaction.mine, image: picture)
+    }
+
+    /// How many messages that need you get their reactions asked for, each kept 10 minutes: Slack's search doesn't
+    /// return them, and one request per message adds up.
+    static let reactionsAsked = 15
+    static let reactionsLifetime: TimeInterval = 600
+
+    /// The messages you reacted to lately, by `channel/ts`, with everyone's reactions: one request for every item.
+    /// Without the reactions:read permission, a remark says how to add it.
+    func reactedByYou(me: String, custom: [String: String] = [:]) async -> (
+        reactions: [String: [Reaction]], remark: String?
+    ) {
+        do {
+            let reacted: Reacted = try await call("reactions.list", ["count": "100", "full": "true"])
+            var byMessage: [String: [Reaction]] = [:]
+            for item in reacted.items {
+                guard let channel = item.channel, let message = item.message, let ts = message.ts,
+                    let reactions = Self.reactions(message.reactions, me: me, custom: custom)
+                else { continue }
+                byMessage["\(channel)/\(ts)"] = reactions
+            }
+            return (byMessage, nil)
+        } catch HTTPError.api(let message) where message.hasSuffix("missing_scope") {
+            return (
+                [:],
+                L(
+                    "Slack: reactions need the reactions:read permission. Add it to the Remora app in Slack, reinstall it, and paste the new token."
+                )
+            )
+        } catch {
+            return ([:], nil)
+        }
+    }
+
+    /// The reactions on these messages, by `channel/ts`. A message whose reactions can't be read just has none.
+    func reactions(on messages: [Match], me: String, custom: [String: String] = [:]) async -> [String: [Reaction]] {
+        await withTaskGroup(of: (String, [Reaction]?).self) { group in
+            for message in messages {
+                let key = "\(message.channel.id)/\(message.ts)"
+                group.addTask {
+                    let got: Got? = try? await cache.value("reactions.get \(key)", lifetime: Self.reactionsLifetime) {
+                        try await call(
+                            "reactions.get", ["channel": message.channel.id, "timestamp": message.ts, "full": "true"])
+                    }
+                    return (key, Self.reactions(got?.message?.reactions, me: me, custom: custom))
+                }
+            }
+            var byMessage: [String: [Reaction]] = [:]
+            for await (key, reactions) in group {
+                if let reactions { byMessage[key] = reactions }
+            }
+            return byMessage
+        }
+    }
+
+    /// The newest messages that need you, as they become items: mentions, and the last message of each
+    /// conversation. Apps' messages aren't asked about.
+    static func needingYou(mentions: [Match], direct: [Match]) -> [Match] {
+        (mentions.filter { !$0.channel.isDirect } + latestPerConversation(direct))
+            .filter { !$0.isFromApp }
+            .sorted { $0.date > $1.date }
+            .prefix(reactionsAsked)
+            .map { $0 }
+    }
+
+    static func latestPerConversation(_ direct: [Match]) -> [Match] {
+        Dictionary(grouping: direct.filter(\.channel.isDirect), by: \.channel.id).compactMap {
+            $0.value.max { $0.date < $1.date }
+        }
+    }
+
+    /// Slack's reactions as items carry them, one per emoji; nil when there are none.
+    static func reactions(_ wire: [WireReaction]?, me: String, custom: [String: String] = [:]) -> [Reaction]? {
+        guard let wire, !wire.isEmpty else { return nil }
+        return Reaction.merged(
+            wire.map {
+                resolve(
+                    Reaction(
+                        name: $0.name, count: $0.count ?? $0.users?.count ?? 0, mine: $0.users?.contains(me) == true),
+                    custom: custom)
+            }
+        )
+    }
+
+    /// The threads you wrote in lately, as of your last message there: what search can't find, since nobody
+    /// mentioned you. The 10 most recent channel threads, one `conversations.replies` each. A newer reply is to
+    /// read or answer (one that mentions you is already a mention); without one, their reactions on your message
+    /// speak: ❓ is a question for you, ✅ an answer, and otherwise your message waits (if it asked something, as
+    /// `VerbClassifier` decides). Without the history scopes, a remark says how to add them.
+    func threadReplies(mine: [Match], me: String, teamID: String?, custom: [String: String] = [:]) async -> (
+        items: [InboxItem], remarks: [String]
+    ) {
         var latest: [String: Match] = [:]
         for message in mine where !message.channel.isDirect {
             let key = "\(message.channel.id)/\(message.threadTS)"
@@ -99,7 +221,8 @@ public struct SlackPlugin: SourcePlugin {
                 replies = try await call(
                     "conversations.replies",
                     [
-                        "channel": mineLast.channel.id, "ts": mineLast.threadTS, "oldest": mineLast.ts, "limit": "50",
+                        "channel": mineLast.channel.id, "ts": mineLast.threadTS, "oldest": mineLast.ts,
+                        "inclusive": "true", "limit": "50",
                     ])
             } catch HTTPError.api(let message) where message.hasSuffix("missing_scope") {
                 return (
@@ -114,28 +237,69 @@ public struct SlackPlugin: SourcePlugin {
                 continue
             }
             // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
-            let others = replies.messages.filter {
-                $0.date > mineLast.date && $0.user != me && $0.botId == nil && !$0.text.contains("<@\(me)>")
+            let after = replies.messages.filter { $0.date > mineLast.date && $0.user != me && $0.botId == nil }
+            let others = after.filter { !$0.text.contains("<@\(me)>") }
+            if let reply = others.max(by: { $0.date < $1.date }) {
+                var item = reply.item(in: mineLast, accountID: accountID, me: me, teamID: teamID)
+                item.reactions = Self.reactions(reply.reactions, me: me, custom: custom)
+                items.append(item)
+                continue
             }
-            guard let reply = others.max(by: { $0.date < $1.date }) else { continue }
-            items.append(reply.item(in: mineLast, accountID: accountID, me: me, teamID: teamID))
+            guard after.isEmpty else { continue }
+            let yours = replies.messages.first { $0.ts == mineLast.ts }
+            if let item = Self.unanswered(
+                mineLast, reactions: Self.reactions(yours?.reactions, me: me, custom: custom), accountID: accountID,
+                me: me,
+                teamID: teamID)
+            {
+                items.append(item)
+            }
         }
         return (items, [])
     }
 
+    /// Your last message in a thread nobody wrote back in: their ❓ makes it yours to answer, their ✅ closes it,
+    /// and otherwise it waits on them (`chat.asked`, which `VerbClassifier` keeps only when it asked something).
+    static func unanswered(
+        _ yours: Match, reactions: [Reaction]?, accountID: UUID, me: String, teamID: String?
+    ) -> InboxItem? {
+        let theirs = (reactions ?? []).filter { $0.others > 0 }
+        if theirs.contains(where: { $0.meaning == .done }) { return nil }
+        var item = yours.item(
+            accountID: accountID, bundle: .asked, id: "\(yours.channel.id)/thread/\(yours.threadTS)", me: me,
+            teamID: teamID)
+        item.bundle = .asked
+        item.expires = nil
+        item.context = L("Thread in %@", yours.channel.label)
+        item.needsAction = false
+        item.reactions = reactions
+        let questions = theirs.filter { $0.meaning == .question }
+        if !questions.isEmpty {
+            item.context = L(
+                "%@ on your message in %@", questions.map(\.emoji).joined(separator: " "), yours.channel.label)
+            item.bundle = .reply
+            item.needsAction = true
+        }
+        return item
+    }
+
     static func snapshot(
-        mentions: [Match], direct: [Match], identity: String, me: String, teamID: String? = nil, accountID: UUID
+        mentions: [Match], direct: [Match], identity: String, me: String, teamID: String? = nil, accountID: UUID,
+        reactions: [String: [Reaction]] = [:]
     ) -> SourceSnapshot {
         let mentionItems =
             mentions
             .filter { !$0.channel.isDirect }
             .map {
                 $0.item(
-                    accountID: accountID, bundle: .mentions, id: "\($0.channel.id)/\($0.ts)", me: me, teamID: teamID)
+                    accountID: accountID, bundle: .mentions, id: "\($0.channel.id)/\($0.ts)", me: me, teamID: teamID,
+                    reactions: reactions["\($0.channel.id)/\($0.ts)"])
             }
-        let latestPerConversation = Dictionary(grouping: direct.filter(\.channel.isDirect), by: \.channel.id)
-            .compactMap { $0.value.max { $0.date < $1.date } }
-            .map { $0.item(accountID: accountID, bundle: .directMessages, id: $0.channel.id, me: me, teamID: teamID) }
+        let latestPerConversation = latestPerConversation(direct).map {
+            $0.item(
+                accountID: accountID, bundle: .directMessages, id: $0.channel.id, me: me, teamID: teamID,
+                reactions: reactions["\($0.channel.id)/\($0.ts)"])
+        }
         return SourceSnapshot(identity: identity, items: mentionItems + latestPerConversation)
     }
 
@@ -188,6 +352,46 @@ extension SlackPlugin {
         var messages: Messages
     }
 
+    /// A reaction as Slack sends it: on a message from `conversations.replies`, `reactions.list` or `reactions.get`.
+    struct WireReaction: Decodable {
+        var name: String
+        var users: [String]?
+        var count: Int?
+    }
+
+    /// `reactions.list`: the messages you reacted to, newest first. Files and other kinds have no message.
+    struct Reacted: Decodable {
+        struct Item: Decodable {
+            var channel: String?
+            var message: Reactions?
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                channel = try? container.decodeIfPresent(String.self, forKey: .channel)
+                message = try? container.decodeIfPresent(Reactions.self, forKey: .message)
+            }
+
+            enum CodingKeys: String, CodingKey { case channel, message }
+        }
+        var items: [Item]
+    }
+
+    /// A message's reactions, from `reactions.list` or `reactions.get`.
+    struct Reactions: Decodable {
+        var ts: String?
+        var reactions: [WireReaction]?
+    }
+
+    /// `reactions.get`.
+    struct Got: Decodable {
+        var message: Reactions?
+    }
+
+    /// `emoji.list`: the workspace's own emoji.
+    struct CustomEmoji: Decodable {
+        var emoji: [String: String]
+    }
+
     /// A thread's messages from `conversations.replies`, the root first.
     struct Replies: Decodable {
         struct Message: Decodable {
@@ -200,8 +404,9 @@ extension SlackPlugin {
             var user: String?
             var botId: String?
             var userProfile: Profile?
+            var reactions: [WireReaction]?
 
-            enum CodingKeys: String, CodingKey { case ts, text, user, botId, userProfile }
+            enum CodingKeys: String, CodingKey { case ts, text, user, botId, userProfile, reactions }
 
             init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -210,6 +415,7 @@ extension SlackPlugin {
                 user = try container.decodeIfPresent(String.self, forKey: .user)
                 botId = try container.decodeIfPresent(String.self, forKey: .botId)
                 userProfile = try? container.decodeIfPresent(Profile.self, forKey: .userProfile)
+                reactions = try? container.decodeIfPresent([WireReaction].self, forKey: .reactions)
             }
 
             var date: Date { Date(timeIntervalSince1970: Double(ts) ?? 0) }
@@ -326,7 +532,10 @@ extension SlackPlugin {
             return components.url
         }
 
-        func item(accountID: UUID, bundle: InboxBundle, id: String, me: String, teamID: String? = nil) -> InboxItem {
+        func item(
+            accountID: UUID, bundle: InboxBundle, id: String, me: String, teamID: String? = nil,
+            reactions: [Reaction]? = nil
+        ) -> InboxItem {
             let lines = SlackText.plain(words, me: me).split(separator: "\n", omittingEmptySubsequences: true)
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
             var item = InboxItem(
@@ -344,6 +553,7 @@ extension SlackPlugin {
                 appURL: appURL(teamID: teamID)
             )
             item.expires = expires
+            item.reactions = reactions
             return item
         }
 

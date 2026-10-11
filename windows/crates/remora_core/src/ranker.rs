@@ -114,7 +114,7 @@ impl PersonalRanker {
         (quick / deferred).ln()
     }
 
-    fn features(item: &InboxItem) -> Vec<String> {
+    pub(crate) fn features(item: &InboxItem) -> Vec<String> {
         let mut features = vec![
             format!("tool:{}", item.plugin_id),
             format!("verb:{}", item.bundle.id),
@@ -124,6 +124,15 @@ impl PersonalRanker {
             features.push(format!("from:{}", author.name));
         }
         features.extend(item.badges.iter().map(|b| format!("badge:{}", b.id)));
+        let mut reacted: Vec<String> = item
+            .reactions
+            .iter()
+            .flatten()
+            .filter_map(|r| r.meaning().map(|m| format!("{}:{}", if r.mine { "reacted" } else { "their" }, m.as_str())))
+            .collect();
+        reacted.sort();
+        reacted.dedup();
+        features.extend(reacted);
         features.extend(title_words(&normalized(&item.title)).into_iter().take(6).map(|w| format!("word:{w}")));
         features
     }

@@ -15,13 +15,13 @@ and a policy under `HKLM\SOFTWARE\Policies\Remora` (Group Policy or Intune).
 |---|---|---|---|
 | GitHub | `api.github.com`, `github.com`, `avatars.githubusercontent.com`, or the GitHub Enterprise host | The user’s token; read requests for their pull requests, review requests, and the changed files’ paths and line counts | Allowed |
 | GitLab | The configured GitLab host | The user’s token; read requests for their merge requests, then one GraphQL query for their approvals, pipelines and changed file paths and line counts. The diff text in responses is never decoded or stored | Allowed |
-| Slack | `slack.com` | The user token; search requests for the user’s mentions, direct messages and own thread messages, then the replies of up to 10 of those threads (`conversations.replies`, read-only history scopes) | Allowed |
+| Slack | `slack.com` | The user token; search requests for the user’s mentions, direct messages and own thread messages, then the replies of up to 10 of those threads (`conversations.replies`, read-only history scopes); the messages the user reacted to (`reactions.list`), the reactions on up to 15 recent messages (`reactions.get`, each kept 10 minutes) and the workspace’s own emoji (`emoji.list`, once a day) | Allowed |
 | Linear | `api.linear.app`, `public.linear.app` | The API key; read requests for assigned issues and notifications | Allowed |
 | Notion | `api.notion.com` | The token; the user's identity, then queries of the chosen databases for tasks assigned to the user | Allowed |
 | Claude Code | Anthropic, through the local `claude` program | A few fields of each inbox item: see [What reaches the assistant](#what-reaches-claude) | **Off** |
 | Claude API | `api.anthropic.com` | The API key, and the same fields as Claude Code | **Off** |
 | OpenAI-compatible | The server set in the account or by `AIServer`: OpenAI, Azure OpenAI, Mistral…, or a server on this computer | The API key, if any, and the same fields as Claude Code. The provider’s own terms (retention, training) apply to what it receives | **Off**; a server on this computer is allowed unless the organization refuses it (`AllowLocalAI`) |
-| Avatars | Image hosts of allowed, connected tools only, over https; GitLab avatars also from Gravatar (`secure.gravatar.com`, `www.gravatar.com`) | An image request, never with a token | Allowed |
+| Avatars | Image hosts of allowed, connected tools only, over https; GitLab avatars also from Gravatar (`secure.gravatar.com`, `www.gravatar.com`), and a Slack workspace’s own emoji from `emoji.slack-edge.com` | An image request, never with a token | Allowed |
 | Updates | `github.com`, and GitHub's download servers (`*.githubusercontent.com`) | A request for `latest.json` once a day, and the new version when the user installs it. No identifier, token or content | **Off** (`AutomaticUpdates`) |
 
 Data from the tools comes **back** to the computer and stays there. There is **no telemetry, no analytics, no crash
@@ -36,6 +36,8 @@ fields. For each inbox item:
 
 - its verb (*To reply*, *To review*…), **title**, context (repository, channel or issue key), author, statuses
   (checks, approvals, size of the change) and age, plus an internal id so the answer can point back to the item;
+- for a **Slack** item, what its reactions mean and how many (“you reacted: done”, “others reacted: ack ×2”), never
+  who reacted;
 - for a **Slack** message, the title is the **first line of the message** (the rest, shown as a preview in the
   inbox, is not sent);
 - for **triage** of the Snoozed tab, also when the item comes back, the snooze reason the user picked (*Waiting
@@ -50,7 +52,7 @@ sent: tokens, links, code, the rest of a message, notes, files.
 - Items are written by other people, so a message could try to give the assistant orders. Remora sends them as a
   marked block of data and tells the model never to follow instructions found in them; its answers are shown as
   plain text, and triage suggestions that hide or open items are never ticked for the user.
-- **Send to the assistant** (Settings → General) keeps a tool's items away from the assistant entirely; on macOS, the
+- **Send to the assistant** (Settings → General) keeps a tool's items away from the assistant entirely; the
   organization can do the same and limit the models with [MDM keys](./mdm#keys) (`AIExcludedSources`,
   `AllowedAIModels`).
 - **Hide message content** (Settings → General → Notifications) applies to notifications only: it doesn’t keep that tool’s
@@ -113,7 +115,8 @@ Windows app sorts with keyword rules only. Nothing is sent anywhere.
 3. **External AI off by default.** An assistant that sends content off the computer (Claude, or an OpenAI-compatible
    server elsewhere) is refused until external AI is allowed; the brief, summaries and triage then appear in the UI.
    A server on this computer follows `AllowLocalAI` instead.
-4. **Avatars** load only from the hosts of allowed, connected tools, and GitLab's Gravatar images: no other third party.
+4. **Avatars** load only from the hosts of allowed, connected tools, GitLab's Gravatar images and Slack's workspace
+   emoji: no other third party.
 5. **Settings → Privacy** shows each connected account’s destinations and whether it is allowed.
 
 The organization can lock all of this: [Managing the policy with MDM](./mdm).
