@@ -30,9 +30,9 @@ if [ -z "$IDENTITY" ]; then
     IDENTITY="$(echo "$IDENTITIES" | sed -n 's/.*"\(Apple Development: [^"]*\)".*/\1/p' | head -1)"
 fi
 # The local certificate, under its current or its earlier name.
-for NAME in "Remora Local Signing" "Perch Local Signing"; do
-    if [ -z "$IDENTITY" ] && echo "$IDENTITIES" | grep -q "\"$NAME\""; then IDENTITY="$NAME"; fi
-done
+if [ -z "$IDENTITY" ] && echo "$IDENTITIES" | grep -q '"Remora Local Signing"'; then
+    IDENTITY="Remora Local Signing"
+fi
 # Always the hardened runtime: the app needs no exception (no plug-ins, no JIT; starting `claude` is allowed).
 # Apple's timestamp server only accepts Apple-issued certificates, and notarization requires it.
 OPTIONS=(--force --options runtime)
@@ -41,7 +41,8 @@ if [ -n "$IDENTITY" ]; then
     echo "Signing with $IDENTITY"
     codesign "${OPTIONS[@]}" --sign "$IDENTITY" "$APP"
 else
-    echo "No signing certificate, signing ad hoc."
+    echo "No signing certificate, signing ad hoc: the Keychain will ask again after each build."
+    echo "scripts/make-signing-cert.sh creates \"Remora Local Signing\", so it recognizes Remora across builds."
     codesign "${OPTIONS[@]}" --sign - "$APP"
 fi
 echo "Built $APP"
