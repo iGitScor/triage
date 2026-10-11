@@ -16,11 +16,16 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
             ],
             .info: [
                 "The deployment is done.", "Here are the notes from today's meeting.",
-                "The release went out this morning.", "Thanks, that worked.",
+                "The release went out this morning.", "The new pricing starts next month.",
                 "Sharing the slides from the presentation.", "The office will be closed on Friday.",
                 "The migration went smoothly.", "The bug is fixed in production.",
                 "A new version is available for the whole team.", "The incident is resolved.",
                 "The dashboard is now live.", "Good news, the client signed.",
+            ],
+            .closing: [
+                "Thanks, that worked.", "Thank you so much!", "Perfect, thanks.", "Sounds good to me.",
+                "Got it, thanks!", "Great, see you tomorrow.", "Ok, noted.", "Awesome, appreciated.",
+                "No problem at all.", "All good, thanks for the help.", "Cool, will do.", "Makes sense, thanks.",
             ],
         ],
         .french: [
@@ -34,11 +39,16 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
             ],
             .info: [
                 "Le déploiement est terminé.", "Voici le compte rendu de la réunion.",
-                "La version est sortie ce matin.", "Merci, ça a marché.",
+                "La version est sortie ce matin.", "Les nouveaux tarifs commencent le mois prochain.",
                 "Je partage les slides de la présentation.", "Le bureau sera fermé vendredi.",
                 "La migration s'est bien passée.", "Le bug est corrigé en production.",
                 "Nouvelle version disponible pour toute l'équipe.", "L'incident est résolu.",
                 "Le tableau de bord est en ligne.", "Bonne nouvelle, le client a signé.",
+            ],
+            .closing: [
+                "Merci, ça a marché.", "Merci beaucoup !", "Parfait, merci.", "Ça me va.",
+                "C'est noté, merci !", "Super, à demain.", "Ok, bien reçu.", "Top, merci pour l'aide.",
+                "Pas de souci.", "Nickel, merci.", "Ça marche, je m'en occupe.", "D'accord, merci.",
             ],
         ],
     ]
@@ -81,10 +91,10 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
             let nearest = (examples[intent] ?? []).map { Self.cosineDistance(message, $0) }.sorted().prefix(neighbors)
             return nearest.isEmpty ? .infinity : nearest.reduce(0, +) / Double(nearest.count)
         }
-        let request = distance(to: .request)
-        let info = distance(to: .info)
-        guard request.isFinite, info.isFinite, abs(request - info) >= margin else { return nil }
-        return request < info ? .request : .info
+        // The nearest class, if clearly nearer than the runner-up.
+        let ranked = examples.keys.map { ($0, distance(to: $0)) }.filter { $0.1.isFinite }.sorted { $0.1 < $1.1 }
+        guard ranked.count >= 2, ranked[1].1 - ranked[0].1 >= margin else { return nil }
+        return ranked[0].0
     }
 
     private func vectors(of language: NLLanguage, in embedding: NLEmbedding) -> [TextIntent: [[Double]]]? {

@@ -376,6 +376,33 @@ struct InboxModelTests {
         #expect(model.layout.done.count == 2, "back in Done, not cleared")
     }
 
+    /// Clear all also clears what the tool put in Done (your ✅ in Slack, a finished conversation).
+    @Test func clearAllClearsWhatTheToolPutInDone() throws {
+        let harness = Harness()
+        let account = Account(pluginID: "slack", name: nil, settings: [:])
+        var handled = InboxItem(
+            id: "\(account.id)/D1", accountID: account.id, pluginID: "slack", bundle: .reply, title: "Deck?",
+            context: "Direct message", date: .now, needsAction: true)
+        handled.reactions = [Reaction(name: "white_check_mark", count: 1, mine: true)]
+        var finished = handled
+        finished.id = "\(account.id)/D2"
+        finished.bundle = .finished
+        finished.reactions = nil
+        try JSONEncoder().encode([account]).write(to: harness.folder.appending(path: "accounts.json"))
+        try JSONEncoder().encode([account.id: [handled, finished]]).write(
+            to: harness.folder.appending(path: "cache.json"))
+        // Marked done days ago, on an older message: a stale mark doesn't keep it from clearing.
+        let stale = ItemState(done: .init(at: .now, fingerprint: "0|", clearedAt: .now))
+        try JSONEncoder().encode([finished.id: stale]).write(to: harness.folder.appending(path: "states.json"))
+        let model = harness.model()
+        #expect(model.layout.done.count == 2)
+
+        model.clear(model.layout.done)
+        #expect(model.layout.done.isEmpty)
+        model.undo()
+        #expect(model.layout.done.count == 2, "back in Done")
+    }
+
     @Test func aReminderMarkedDoneComesBack() async throws {
         let harness = Harness()
         let model = harness.model()

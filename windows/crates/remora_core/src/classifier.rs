@@ -9,6 +9,8 @@ use crate::{InboxBundle, InboxItem};
 pub enum TextIntent {
     Request,
     Info,
+    /// A thank-you, an OK, a 👍: the conversation is over, nobody waits for anything.
+    Closing,
 }
 
 /// Explicit wording in English and French. Requests win over FYI ("FYI, can you check?"), but a negated request
@@ -29,6 +31,10 @@ static NO_REPLY_WORDS: LazyLock<Regex> =
     LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NO_REPLY)));
 static NOT_URGENT_WORDS: LazyLock<Regex> =
     LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NOT_URGENT)));
+static CLOSER_WORDS: LazyLock<Regex> =
+    LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::CLOSERS)));
+/// Emoji codes (`:+1:`), which say no words.
+static EMOJI_CODES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[:][a-z0-9_+'-]+[:]").expect("valid pattern"));
 
 /// Each phrase with a straight and a curly apostrophe, as people type both.
 fn with_apostrophes(phrases: &[&str]) -> Vec<String> {
@@ -144,6 +150,60 @@ impl KeywordIntentClassifier {
         "annonce",
     ];
 
+    /// Ends a conversation when a short message says little else: "thanks!", "sounds good", "merci, parfait".
+    /// After requests and explicit information, which win. Same list as macOS.
+    const CLOSERS: &'static [&'static str] = &[
+        "thanks",
+        "thank you",
+        "thx",
+        "ty",
+        "tysm",
+        "cheers",
+        "great",
+        "perfect",
+        "awesome",
+        "sounds good",
+        "sgtm",
+        "got it",
+        "ok",
+        "okay",
+        "kk",
+        "noted",
+        "will do",
+        "all good",
+        "no problem",
+        "np",
+        "cool",
+        "nice",
+        "lgtm",
+        "ack",
+        "roger",
+        "appreciated",
+        "merci",
+        "merci beaucoup",
+        "parfait",
+        "super",
+        "top",
+        "ça marche",
+        "ca marche",
+        "d'accord",
+        "dac",
+        "entendu",
+        "noté",
+        "bien reçu",
+        "c'est noté",
+        "nickel",
+        "génial",
+        "impeccable",
+        "pas de souci",
+        "pas de soucis",
+        "ça roule",
+        "bien vu",
+        "vu",
+    ];
+    /// The most words a closing message has: "Thanks a lot, that's perfect for me" closes, a paragraph doesn't.
+    const CLOSING_WORDS: usize = 12;
+
     pub fn intent(text: &str) -> Option<TextIntent> {
         let text = text.to_lowercase();
         let text = NOT_PROSE.replace_all(&text, " ");
@@ -153,10 +213,27 @@ impl KeywordIntentClassifier {
         if QUESTION.is_match(&text) || REQUEST_WORDS.is_match(&text) {
             return Some(TextIntent::Request);
         }
+        // Explicit information wins over a closing word: "FYI, done", "nothing to do, thanks" are to read.
         if says_no_reply || INFO_WORDS.is_match(&text) {
             return Some(TextIntent::Info);
         }
+        if Self::closes(&text) {
+            return Some(TextIntent::Closing);
+        }
         None
+    }
+
+    /// A short message with a closing word, or nothing but emoji and punctuation (a lone 👍).
+    fn closes(text: &str) -> bool {
+        let without_codes = EMOJI_CODES.replace_all(text, " ");
+        let words = without_codes
+            .split(|c: char| !c.is_alphanumeric() && !matches!(c, '\'' | '’' | '-'))
+            .filter(|w| !w.is_empty())
+            .count();
+        if words == 0 {
+            return !text.trim().is_empty();
+        }
+        words <= Self::CLOSING_WORDS && CLOSER_WORDS.is_match(text)
     }
 }
 
@@ -178,21 +255,31 @@ impl VerbClassifier {
                     .collect::<Vec<_>>()
                     .join("\n");
                 let intent = KeywordIntentClassifier::intent(&text).unwrap_or(TextIntent::Request);
-                item.bundle = if intent == TextIntent::Request { InboxBundle::reply() } else { InboxBundle::read() };
+                item.bundle = match intent {
+                    TextIntent::Request => InboxBundle::reply(),
+                    TextIntent::Closing => InboxBundle::finished(),
+                    TextIntent::Info => InboxBundle::read(),
+                };
                 item.needs_action = intent == TextIntent::Request;
             }
-            "chat.asked" => {
-                // Your own message: a question or request waits on the others; anything else (an FYI, "done!")
-                // waits on nobody and is cleared. Unsure means not a question, so Waiting doesn't fill with chatter.
+            "chat.asked" | "chat.answered" => {
+                // Your own message, last in the conversation: a question or request waits on the others. Anything
+                // else waits on nobody: an answer of yours finishes the conversation (Done), and a message nobody
+                // asked for (an FYI) is cleared. Unsure means not a question, so Waiting doesn't fill with chatter.
+                let answered = item.bundle == InboxBundle::answered();
                 let text = [Some(item.title.as_str()), item.preview.as_deref()]
                     .into_iter()
                     .flatten()
                     .collect::<Vec<_>>()
                     .join("\n");
                 let intent = KeywordIntentClassifier::intent(&text);
-                item.bundle = InboxBundle::awaiting();
                 item.needs_action = false;
-                if intent != Some(TextIntent::Request) {
+                if intent == Some(TextIntent::Request) {
+                    item.bundle = InboxBundle::awaiting();
+                } else if answered {
+                    item.bundle = InboxBundle::finished();
+                } else {
+                    item.bundle = InboxBundle::awaiting();
                     item.expires = Some(item.date);
                 }
             }
@@ -306,5 +393,70 @@ mod tests {
         let read = VerbClassifier::classify(news);
         assert!(read.bundle == InboxBundle::read() && !read.needs_action);
         assert_eq!(VerbClassifier::classify(unsure).bundle, InboxBundle::reply());
+    }
+}
+
+/// When a chat conversation needs nothing more from you. Same cases as macOS (`ConversationTests`).
+#[cfg(test)]
+mod conversation_tests {
+    use super::*;
+    use crate::fixtures::{item, now};
+    use crate::{InboxAssembler, ItemState, Placement};
+
+    #[test]
+    fn closing_messages() {
+        let cases = [
+            ("Thanks!", TextIntent::Closing),
+            ("thank you so much", TextIntent::Closing),
+            ("Merci, parfait", TextIntent::Closing),
+            ("Sounds good 👍", TextIntent::Closing),
+            ("👍", TextIntent::Closing),
+            (":+1:", TextIntent::Closing),
+            ("Ok merci !", TextIntent::Closing),
+            ("ça marche, à demain", TextIntent::Closing),
+            ("Thanks, can you also send the slides?", TextIntent::Request),
+            ("FYI, done", TextIntent::Info),
+            ("Rien à faire de ton côté, merci !", TextIntent::Info),
+        ];
+        for (text, expected) in cases {
+            assert_eq!(KeywordIntentClassifier::intent(text), Some(expected), "{text}");
+        }
+        let long = "Thanks for the update, the numbers for the third quarter are in the shared folder with the notes";
+        assert_ne!(KeywordIntentClassifier::intent(long), Some(TextIntent::Closing));
+    }
+
+    fn classified(title: &str, bundle: InboxBundle) -> InboxItem {
+        let mut item = item("c", bundle);
+        item.title = title.into();
+        item.needs_action = true;
+        VerbClassifier::classify(item)
+    }
+
+    #[test]
+    fn a_closing_message_finishes_the_conversation() {
+        let thanks = classified("Thanks, that worked!", InboxBundle::direct_messages());
+        assert!(thanks.bundle == InboxBundle::finished() && !thanks.needs_action);
+        assert_eq!(classified("Can you look at this?", InboxBundle::mentions()).bundle, InboxBundle::reply());
+    }
+
+    /// Your answer, last: a question waits on them; anything else finishes the conversation. A message nobody
+    /// asked for (asked) is cleared instead.
+    #[test]
+    fn your_answer_waits_only_when_it_asks() {
+        let question = classified("Which branch should I use?", InboxBundle::answered());
+        assert!(question.bundle == InboxBundle::awaiting() && !question.needs_action);
+        let done = classified("Here it is", InboxBundle::answered());
+        assert!(done.bundle == InboxBundle::finished() && done.expires.is_none());
+        assert!(classified("Here it is", InboxBundle::asked()).expires.is_some());
+    }
+
+    /// A finished conversation is in Done until someone writes again; a pin keeps it where it is.
+    #[test]
+    fn a_finished_conversation_is_done() {
+        let assembler = InboxAssembler { wake_on_activity: true };
+        let finished = item("f", InboxBundle::finished());
+        assert_eq!(assembler.placement(&finished, None, now()), Placement::Done);
+        let pinned = ItemState { pinned: true, ..Default::default() };
+        assert_eq!(assembler.placement(&finished, Some(&pinned), now()), Placement::Inbox);
     }
 }

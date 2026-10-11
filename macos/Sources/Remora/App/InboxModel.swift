@@ -851,7 +851,12 @@ final class InboxModel {
         remember(items.count == 1 ? L("Cleared") : L("Done items cleared"))
         batch {
             for item in items {
-                update(item) { $0.done?.clearedAt = .now }
+                // The mark is for the item as it is now: one the tool put in Done (your ✅, a finished conversation)
+                // may have no mark, or one from an older message, and must clear too. New activity brings it back.
+                update(item) { state in
+                    state.done = ItemState.Mark(
+                        at: state.done?.at ?? .now, fingerprint: item.fingerprint, clearedAt: .now)
+                }
             }
         }
     }

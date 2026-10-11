@@ -72,10 +72,12 @@ public struct InboxAssembler: Sendable {
         return placement(byYourReaction: item, state: state)
     }
 
-    /// Your reaction in the tool says what you did: ✅ handled it (Done), 👀 are on it (In progress). A pin or a
-    /// reminder keeps the item where you put it; removing the reaction brings it back.
+    /// The tool says what you did: your ✅ handled it, a finished conversation needs nothing more (Done), your 👀
+    /// are on it (In progress). A pin or a reminder keeps the item where you put it; removing the reaction, or a new
+    /// message, brings it back.
     private func placement(byYourReaction item: InboxItem, state: ItemState?) -> Placement {
         guard state?.pinned != true, state?.remindedAt == nil else { return .inbox }
+        if item.bundle == .finished { return .done }
         switch item.yourReaction {
         case .done: return .done
         case .started: return .inProgress

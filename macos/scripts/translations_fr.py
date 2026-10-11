@@ -24,6 +24,8 @@ FR = {
     "Direct messages": "Messages directs",
     "Your merge requests": "Vos merge requests",
     "Your questions": "Vos questions",
+    "Your answers": "Vos réponses",
+    "Finished": "Terminées",
     "Pinned": "Épinglés",
     # Inbox
     "Search": "Rechercher",

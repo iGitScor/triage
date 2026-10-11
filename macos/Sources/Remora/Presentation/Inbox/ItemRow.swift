@@ -288,7 +288,10 @@ struct ItemRow: View {
         if state.snooze != nil { Button("Unsnooze") { model.unsnooze(item) } }
         if item.recurrence != nil { Button("Stop repeating") { model.stopRepeating(item) } }
         Button(L(state.done == nil ? "Mark as done" : "Move to inbox")) { model.toggleDone(item) }
-        if state.done != nil { Button("Clear") { model.clear([item]) } }
+        // In Done by your mark, your ✅ in the tool or a finished conversation: each can be cleared.
+        if state.done != nil || item.bundle == .finished || item.yourReaction == .done {
+            Button("Clear") { model.clear([item]) }
+        }
     }
 
     private var background: Color {

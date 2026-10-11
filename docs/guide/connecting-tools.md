@@ -44,8 +44,8 @@ Shows your merge requests, the ones you review, their approvals and pipelines.
 Shows mentions, direct messages and replies in your threads from the last few days. Mentions are one item per
 message; a direct conversation is one item, so a new message brings it back even after you marked it done. A
 thread you wrote in is one item too, when someone replied after you, even without mentioning you (the 10 most
-recent threads), or, when nobody did, as a question waiting on others. Reactions count too: see
-[Slack reactions](./inbox#slack-reactions).
+recent threads). When you wrote last, your question waits in *Waiting* and an answer of yours finishes the
+conversation: see [When a Slack conversation is over](./inbox#when-a-slack-conversation-is-over).
 
 1. Settings → Sources → Slack → **Create the Slack app**. Slack opens with an app named Remora, already set up
    with the read-only permissions it needs, as you: `search:read`, `channels:history` and `groups:history` to read

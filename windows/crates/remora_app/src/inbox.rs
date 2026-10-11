@@ -583,11 +583,20 @@ impl Inbox {
 
     /// Empties the Done tab; cleared items still come back on new activity.
     pub fn clear_done(&mut self, now: DateTime<Utc>) {
+        // The mark is for the item as it is now: one the tool put in Done (your ✅, a finished conversation) may have
+        // no mark, or one from an older message, and must clear too. New activity brings it back.
+        let shown: Vec<(String, String)> =
+            self.layout(now, "").done.iter().map(|item| (item.id.clone(), item.fingerprint())).collect();
         self.remember();
         for state in self.states.values_mut() {
             if let Some(done) = state.done.as_mut() {
                 done.cleared_at.get_or_insert(now);
             }
+        }
+        for (id, fingerprint) in shown {
+            let state = self.states.entry(id).or_default();
+            let at = state.done.as_ref().map_or(now, |done| done.at);
+            state.done = Some(Mark { at, fingerprint, cleared_at: Some(now) });
         }
         self.persist(STATES, &self.states);
     }
@@ -1573,6 +1582,29 @@ mod tests {
         assert!(inbox.layout(now(), "").done.is_empty());
         assert!(inbox.undo());
         assert_eq!(inbox.layout(now(), "").done.len(), 1, "back in Done, not cleared");
+    }
+
+    /// Clear all also clears what the tool put in Done (your ✅, a finished conversation); a new message brings it
+    /// back.
+    #[test]
+    fn clear_all_clears_what_the_tool_put_in_done() {
+        let mut inbox = inbox();
+        let mut handled = item("1", InboxBundle::reply());
+        handled.reactions = Some(vec![remora_core::Reaction::new("white_check_mark", 1, true)]);
+        let finished = item("2", InboxBundle::finished());
+        // Marked done days ago, on an older message: a stale mark doesn't keep it from clearing.
+        let stale = Mark { at: now(), fingerprint: "0|".into(), cleared_at: Some(now()) };
+        inbox.states.insert("2".into(), ItemState { done: Some(stale), ..Default::default() });
+        inbox.apply(snapshot(vec![handled, finished]), now());
+        assert_eq!(inbox.layout(now(), "").done.len(), 2);
+
+        inbox.clear_done(now());
+        assert!(inbox.layout(now(), "").done.is_empty());
+
+        let mut newer = item("1", InboxBundle::reply());
+        newer.date = now() + Duration::minutes(5);
+        inbox.apply(snapshot(vec![newer]), now());
+        assert_eq!(inbox.layout(now(), "").my_turn.len(), 1, "a new message brings it back");
     }
 
     #[test]

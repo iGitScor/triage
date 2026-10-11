@@ -95,30 +95,33 @@ impl SlackPlugin {
     }
 
     fn snapshot(
-        mentions: &[Match],
-        direct: &[Match],
+        heads: &[Head],
         identity: String,
         me: &str,
         team: Option<&str>,
         account_id: &str,
         reactions: &HashMap<String, Vec<Reaction>>,
     ) -> SourceSnapshot {
-        let with_reactions = |m: &Match, mut item: InboxItem| {
-            item.reactions = reactions.get(&format!("{}/{}", m.channel.id, m.ts)).cloned();
-            item
-        };
-        let mut items: Vec<InboxItem> = mentions
+        let items = heads
             .iter()
-            .filter(|m| !m.channel.is_direct())
-            .map(|m| {
-                let item = m.item(account_id, InboxBundle::mentions(), &format!("{}/{}", m.channel.id, m.ts), me, team);
-                with_reactions(m, item)
+            .map(|head| {
+                let m = head.message;
+                let mut item = m.item(account_id, head.bundle.clone(), &head.id, me, team);
+                item.reactions = reactions.get(&format!("{}/{}", m.channel.id, m.ts)).cloned();
+                let mine = [InboxBundle::asked(), InboxBundle::answered(), InboxBundle::finished()];
+                if !mine.contains(&head.bundle) {
+                    return item;
+                }
+                item.bundle = head.bundle.clone();
+                item.expires = None;
+                item.needs_action = false;
+                if head.bundle == InboxBundle::finished() {
+                    item
+                } else {
+                    weighed(item, &m.channel.label())
+                }
             })
             .collect();
-        items.extend(latest_per_conversation(direct).into_iter().map(|m| {
-            let item = m.item(account_id, InboxBundle::direct_messages(), &m.channel.id, me, team);
-            with_reactions(m, item)
-        }));
         SourceSnapshot { identity, items, remarks: vec![] }
     }
 
@@ -238,7 +241,12 @@ impl SlackPlugin {
             }
             let yours = replies.messages.iter().find(|r| r.ts == thread.ts);
             let on_yours = yours.and_then(|r| reactions(&r.reactions, me, custom));
-            items.extend(unanswered(&thread, on_yours, &self.account_id, me, team));
+            // Someone else wrote before you (the thread's first message, at least): yours is an answer.
+            let answered = replies
+                .messages
+                .iter()
+                .any(|r| r.date() < thread.date() && r.user.as_deref().is_some_and(|u| u != me) && r.bot_id.is_none());
+            items.push(unanswered(&thread, answered, on_yours, &self.account_id, me, team));
         }
         (items, vec![])
     }
@@ -253,18 +261,109 @@ const EMOJI_LIFETIME: std::time::Duration = std::time::Duration::from_secs(86_40
 /// Shown when the token can't read reactions. Same text on macOS.
 const MISSING_REACTIONS: &str = "Slack: reactions need the reactions:read permission. Add it to the Remora app in Slack, reinstall it, and paste the new token.";
 
-/// The newest messages that need you, as they become items: mentions, and the last message of each conversation.
-/// Apps' messages aren't asked about.
-fn needing_you<'a>(mentions: &'a [Match], direct: &'a [Match]) -> Vec<&'a Match> {
-    let mut all: Vec<&Match> = mentions
-        .iter()
-        .filter(|m| !m.channel.is_direct())
-        .chain(latest_per_conversation(direct))
-        .filter(|m| !m.is_from_app())
-        .collect();
+/// The newest messages that become items, theirs or your answers. Apps' messages aren't asked about.
+fn needing_you<'a>(heads: &[Head<'a>]) -> Vec<&'a Match> {
+    let mut all: Vec<&Match> = heads.iter().map(|h| h.message).filter(|m| !m.is_from_app()).collect();
     all.sort_by_key(|m| std::cmp::Reverse(m.date()));
     all.truncate(REACTIONS_ASKED);
     all
+}
+
+/// The message a conversation's item shows: theirs when they spoke last, yours when you did.
+struct Head<'a> {
+    message: &'a Match,
+    bundle: InboxBundle,
+    id: String,
+}
+
+/// How long after a mention a message of yours in the same channel counts as the answer, when it doesn't name the
+/// person: in a busy channel, a later message of yours may be about something else.
+const ANSWER_WINDOW: Duration = Duration::hours(2);
+
+/// Whose turn each conversation is. A direct conversation is theirs to answer when they wrote last, else yours
+/// waits (`answered`, or `asked` when they never wrote). A mention is answered by your later message in its
+/// thread, which the thread's own item then follows (`finished` here), or, outside a thread, by your later message
+/// in the channel that names them or comes within `ANSWER_WINDOW`. Same rules as macOS.
+fn conversations<'a>(mentions: &'a [Match], direct: &'a [Match], sent: &'a [Match], me: &str) -> Vec<Head<'a>> {
+    let yours: Vec<&Match> = sent.iter().filter(|m| m.user.as_deref().is_none_or(|u| u == me)).collect();
+    let mut heads = vec![];
+    for mention in mentions.iter().filter(|m| !m.channel.is_direct()) {
+        let id = format!("{}/{}", mention.channel.id, mention.ts);
+        let later: Vec<&&Match> =
+            yours.iter().filter(|m| m.channel.id == mention.channel.id && m.date() > mention.date()).collect();
+        let in_its_thread = later.iter().any(|m| {
+            let thread = m.thread_ts();
+            thread != m.ts && (thread == mention.thread_ts() || thread == mention.ts)
+        });
+        if in_its_thread {
+            heads.push(Head { message: mention, bundle: InboxBundle::finished(), id });
+            continue;
+        }
+        let answer = later
+            .iter()
+            .filter(|m| {
+                m.thread_ts() == m.ts
+                    && (mention.user.as_ref().is_some_and(|u| m.text.contains(&format!("<@{u}>")))
+                        || m.date() - mention.date() <= ANSWER_WINDOW)
+            })
+            .max_by_key(|m| m.date());
+        heads.push(match answer {
+            Some(answer) => Head { message: answer, bundle: InboxBundle::answered(), id },
+            None => Head { message: mention, bundle: InboxBundle::mentions(), id },
+        });
+    }
+    let owned: Vec<&Match> = yours.clone();
+    let theirs: HashMap<&str, &Match> =
+        latest_per_conversation(direct).into_iter().map(|m| (m.channel.id.as_str(), m)).collect();
+    let ours: HashMap<&str, &Match> = latest_of(&owned).into_iter().map(|m| (m.channel.id.as_str(), m)).collect();
+    let mut channels: Vec<&str> = theirs.keys().chain(ours.keys()).copied().collect();
+    channels.sort_unstable();
+    channels.dedup();
+    for channel in channels {
+        let their = theirs.get(channel).copied();
+        match ours.get(channel).copied() {
+            Some(mine) if their.is_none_or(|t| mine.date() > t.date()) => {
+                let bundle = if their.is_none() { InboxBundle::asked() } else { InboxBundle::answered() };
+                heads.push(Head { message: mine, bundle, id: channel.to_string() });
+            }
+            _ => {
+                if let Some(message) = their {
+                    heads.push(Head { message, bundle: InboxBundle::direct_messages(), id: channel.to_string() });
+                }
+            }
+        }
+    }
+    heads
+}
+
+/// The latest of your messages in each direct conversation.
+fn latest_of<'a>(messages: &[&'a Match]) -> Vec<&'a Match> {
+    let mut latest: HashMap<&str, &Match> = HashMap::new();
+    for m in messages.iter().filter(|m| m.channel.is_direct()) {
+        let entry = latest.entry(m.channel.id.as_str()).or_insert(m);
+        if m.date() > entry.date() {
+            *entry = m;
+        }
+    }
+    latest.into_values().collect()
+}
+
+/// Your message, last in a conversation: their ✅ finishes it, their ❓ or 🤔 makes it yours to answer, and otherwise
+/// `VerbClassifier` decides whether it waits on them.
+fn weighed(mut item: InboxItem, label: &str) -> InboxItem {
+    let theirs: Vec<&Reaction> = item.reactions.iter().flatten().filter(|r| r.others() > 0).collect();
+    if theirs.iter().any(|r| r.meaning() == Some(ReactionMeaning::Done)) {
+        item.bundle = InboxBundle::finished();
+        return item;
+    }
+    let questions: Vec<String> =
+        theirs.iter().filter(|r| r.meaning() == Some(ReactionMeaning::Question)).map(|r| r.emoji.clone()).collect();
+    if !questions.is_empty() {
+        item.context = format!("{} on your message in {label}", questions.join(" "));
+        item.bundle = InboxBundle::reply();
+        item.needs_action = true;
+    }
+    item
 }
 
 fn latest_per_conversation(direct: &[Match]) -> Vec<&Match> {
@@ -304,34 +403,24 @@ pub fn resolve(reaction: Reaction, custom: &HashMap<String, String>) -> Reaction
     Reaction { image, ..Reaction::new(&name, reaction.count, reaction.mine) }
 }
 
-/// Your last message in a thread nobody wrote back in: their ❓ makes it yours to answer, their ✅ closes it, and
-/// otherwise it waits on them (`chat.asked`, which `VerbClassifier` keeps only when it asked something).
+/// Your last message in a thread nobody wrote back in, as the item: `answered` when someone else wrote before you,
+/// else `asked`; their reactions on it are weighed (`weighed`).
 fn unanswered(
     yours: &Match,
+    answered: bool,
     reactions: Option<Vec<Reaction>>,
     account_id: &str,
     me: &str,
     team: Option<&str>,
-) -> Option<InboxItem> {
-    let theirs: Vec<&Reaction> = reactions.iter().flatten().filter(|r| r.others() > 0).collect();
-    if theirs.iter().any(|r| r.meaning() == Some(ReactionMeaning::Done)) {
-        return None;
-    }
-    let questions: Vec<String> =
-        theirs.iter().filter(|r| r.meaning() == Some(ReactionMeaning::Question)).map(|r| r.emoji.clone()).collect();
+) -> InboxItem {
     let id = format!("{}/thread/{}", yours.channel.id, yours.thread_ts());
     let mut item = yours.item(account_id, InboxBundle::asked(), &id, me, team);
-    item.bundle = InboxBundle::asked();
+    item.bundle = if answered { InboxBundle::answered() } else { InboxBundle::asked() };
     item.expires = None;
     item.context = format!("Thread in {}", yours.channel.label());
     item.needs_action = false;
-    if !questions.is_empty() {
-        item.context = format!("{} on your message in {}", questions.join(" "), yours.channel.label());
-        item.bundle = InboxBundle::reply();
-        item.needs_action = true;
-    }
     item.reactions = reactions;
-    Some(item)
+    weighed(item, &yours.channel.label())
 }
 
 /// Shown when the token can't read threads. Same text on macOS.
@@ -349,24 +438,29 @@ impl SourcePlugin for SlackPlugin {
         let direct_params = [("query", direct_query.as_str())];
         let mine_query = format!("from:{me} is:thread after:{since}");
         let mine_params = [("query", mine_query.as_str())];
+        // Your own recent messages: an answer of yours ends a conversation's turn.
+        let sent_query = format!("from:{me} after:{since}");
+        let sent_params = [("query", sent_query.as_str())];
         // The workspace's own emoji first (kept a day): an alias of ✅ must count as ✅ wherever reactions decide.
         let custom = self.custom_emoji().await;
-        let (mentions, direct, mine, (by_you, reactions_remark)) = futures::join!(
+        let (mentions, direct, mine, sent, (by_you, reactions_remark)) = futures::join!(
             self.call::<Search>("search.messages", &mentions_params),
             self.call::<Search>("search.messages", &direct_params),
             self.call::<Search>("search.messages", &mine_params),
+            self.call::<Search>("search.messages", &sent_params),
             self.reacted_by_you(&auth.user_id, &custom)
         );
         let (mentions, direct) = (mentions?.messages.matches, direct?.messages.matches);
-        // Search results carry no reactions: ask for those of the newest messages that need you, unless the token
+        let sent = sent.map(|s| s.messages.matches).unwrap_or_default();
+        let heads = conversations(&mentions, &direct, &sent, &auth.user_id);
+        // Search results carry no reactions: ask for those of the newest messages that matter, unless the token
         // can't read reactions at all.
         let mut reactions = by_you;
         if reactions_remark.is_none() {
-            reactions.extend(self.reactions_on(&needing_you(&mentions, &direct), &auth.user_id, &custom).await);
+            reactions.extend(self.reactions_on(&needing_you(&heads), &auth.user_id, &custom).await);
         }
         let mut snapshot = Self::snapshot(
-            &mentions,
-            &direct,
+            &heads,
             format!("{} · {}", auth.user, auth.team),
             &auth.user_id,
             auth.team_id.as_deref(),
@@ -567,6 +661,9 @@ struct Match {
     text: String,
     permalink: Option<String>,
     username: Option<String>,
+    /// Who wrote it, by Slack id.
+    #[serde(default)]
+    user: Option<String>,
     channel: Channel,
     bot_id: Option<String>,
     subtype: Option<String>,
@@ -1049,6 +1146,8 @@ mod tests {
         reacted: Option<&'static str>,
         got: HashMap<&'static str, &'static str>,
         emoji: Option<&'static str>,
+        direct: Option<String>,
+        sent: Option<String>,
         methods: std::sync::Mutex<Vec<String>>,
     }
 
@@ -1089,6 +1188,8 @@ mod tests {
                 "emoji.list" => self.emoji.unwrap_or(r#"{"ok": true, "emoji": {}}"#).to_string(),
                 _ if value("query").contains("is:thread") => self.mine.to_string(),
                 _ if value("query").starts_with("<@UME>") => self.mentions.clone().unwrap_or(none),
+                _ if value("query").starts_with("to:me") => self.direct.clone().unwrap_or(none),
+                _ if value("query").starts_with("from:<@UME>") => self.sent.clone().unwrap_or(none),
                 _ => none,
             };
             Ok(crate::Response { status: 200, body, etag: None })
@@ -1142,8 +1243,8 @@ mod tests {
         let items = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap().items;
         let thread = items.iter().find(|i| i.context.starts_with("Thread")).unwrap();
         assert!(
-            thread.bundle == InboxBundle::asked() && !thread.needs_action,
-            "the ball is in their court: your message waits"
+            thread.bundle == InboxBundle::answered() && !thread.needs_action,
+            "the ball is in their court: your answer stands"
         );
     }
 
@@ -1176,21 +1277,22 @@ mod tests {
     #[tokio::test]
     async fn their_reactions_on_your_message() {
         let waiting = thread("[]", None).await.unwrap();
-        assert!(waiting.bundle == InboxBundle::asked() && !waiting.needs_action);
+        assert!(waiting.bundle == InboxBundle::answered() && !waiting.needs_action, "someone else started it");
         assert_eq!(waiting.title, "Can someone review the mockups?");
         assert!(waiting.id.ends_with("/C1/thread/1700000100.0"), "the same item as a reply would be");
 
         let seen = thread(r#"[{"name": "+1::skin-tone-2", "users": ["U2"], "count": 1}]"#, None).await.unwrap();
-        assert!(seen.bundle == InboxBundle::asked() && seen.others_reacted(ReactionMeaning::Ack));
+        assert!(seen.bundle == InboxBundle::answered() && seen.others_reacted(ReactionMeaning::Ack));
 
         let question = thread(r#"[{"name": "thinking_face", "users": ["U2", "U3"], "count": 2}]"#, None).await.unwrap();
         assert!(question.bundle == InboxBundle::reply() && question.needs_action);
         assert_eq!(question.context, "🤔 on your message in #design");
         assert_eq!(question.title, "Can someone review the mockups?");
 
-        assert!(thread(r#"[{"name": "white_check_mark", "users": ["U2"], "count": 1}]"#, None).await.is_none());
+        let closed = thread(r#"[{"name": "white_check_mark", "users": ["U2"], "count": 1}]"#, None).await.unwrap();
+        assert_eq!(closed.bundle, InboxBundle::finished(), "their ✅: finished, in Done");
         let own = thread(r#"[{"name": "white_check_mark", "users": ["UME"], "count": 1}]"#, None).await.unwrap();
-        assert_eq!(own.bundle, InboxBundle::asked(), "your own ✅ answers nothing");
+        assert_eq!(own.bundle, InboxBundle::answered(), "your own ✅ answers nothing");
     }
 
     /// A reply keeps its reactions; your ✅ on it is what moves it to Done.
@@ -1272,7 +1374,8 @@ mod tests {
         let emoji = r#"{"ok": true, "emoji": {"yes": "alias:white_check_mark",
           "approved-by-design": "https://emoji.slack-edge.com/T1/approved-by-design/abc.png"}}"#;
         assert!(
-            thread(r#"[{"name": "yes", "users": ["U2"], "count": 1}]"#, Some(emoji)).await.is_none(),
+            thread(r#"[{"name": "yes", "users": ["U2"], "count": 1}]"#, Some(emoji)).await.unwrap().bundle
+                == InboxBundle::finished(),
             "✅ by alias"
         );
 
@@ -1282,6 +1385,71 @@ mod tests {
         assert_eq!(resolved.meaning(), Some(ReactionMeaning::Done));
         assert_eq!(resolved.emoji, ":approved-by-design:");
         assert_eq!(resolve(Reaction::new("yes", 1, false), &HashMap::new()).meaning(), Some(ReactionMeaning::Ack));
+    }
+
+    fn matches(messages: &[String]) -> String {
+        format!(r#"{{"ok": true, "messages": {{"matches": [{}]}}}}"#, messages.join(","))
+    }
+
+    fn dm(ts: &str, text: &str, user: &str) -> String {
+        format!(
+            r#"{{"ts": "{ts}", "text": "{text}", "user": "{user}", "username": "{user}", "channel": {{"id": "D1", "is_im": true}}}}"#
+        )
+    }
+
+    async fn items(mentions: Option<String>, direct: Option<String>, sent: Option<String>) -> Vec<InboxItem> {
+        let none = r#"{"ok": true, "messages": {"matches": []}}"#;
+        let http = Arc::new(SlackStub { mine: none, replies: "{}", mentions, direct, sent, ..Default::default() });
+        SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap().items
+    }
+
+    /// Whose turn a direct conversation is: theirs to answer when they wrote last, else your message stands. Same
+    /// cases as macOS.
+    #[tokio::test]
+    async fn who_wrote_last_in_a_direct_conversation() {
+        let question = dm("1700000100.0", "Can you send the deck?", "U2");
+        let answer = dm("1700000200.0", "Here it is", "UME");
+        let earlier = dm("1700000050.0", "Hi!", "UME");
+
+        let theirs =
+            items(None, Some(matches(std::slice::from_ref(&question))), Some(matches(std::slice::from_ref(&earlier))))
+                .await;
+        assert!(theirs.len() == 1 && theirs[0].bundle == InboxBundle::direct_messages());
+        assert_eq!(theirs[0].title, "Can you send the deck?");
+
+        let answered = items(None, Some(matches(&[question])), Some(matches(&[answer, earlier]))).await;
+        assert!(answered.len() == 1 && answered[0].bundle == InboxBundle::answered());
+        assert_eq!(answered[0].title, "Here it is");
+        assert!(answered[0].id.ends_with("/D1") && !answered[0].needs_action && answered[0].expires.is_none());
+
+        let asked = items(None, None, Some(matches(&[dm("1700000300.0", "Free for lunch?", "UME")]))).await;
+        assert!(asked.len() == 1 && asked[0].bundle == InboxBundle::asked(), "they never wrote: your question waits");
+    }
+
+    fn in_channel(ts: &str, text: &str, user: &str, thread: Option<&str>) -> String {
+        let link = thread
+            .map(|t| format!(r#", "permalink": "https://acme.slack.com/archives/C9/p1?thread_ts={t}""#))
+            .unwrap_or_default();
+        format!(
+            r#"{{"ts": "{ts}", "text": "{text}", "user": "{user}", "username": "{user}", "channel": {{"id": "C9", "name": "ops"}}{link}}}"#
+        )
+    }
+
+    /// A mention is answered by your later message in its thread (which the thread's item then follows), or in the
+    /// channel when it names them or comes soon after; a later message of yours about something else doesn't count.
+    #[tokio::test]
+    async fn when_a_mention_is_answered() {
+        let mention = || Some(matches(&[in_channel("1700000000.0", "<@UME> can you check the logs?", "U2", None)]));
+        let named = in_channel("1700020000.0", "<@U2> logs look fine", "UME", None);
+        let soon = in_channel("1700001000.0", "Looking, give me a sec", "UME", None);
+        let unrelated = in_channel("1700020000.0", "Deploying the web app now", "UME", None);
+        let in_thread = in_channel("1700000500.0", "On it", "UME", Some("1700000000.0"));
+
+        assert_eq!(items(mention(), None, Some(matches(&[unrelated]))).await[0].bundle, InboxBundle::mentions());
+        let answer = &items(mention(), None, Some(matches(&[named]))).await[0];
+        assert!(answer.bundle == InboxBundle::answered() && answer.title.ends_with("logs look fine"));
+        assert_eq!(items(mention(), None, Some(matches(&[soon]))).await[0].bundle, InboxBundle::answered());
+        assert_eq!(items(mention(), None, Some(matches(&[in_thread]))).await[0].bundle, InboxBundle::finished());
     }
 
     #[tokio::test]

@@ -186,7 +186,7 @@ struct SlackPluginTests {
         )
         .fetch().items
         let thread = try #require(items.first { $0.context.hasPrefix("Thread") })
-        #expect(thread.bundle == .asked && !thread.needsAction, "the ball is in their court: your message waits")
+        #expect(thread.bundle == .answered && !thread.needsAction, "the ball is in their court: your answer stands")
     }
 
     /// Your last message in a thread, as Slack returns it with `inclusive`: the reactions on it decide.
@@ -215,12 +215,13 @@ struct SlackPluginTests {
     /// Nobody wrote back: their reactions on your message speak for them.
     @Test func theirReactionsOnYourMessage() async throws {
         let waiting = try #require(try await thread(reactions: "[]"))
-        #expect(waiting.bundle == .asked && !waiting.needsAction && waiting.title == "Can someone review the mockups?")
+        #expect(waiting.bundle == .answered && !waiting.needsAction, "someone else started it: yours is an answer")
+        #expect(waiting.title == "Can someone review the mockups?")
         #expect(waiting.id.hasSuffix("/C1/thread/1700000100.0"), "the same item as a reply would be")
 
         let seen = try #require(
             try await thread(reactions: #"[{"name": "+1::skin-tone-2", "users": ["U2"], "count": 1}]"#))
-        #expect(seen.bundle == .asked && seen.othersReacted(.ack), "acknowledged, still waiting")
+        #expect(seen.bundle == .answered && seen.othersReacted(.ack), "acknowledged, still waiting")
 
         let question = try #require(
             try await thread(reactions: #"[{"name": "thinking_face", "users": ["U2", "U3"], "count": 2}]"#))
@@ -228,12 +229,10 @@ struct SlackPluginTests {
         #expect(
             question.context == "🤔 on your message in #design" && question.title == "Can someone review the mockups?")
 
-        #expect(
-            try await thread(reactions: #"[{"name": "white_check_mark", "users": ["U2"], "count": 1}]"#) == nil,
-            "answered")
-        #expect(
-            try await thread(reactions: #"[{"name": "white_check_mark", "users": ["UME"], "count": 1}]"#)?.bundle
-                == .asked, "your own ✅ answers nothing")
+        let closed = try await thread(reactions: #"[{"name": "white_check_mark", "users": ["U2"], "count": 1}]"#)
+        #expect(closed?.bundle == .finished, "their ✅: finished, in Done")
+        let own = try await thread(reactions: #"[{"name": "white_check_mark", "users": ["UME"], "count": 1}]"#)
+        #expect(own?.bundle == .answered, "your own ✅ answers nothing")
     }
 
     /// A reply keeps its reactions; your ✅ on it is what moves it to Done.
@@ -309,7 +308,7 @@ struct SlackPluginTests {
             mine: Self.yourThread, replies: Self.replies(reactions: #"[{"name": "yes", "users": ["U2"], "count": 1}]"#),
             emoji: emoji)
         let items = try await SlackPlugin(config: config(["token": "xoxp"]), http: alias).fetch().items
-        #expect(!items.contains { $0.id.contains("/thread/") }, "✅ through its alias: answered")
+        #expect(items.first { $0.id.contains("/thread/") }?.bundle == .finished, "✅ through its alias: finished")
 
         let custom = SlackPlugin.resolve(
             Reaction(name: "approved-by-design", count: 1, mine: false), custom: ["approved-by-design": picture])
@@ -327,6 +326,60 @@ struct SlackPluginTests {
         let message = BriefPrompt.message(items: [item], now: .now)
         #expect(message.contains("you reacted: started") && message.contains("others reacted: started ×1"))
         #expect(!message.contains("UME"))
+    }
+
+    static func matches(_ messages: String...) -> String {
+        #"{"ok": true, "messages": {"matches": ["# + messages.joined(separator: ",") + "]}}"
+    }
+
+    static func dm(_ ts: String, _ text: String, from user: String, channel: String = "D1") -> String {
+        #"{"ts": "\#(ts)", "text": "\#(text)", "user": "\#(user)", "username": "\#(user)", "channel": {"id": "\#(channel)", "is_im": true}}"#
+    }
+
+    func items(mentions: String? = nil, direct: String? = nil, sent: String? = nil) async throws -> [InboxItem] {
+        let none = #"{"ok": true, "messages": {"matches": []}}"#
+        let http = SlackStub(mine: none, replies: "{}", mentions: mentions, direct: direct, sent: sent)
+        return try await SlackPlugin(config: config(["token": "xoxp"]), http: http).fetch().items
+    }
+
+    /// Whose turn a direct conversation is: theirs to answer when they wrote last, else your message stands.
+    @Test func whoWroteLastInADirectConversation() async throws {
+        let question = Self.dm("1700000100.0", "Can you send the deck?", from: "U2")
+        let answer = Self.dm("1700000200.0", "Here it is", from: "UME")
+        let earlier = Self.dm("1700000050.0", "Hi!", from: "UME")
+
+        let theirs = try await items(direct: Self.matches(question), sent: Self.matches(earlier))
+        #expect(theirs.count == 1 && theirs[0].bundle == .directMessages && theirs[0].title == "Can you send the deck?")
+
+        let answered = try await items(direct: Self.matches(question), sent: Self.matches(answer, earlier))
+        #expect(answered.count == 1 && answered[0].bundle == .answered && answered[0].title == "Here it is")
+        #expect(answered[0].id.hasSuffix("/D1") && theirs[0].id.hasSuffix("/D1"), "the same conversation, one item")
+        #expect(!answered[0].needsAction && answered[0].expires == nil)
+
+        let asked = try await items(sent: Self.matches(Self.dm("1700000300.0", "Free for lunch?", from: "UME")))
+        #expect(asked.count == 1 && asked[0].bundle == .asked, "they never wrote: your question waits")
+    }
+
+    static func channel(_ ts: String, _ text: String, from user: String, thread: String? = nil) -> String {
+        let link = thread.map { #", "permalink": "https://acme.slack.com/archives/C9/p1?thread_ts=\#($0)""# } ?? ""
+        return
+            #"{"ts": "\#(ts)", "text": "\#(text)", "user": "\#(user)", "username": "\#(user)", "channel": {"id": "C9", "name": "ops"}\#(link)}"#
+    }
+
+    /// A mention is answered by your later message in its thread (which the thread's item then follows), or in the
+    /// channel when it names them or comes soon after; a later message of yours about something else doesn't count.
+    @Test func whenAMentionIsAnswered() async throws {
+        let mention = Self.matches(Self.channel("1700000000.0", "<@UME> can you check the logs?", from: "U2"))
+        let named = Self.channel("1700020000.0", "<@U2> logs look fine", from: "UME")
+        let soon = Self.channel("1700001000.0", "Looking, give me a sec", from: "UME")
+        let unrelated = Self.channel("1700020000.0", "Deploying the web app now", from: "UME")
+        let inThread = Self.channel("1700000500.0", "On it", from: "UME", thread: "1700000000.0")
+
+        #expect(try await items(mentions: mention, sent: Self.matches(unrelated))[0].bundle == .mentions)
+        let answer = try await items(mentions: mention, sent: Self.matches(named))[0]
+        #expect(answer.bundle == .answered && answer.title.hasSuffix("logs look fine"), "your answer stands")
+        #expect(try await items(mentions: mention, sent: Self.matches(soon))[0].bundle == .answered)
+        #expect(try await items(mentions: mention, sent: Self.matches(inThread))[0].bundle == .finished)
     }
 
     @Test func threadsWithoutTheHistoryScopeSaySo() async throws {
@@ -360,13 +413,17 @@ actor SlackStub: HTTPClient {
     let reacted: String?
     let got: [String: String]
     let emoji: String?
+    let direct: String?
+    let sent: String?
     private(set) var repliesAsked: [String] = []
     private(set) var methods: [String] = []
 
     init(
         mine: String, replies: String, mentions: String? = nil, reacted: String? = nil, got: [String: String] = [:],
-        emoji: String? = nil
+        emoji: String? = nil, direct: String? = nil, sent: String? = nil
     ) {
+        self.direct = direct
+        self.sent = sent
         self.mine = mine
         self.replies = replies
         self.mentions = mentions
@@ -392,7 +449,17 @@ actor SlackStub: HTTPClient {
         case "emoji.list": body = emoji ?? #"{"ok": true, "emoji": {}}"#
         default:
             let search = value("query")
-            body = search.contains("is:thread") ? mine : search.hasPrefix("<@UME>") ? (mentions ?? none) : none
+            if search.contains("is:thread") {
+                body = mine
+            } else if search.hasPrefix("<@UME>") {
+                body = mentions ?? none
+            } else if search.hasPrefix("to:me") {
+                body = direct ?? none
+            } else if search.hasPrefix("from:<@UME>") {
+                body = sent ?? none
+            } else {
+                body = none
+            }
         }
         return (Data(body.utf8), HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
     }

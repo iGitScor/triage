@@ -7,6 +7,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- Slack: Remora sees whose turn each conversation is. When they wrote last, a question is to reply, information to
+  read, and a thank-you or a lone 👍 finishes the conversation; when you wrote last, your question waits in
+  Waiting and your answer finishes it. A finished conversation goes to Done and comes back when someone writes
+  again. A mention counts as answered by your message in its thread, or in the channel when you name the person or
+  reply within two hours.
 - Slack reactions: react ✅ to a mention, a direct message or a reply and it moves to Done; 👀 moves it to In
   progress. A question you asked in a thread waits in the Waiting tab until someone answers; their 👍 shows they
   saw it, their ✅ closes it, and their ❓ makes it yours to answer. Reactions show under each Slack item, a
@@ -23,6 +28,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Slack: a direct message or a mention you answered no longer stays in To reply.
+- Clear all also clears what Remora put in Done itself (your ✅, a finished conversation), even an item you had marked
+  done before on an older message.
 - Slack: after you reply in someone else's thread, its first message no longer shows up as a new reply to you.
 - Mac: a refresh still running when you erase local data, disconnect a tool or block it in Privacy settings no
   longer brings its items back on screen and on disk.

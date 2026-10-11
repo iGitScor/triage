@@ -45,8 +45,9 @@ Affiche vos merge requests, celles que vous relisez, leurs approbations et pipel
 Affiche les mentions, messages directs et réponses dans vos fils des derniers jours. Une mention est un élément
 par message ; une conversation directe est un seul élément, donc un nouveau message la fait revenir même après
 l’avoir terminée. Un fil où vous avez écrit est aussi un élément, quand quelqu’un a répondu après vous, même sans
-vous mentionner (les 10 fils les plus récents), ou, sans réponse, comme une question en attente des autres. Les
-réactions comptent aussi : voir [Les réactions Slack](./boite-de-reception#les-reactions-slack).
+vous mentionner (les 10 fils les plus récents). Quand vous avez écrit en dernier, votre question attend dans *En
+attente* et votre réponse termine la conversation : voir
+[Quand une conversation Slack est terminée](./boite-de-reception#quand-une-conversation-slack-est-terminee).
 
 1. Réglages → Sources → Slack → **Créer l’app Slack**. Slack s’ouvre avec une app nommée Remora, déjà configurée
    avec les permissions en lecture seule nécessaires, en votre nom : `search:read`, `channels:history` et

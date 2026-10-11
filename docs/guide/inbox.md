@@ -41,17 +41,24 @@ of an event leaves the inbox once the event starts (unless you pinned or started
 On Windows, only the keyword rules run (the language model is Apple's): a message without one of those words goes
 to *To reply*.
 
-## Slack reactions
+## When a Slack conversation is over
 
-Remora reads reactions as answers, and shows them under each Slack item (yours outlined):
+Remora follows each Slack conversation (a direct message, a thread, the thread of a mention) and asks whose turn it
+is, on your computer:
 
-- **Your ✅** (or ✔️, ☑️, 👌) on a mention, a direct message or a reply moves it to **Done**; your **👀** to **In
-  progress**. Remove the reaction in Slack to bring the item back. A pin or a reminder keeps it where you put it.
-- **A question you asked** in a thread, that nobody answered yet, waits in the **Waiting** tab. A 👍 from them
-  shows they saw it; their ✅ closes it; their ❓ or 🤔 makes it yours to answer, in *To reply*. A message of yours
-  that asked nothing (an FYI) doesn't wait.
-- A workspace's own emoji counts as the standard one it stands for, or by a word of its name (`:approved:`,
-  `:lgtm:` are ✅; `:merci:` is 👍), in English and French.
+- **They wrote last**: a question or request is *To reply*, information *To read*, and a closing message
+  ("thanks!", "sounds good", "merci, parfait", a lone 👍) **finishes** the conversation.
+- **You wrote last**: if you asked something, it waits in the **Waiting** tab; if you answered, the conversation is
+  **finished**. A mention counts as answered by your later message in its thread, or in the channel when you name
+  the person or reply within two hours.
+- **Reactions are answers too**: your **✅** (or ✔️, ☑️, 👌) finishes an item, your **👀** moves it to **In
+  progress**. On a message of yours, their 👍 shows they saw it, their ✅ finishes it, and their ❓ or 🤔 makes it
+  yours to answer. A workspace's own emoji counts as the standard one it stands for, or by a word of its name
+  (`:approved:`, `:lgtm:` are ✅; `:merci:` is 👍), in English and French. Reactions show under each Slack item,
+  yours outlined.
+
+A finished conversation goes to **Done**, as if you had marked it, and comes back on its own when someone writes
+again. *Clear all* clears it like the rest. When Remora isn't sure, it stays in *To reply*.
 
 ## Done, Pin
 

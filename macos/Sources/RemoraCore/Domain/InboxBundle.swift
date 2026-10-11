@@ -19,7 +19,7 @@ public struct InboxBundle: Hashable, Codable, Sendable, Identifiable {
     public var isMine: Bool? {
         switch id {
         case Self.awaiting.id: false
-        case Self.authored.id, Self.mentions.id, Self.directMessages.id, Self.asked.id: nil
+        case Self.authored.id, Self.mentions.id, Self.directMessages.id, Self.asked.id, Self.answered.id: nil
         default: true
         }
     }
@@ -42,6 +42,9 @@ extension InboxBundle {
     public static let read = InboxBundle(id: "verb.read", title: "To read", symbol: "text.alignleft", rank: 8)
     public static let awaiting = InboxBundle(
         id: "verb.awaiting", title: "Waiting on others", symbol: "hourglass", rank: 9)
+    /// A conversation that needs nothing more from you: placed in Done until someone writes again.
+    public static let finished = InboxBundle(
+        id: "verb.finished", title: "Finished", symbol: "checkmark.circle", rank: 10)
 }
 
 // MARK: Kinds, as reported by plugins
@@ -55,4 +58,7 @@ extension InboxBundle {
     /// Your last message in a chat thread nobody answered yet: `VerbClassifier` keeps the questions, as Waiting.
     public static let asked = InboxBundle(
         id: "chat.asked", title: "Your questions", symbol: "questionmark.bubble", rank: 9)
+    /// Your answer, last in a conversation someone else started: a question waits on them, anything else finishes it.
+    public static let answered = InboxBundle(
+        id: "chat.answered", title: "Your answers", symbol: "arrowshape.turn.up.left", rank: 9)
 }

@@ -91,11 +91,15 @@ impl InboxAssembler {
         Self::by_your_reaction(item, Some(state))
     }
 
-    /// Your reaction in the tool says what you did: ✅ handled it (Done), 👀 are on it (In progress). A pin or a
-    /// reminder keeps the item where you put it; removing the reaction brings it back.
+    /// The tool says what you did: your ✅ handled it, a finished conversation needs nothing more (Done), your 👀
+    /// are on it (In progress). A pin or a reminder keeps the item where you put it; removing the reaction, or a new
+    /// message, brings it back.
     fn by_your_reaction(item: &InboxItem, state: Option<&ItemState>) -> Placement {
         if state.is_some_and(|s| s.pinned || s.reminded_at.is_some()) {
             return Placement::Inbox;
+        }
+        if item.bundle == crate::InboxBundle::finished() {
+            return Placement::Done;
         }
         match item.your_reaction() {
             Some(crate::ReactionMeaning::Done) => Placement::Done,

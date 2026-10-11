@@ -42,18 +42,25 @@ dans *À lire*, et le rappel d’un événement envoyé par une application quit
 Sur Windows, seules les règles de mots-clés s’appliquent (le modèle de langue est celui d’Apple) : un message sans
 l’un de ces mots va dans *À répondre*.
 
-## Les réactions Slack
+## Quand une conversation Slack est terminée
 
-Remora lit les réactions comme des réponses, et les affiche sous chaque élément Slack (les vôtres entourées) :
+Remora suit chaque conversation Slack (un message direct, un fil, le fil d’une mention) et se demande à qui c’est le
+tour, sur votre ordinateur :
 
-- **Votre ✅** (ou ✔️, ☑️, 👌) sur une mention, un message direct ou une réponse le range dans **Terminés** ; votre
-  **👀** dans **En cours**. Retirez la réaction dans Slack pour le faire revenir. Un élément épinglé ou rappelé reste
-  où vous l’avez mis.
-- **Une question que vous avez posée** dans un fil, sans réponse pour l’instant, attend dans l’onglet **En
-  attente**. Un 👍 de leur part montre qu’ils l’ont vue ; leur ✅ la clôt ; leur ❓ ou 🤔 vous la renvoie, dans *À
-  répondre*. Un message de vous qui ne demandait rien (un « pour info ») n’attend pas.
-- Un emoji propre à l’espace de travail compte comme l’emoji standard qu’il remplace, ou d’après un mot de son nom
-  (`:approved:`, `:lgtm:` valent ✅ ; `:merci:` vaut 👍), en français et en anglais.
+- **Ils ont écrit en dernier** : une question ou une demande est *À répondre*, une information *À lire*, et un
+  message de clôture (« merci ! », « parfait », « ça marche », « sounds good », un 👍 seul) **termine** la
+  conversation.
+- **Vous avez écrit en dernier** : si vous avez demandé quelque chose, elle attend dans l’onglet **En attente** ;
+  si vous avez répondu, la conversation est **terminée**. Une mention compte comme répondue par votre message suivant
+  dans son fil, ou dans le canal si vous nommez la personne ou répondez dans les deux heures.
+- **Les réactions sont aussi des réponses** : votre **✅** (ou ✔️, ☑️, 👌) termine un élément, votre **👀** le range
+  dans **En cours**. Sur un de vos messages, leur 👍 montre qu’ils l’ont vu, leur ✅ le termine, et leur ❓ ou 🤔 vous
+  le renvoie. Un emoji propre à l’espace de travail compte comme l’emoji standard qu’il remplace, ou d’après un mot
+  de son nom (`:approved:`, `:lgtm:` valent ✅ ; `:merci:` vaut 👍), en français et en anglais. Les réactions
+  s’affichent sous chaque élément Slack, les vôtres entourées.
+
+Une conversation terminée va dans **Terminés**, comme si vous l’aviez marquée, et revient d’elle-même quand quelqu’un
+écrit à nouveau. *Tout effacer* l’efface comme le reste. Dans le doute, elle reste dans *À répondre*.
 
 ## Terminé, Épingler
 

@@ -196,6 +196,10 @@ impl InboxBundle {
     pub fn awaiting() -> Self {
         Self::of("verb.awaiting", "Waiting on others", 9)
     }
+    /// A conversation that needs nothing more from you: placed in Done until someone writes again.
+    pub fn finished() -> Self {
+        Self::of("verb.finished", "Finished", 10)
+    }
     pub fn mentions() -> Self {
         Self::of("chat.mentions", "Mentions", 6)
     }
@@ -209,12 +213,16 @@ impl InboxBundle {
     pub fn asked() -> Self {
         Self::of("chat.asked", "Your questions", 9)
     }
+    /// Your answer, last in a conversation someone else started: a question waits on them, anything else finishes it.
+    pub fn answered() -> Self {
+        Self::of("chat.answered", "Your answers", 9)
+    }
 
     /// Whose turn the bundle is, when the bundle alone tells. Kinds leave it to `needs_action`.
     pub fn is_mine(&self) -> Option<bool> {
         match self.id.as_str() {
             "verb.awaiting" => Some(false),
-            "code.authored" | "chat.mentions" | "chat.direct" | "chat.asked" => None,
+            "code.authored" | "chat.mentions" | "chat.direct" | "chat.asked" | "chat.answered" => None,
             _ => Some(true),
         }
     }

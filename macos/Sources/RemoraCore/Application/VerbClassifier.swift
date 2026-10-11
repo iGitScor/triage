@@ -6,6 +6,8 @@ public enum TextIntent: Equatable, Sendable {
     case request
     /// Information you may read, nothing to answer.
     case info
+    /// A thank-you, an OK, a 👍: the conversation is over, nobody waits for anything.
+    case closing
 }
 
 /// Reads a message and guesses its intent. Returns nil when unsure.
@@ -32,15 +34,23 @@ public struct VerbClassifier: Sendable {
         case InboxBundle.directMessages.id, InboxBundle.mentions.id:
             let fallback: TextIntent = .request
             let intent = intent(of: [item.title, item.preview].compactMap { $0 }.joined(separator: "\n")) ?? fallback
-            item.bundle = intent == .request ? .reply : .read
+            item.bundle = intent == .request ? .reply : intent == .closing ? .finished : .read
             item.needsAction = intent == .request
-        case InboxBundle.asked.id:
-            // Your own message: a question or request waits on the others; anything else (an FYI, "done!") waits on
-            // nobody and is cleared. Unsure means not a question, so the Waiting tab doesn't fill with chatter.
+        case InboxBundle.asked.id, InboxBundle.answered.id:
+            // Your own message, last in the conversation: a question or request waits on the others. Anything else
+            // waits on nobody: an answer of yours finishes the conversation (Done), and a message nobody asked for
+            // (an FYI) is cleared. Unsure means not a question, so the Waiting tab doesn't fill with chatter.
             let intent = intent(of: [item.title, item.preview].compactMap { $0 }.joined(separator: "\n"))
-            item.bundle = .awaiting
+            let answered = item.bundle == .answered
             item.needsAction = false
-            if intent != .request { item.expires = item.date }
+            if intent == .request {
+                item.bundle = .awaiting
+            } else if answered {
+                item.bundle = .finished
+            } else {
+                item.bundle = .awaiting
+                item.expires = item.date
+            }
         default:
             break
         }
@@ -87,6 +97,18 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
         "pas la peine de répondre", "aucune action requise", "aucune action nécessaire", "rien à faire",
         "tu n'as pas besoin de répondre", "vous n'avez pas besoin de répondre",
     ])
+    /// Ends a conversation when a short message says little else: "thanks!", "sounds good", "merci, parfait". After
+    /// requests and explicit information, which win.
+    static let closers = withApostrophes([
+        "thanks", "thank you", "thx", "ty", "tysm", "cheers", "great", "perfect", "awesome", "sounds good", "sgtm",
+        "got it", "ok", "okay", "kk", "noted", "will do", "all good", "no problem", "np", "cool", "nice",
+        "lgtm", "ack", "roger", "appreciated", "merci", "merci beaucoup", "parfait", "super", "top", "ça marche",
+        "ca marche", "d'accord", "dac", "entendu", "noté", "bien reçu", "c'est noté", "nickel", "génial",
+        "impeccable", "pas de souci", "pas de soucis", "ça roule", "bien vu", "vu",
+    ])
+    /// The most words a closing message has: "Thanks a lot, that's perfect for me" closes, a paragraph doesn't.
+    static let closingWords = 12
+
     /// Takes the urgency out, nothing more: "not urgent, but can you look?" is still a request.
     static let notUrgent = withApostrophes([
         "not urgent", "nothing urgent", "no rush", "no hurry", "pas urgent", "rien d'urgent", "pas d'urgence",
@@ -101,8 +123,18 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
         text = Self.removing(Self.noReplyWords, from: text)
         text = Self.removing(Self.notUrgentWords, from: text)
         if Self.matches(Self.question, text) || Self.matches(Self.requestWords, text) { return .request }
+        // Explicit information wins over a closing word: "FYI, done", "nothing to do, thanks" are to read.
         if saysNoReply || Self.matches(Self.infoWords, text) { return .info }
+        if Self.closes(text) { return .closing }
         return nil
+    }
+
+    /// A short message with a closing word, or nothing but emoji and punctuation (a lone 👍).
+    static func closes(_ text: String) -> Bool {
+        let words = text.replacingOccurrences(of: ":[a-z0-9_+'-]+:", with: " ", options: .regularExpression)
+            .split { !$0.isLetter && !$0.isNumber && $0 != "'" && $0 != "’" && $0 != "-" }
+        if words.isEmpty { return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return words.count <= closingWords && matches(closerWords, text)
     }
 
     /// Each phrase with a straight and a curly apostrophe, as people type both.
@@ -127,6 +159,7 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
     static let infoWords = wordPattern(infos)
     static let noReplyWords = wordPattern(noReply)
     static let notUrgentWords = wordPattern(notUrgent)
+    static let closerWords = wordPattern(closers)
 
     /// Any of the keywords as whole words: not preceded or followed by a letter or a digit. One pattern, compiled once.
     static func wordPattern(_ keywords: [String]) -> NSRegularExpression {

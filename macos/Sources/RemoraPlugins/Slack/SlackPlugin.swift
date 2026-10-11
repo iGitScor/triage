@@ -66,22 +66,23 @@ public struct SlackPlugin: SourcePlugin {
         async let mentions: Search = call("search.messages", ["query": "\(me) -from:\(me) after:\(since)"])
         async let direct: Search = call("search.messages", ["query": "to:me -from:\(me) after:\(since)"])
         async let mine: Search? = try? call("search.messages", ["query": "from:\(me) is:thread after:\(since)"])
+        // Your own recent messages: an answer of yours ends a conversation's turn.
+        async let sent: Search? = try? call("search.messages", ["query": "from:\(me) after:\(since)"])
         // The workspace's own emoji first (kept a day): an alias of ✅ must count as ✅ wherever reactions decide.
         let custom = await customEmoji()
         async let yours = reactedByYou(me: auth.userId, custom: custom)
         let mentioned = try await mentions.messages.matches
         let written = try await direct.messages.matches
+        let heads = Self.conversations(
+            mentions: mentioned, direct: written, sent: await sent?.messages.matches ?? [], me: auth.userId)
         let (byYou, reactionsRemark) = await yours
-        // Search results carry no reactions: ask for those of the newest messages that need you, unless the token
+        // Search results carry no reactions: ask for those of the newest messages that matter, unless the token
         // can't read reactions at all.
         let shown =
             reactionsRemark == nil
-            ? await reactions(
-                on: Self.needingYou(mentions: mentioned, direct: written), me: auth.userId, custom: custom)
-            : [:]
+            ? await reactions(on: Self.needingYou(heads), me: auth.userId, custom: custom) : [:]
         var snapshot = Self.snapshot(
-            mentions: mentioned,
-            direct: written,
+            heads: heads,
             identity: "\(auth.user) · \(auth.team)",
             me: auth.userId,
             teamID: auth.teamId,
@@ -171,14 +172,58 @@ public struct SlackPlugin: SourcePlugin {
         }
     }
 
-    /// The newest messages that need you, as they become items: mentions, and the last message of each
-    /// conversation. Apps' messages aren't asked about.
-    static func needingYou(mentions: [Match], direct: [Match]) -> [Match] {
-        (mentions.filter { !$0.channel.isDirect } + latestPerConversation(direct))
-            .filter { !$0.isFromApp }
-            .sorted { $0.date > $1.date }
-            .prefix(reactionsAsked)
-            .map { $0 }
+    /// The newest messages that become items, theirs or your answers. Apps' messages aren't asked about.
+    static func needingYou(_ heads: [Head]) -> [Match] {
+        heads.map(\.message).filter { !$0.isFromApp }.sorted { $0.date > $1.date }.prefix(reactionsAsked).map { $0 }
+    }
+
+    /// The message a conversation's item shows: theirs when they spoke last, yours when you did.
+    struct Head {
+        var message: Match
+        var bundle: InboxBundle
+        var id: String
+    }
+
+    /// How long after a mention a message of yours in the same channel counts as the answer, when it doesn't name
+    /// the person: in a busy channel, a later message of yours may be about something else.
+    static let answerWindow: TimeInterval = 2 * 3_600
+
+    /// Whose turn each conversation is. A direct conversation is theirs to answer when they wrote last, else yours
+    /// waits (`answered`, or `asked` when they never wrote). A mention is answered by your later message in its
+    /// thread, which the thread's own item then follows (`finished` here), or, outside a thread, by your later
+    /// message in the channel that names them or comes within `answerWindow`.
+    static func conversations(mentions: [Match], direct: [Match], sent: [Match], me: String) -> [Head] {
+        let yours = sent.filter { $0.user == nil || $0.user == me }
+        var heads: [Head] = []
+        for mention in mentions where !mention.channel.isDirect {
+            let id = "\(mention.channel.id)/\(mention.ts)"
+            let later = yours.filter { $0.channel.id == mention.channel.id && $0.date > mention.date }
+            let inItsThread = later.contains {
+                $0.threadTS != $0.ts && ($0.threadTS == mention.threadTS || $0.threadTS == mention.ts)
+            }
+            if inItsThread {
+                heads.append(Head(message: mention, bundle: .finished, id: id))
+                continue
+            }
+            let answer = later.filter { message in
+                message.threadTS == message.ts
+                    && (mention.user.map { message.text.contains("<@\($0)>") } == true
+                        || message.date.timeIntervalSince(mention.date) <= answerWindow)
+            }.max { $0.date < $1.date }
+            heads.append(
+                answer.map { Head(message: $0, bundle: .answered, id: id) }
+                    ?? Head(message: mention, bundle: .mentions, id: id))
+        }
+        let theirs = Dictionary(uniqueKeysWithValues: latestPerConversation(direct).map { ($0.channel.id, $0) })
+        let ours = Dictionary(uniqueKeysWithValues: latestPerConversation(yours).map { ($0.channel.id, $0) })
+        for channel in Set(theirs.keys).union(ours.keys).sorted() {
+            if let mine = ours[channel], mine.date > (theirs[channel]?.date ?? .distantPast) {
+                heads.append(Head(message: mine, bundle: theirs[channel] == nil ? .asked : .answered, id: channel))
+            } else if let message = theirs[channel] {
+                heads.append(Head(message: message, bundle: .directMessages, id: channel))
+            }
+        }
+        return heads
     }
 
     static func latestPerConversation(_ direct: [Match]) -> [Match] {
@@ -247,60 +292,76 @@ public struct SlackPlugin: SourcePlugin {
             }
             guard after.isEmpty else { continue }
             let yours = replies.messages.first { $0.ts == mineLast.ts }
-            if let item = Self.unanswered(
-                mineLast, reactions: Self.reactions(yours?.reactions, me: me, custom: custom), accountID: accountID,
-                me: me,
-                teamID: teamID)
-            {
-                items.append(item)
+            // Someone else wrote before you (the thread's first message, at least): yours is an answer.
+            let answered = replies.messages.contains {
+                $0.date < mineLast.date && $0.user != me && $0.user != nil && $0.botId == nil
             }
+            items.append(
+                Self.unanswered(
+                    mineLast, answered: answered, reactions: Self.reactions(yours?.reactions, me: me, custom: custom),
+                    accountID: accountID, me: me, teamID: teamID))
         }
         return (items, [])
     }
 
-    /// Your last message in a thread nobody wrote back in: their ❓ makes it yours to answer, their ✅ closes it,
-    /// and otherwise it waits on them (`chat.asked`, which `VerbClassifier` keeps only when it asked something).
+    /// Your last message in a thread nobody wrote back in, as the item: `answered` when someone else wrote before
+    /// you, else `asked`; their reactions on it are weighed (`weighed`).
     static func unanswered(
-        _ yours: Match, reactions: [Reaction]?, accountID: UUID, me: String, teamID: String?
-    ) -> InboxItem? {
-        let theirs = (reactions ?? []).filter { $0.others > 0 }
-        if theirs.contains(where: { $0.meaning == .done }) { return nil }
+        _ yours: Match, answered: Bool = false, reactions: [Reaction]?, accountID: UUID, me: String, teamID: String?
+    ) -> InboxItem {
         var item = yours.item(
             accountID: accountID, bundle: .asked, id: "\(yours.channel.id)/thread/\(yours.threadTS)", me: me,
             teamID: teamID)
-        item.bundle = .asked
+        item.bundle = answered ? .answered : .asked
         item.expires = nil
         item.context = L("Thread in %@", yours.channel.label)
         item.needsAction = false
         item.reactions = reactions
-        let questions = theirs.filter { $0.meaning == .question }
-        if !questions.isEmpty {
-            item.context = L(
-                "%@ on your message in %@", questions.map(\.emoji).joined(separator: " "), yours.channel.label)
-            item.bundle = .reply
-            item.needsAction = true
-        }
-        return item
+        return weighed(item, in: yours.channel.label)
     }
 
     static func snapshot(
         mentions: [Match], direct: [Match], identity: String, me: String, teamID: String? = nil, accountID: UUID,
         reactions: [String: [Reaction]] = [:]
     ) -> SourceSnapshot {
-        let mentionItems =
-            mentions
-            .filter { !$0.channel.isDirect }
-            .map {
-                $0.item(
-                    accountID: accountID, bundle: .mentions, id: "\($0.channel.id)/\($0.ts)", me: me, teamID: teamID,
-                    reactions: reactions["\($0.channel.id)/\($0.ts)"])
-            }
-        let latestPerConversation = latestPerConversation(direct).map {
-            $0.item(
-                accountID: accountID, bundle: .directMessages, id: $0.channel.id, me: me, teamID: teamID,
-                reactions: reactions["\($0.channel.id)/\($0.ts)"])
+        snapshot(
+            heads: conversations(mentions: mentions, direct: direct, sent: [], me: me), identity: identity, me: me,
+            teamID: teamID, accountID: accountID, reactions: reactions)
+    }
+
+    static func snapshot(
+        heads: [Head], identity: String, me: String, teamID: String?, accountID: UUID, reactions: [String: [Reaction]]
+    ) -> SourceSnapshot {
+        let items = heads.map { head in
+            let message = head.message
+            var item = message.item(
+                accountID: accountID, bundle: head.bundle, id: head.id, me: me, teamID: teamID,
+                reactions: reactions["\(message.channel.id)/\(message.ts)"])
+            guard [InboxBundle.asked, .answered, .finished].contains(head.bundle) else { return item }
+            item.bundle = head.bundle
+            item.expires = nil
+            item.needsAction = false
+            return head.bundle == .finished ? item : weighed(item, in: message.channel.label)
         }
-        return SourceSnapshot(identity: identity, items: mentionItems + latestPerConversation)
+        return SourceSnapshot(identity: identity, items: items)
+    }
+
+    /// Your message, last in a conversation: their ✅ finishes it, their ❓ or 🤔 makes it yours to answer, and
+    /// otherwise `VerbClassifier` decides whether it waits on them.
+    static func weighed(_ item: InboxItem, in label: String) -> InboxItem {
+        var item = item
+        let theirs = (item.reactions ?? []).filter { $0.others > 0 }
+        if theirs.contains(where: { $0.meaning == .done }) {
+            item.bundle = .finished
+            return item
+        }
+        let questions = theirs.filter { $0.meaning == .question }
+        if !questions.isEmpty {
+            item.context = L("%@ on your message in %@", questions.map(\.emoji).joined(separator: " "), label)
+            item.bundle = .reply
+            item.needsAction = true
+        }
+        return item
     }
 
     private func call<T: Decodable>(_ method: String, _ query: [String: String] = [:]) async throws -> T {
@@ -477,6 +538,8 @@ extension SlackPlugin {
         var text: String
         var permalink: String?
         var username: String?
+        /// Who wrote it, by Slack id.
+        var user: String?
         var channel: Channel
         var botId: String?
         var subtype: String?
@@ -489,6 +552,7 @@ extension SlackPlugin {
             text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
             permalink = try container.decodeIfPresent(String.self, forKey: .permalink)
             username = try container.decodeIfPresent(String.self, forKey: .username)
+            user = try? container.decodeIfPresent(String.self, forKey: .user)
             channel = try container.decode(Channel.self, forKey: .channel)
             botId = try container.decodeIfPresent(String.self, forKey: .botId)
             subtype = try container.decodeIfPresent(String.self, forKey: .subtype)
@@ -497,7 +561,7 @@ extension SlackPlugin {
         }
 
         enum CodingKeys: String, CodingKey {
-            case ts, text, permalink, username, channel, botId, subtype, attachments, blocks
+            case ts, text, permalink, username, user, channel, botId, subtype, attachments, blocks
         }
 
         /// Apps (Google Calendar, Jira, GitHub…) post with a bot id, or with an empty `text` and their content in
