@@ -197,14 +197,11 @@ public struct ClaudeCodePlugin: AssistantPlugin {
     }
 
     private static func decode<Output: Decodable>(_ data: Data) throws -> Output {
-        guard let result = try? JSONDecoder().decode(Result<Output>.self, from: data) else {
+        guard let result = Result(data) else {
             throw HTTPError.api(
                 L("Claude Code returned an unexpected answer. Run `claude` in Terminal to check it’s signed in."))
         }
-        guard !result.isError, let output = result.structuredOutput else {
-            throw HTTPError.api(L("Claude Code: %@", result.result ?? L("the request failed.")))
-        }
-        return output
+        return try result.decode()
     }
 
     private func run(_ command: (arguments: [String], input: Data)) async throws -> Data {
@@ -237,31 +234,54 @@ public struct ClaudeCodePlugin: AssistantPlugin {
     }
 
     /// Turns what `claude` printed on failure into something the user can act on.
-    static func explain(_ message: String) -> HTTPError {
+    static func explain(_ message: String) -> HTTPError { .api(explanation(message)) }
+
+    static func explanation(_ message: String) -> String {
         let lowered = message.lowercased()
         if lowered.contains("env: node") || lowered.contains("node: no such file")
             || lowered.contains("node: command not found")
         {
-            return .api(
-                L(
-                    "Claude Code needs Node.js, which Remora can’t find. Reinstall Claude Code with Anthropic’s installer, which doesn’t need Node.js, or enter the path to claude."
-                ))
+            return L(
+                "Claude Code needs Node.js, which Remora can’t find. Reinstall Claude Code with Anthropic’s installer, which doesn’t need Node.js, or enter the path to claude."
+            )
         }
         if lowered.contains("not logged in") || lowered.contains("/login") || lowered.contains("please log in") {
-            return .api(L("Claude Code isn’t signed in. Run `claude` in Terminal once to sign in."))
+            return L("Claude Code isn’t signed in. Run `claude` in Terminal once to sign in.")
         }
-        return .api(L("Claude Code: %@", message.isEmpty ? L("the request failed.") : message))
+        return L("Claude Code: %@", message.isEmpty ? L("the request failed.") : message)
     }
 
-    struct Result<Output: Decodable>: Decodable {
+    /// What `claude --print --output-format json` prints: the answer in `structured_output`, or an error with its
+    /// `subtype` and message in `result`.
+    struct Result: AssistantReply {
         var isError: Bool
+        var subtype: String?
         var result: String?
-        var structuredOutput: Output?
+        /// `structured_output` as JSON, for the shared decoding.
+        var structuredOutput: Data?
 
-        enum CodingKeys: String, CodingKey {
-            case isError = "is_error"
-            case result
-            case structuredOutput = "structured_output"
+        init?(_ data: Data) {
+            guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                let isError = object["is_error"] as? Bool
+            else { return nil }
+            self.isError = isError
+            subtype = object["subtype"] as? String
+            result = object["result"] as? String
+            structuredOutput = object["structured_output"].flatMap { output in
+                output is NSNull ? nil : try? JSONSerialization.data(withJSONObject: output, options: .fragmentsAllowed)
+            }
+        }
+
+        func answer() throws(AssistantFailure) -> Data {
+            switch subtype {
+            case "error_max_structured_output_retries": throw .noStructuredAnswer
+            case "error_max_turns": throw .tooManySteps
+            case "error_max_budget_usd": throw .spendingLimit
+            default:
+                if isError { throw .failed(ClaudeCodePlugin.explanation(result ?? "")) }
+                guard let structuredOutput else { throw .unexpectedAnswer }
+                return structuredOutput
+            }
         }
     }
 }

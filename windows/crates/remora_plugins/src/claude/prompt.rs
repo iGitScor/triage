@@ -1,7 +1,7 @@
 //! The brief's instructions and answer format, shared by both Claude-backed assistants. A port of the macOS
 //! `BriefPrompt.swift`: the same words, so both apps get the same answers.
 
-use chrono::{DateTime, SecondsFormat, Utc};
+use chrono::{DateTime, Duration, SecondsFormat, Utc};
 use remora_core::{Brief, Focus, InboxItem, SnoozedItem, TriageAction, TriageSuggestion};
 use serde::ser::SerializeMap;
 use serde::{Deserialize, Serialize, Serializer};
@@ -30,7 +30,8 @@ no greeting, no list, no item IDs.";
 
 pub static BASE_TRIAGE_SYSTEM: &str =
     "You help a software engineer handle the items they snoozed. For each item choose \
-one action: \"keep\" (the current return time is right), \"reschedule\" (give a better ISO-8601 time in \"until\"), \
+one action: \"keep\" (the current return time is right), \"reschedule\" (give a better ISO-8601 time in \"until\", \
+within 60 days), \
 \"done\" (obsolete or not worth it any more), or \"now\" (small or overdue: better done right away). Use the snooze \
 reason and how many times it was snoozed: an item snoozed three times or more needs a decision, not another snooze. \
 Keep \"until\" empty unless rescheduling. Each reason is at most twelve words, kind, no guilt.";
@@ -269,13 +270,16 @@ pub struct TriageOutputItem {
 }
 
 impl TriageOutput {
-    /// Drops unknown items and actions; reschedules need a valid future date.
+    /// The latest a reschedule may suggest, in days: a later date is brought back to it.
+    pub const LATEST_RETURN_DAYS: i64 = 60;
+
+    /// Drops unknown items and actions; reschedules need a valid future date, at most 60 days ahead.
     pub fn suggestions(self, known_ids: &HashSet<String>, now: DateTime<Utc>) -> Vec<TriageSuggestion> {
         self.suggestions
             .into_iter()
             .filter_map(|item| {
                 let action = TriageAction::parse(&item.action).filter(|_| known_ids.contains(&item.id))?;
-                let until = parse_iso8601(&item.until);
+                let until = parse_iso8601(&item.until).map(|u| u.min(now + Duration::days(Self::LATEST_RETURN_DAYS)));
                 if action == TriageAction::Reschedule && until.is_none_or(|u| u <= now) {
                     return None;
                 }

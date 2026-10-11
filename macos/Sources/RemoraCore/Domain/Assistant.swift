@@ -15,11 +15,21 @@ public struct Brief: Codable, Equatable, Sendable {
     public var summary: String
     public var focus: [Focus]
     public var createdAt: Date
+    /// The items it was written from, sorted. Nil in briefs saved before it was kept.
+    public var itemIDs: [String]?
 
-    public init(summary: String, focus: [Focus], createdAt: Date = .now) {
+    public init(summary: String, focus: [Focus], createdAt: Date = .now, itemIDs: [String]? = nil) {
         self.summary = summary
         self.focus = focus
         self.createdAt = createdAt
+        self.itemIDs = itemIDs
+    }
+
+    /// The same brief, remembering the items it was written from.
+    public func writtenFrom(_ items: [InboxItem]) -> Brief {
+        var brief = self
+        brief.itemIDs = items.map(\.id).sorted()
+        return brief
     }
 
     /// When a new brief may be written; until then the current one is reused.
@@ -27,8 +37,9 @@ public struct Brief: Codable, Equatable, Sendable {
         createdAt.addingTimeInterval(Double(max(0, cacheMinutes)) * 60)
     }
 
-    public func isFresh(cacheMinutes: Int, now: Date = .now) -> Bool {
-        now < freshUntil(cacheMinutes: cacheMinutes)
+    /// Recent, and written from the same items: an item done, snoozed or arrived since makes it stale.
+    public func isFresh(for items: [InboxItem], cacheMinutes: Int, now: Date = .now) -> Bool {
+        now < freshUntil(cacheMinutes: cacheMinutes) && (itemIDs.map { $0 == items.map(\.id).sorted() } ?? true)
     }
 }
 

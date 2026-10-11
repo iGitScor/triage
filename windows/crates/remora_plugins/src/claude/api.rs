@@ -2,6 +2,7 @@
 //! `ClaudePlugin.swift`.
 
 use super::prompt::{self, Schema};
+use crate::assistant::{decode_reply, json_text, AssistantFailure, AssistantReply};
 use crate::{decode, AssistantPlugin, HttpClient, PluginConfig, PluginError, Request};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -22,9 +23,6 @@ const ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
 pub const TIMEOUT: Duration = Duration::from_secs(600);
 
 const TOO_SLOW: &str = "Claude took too long to answer. Try again later.";
-const DECLINED: &str = "Claude declined this request.";
-const CUT_OFF: &str = "Claude’s answer was cut off. Try again, or with fewer items.";
-const UNEXPECTED: &str = "Claude returned an unexpected answer.";
 
 /// The same words as the macOS app, which the shared French dictionary translates.
 pub fn manifest() -> PluginManifest {
@@ -194,15 +192,21 @@ pub fn retry_delay(error: &PluginError, attempt: u32, now: DateTime<Utc>) -> Opt
     }
 }
 
-fn output<T: DeserializeOwned>(response: ApiResponse) -> Result<T, PluginError> {
-    match response.stop_reason.as_deref() {
-        Some("refusal") => return Err(PluginError::Api(DECLINED.into())),
-        // Thinking counts toward max_tokens: a long one can leave the answer cut off, and half a JSON is unusable.
-        Some("max_tokens") => return Err(PluginError::Api(CUT_OFF.into())),
-        _ => {}
+/// The Messages API's reply: the JSON in its text block, unless it stopped short.
+impl AssistantReply for ApiResponse {
+    fn answer(self) -> Result<serde_json::Value, AssistantFailure> {
+        match self.stop_reason.as_deref() {
+            Some("refusal") => return Err(AssistantFailure::Declined),
+            // Thinking counts toward max_tokens: a long one can leave the answer cut off.
+            Some("max_tokens") => return Err(AssistantFailure::CutOff),
+            _ => {}
+        }
+        json_text(self.content.into_iter().find(|b| b.kind == "text").and_then(|b| b.text))
     }
-    let text = response.content.into_iter().find(|b| b.kind == "text").and_then(|b| b.text);
-    text.and_then(|t| serde_json::from_str(&t).ok()).ok_or_else(|| PluginError::Api(UNEXPECTED.into()))
+}
+
+fn output<T: DeserializeOwned>(response: ApiResponse) -> Result<T, PluginError> {
+    Ok(decode_reply(response)?)
 }
 
 #[async_trait]
@@ -359,19 +363,22 @@ mod tests {
     #[tokio::test]
     async fn a_cut_off_answer_says_so() {
         let http = StubHttp::paths(&[("/v1/messages", &answer(r#"{"summary": "One rev"#, "max_tokens"))]);
-        assert_eq!(plugin(http).brief(&[item("a")], now()).await.err(), Some(PluginError::Api(CUT_OFF.into())));
+        assert_eq!(plugin(http).brief(&[item("a")], now()).await.err(), Some(AssistantFailure::CutOff.into()));
     }
 
     #[tokio::test]
     async fn a_refusal_becomes_an_error() {
         let http = StubHttp::paths(&[("/v1/messages", r#"{"content": [], "stop_reason": "refusal"}"#)]);
-        assert_eq!(plugin(http).brief(&[item("a")], now()).await.err(), Some(PluginError::Api(DECLINED.into())));
+        assert_eq!(plugin(http).brief(&[item("a")], now()).await.err(), Some(AssistantFailure::Declined.into()));
     }
 
     #[tokio::test]
     async fn a_strange_answer_or_a_rejected_key_says_so() {
         let http = StubHttp::paths(&[("/v1/messages", &answer("not JSON", "end_turn"))]);
-        assert_eq!(plugin(http).brief(&[item("a")], now()).await.err(), Some(PluginError::Api(UNEXPECTED.into())));
+        assert_eq!(
+            plugin(http).brief(&[item("a")], now()).await.err(),
+            Some(AssistantFailure::UnexpectedAnswer.into())
+        );
         let rejected = Recorder::new(401, Ok(r#"{"type": "error"}"#));
         assert_eq!(plugin(ArcClient(rejected)).brief(&[item("a")], now()).await.err(), Some(PluginError::Unauthorized));
     }

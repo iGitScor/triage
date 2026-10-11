@@ -7,7 +7,7 @@ import Testing
 struct TriageTests {
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     var items: [SnoozedItem] {
-        ["a", "b", "c"].map { id in
+        ["a", "b", "c", "d"].map { id in
             let item = InboxItem(
                 id: id, accountID: UUID(), pluginID: "github", bundle: .reviews, title: "Item \(id)",
                 context: "acme/app", date: now)
@@ -25,6 +25,7 @@ struct TriageTests {
               {"id": "a", "action": "reschedule", "until": "\(later)", "reason": "After Erin's review"},
               {"id": "b", "action": "done", "until": "", "reason": "Merged elsewhere"},
               {"id": "c", "action": "reschedule", "until": "yesterday", "reason": "bad date"},
+              {"id": "d", "action": "reschedule", "until": "2099-01-01T09:00:00Z", "reason": "far away"},
               {"id": "ghost", "action": "now", "until": "", "reason": "unknown item"}
             ]}}
             """
@@ -32,7 +33,8 @@ struct TriageTests {
         let plugin = try ClaudeCodePlugin(config: config(["path": fakeClaude()]), runner: runner)
         let suggestions = try await plugin.triage(items, now: now)
 
-        #expect(suggestions.map(\.id) == ["a", "b"])
+        #expect(suggestions.map(\.id) == ["a", "b", "d"])
+        #expect(suggestions[2].until == now + 60 * 86_400)
         #expect(suggestions[0].action == .reschedule && suggestions[0].until == Date(iso8601: later))
         #expect(suggestions[1].action == .done && suggestions[1].until == nil)
         let arguments = await runner.arguments

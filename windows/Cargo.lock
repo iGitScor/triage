@@ -935,7 +935,7 @@ dependencies = [
  "rustc_version",
  "toml 1.1.7+spec-1.1.0",
  "vswhom",
- "winreg 0.56.0",
+ "winreg",
 ]
 
 [[package]]
@@ -3293,7 +3293,7 @@ dependencies = [
  "tauri-plugin-updater",
  "tauri-winrt-notification",
  "tokio",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3302,7 +3302,7 @@ version = "0.4.0"
 dependencies = [
  "async-trait",
  "chrono",
- "dirs 6.0.0",
+ "dirs 7.0.0",
  "futures",
  "keyring",
  "remora_core",
@@ -3312,7 +3312,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "uuid",
- "winreg 0.55.0",
+ "winreg",
 ]
 
 [[package]]
@@ -5689,16 +5689,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b97319f7b8343df12cc98938e5c3eb436064524c8d2b4e30a1d3a36eecdf81"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "winreg"
-version = "0.55.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb5a765337c50e9ec252c2069be9bf91c7df47afb103b642ba3a53bf8101be97"
-dependencies = [
- "cfg-if",
- "windows-sys 0.59.0",
 ]
 
 [[package]]

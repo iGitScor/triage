@@ -8,11 +8,12 @@ description: Les fonctions d’IA facultatives de Remora (brief, résumés de li
 Tout Remora fonctionne sans IA. L’assistant (Claude, ou un modèle derrière une API OpenAI-compatible) est un plus
 facultatif, **désactivé par défaut**, qui écrit de courts textes sur votre boîte :
 
-- **Brief** (✦ en haut de la boîte) : trois phrases et les éléments à traiter d’abord.
+- **Brief** (✦ en haut de la boîte) : trois phrases et les éléments à traiter d’abord. Il est gardé tant que votre
+  boîte ne change pas ; après un Terminé, un report ou une arrivée, ↻ en rédige un nouveau.
 - **Résumés de liste** (✦ sur l’en-tête d’un verbe, à partir de deux éléments) : de quoi parle le groupe, en deux
   phrases.
-- **Tri** (dans l’onglet *Reportés*) : garder, reprogrammer, laisser tomber ou faire maintenant, élément par
-  élément. Vous validez chaque changement ; seules les reprogrammations sont cochées d’avance.
+- **Tri** (dans l’onglet *Reportés*) : garder, reprogrammer (à 60 jours au plus), laisser tomber ou faire
+  maintenant, élément par élément. Vous validez chaque changement ; seules les reprogrammations sont cochées d’avance.
 
 Briefs et résumés sont rédigés dans la langue de votre système.
 

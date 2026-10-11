@@ -234,6 +234,52 @@ struct InboxModelTests {
         #expect(model.sourcesHealth == .fine)
     }
 
+    /// A new token any time, not only after a rejection: the account and its states stay.
+    @Test func updatingTheTokenKeepsTheAccountAndItsStates() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let account = try #require(model.accounts.first)
+        let item = try #require(model.allItems.first)
+        model.togglePin(item)
+
+        try await model.connect(
+            pluginID: "linear", name: nil, settings: account.settings, secrets: ["token": "lin_new_key"])
+        #expect(model.accounts.map(\.id) == [account.id], "the same account")
+        #expect(model.state(of: item).pinned, "its pin stays")
+        #expect(harness.secrets.stored[account.id]?["token"] == "lin_new_key")
+    }
+
+    /// The first sync after launch compares with the cache: what arrived while Remora was closed is announced.
+    @Test func whatArrivedWhileClosedIsAnnounced() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let account = try #require(model.accounts.first)
+        let arrived = try #require(model.allItems.last { $0.needsAction })
+        _ = harness.model()  // Quits the first one: its files are written.
+        let cache = JSONStore<[UUID: [InboxItem]]>("cache", in: harness.folder, backedUp: false)
+        var items = try #require(cache.load())
+        items[account.id]?.removeAll { $0.id == arrived.id }
+        try cache.save(items)
+
+        let relaunched = harness.model()
+        await relaunched.refresh(manual: true)
+        #expect(harness.notifier.posted.map(\.itemID) == [arrived.id])
+
+        await relaunched.refresh(manual: true)
+        #expect(harness.notifier.posted.count == 1, "later syncs compare with the last one")
+    }
+
+    /// Without a cache (a new account, or none saved), the first sync stays silent.
+    @Test func aFirstSyncWithoutCacheIsSilent() async throws {
+        let harness = Harness()
+        _ = try await harness.connected()
+        _ = harness.model()
+        try FileManager.default.removeItem(at: harness.folder.appending(path: "cache.json"))
+        let relaunched = harness.model()
+        await relaunched.refresh(manual: true)
+        #expect(harness.notifier.posted.isEmpty)
+    }
+
     @Test func disconnectingRemovesTheTokenItemsAndNotifications() async throws {
         let harness = Harness()
         let model = try await harness.connected()

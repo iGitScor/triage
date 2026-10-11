@@ -52,6 +52,7 @@ rust = [
     re.compile(r'=> "([A-Z][^"]+[.:!?])",'),
     # Messages kept in constants, an item's context, and fallbacks.
     re.compile(r'const [A-Z_]+: &str = "((?:[A-Z]|%@)[^"]*[.!?])";'),
+    re.compile(r'const NOTICE_[A-Z_]+: &str = "([^"]+)";'),
     re.compile(r'context: format!\("([^"]+)"'),
     re.compile(r'unwrap_or_else\(\|\| "([^"]+)"\.into\(\)\)'),
 ]

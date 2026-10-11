@@ -8,7 +8,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 1420,
     strictPort: true,
-    fs: { allow: ['..', '../../macos/Resources/Logos', '../../site/public/site'] },
+    // This app, the shared tokens and fonts, and the tool logos: nothing else in the repository is served.
+    fs: { allow: ['.', '../../macos/Resources/Logos', '../../site/public/site'] },
   },
   build: { target: 'es2022', outDir: 'dist', emptyOutDir: true },
   // Components mount with Svelte's browser build in tests (ConnectForm.test.ts).

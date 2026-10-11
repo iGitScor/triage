@@ -36,7 +36,8 @@ Settings → General → **Open at login**, so Remora is there every morning.
 
 Remora sits in the notification area of the taskbar (click **^** if it’s hidden, and drag it next to the clock to
 keep it visible). Click it to open the inbox; right-click it for the menu. Tray icons can’t be dragged on Windows, so a
-new reminder is **Ctrl+Alt+R**, from anywhere. Settings → General → **Start with Windows** starts it at sign-in.
+new reminder is **Ctrl+Alt+R**, from anywhere. Settings → General → **Start with Windows** starts it at sign-in. A tip at the top of
+the inbox recalls all this the first time; if another app already uses Ctrl+Alt+R, Settings → General says so.
 
 The Windows version has what the Mac has: the five tools, snooze with reasons and insights, review prep and sessions,
 the waiting assistant and the assistant (Claude or an OpenAI-compatible server). It sorts messages with keywords
@@ -50,7 +51,8 @@ button that opens the right page of the tool to create a token, and numbered ste
 tools](./connecting-tools) has the details for each.
 
 The first sync is silent: connecting a tool never floods you with notifications. After that, Remora checks every
-5 minutes (Settings → General → **Check every**); on a Mac, also when it wakes up and when you open the inbox.
+5 minutes (Settings → General → **Check every**); on a Mac, also when it wakes up and when you open the inbox. When
+Remora starts, it announces what arrived while it was closed; more than three new things become one notification.
 
 The first time it saves a token, macOS asks whether Remora may use its Keychain item. Choose **Always Allow**. On
 Windows, tokens go to the Credential Manager without asking.

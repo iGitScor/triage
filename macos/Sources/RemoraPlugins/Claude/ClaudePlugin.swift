@@ -55,7 +55,7 @@ public struct ClaudePlugin: AssistantPlugin {
             outputConfig: .init(effort: "low", format: .init(type: "json_schema", schema: .digest)),
             fallbacks: nil
         )
-        let output: BriefPrompt.DigestOutput = try Self.output(of: try await send(body))
+        let output: BriefPrompt.DigestOutput = try await send(body).decode()
         return output.summary
     }
 
@@ -68,7 +68,7 @@ public struct ClaudePlugin: AssistantPlugin {
             outputConfig: .init(effort: "low", format: .init(type: "json_schema", schema: .triage)),
             fallbacks: "default"
         )
-        let output: BriefPrompt.TriageOutput = try Self.output(of: try await send(body))
+        let output: BriefPrompt.TriageOutput = try await send(body).decode()
         return output.suggestions(knownIDs: Set(items.map(\.item.id)), now: now)
     }
 
@@ -96,22 +96,8 @@ public struct ClaudePlugin: AssistantPlugin {
     }
 
     static func parse(_ response: Response, knownIDs: Set<String>) throws -> Brief {
-        let output: BriefPrompt.Output = try output(of: response)
+        let output: BriefPrompt.Output = try response.decode()
         return output.brief(knownIDs: knownIDs)
-    }
-
-    private static func output<Output: Decodable>(of response: Response) throws -> Output {
-        if response.stopReason == "refusal" { throw HTTPError.api(L("Claude declined this request.")) }
-        // Thinking counts toward max_tokens: a long one can leave the answer cut off, and half a JSON is unusable.
-        if response.stopReason == "max_tokens" {
-            throw HTTPError.api(L("Claude’s answer was cut off. Try again, or with fewer items."))
-        }
-        guard let text = response.content.first(where: { $0.type == "text" })?.text,
-            let output = try? JSONDecoder().decode(Output.self, from: Data(text.utf8))
-        else {
-            throw HTTPError.api(L("Claude returned an unexpected answer."))
-        }
-        return output
     }
 }
 
@@ -147,7 +133,7 @@ extension ClaudePlugin {
         }
     }
 
-    struct Response: Decodable {
+    struct Response: Decodable, AssistantReply {
         struct Block: Decodable {
             var type: String
             var text: String?
@@ -158,6 +144,18 @@ extension ClaudePlugin {
         enum CodingKeys: String, CodingKey {
             case content
             case stopReason = "stop_reason"
+        }
+
+        /// The JSON text block. Thinking counts toward max_tokens: a long one can leave the answer cut off, and half
+        /// a JSON is unusable.
+        func answer() throws(AssistantFailure) -> Data {
+            switch stopReason {
+            case "refusal": throw .declined
+            case "max_tokens": throw .cutOff
+            default:
+                guard let text = content.first(where: { $0.type == "text" })?.text else { throw .unexpectedAnswer }
+                return Data(text.utf8)
+            }
         }
     }
 }

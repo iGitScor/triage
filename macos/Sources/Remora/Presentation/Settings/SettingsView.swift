@@ -112,20 +112,20 @@ private struct AccountRow: View {
                             .help("Rename")
                     }
                 }
-                if let failure = model.errors[account.id] {
+                let failure = model.errors[account.id]
+                if let failure {
                     Text(failure.message).font(Myna.font(11.5)).foregroundStyle(Self.color(failure.kind)).lineLimit(2)
-                    // A rejected token is fixed here, keeping the account's Done, snoozes and pins.
-                    if failure.kind == .auth, manifest != nil {
-                        Button(L("Reconnect…")) { reconnecting = true }
-                            .controlSize(.small)
-                            .sheet(isPresented: $reconnecting) {
-                                if let manifest {
-                                    ConnectForm(manifest: manifest, account: account) { reconnecting = false }
-                                }
-                            }
-                    }
                 } else {
                     Text(account.subtitle).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                }
+                // A new token goes in here, keeping the account's Done, snoozes and pins: after a rejection, or any
+                // time (a token about to expire). Not for an account without one (Claude Code).
+                if let manifest, manifest.fields.contains(where: \.isSecret) {
+                    Button(failure?.kind == .auth ? L("Reconnect…") : L("Update token…")) { reconnecting = true }
+                        .controlSize(.small)
+                        .sheet(isPresented: $reconnecting) {
+                            ConnectForm(manifest: manifest, account: account) { reconnecting = false }
+                        }
                 }
                 ForEach(model.remarks[account.id] ?? [], id: \.self) { remark in
                     Label(remark, systemImage: "info.circle")

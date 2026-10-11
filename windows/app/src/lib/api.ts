@@ -217,6 +217,8 @@ export interface Preferences {
   wholeInboxBrief: boolean
   briefCacheMinutes: number
   assistantExcludedSources: string[]
+  /** The first-run tip was dismissed. */
+  welcomed: boolean
 }
 export interface Managed {
   allowedPlugins?: string[] | null
@@ -239,6 +241,8 @@ export interface Settings {
   version: string
   dataDir: string
   shortcut: string
+  /** False when another app holds the reminder shortcut. */
+  shortcutRegistered: boolean
 }
 /** Updates, as `updates.rs` reports them. */
 export type UpdateStatus =

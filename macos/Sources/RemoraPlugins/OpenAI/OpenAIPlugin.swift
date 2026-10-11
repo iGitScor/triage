@@ -110,23 +110,7 @@ public struct OpenAIPlugin: AssistantPlugin {
         let response = try await AssistantRetry.decode(
             Response.self, from: request, http: http,
             tooSlow: L("The assistant took too long to answer. Try again later."), sleep: sleep)
-        return try Self.output(of: response)
-    }
-
-    static func output<Output: Decodable>(of response: Response) throws -> Output {
-        let choice = response.choices.first
-        if let refusal = choice?.message.refusal, !refusal.isEmpty {
-            throw HTTPError.api(L("The assistant declined this request."))
-        }
-        if choice?.finishReason == "length" {
-            throw HTTPError.api(L("The assistant’s answer was cut off. Try again, or with fewer items."))
-        }
-        guard let text = choice?.message.content,
-            let output = try? JSONDecoder().decode(Output.self, from: Data(text.utf8))
-        else {
-            throw HTTPError.api(L("The assistant returned an unexpected answer."))
-        }
-        return output
+        return try response.decode()
     }
 }
 
@@ -163,7 +147,7 @@ extension OpenAIPlugin {
         }
     }
 
-    struct Response: Decodable {
+    struct Response: Decodable, AssistantReply {
         struct Choice: Decodable {
             struct Message: Decodable {
                 var content: String?
@@ -178,5 +162,14 @@ extension OpenAIPlugin {
             }
         }
         var choices: [Choice]
+
+        /// The first choice's content: a refusal or a stop at the length limit is named, not decoded.
+        func answer() throws(AssistantFailure) -> Data {
+            let choice = choices.first
+            if let refusal = choice?.message.refusal, !refusal.isEmpty { throw .declined }
+            if choice?.finishReason == "length" { throw .cutOff }
+            guard let text = choice?.message.content else { throw .unexpectedAnswer }
+            return Data(text.utf8)
+        }
     }
 }

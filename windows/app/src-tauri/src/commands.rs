@@ -236,7 +236,8 @@ pub async fn connect(
     Ok(())
 }
 
-/// Reconnect: the same account with a new token, checked with one fetch first.
+/// Reconnect: the same account with a new token, checked with one fetch first (the assistant: with one
+/// made-up item, so no inbox content leaves).
 #[tauri::command]
 pub async fn reconnect(
     app: AppHandle,
@@ -244,6 +245,37 @@ pub async fn reconnect(
     account_id: String,
     secrets: HashMap<String, String>,
 ) -> Result<()> {
+    let assistant = {
+        let inbox = state.inbox.lock().await;
+        let is_assistant =
+            inbox.accounts.iter().any(|a| a.id == account_id && remora_plugins::claude::is_assistant(&a.plugin_id));
+        if is_assistant {
+            let language = crate::i18n::translator().lang();
+            Some(inbox.prepare_assistant_reconnect(&account_id, &secrets, state.http.clone(), language)?)
+        } else {
+            None
+        }
+    };
+    if let Some(plugin) = assistant {
+        plugin
+            .digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now())
+            .await
+            .map_err(|e| e.to_string())?;
+        let _writes = state.vault_writes.lock().await;
+        let (vault, all) = {
+            let mut inbox = state.inbox.lock().await;
+            (
+                inbox.vault(),
+                inbox.secrets_after(|all| {
+                    all.insert(account_id.clone(), secrets);
+                })?,
+            )
+        };
+        save_secrets(vault, all.clone()).await?;
+        state.inbox.lock().await.finish_reconnect_secrets(&account_id, all)?;
+        changed(&app).await;
+        return Ok(());
+    }
     let plugin = state.inbox.lock().await.prepare_reconnect(&account_id, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await.map_err(|e| e.to_string())?;
     let _writes = state.vault_writes.lock().await;
@@ -301,6 +333,7 @@ pub struct SettingsView {
     version: &'static str,
     data_dir: String,
     shortcut: &'static str,
+    shortcut_registered: bool,
 }
 
 #[tauri::command]
@@ -315,6 +348,7 @@ pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<Sett
         version: env!("CARGO_PKG_VERSION"),
         data_dir: paths::data_dir().display().to_string(),
         shortcut: REMINDER_SHORTCUT,
+        shortcut_registered: crate::SHORTCUT_REGISTERED.load(std::sync::atomic::Ordering::Relaxed),
     })
 }
 
@@ -482,7 +516,7 @@ pub async fn make_brief(app: AppHandle, state: State<'_, AppState>, force: bool)
         (plugin?, inbox.brief_items(Utc::now()))
     };
     let brief = plugin.brief(&items, Utc::now()).await.map_err(|e| e.to_string())?;
-    state.inbox.lock().await.store_brief(Some(brief));
+    state.inbox.lock().await.store_brief(Some(brief.written_from(&items)));
     changed(&app).await;
     Ok(())
 }

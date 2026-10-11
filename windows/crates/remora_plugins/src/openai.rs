@@ -2,6 +2,7 @@
 //! computer (Ollama, LM Studio, vLLM). Same prompts, answers, retries and timeout as the Claude API (AI-23). A port
 //! of the macOS `OpenAIPlugin.swift`.
 
+use crate::assistant::{decode_reply, json_text, AssistantFailure, AssistantReply};
 use crate::claude::api::{retry_delay, TIMEOUT};
 use crate::claude::prompt::{self, Schema};
 use crate::{decode, AssistantPlugin, HttpClient, PluginConfig, PluginError, Request};
@@ -19,9 +20,6 @@ use std::sync::Arc;
 pub const ID: &str = AI_SERVER_PLUGIN;
 
 const TOO_SLOW: &str = "The assistant took too long to answer. Try again later.";
-const DECLINED: &str = "The assistant declined this request.";
-const CUT_OFF: &str = "The assistant’s answer was cut off. Try again, or with fewer items.";
-const UNEXPECTED: &str = "The assistant returned an unexpected answer.";
 const NEEDS_KEY: &str = "An API key is needed for this server.";
 const INSECURE: &str = "Only a server on this computer can use http: use https.";
 
@@ -212,18 +210,22 @@ impl OpenAIPlugin {
     }
 }
 
+/// A Chat Completions reply: the JSON in the first choice's content, unless it refused or stopped at its length.
+impl AssistantReply for ApiResponse {
+    fn answer(self) -> Result<serde_json::Value, AssistantFailure> {
+        let choice = self.choices.into_iter().next().ok_or(AssistantFailure::UnexpectedAnswer)?;
+        if choice.message.as_ref().and_then(|m| m.refusal.as_deref()).is_some_and(|r| !r.trim().is_empty()) {
+            return Err(AssistantFailure::Declined);
+        }
+        if choice.finish_reason.as_deref() == Some("length") {
+            return Err(AssistantFailure::CutOff);
+        }
+        json_text(choice.message.and_then(|m| m.content))
+    }
+}
+
 fn output<T: DeserializeOwned>(response: ApiResponse) -> Result<T, PluginError> {
-    let Some(choice) = response.choices.into_iter().next() else {
-        return Err(PluginError::Api(UNEXPECTED.into()));
-    };
-    if choice.message.as_ref().and_then(|m| m.refusal.as_deref()).is_some_and(|r| !r.trim().is_empty()) {
-        return Err(PluginError::Api(DECLINED.into()));
-    }
-    if choice.finish_reason.as_deref() == Some("length") {
-        return Err(PluginError::Api(CUT_OFF.into()));
-    }
-    let text = choice.message.and_then(|m| m.content);
-    text.and_then(|t| serde_json::from_str(&t).ok()).ok_or_else(|| PluginError::Api(UNEXPECTED.into()))
+    Ok(decode_reply(response)?)
 }
 
 #[async_trait]
@@ -400,16 +402,17 @@ mod tests {
             (
                 serde_json::json!({ "choices": [{ "message": { "content": null, "refusal": "No." }, "finish_reason": "stop" }] })
                     .to_string(),
-                DECLINED,
+                AssistantFailure::Declined,
             ),
-            (answer(r#"{"summary":"One rev"#, "length"), CUT_OFF),
-            (answer("not json", "stop"), UNEXPECTED),
-            (r#"{"choices":[]}"#.to_string(), UNEXPECTED),
+            (answer(r#"{"summary":"One rev"#, "length"), AssistantFailure::CutOff),
+            (answer("not json", "stop"), AssistantFailure::UnexpectedAnswer),
+            (answer(r#"{"focus": []}"#, "stop"), AssistantFailure::UnexpectedAnswer),
+            (r#"{"choices":[]}"#.to_string(), AssistantFailure::UnexpectedAnswer),
         ];
         for (body, expected) in cases {
             let http = Recorder::new(&[], &body);
             let result = plugin(&[("token", "k"), ("model", "m")], http).unwrap().brief(&[item("a")], now()).await;
-            assert_eq!(result.unwrap_err(), PluginError::Api(expected.into()));
+            assert_eq!(result.unwrap_err(), expected.into());
         }
     }
 

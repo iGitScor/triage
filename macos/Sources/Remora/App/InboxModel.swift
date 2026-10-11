@@ -370,11 +370,10 @@ final class InboxModel {
         isBriefing = true
         briefError = nil
         defer { isBriefing = false }
-        let layout = layout
-        let items = assistantPolicy.items(layout.pinned + layout.groups.flatMap(\.items))
+        let items = briefItems
         do {
             let assistant = try assistantPlugin(account, secrets: environment.secrets.secrets(for: account.id))
-            store(try await assistant.brief(items, now: .now))
+            store(try await assistant.brief(items, now: .now).writtenFrom(items))
         } catch {
             briefError = error.localizedDescription
         }
@@ -400,8 +399,14 @@ final class InboxModel {
         }
     }
 
+    /// What a brief is written from: the pinned items and My turn, as the assistant may see them.
+    var briefItems: [InboxItem] {
+        let layout = layout
+        return assistantPolicy.items(layout.pinned + layout.groups.flatMap(\.items))
+    }
+
     var isBriefFresh: Bool {
-        brief?.isFresh(cacheMinutes: preferences.briefCacheMinutes, now: .now) ?? false
+        brief?.isFresh(for: briefItems, cacheMinutes: preferences.briefCacheMinutes, now: .now) ?? false
     }
 
     private func store(_ brief: Brief?) {
@@ -560,7 +565,9 @@ final class InboxModel {
     }
 
     private func apply(_ snapshot: SourceSnapshot, to accountID: UUID) {
-        let previous = syncedAccounts.contains(accountID) ? itemsByAccount[accountID] : nil
+        // The first sync after launch compares with the cache, if there is one: what arrived while Remora was closed.
+        let firstSync = !syncedAccounts.contains(accountID)
+        let previous = itemsByAccount[accountID]
         syncedAccounts.insert(accountID)
         errors[accountID] = nil
         remarks[accountID] = snapshot.remarks.isEmpty ? nil : snapshot.remarks
@@ -572,9 +579,17 @@ final class InboxModel {
             persist(accountsStore, accounts)
         }
 
-        for notice in ChangeDetector.notices(previous: previous, current: snapshot.items) {
-            let wanted = notice.kind == .arrival ? preferences.notifyArrivals : preferences.notifyStatusChanges
-            if wanted { environment.notifications.post(respectingPrivacy(notice, from: account(accountID)?.pluginID)) }
+        let pluginID = account(accountID)?.pluginID
+        var notices = ChangeDetector.notices(previous: previous, current: snapshot.items).filter { notice in
+            notice.kind == .arrival ? preferences.notifyArrivals : preferences.notifyStatusChanges
+        }
+        if firstSync, let account = account(accountID) {
+            notices = ChangeDetector.whileClosed(
+                notices, accountID: accountID.uuidString,
+                accountName: account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID)
+        }
+        for notice in notices {
+            environment.notifications.post(notice.isSummary ? notice : respectingPrivacy(notice, from: pluginID))
         }
         wakeSnoozedItems(touchedIn: snapshot.items)
     }

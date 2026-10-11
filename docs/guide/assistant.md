@@ -8,9 +8,10 @@ description: Remora's optional AI features (brief, bundle summaries, snooze tria
 Everything in Remora works without AI. The assistant (Claude, or a model behind an OpenAI-compatible API) is an
 optional extra, **off by default**, that writes short text about your inbox:
 
-- **Brief** (✦ at the top of the inbox): three sentences and the items to handle first.
+- **Brief** (✦ at the top of the inbox): three sentences and the items to handle first. It is kept while your
+  inbox stays the same; after a Done, a snooze or an arrival, ↻ writes a new one.
 - **Bundle summaries** (✦ on a verb’s header, from two items): what the group is about, in two sentences.
-- **Triage** (in the *Snoozed* tab): keep, reschedule, let go or do now, item by item. You confirm every change;
+- **Triage** (in the *Snoozed* tab): keep, reschedule (at most 60 days ahead), let go or do now, item by item. You confirm every change;
   only reschedules are ticked for you.
 
 Briefs and summaries come back in your system’s language.

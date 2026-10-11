@@ -8,16 +8,23 @@ description = "Remora's application layer for Windows: storage, credentials, pol
 [dependencies]
 chrono = { version = "0.4.45", features = ["serde"] }
 futures = "0.3.34"
-keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
 remora_core = { version = "0.4.0", path = "../remora_core" }
 remora_plugins = { version = "0.4.0", path = "../remora_plugins" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
-dirs = "6"
+dirs = "7"
 uuid = { version = "1", features = ["v4"] }
 
+# The vault: the platform's own store, each target with only its backend.
 [target.'cfg(windows)'.dependencies]
-winreg = "0.55"
+keyring = { version = "3", features = ["windows-native"] }
+winreg = "0.56"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["linux-native"] }
 
 [dev-dependencies]
 async-trait = "0.1.92"

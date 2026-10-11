@@ -121,7 +121,8 @@ onMount(() => {
                   {#if account.name && account.identity}<span class="muted"> · {account.identity}</span>{/if}
                   {#if account.refusal && !source.refusal}<span class="error"> · {t(account.refusal)}</span>{/if}
                   {#if account.error}<span class={account.errorKind === 'offline' || account.errorKind === 'rateLimited' ? 'muted' : 'error'}> · {translateMessage(account.error)}</span>{/if}
-                  {#if account.errorKind === 'auth'}<button type="button" class="link" onclick={() => (reconnecting = account.id)}>{t('Reconnect…')}</button>{/if}
+                  {#if account.errorKind === 'auth'}<button type="button" class="link" onclick={() => (reconnecting = account.id)}>{t('Reconnect…')}</button>
+                  {:else if source.manifest.fields.some((f) => f.isSecret)}<span class="muted"> ·&nbsp;</span><button type="button" class="link" onclick={() => (reconnecting = reconnecting === account.id ? null : account.id)}>{t('Update token…')}</button>{/if}
                   {#each account.remarks as remark (remark)}<span class="remark muted">{translateMessage(remark)}</span>{/each}
                 </span>
                 <button type="button" class="icon-button" onclick={() => { renaming = account.id; newName = account.name ?? '' }} aria-label={t('Rename')} title={t('Rename')}><Icon name="pencil" size={15} /></button>
@@ -157,6 +158,7 @@ onMount(() => {
       <label class="toggle"><input type="checkbox" checked={settings.autostart} onchange={async (e) => { await api.setAutostart(e.currentTarget.checked); await load() }} />{t('Start with Windows')}</label>
       <label class="toggle"><input type="checkbox" checked={p.openInApps} onchange={(e) => save({ openInApps: e.currentTarget.checked })} />{t('Open in desktop apps when installed')}</label>
       <p class="help">{t('Slack and Linear open in their app; Shift-click opens the web page instead.')}</p>
+      {#if !settings.shortcutRegistered}<p class="notice warn">{t('Ctrl+Alt+R is used by another app: use + Reminder in the inbox instead.')}</p>{/if}
 
       <h2 class="section-title">{t('Tray icon')}</h2>
       <label class="row line">

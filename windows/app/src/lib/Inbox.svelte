@@ -24,7 +24,17 @@ let {
   query = $bindable(),
   onsettings,
   onreminder,
-}: { view: InboxView | null; query: string; onsettings: () => void; onreminder: () => void } = $props()
+  welcome = null,
+  onwelcomed = () => {},
+}: {
+  view: InboxView | null
+  query: string
+  onsettings: () => void
+  onreminder: () => void
+  /** The first-run tip, until dismissed: the reminder shortcut, or null when another app holds it. */
+  welcome?: { shortcut: string | null } | null
+  onwelcomed?: () => void
+} = $props()
 
 let tab: Tab = $state('myTurn')
 const running = $derived(view?.counts.inProgress ?? 0)
@@ -51,17 +61,8 @@ let refreshing = $state(false)
 /// The brief card (when an assistant is connected) and the review session.
 let showBrief = $state(false)
 let reviewing = $state(false)
-const allItems = $derived(
-  view
-    ? [
-        ...view.layout.inProgress,
-        ...view.layout.pinned,
-        ...view.layout.myTurn.flatMap((g) => g.items),
-        ...view.layout.waiting.flatMap((g) => g.items),
-        ...view.layout.snoozed,
-      ]
-    : [],
-)
+/// What a brief is written from (pinned and My turn): an item done or snoozed since leaves its list.
+const briefItems = $derived(view ? [...view.layout.pinned, ...view.layout.myTurn.flatMap((g) => g.items)] : [])
 
 // After Refresh, the next inbox says what came back (A11Y-17): the refresh itself runs in the background.
 let announceNext = false
@@ -142,6 +143,14 @@ async function clearAll() {
   </label>
 
   <div class="scroll" role="tabpanel" id="inbox-panel" aria-labelledby="tab-{tab}">
+    {#if welcome && view && !view.demo}
+      <div class="card welcome">
+        <p>{t('Remora lives in the system tray: click the fish to open it.')}</p>
+        {#if welcome.shortcut}<p>{t('Press %@ from anywhere to add a reminder.', welcome.shortcut)}</p>{/if}
+        <p>{t('It starts with Windows; change it in Settings → General.')}</p>
+        <button type="button" class="pill" onclick={onwelcomed}>{t('Got it')}</button>
+      </div>
+    {/if}
     {#if view && !view.connected && !view.demo}
       <div class="card welcome">
         <strong>{t('Connect a tool to get started')}</strong>
@@ -153,7 +162,7 @@ async function clearAll() {
         {#each view.layout.inProgress as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = i)} {ondraft} />{/each}
         {#if !view.layout.inProgress.length}<p class="empty muted">{t(empty.inProgress)}</p>{/if}
       {:else if tab === 'myTurn'}
-        {#if showBrief && view.assistant?.wholeInbox}<BriefCard assistant={view.assistant} items={allItems} />{/if}
+        {#if showBrief && view.assistant?.wholeInbox}<BriefCard assistant={view.assistant} items={briefItems} />{/if}
         {#if view.layout.pinned.length}
           <h2 class="section-title">{t('Pinned')}</h2>
           {#each view.layout.pinned as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = i)} {ondraft} />{/each}

@@ -39,7 +39,8 @@ Réglages → Général → **Ouvrir à la connexion**, pour retrouver Remora ch
 Remora se place dans la zone de notification de la barre des tâches (cliquez sur **^** si elle est masquée, et
 glissez-la près de l’horloge pour la garder visible). Un clic ouvre la boîte ; un clic droit, le menu. Les icônes de
 la zone de notification ne se tirent pas sous Windows : un nouveau rappel se crée avec **Ctrl+Alt+R**, de partout.
-Réglages → Général → **Lancer au démarrage de Windows** la démarre à l’ouverture de session.
+Réglages → Général → **Lancer au démarrage de Windows** la démarre à l’ouverture de session. La première fois, un
+conseil en haut de la boîte rappelle tout cela ; si une autre app utilise déjà Ctrl+Alt+R, Réglages → Général le dit.
 
 La version Windows a ce qu’a le Mac : les cinq outils, le report avec raisons et constats, la préparation et les
 sessions de relecture, l’assistant d’attente et l’assistant (Claude ou un serveur OpenAI-compatible). Elle trie les
@@ -55,7 +56,8 @@ bouton qui ouvre la bonne page de l’outil pour créer un jeton, et des étapes
 
 La première synchronisation est silencieuse : connecter un outil ne vous noie jamais sous les notifications.
 Ensuite, Remora vérifie toutes les 5 minutes (Réglages → Général → **Vérifier toutes les**) ; sur Mac, aussi au
-réveil et quand vous ouvrez la boîte.
+réveil et quand vous ouvrez la boîte. Au démarrage, Remora annonce ce qui est arrivé pendant qu’elle était fermée ;
+au-delà de trois nouveautés, une seule notification les résume.
 
 La première fois qu’elle enregistre un jeton, macOS demande si Remora peut utiliser son élément du trousseau.
 Choisissez **Toujours autoriser**. Sous Windows, les jetons vont dans le Gestionnaire d’identification sans rien

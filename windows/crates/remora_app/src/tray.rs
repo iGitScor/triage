@@ -132,16 +132,14 @@ pub fn running_text(running: usize, since: Option<DateTime<Utc>>, now: DateTime<
 }
 
 /// A notification's title and its two lines: where (the subtitle), then what (the body), translated.
+/// A title with `%d` shows the notice's count.
 pub fn notification_text(notice: &Notice, t: &Translator) -> (String, String, String) {
-    let body = [notice.subtitle.as_str(), notice.body.as_str()]
-        .into_iter()
-        .filter(|s| !s.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n");
-    let body = t.t(&body);
-    let mut lines = body.splitn(2, '\n');
-    let first = lines.next().unwrap_or_default().to_string();
-    (t.t(&notice.title), first, lines.next().unwrap_or_default().to_string())
+    let mut lines =
+        [notice.subtitle.as_str(), notice.body.as_str()].into_iter().filter(|s| !s.is_empty()).map(|s| t.t(s));
+    let first = lines.next().unwrap_or_default();
+    let title = t.t(&notice.title);
+    let title = notice.count.map_or(title.clone(), |n| title.replace("%d", &n.to_string()));
+    (title, first, lines.next().unwrap_or_default())
 }
 
 #[cfg(test)]
@@ -249,6 +247,7 @@ mod tests {
             subtitle: subtitle.into(),
             body: body.into(),
             url: None,
+            count: None,
         };
         let english = Translator::english();
         assert_eq!(
@@ -256,5 +255,26 @@ mod tests {
             ("New review".into(), "acme/app #1".into(), "Fix login".into())
         );
         assert_eq!(notification_text(&notice("", "Fix login"), &english).1, "Fix login");
+    }
+
+    /// What arrived while the app was closed: one notification with the count in its title.
+    #[test]
+    fn the_while_closed_notice_shows_its_count() {
+        let notices: Vec<Notice> = (0..5)
+            .map(|i| Notice {
+                kind: NoticeKind::Arrival,
+                item_id: i.to_string(),
+                title: "To review".into(),
+                subtitle: "acme/app".into(),
+                body: "Fix login".into(),
+                url: None,
+                count: None,
+            })
+            .collect();
+        let summary = remora_core::while_closed("a1", "GitHub", notices);
+        assert_eq!(
+            notification_text(&summary[0], &Translator::english()),
+            ("5 new while Remora was closed".into(), "GitHub".into(), "Open Remora to see them.".into())
+        );
     }
 }

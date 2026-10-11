@@ -45,6 +45,7 @@ function mock(data) {
       version: data.version,
       dataDir: 'C:\\Users\\alice\\AppData\\Local\\Remora',
       shortcut: 'CommandOrControl+Alt+R',
+      shortcutRegistered: true,
     }),
     presets: () => [
       { label: 'Later today', date: at(180) },

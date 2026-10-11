@@ -53,7 +53,7 @@ struct ClaudePluginTests {
             "/v1/messages":
                 #"{"content": [{"type": "text", "text": "{\"summary\": \"One rev"}], "stop_reason": "max_tokens"}"#
         ])
-        await #expect(throws: HTTPError.api(L("Claude’s answer was cut off. Try again, or with fewer items."))) {
+        await #expect(throws: HTTPError.api(AssistantFailure.cutOff.message)) {
             try await ClaudePlugin(config: config(["token": "k"]), http: http).brief([item], now: .now)
         }
     }

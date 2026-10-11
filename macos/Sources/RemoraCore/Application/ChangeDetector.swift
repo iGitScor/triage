@@ -19,6 +19,9 @@ public struct Notice: Equatable, Sendable {
         self.url = url
     }
 
+    /// The summary of what arrived while Remora was closed: no item, so no Done or Snooze buttons.
+    public var isSummary: Bool { itemID.hasSuffix(ChangeDetector.whileClosedSuffix) }
+
     /// Keeps what kind of notice it is and where it comes from, hides what was written.
     public func redacted() -> Notice {
         var notice = self
@@ -60,5 +63,26 @@ public enum ChangeDetector {
                     )
                 }
         }
+    }
+
+    /// Ends the item ID of the summary notice: it points to no item, opening it opens the inbox.
+    public static let whileClosedSuffix = "/while-closed"
+
+    /// The notices of an account's first sync after launch, compared with its cached items: what arrived while
+    /// Remora was closed. More than `limit` become one summary, so a week away doesn't bring a flood.
+    public static func whileClosed(_ notices: [Notice], accountID: String, accountName: String, limit: Int = 3)
+        -> [Notice]
+    {
+        guard notices.count > limit else { return notices }
+        return [
+            Notice(
+                kind: .arrival,
+                itemID: accountID + whileClosedSuffix,
+                title: L("%d new while Remora was closed", notices.count),
+                subtitle: accountName,
+                body: L("Open Remora to see them."),
+                url: nil
+            )
+        ]
     }
 }

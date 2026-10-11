@@ -15,13 +15,27 @@ let screen: Screen = $state('inbox')
 let view: InboxView | null = $state(null)
 let query = $state('')
 let shortcut = $state('Ctrl+Alt+R')
+let settings = $state<SettingsData | null>(null)
+const welcome = $derived(
+  settings && !settings.preferences.welcomed
+    ? { shortcut: settings.shortcutRegistered ? settings.shortcut.replace('CommandOrControl', 'Ctrl') : null }
+    : null,
+)
+
+/** The first-run tip is dismissed for good. */
+async function welcomed() {
+  if (!settings) return
+  await api.setPreferences({ ...settings.preferences, welcomed: true })
+  apply(await api.settings())
+}
 
 const loader = reloader(api.inbox, (next) => (view = next))
 const reload = () => loader.now(query)
 
-function apply(settings: SettingsData) {
-  shortcut = settings.shortcut
-  const theme = settings.preferences.appearance
+function apply(next: SettingsData) {
+  settings = next
+  shortcut = next.shortcut
+  const theme = next.preferences.appearance
   if (theme === 'system') document.documentElement.removeAttribute('data-theme')
   else document.documentElement.dataset.theme = theme
 }
@@ -90,7 +104,7 @@ onMount(() => {
 {:else if screen === 'reminder'}
   <QuickReminder {shortcut} onclose={() => (screen = 'inbox')} />
 {:else}
-  <Inbox {view} bind:query onsettings={() => (screen = 'settings')} onreminder={() => (screen = 'reminder')} />
+  <Inbox {view} bind:query {welcome} onwelcomed={welcomed} onsettings={() => (screen = 'settings')} onreminder={() => (screen = 'reminder')} />
 {/if}
 
 <Toast />

@@ -119,7 +119,8 @@ compte en le connectant (« GitLab boulot », « Slack client »), ou renommez-l
 plusieurs comptes d’un même outil sont connectés, les éléments affichent le nom du compte.
 
 Quand un jeton expire ou est révoqué, le compte l’indique et propose **Reconnecter…** : collez un nouveau jeton, et
-le compte garde ses Terminé, reports et épingles. Sur Mac, connecter à nouveau le même compte (même outil, serveur et
+le compte garde ses Terminé, reports et épingles. Pour remplacer un jeton avant, utilisez **Mettre à jour le jeton…**
+sur le compte. Sur Mac, connecter à nouveau le même compte (même outil, serveur et
 utilisateur) fait de même.
 
 Chaque liste contient les 50 éléments les plus récents. Quand un outil en a davantage (60 demandes de relecture,

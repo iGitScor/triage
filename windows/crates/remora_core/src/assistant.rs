@@ -13,6 +13,10 @@ pub struct Brief {
     pub summary: String,
     pub focus: Vec<Focus>,
     pub created_at: DateTime<Utc>,
+    /// The items it was written from, sorted. None in briefs saved before it was kept. Named as the macOS app
+    /// stores it.
+    #[serde(rename = "itemIDs", default, skip_serializing_if = "Option::is_none")]
+    pub item_ids: Option<Vec<String>>,
 }
 
 /// One item to handle first, and why.
@@ -30,7 +34,13 @@ fn cache_end(created_at: DateTime<Utc>, cache_minutes: i64) -> DateTime<Utc> {
 
 impl Brief {
     pub fn new(summary: impl Into<String>, focus: Vec<Focus>, created_at: DateTime<Utc>) -> Self {
-        Brief { summary: summary.into(), focus, created_at }
+        Brief { summary: summary.into(), focus, created_at, item_ids: None }
+    }
+
+    /// The same brief, remembering the items it was written from.
+    pub fn written_from(mut self, items: &[InboxItem]) -> Self {
+        self.item_ids = Some(sorted_ids(items));
+        self
     }
 
     /// When a new brief may be written; until then the current one is reused.
@@ -38,8 +48,9 @@ impl Brief {
         cache_end(self.created_at, cache_minutes)
     }
 
-    pub fn is_fresh(&self, cache_minutes: i64, now: DateTime<Utc>) -> bool {
-        now < self.fresh_until(cache_minutes)
+    /// Recent, and written from the same items: an item done, snoozed or arrived since makes it stale.
+    pub fn is_fresh(&self, items: &[InboxItem], cache_minutes: i64, now: DateTime<Utc>) -> bool {
+        now < self.fresh_until(cache_minutes) && self.item_ids.as_ref().is_none_or(|ids| *ids == sorted_ids(items))
     }
 }
 
@@ -212,15 +223,30 @@ mod tests {
     #[test]
     fn brief_stays_fresh_for_the_cache_duration() {
         let brief = Brief::new("s", vec![], now());
-        assert!(brief.is_fresh(30, now() + Duration::minutes(29)));
-        assert!(!brief.is_fresh(30, now() + Duration::minutes(30)));
+        assert!(brief.is_fresh(&[], 30, now() + Duration::minutes(29)));
+        assert!(!brief.is_fresh(&[], 30, now() + Duration::minutes(30)));
     }
 
     #[test]
     fn zero_minutes_means_no_cache() {
         let brief = Brief::new("s", vec![], now());
-        assert!(!brief.is_fresh(0, now()));
-        assert!(!brief.is_fresh(-5, now()));
+        assert!(!brief.is_fresh(&[], 0, now()));
+        assert!(!brief.is_fresh(&[], -5, now()));
+    }
+
+    #[test]
+    fn brief_needs_the_same_items() {
+        let items = vec![item("1", InboxBundle::reviews()), item("2", InboxBundle::reviews())];
+        let brief = Brief::new("s", vec![], now());
+        let written = brief.clone().written_from(&items);
+        let reversed: Vec<InboxItem> = items.iter().rev().cloned().collect();
+        assert!(written.is_fresh(&reversed, 30, now()));
+        assert!(!written.is_fresh(&items[..1], 30, now()));
+        let mut more = items.clone();
+        more.push(item("3", InboxBundle::reviews()));
+        assert!(!written.is_fresh(&more, 30, now()));
+        // Saved before the items were kept: time alone.
+        assert!(brief.is_fresh(&items, 30, now()));
     }
 
     #[test]

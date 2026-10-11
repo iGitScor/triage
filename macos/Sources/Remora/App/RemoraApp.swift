@@ -1,4 +1,5 @@
 import AppKit
+import RemoraCore
 import SwiftUI
 
 @main
@@ -21,7 +22,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Fonts.register()
         if CommandLine.arguments.contains("--dark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
         if CommandLine.arguments.contains("--window") || CommandLine.arguments.contains("--demo") { showWindow() }
-        Notifier.shared.onOpen = { itemID in InboxModel.shared.openFromNotification(itemID) }
+        Notifier.shared.onOpen = { [weak self] itemID in
+            // The summary of what arrived while Remora was closed opens the inbox.
+            guard itemID.hasSuffix(ChangeDetector.whileClosedSuffix) else {
+                return InboxModel.shared.openFromNotification(itemID)
+            }
+            self?.statusItem?.showInbox()
+            return true
+        }
         Notifier.shared.onAction = { action, itemID in InboxModel.shared.perform(action, onItem: itemID) }
         Notifier.shared.activate()
         statusItem = MainActor.assumeIsolated { StatusItemController(model: .shared) }

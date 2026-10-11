@@ -2,6 +2,7 @@
 //! `RemoraPlugins`: same queries, same mappings, same tests. Every plugin declares where its data goes
 //! (`PluginManifest::egress`) and reaches the network only through a `GuardedHttpClient`.
 
+pub mod assistant;
 pub mod claude;
 mod code_review;
 pub mod github;

@@ -20,6 +20,9 @@ pub struct Notice {
     pub subtitle: String,
     pub body: String,
     pub url: Option<String>,
+    /// The number a title with `%d` shows (the summary of what arrived while the app was closed).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub count: Option<usize>,
 }
 
 impl Notice {
@@ -46,6 +49,7 @@ pub fn notices(previous: Option<&[InboxItem]>, current: &[InboxItem]) -> Vec<Not
                 subtitle: item.context.clone(),
                 body: item.title.clone(),
                 url: item.url.clone(),
+                count: None,
             }),
             None => {}
             Some(old) => {
@@ -57,12 +61,38 @@ pub fn notices(previous: Option<&[InboxItem]>, current: &[InboxItem]) -> Vec<Not
                         subtitle: item.context.clone(),
                         body: item.title.clone(),
                         url: item.url.clone(),
+                        count: None,
                     });
                 }
             }
         }
     }
     notices
+}
+
+/// Beyond this many notices, what arrived while the app was closed is announced as one.
+pub const WHILE_CLOSED_LIMIT: usize = 3;
+/// The item id of that one notice is the account id with this suffix: clicking it opens Remora.
+pub const WHILE_CLOSED_SUFFIX: &str = "/while-closed";
+/// Its text, translated by the UI; `%d` is its `count`.
+const NOTICE_WHILE_CLOSED_TITLE: &str = "%d new while Remora was closed";
+const NOTICE_WHILE_CLOSED_BODY: &str = "Open Remora to see them.";
+
+/// What an account's first sync after launch found, compared with its saved copy: up to
+/// `WHILE_CLOSED_LIMIT` notices as they are, more as one that says how many.
+pub fn while_closed(account_id: &str, account_name: &str, notices: Vec<Notice>) -> Vec<Notice> {
+    if notices.len() <= WHILE_CLOSED_LIMIT {
+        return notices;
+    }
+    vec![Notice {
+        kind: NoticeKind::Arrival,
+        item_id: format!("{account_id}{WHILE_CLOSED_SUFFIX}"),
+        title: NOTICE_WHILE_CLOSED_TITLE.into(),
+        subtitle: account_name.into(),
+        body: NOTICE_WHILE_CLOSED_BODY.into(),
+        url: None,
+        count: Some(notices.len()),
+    }]
 }
 
 #[cfg(test)]
@@ -106,6 +136,7 @@ mod tests {
             subtitle: "#general".into(),
             body: "Salary review moved".into(),
             url: None,
+            count: None,
         };
         let redacted = notice.redacted();
         assert_eq!(
@@ -113,5 +144,36 @@ mod tests {
             ("Mentions", "#general", "1")
         );
         assert!(!redacted.body.contains("Salary"));
+    }
+
+    fn arrival(id: &str) -> Notice {
+        Notice {
+            kind: NoticeKind::Arrival,
+            item_id: id.into(),
+            title: "To review".into(),
+            subtitle: "acme/web".into(),
+            body: id.into(),
+            url: None,
+            count: None,
+        }
+    }
+
+    #[test]
+    fn up_to_three_arrivals_while_closed_are_announced_one_by_one() {
+        let three: Vec<Notice> = ["1", "2", "3"].map(arrival).into();
+        assert_eq!(while_closed("a1", "GitHub", three.clone()), three);
+        assert!(while_closed("a1", "GitHub", vec![]).is_empty());
+    }
+
+    #[test]
+    fn more_arrivals_while_closed_become_one_notice() {
+        let four: Vec<Notice> = ["1", "2", "3", "4"].map(arrival).into();
+        let summary = while_closed("a1", "GitHub", four);
+        assert_eq!(summary.len(), 1);
+        assert_eq!(summary[0].item_id, "a1/while-closed");
+        assert_eq!(summary[0].title, "%d new while Remora was closed");
+        assert_eq!(summary[0].subtitle, "GitHub");
+        assert_eq!(summary[0].count, Some(4));
+        assert_eq!(summary[0].url, None);
     }
 }

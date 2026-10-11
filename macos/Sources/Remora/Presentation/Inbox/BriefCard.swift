@@ -44,10 +44,11 @@ struct BriefCard: View {
                     .font(Myna.font(13))
                     .foregroundStyle(Myna.onDark(opacity: 0.85))
                     .fixedSize(horizontal: false, vertical: true)
-                ForEach(Array(brief.focus.enumerated()), id: \.element.id) { index, focus in
-                    if let item = model.item(focus.id) {
-                        FocusRow(rank: index + 1, item: item, reason: focus.reason)
-                    }
+                // Only what is still in the inbox: an item done or snoozed since leaves the list.
+                let current = Dictionary(model.briefItems.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+                let focus = brief.focus.compactMap { focus in current[focus.id].map { (focus, $0) } }
+                ForEach(Array(focus.enumerated()), id: \.element.0.id) { index, pair in
+                    FocusRow(rank: index + 1, item: pair.1, reason: pair.0.reason)
                 }
                 Text(footer(for: brief))
                     .font(Myna.font(10.5))

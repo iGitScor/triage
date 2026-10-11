@@ -36,6 +36,8 @@ pub struct AppState {
 
 /// The shortcut that opens a new reminder from anywhere (tray icons can't be dragged on Windows).
 pub const REMINDER_SHORTCUT: &str = "CommandOrControl+Alt+R";
+/// False when another app holds the shortcut: Settings says so.
+pub static SHORTCUT_REGISTERED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
 
 const TRAY_QUIET: &[u8] = include_bytes!("../icons/tray-quiet.png");
 const TRAY_ATTENTION: &[u8] = include_bytes!("../icons/tray-attention.png");
@@ -179,6 +181,7 @@ pub fn run() {
             }
             build_tray(app.handle())?;
             if let Err(error) = app.global_shortcut().register(REMINDER_SHORTCUT) {
+                SHORTCUT_REGISTERED.store(false, std::sync::atomic::Ordering::Relaxed);
                 eprintln!("Remora: {REMINDER_SHORTCUT} is taken by another app: {error}");
             }
             tauri::async_runtime::spawn(background(app.handle().clone()));
@@ -462,6 +465,11 @@ fn toast(app: &AppHandle, title: &str, first: &str, second: &str, item_id: &str)
         .text2(second)
         .on_activated(move |_| {
             let (handle, id) = (handle.clone(), id.clone());
+            // What arrived while the app was closed has no single item: it opens the inbox.
+            if id.ends_with(remora_core::WHILE_CLOSED_SUFFIX) {
+                show(&main_window(&handle), true);
+                return Ok(());
+            }
             tauri::async_runtime::spawn(async move {
                 if let Err(error) = commands::open(&handle, &id, false).await {
                     eprintln!("Remora: opening {id} from a notification failed: {error}");

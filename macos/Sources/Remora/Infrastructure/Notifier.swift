@@ -153,7 +153,9 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, Notifying {
         content.body = notice.body
         content.sound = .default
         content.threadIdentifier = notice.itemID
-        content.categoryIdentifier = (notice.kind == .reminder ? Category.reminder : .item).rawValue
+        if !notice.isSummary {
+            content.categoryIdentifier = (notice.kind == .reminder ? Category.reminder : .item).rawValue
+        }
         content.userInfo["itemID"] = notice.itemID
         if let url = notice.url { content.userInfo["url"] = url.absoluteString }
         center?.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))

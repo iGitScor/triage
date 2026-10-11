@@ -115,7 +115,7 @@ when you connect it (“Work GitLab”, “Client Slack”), or rename it later 
 account of a tool is connected, items show the account name.
 
 When a token expires or is revoked, the account says so and offers **Reconnect…**: paste a new token, and the
-account keeps its Done, snoozes and pins. On the Mac, connecting the same account again (same tool, server and user)
+account keeps its Done, snoozes and pins. To replace a token before then, use **Update token…** on the account. On the Mac, connecting the same account again (same tool, server and user)
 does the same.
 
 Each list holds the latest 50 items. When a tool has more (60 review requests, say), an ⓘ at the bottom of the

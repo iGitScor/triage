@@ -1,11 +1,11 @@
 use crate::{JsonStore, Managed, Preferences, Secrets, Vault};
 use chrono::{DateTime, Utc};
 use remora_core::{
-    notices, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief, BundleSummary, CompliancePolicy,
-    Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder, Mark, Notice,
-    NoticeKind, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule, ReviewPace, ReviewPrep, ReviewTiming,
-    Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth,
-    TriageAction, TriageSuggestion, VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
+    notices, while_closed, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief, BundleSummary,
+    CompliancePolicy, Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder,
+    Mark, Notice, NoticeKind, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule, ReviewPace, ReviewPrep,
+    ReviewTiming, Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem,
+    SourcesHealth, TriageAction, TriageSuggestion, VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
 };
 use remora_plugins::{
     claude, links, registry, AssistantPlugin, GuardedHttpClient, HttpClient, PluginError, SourcePlugin, SourceSnapshot,
@@ -399,20 +399,34 @@ impl Inbox {
                         self.remarks.insert(account_id.clone(), snapshot.remarks.clone());
                     }
                     let items: Vec<InboxItem> = snapshot.items.into_iter().map(VerbClassifier::classify).collect();
-                    let previous = self
-                        .synced
-                        .contains(&account_id)
-                        .then(|| self.items.get(&account_id).cloned().unwrap_or_default());
-                    let plugin_id = self.accounts.iter().find(|a| a.id == account_id).map(|a| a.plugin_id.clone());
-                    for notice in notices(previous.as_deref(), &items) {
-                        let wanted = if notice.kind == NoticeKind::Arrival {
-                            self.preferences.notify_arrivals
-                        } else {
-                            self.preferences.notify_status_changes
-                        };
-                        if wanted {
-                            out.push(self.respecting_privacy(notice, plugin_id.as_deref()));
-                        }
+                    // The first sync after launch compares with the saved copy, so what arrived while the app
+                    // was closed is announced; an account with no saved copy (just connected) stays silent.
+                    let first = !self.synced.contains(&account_id);
+                    let previous = if first {
+                        self.items.get(&account_id).cloned()
+                    } else {
+                        Some(self.items.get(&account_id).cloned().unwrap_or_default())
+                    };
+                    let account = self.accounts.iter().find(|a| a.id == account_id);
+                    let plugin_id = account.map(|a| a.plugin_id.clone());
+                    let wanted: Vec<Notice> = notices(previous.as_deref(), &items)
+                        .into_iter()
+                        .filter(|notice| {
+                            if notice.kind == NoticeKind::Arrival {
+                                self.preferences.notify_arrivals
+                            } else {
+                                self.preferences.notify_status_changes
+                            }
+                        })
+                        .map(|notice| self.respecting_privacy(notice, plugin_id.as_deref()))
+                        .collect();
+                    if first {
+                        let name = account
+                            .and_then(|a| a.name.clone().or_else(|| registry::manifest(&a.plugin_id).map(|m| m.name)))
+                            .unwrap_or_default();
+                        out.extend(while_closed(&account_id, &name, wanted));
+                    } else {
+                        out.extend(wanted);
                     }
                     self.wake_touched(&items);
                     self.synced.insert(account_id.clone());
@@ -469,6 +483,7 @@ impl Inbox {
                     subtitle: item.context.clone(),
                     body: [Some(item.title.clone()), snooze.note].into_iter().flatten().collect::<Vec<_>>().join("\n"),
                     url: item.url.clone(),
+                    count: None,
                 };
                 out.push(if hidden { notice.redacted() } else { notice });
             }
@@ -675,6 +690,19 @@ impl Inbox {
         http: Arc<dyn HttpClient>,
         language: &str,
     ) -> Result<Box<dyn AssistantPlugin>, String> {
+        let secrets = self.secrets()?.get(&account.id).cloned().unwrap_or_default();
+        self.assistant_with(account, &secrets, http, language)
+    }
+
+    /// The assistant for an account with these secrets: allowed by the policy, limited to its declared hosts,
+    /// its models kept within the allowed ones.
+    fn assistant_with(
+        &self,
+        account: &Account,
+        secrets: &HashMap<String, String>,
+        http: Arc<dyn HttpClient>,
+        language: &str,
+    ) -> Result<Box<dyn AssistantPlugin>, String> {
         let manifest = claude::assistant_manifests()
             .into_iter()
             .find(|m| m.id == account.plugin_id)
@@ -683,14 +711,13 @@ impl Inbox {
         if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
             return Err(refusal.to_string());
         }
-        let secrets = self.secrets()?.get(&account.id).cloned().unwrap_or_default();
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
         let defaults: HashMap<String, String> =
             manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
         let mut constrained = account.clone();
         constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
-        claude::make_assistant(&constrained, &secrets, guarded, language).map_err(|e| e.to_string())
+        claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.to_string())
     }
 
     /// The assistant to ask now, or None when there is none or it isn't allowed.
@@ -712,7 +739,9 @@ impl Inbox {
     }
 
     pub fn brief_is_fresh(&self, now: DateTime<Utc>) -> bool {
-        self.brief.as_ref().is_some_and(|b| b.is_fresh(self.preferences.brief_cache_minutes, now))
+        self.brief
+            .as_ref()
+            .is_some_and(|b| b.is_fresh(&self.brief_items(now), self.preferences.brief_cache_minutes, now))
     }
 
     pub fn store_brief(&mut self, brief: Option<Brief>) {
@@ -1218,6 +1247,32 @@ impl Inbox {
         Ok(())
     }
 
+    /// Reconnecting the assistant: the same account with a new key. The caller tests it once with a made-up item
+    /// (no inbox content), then saves the key with `finish_reconnect_secrets`.
+    pub fn prepare_assistant_reconnect(
+        &self,
+        account_id: &str,
+        secrets: &HashMap<String, String>,
+        http: Arc<dyn HttpClient>,
+        language: &str,
+    ) -> Result<Box<dyn AssistantPlugin>, String> {
+        let account = self
+            .accounts
+            .iter()
+            .find(|a| a.id == account_id && claude::is_assistant(&a.plugin_id))
+            .ok_or("This account is no longer connected.")?;
+        self.assistant_with(account, secrets, http, language)
+    }
+
+    /// The tokens are saved: an account reconnected without a fetch (the assistant) uses them from now on.
+    pub fn finish_reconnect_secrets(&mut self, account_id: &str, saved: Secrets) -> Result<(), String> {
+        if !self.accounts.iter().any(|a| a.id == account_id) {
+            return Err("This account is no longer connected.".into());
+        }
+        self.secrets = Some(saved);
+        Ok(())
+    }
+
     pub fn rename(&mut self, account_id: &str, name: &str) {
         if let Some(account) = self.accounts.iter_mut().find(|a| a.id == account_id) {
             account.name = Some(name.trim().to_string()).filter(|n| !n.is_empty());
@@ -1375,6 +1430,40 @@ mod tests {
 
     fn snapshot(items: Vec<InboxItem>) -> Vec<FetchResult> {
         vec![("a1".into(), Ok(SourceSnapshot { identity: "alice".into(), items, remarks: vec![] }))]
+    }
+
+    /// After a launch, the first sync compares with the saved copy: what arrived meanwhile is announced.
+    #[test]
+    fn what_arrived_while_closed_is_announced() {
+        let mut inbox = inbox();
+        inbox.items.insert("a1".into(), vec![item("old", InboxBundle::reviews())]);
+        let found = inbox
+            .apply(snapshot(vec![item("old", InboxBundle::reviews()), item("new", InboxBundle::reviews())]), now());
+        assert_eq!(found.iter().map(|n| n.item_id.as_str()).collect::<Vec<_>>(), ["new"]);
+    }
+
+    /// A just-connected account has no saved copy: its first sync stays silent.
+    #[test]
+    fn a_first_sync_without_a_saved_copy_is_silent() {
+        let mut inbox = inbox();
+        assert!(inbox.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now()).is_empty());
+    }
+
+    /// More than three while closed: one notification with the count, which opens Remora.
+    #[test]
+    fn many_arrivals_while_closed_become_one_notice() {
+        let mut inbox = inbox();
+        inbox.items.insert("a1".into(), vec![]);
+        let items = (1..=5).map(|i| item(&i.to_string(), InboxBundle::reviews())).collect();
+        let found = inbox.apply(snapshot(items), now());
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].item_id, "a1/while-closed");
+        assert_eq!(found[0].subtitle, "GitHub");
+        assert_eq!(found[0].count, Some(5));
+        // Later syncs announce one by one again.
+        let more = (6..=9).map(|i| item(&i.to_string(), InboxBundle::reviews()));
+        let all = (1..=5).map(|i| item(&i.to_string(), InboxBundle::reviews())).chain(more).collect();
+        assert_eq!(inbox.apply(snapshot(all), now()).len(), 4);
     }
 
     #[test]
@@ -1931,6 +2020,29 @@ mod tests {
         let settings = HashMap::from([("host".to_string(), host.to_string()), ("model".to_string(), "m".to_string())]);
         let secrets = HashMap::from([("token".to_string(), "sk".to_string())]);
         inbox.prepare_assistant_connect("openai", None, settings, &secrets, Arc::new(NoNetwork), "en").map(|(a, _)| a)
+    }
+
+    /// UX-03: the assistant's key can be replaced in place: same account, new key, still under the policy.
+    #[test]
+    fn the_assistants_key_is_updated_in_place() {
+        let mut inbox = inbox();
+        inbox.preferences.allow_external_ai = true;
+        let account = connect_openai(&inbox, "https://api.openai.com/v1").unwrap();
+        inbox.finish_assistant_connect(account.clone(), HashMap::from([("token".into(), "old".into())])).unwrap();
+        let key = HashMap::from([("token".to_string(), "new".to_string())]);
+        assert!(inbox.prepare_assistant_reconnect(&account.id, &key, Arc::new(NoNetwork), "en").is_ok());
+        assert!(inbox.prepare_assistant_reconnect("a1", &key, Arc::new(NoNetwork), "en").is_err(), "not an assistant");
+        let all = inbox.secrets_after(|all| {
+            all.insert(account.id.clone(), key.clone());
+        });
+        inbox.finish_reconnect_secrets(&account.id, all.unwrap()).unwrap();
+        assert_eq!(inbox.assistant_account().map(|a| a.id), Some(account.id.clone()), "the same account");
+        assert_eq!(inbox.secrets().unwrap()[&account.id]["token"], "new");
+        inbox.preferences.allow_external_ai = false;
+        assert!(
+            inbox.prepare_assistant_reconnect(&account.id, &key, Arc::new(NoNetwork), "en").is_err(),
+            "the policy still applies"
+        );
     }
 
     /// AI-23: the organization's server replaces the user's, everywhere the account is used or shown.

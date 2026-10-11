@@ -28,7 +28,7 @@ struct ClaudeCodePluginTests {
 
     @Test func surfacesCLIErrors() {
         let json = #"{"type": "result", "is_error": true, "result": "Not logged in"}"#
-        #expect(throws: HTTPError.api("Claude Code: Not logged in")) {
+        #expect(throws: HTTPError.api(L("Claude Code isn’t signed in. Run `claude` in Terminal once to sign in."))) {
             try ClaudeCodePlugin.parse(Data(json.utf8), knownIDs: [])
         }
     }

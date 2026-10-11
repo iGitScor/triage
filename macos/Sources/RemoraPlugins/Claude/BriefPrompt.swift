@@ -38,7 +38,8 @@ enum BriefPrompt {
 
     static let baseTriageSystem = """
         You help a software engineer handle the items they snoozed. For each item choose one action: \
-        "keep" (the current return time is right), "reschedule" (give a better ISO-8601 time in "until"), \
+        "keep" (the current return time is right), "reschedule" (give a better ISO-8601 time in "until", \
+        within 60 days), \
         "done" (obsolete or not worth it any more), or "now" (small or overdue: better done right away). \
         Use the snooze reason and how many times it was snoozed: an item snoozed three times or more needs a decision, \
         not another snooze. Keep "until" empty unless rescheduling. Each reason is at most twelve words, kind, no guilt.
@@ -83,13 +84,16 @@ enum BriefPrompt {
         }
         var suggestions: [Item]
 
-        /// Drops unknown items and actions; reschedules need a valid future date.
+        /// The latest a reschedule may suggest: a later date is brought back to it.
+        static let latestReturn: TimeInterval = 60 * 86_400
+
+        /// Drops unknown items and actions; reschedules need a valid future date, at most 60 days ahead.
         func suggestions(knownIDs: Set<String>, now: Date) -> [TriageSuggestion] {
             suggestions.compactMap { item in
                 guard knownIDs.contains(item.id), let action = TriageSuggestion.Action(rawValue: item.action) else {
                     return nil
                 }
-                let until = Date(iso8601: item.until)
+                let until = Date(iso8601: item.until).map { min($0, now + Self.latestReturn) }
                 if action == .reschedule, (until ?? .distantPast) <= now { return nil }
                 return TriageSuggestion(
                     id: item.id, action: action, until: action == .reschedule ? until : nil, reason: item.reason)

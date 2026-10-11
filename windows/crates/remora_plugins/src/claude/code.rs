@@ -3,6 +3,7 @@
 
 use super::prompt::{self, Schema};
 use super::runner::{CommandError, CommandRunner, ProcessCommandRunner};
+use crate::assistant::{decode_reply, AssistantFailure, AssistantReply};
 use crate::{AssistantPlugin, PluginConfig, PluginError};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -355,18 +356,40 @@ pub fn arguments(items: &[InboxItem], model: &str, now: DateTime<Utc>, language:
 
 /// What `claude --print --output-format json` prints.
 #[derive(Deserialize)]
-struct CliResult<T> {
+struct CliResult {
     is_error: bool,
+    /// On an error: `error_max_structured_output_retries`, `error_max_turns`, `error_max_budget_usd`,
+    /// `error_during_execution`.
+    subtype: Option<String>,
     result: Option<String>,
-    structured_output: Option<T>,
+    structured_output: Option<serde_json::Value>,
 }
 
-fn decode<T: DeserializeOwned>(data: &[u8]) -> Result<T, PluginError> {
-    let result: CliResult<T> = serde_json::from_slice(data).map_err(|_| PluginError::Api(UNEXPECTED.into()))?;
-    match result.structured_output {
-        Some(output) if !result.is_error => Ok(output),
-        _ => Err(PluginError::Api(FAILED.replace("%@", result.result.as_deref().unwrap_or(REQUEST_FAILED)))),
+/// Claude Code's reply: its structured output, or the kind of error it reports.
+impl AssistantReply for CliResult {
+    fn answer(self) -> Result<serde_json::Value, AssistantFailure> {
+        if !self.is_error {
+            return self.structured_output.ok_or(AssistantFailure::UnexpectedAnswer);
+        }
+        Err(match self.subtype.as_deref() {
+            Some("error_max_structured_output_retries") => AssistantFailure::NoStructuredAnswer,
+            Some("error_max_turns") => AssistantFailure::TooManySteps,
+            Some("error_max_budget_usd") => AssistantFailure::SpendingLimit,
+            _ => failure(self.result.as_deref().unwrap_or_default()),
+        })
     }
+}
+
+/// Output that isn't Claude Code's JSON at all comes from the program, not the model: it keeps its own hint.
+fn decode<T: DeserializeOwned>(data: &[u8]) -> Result<T, PluginError> {
+    let result: CliResult = serde_json::from_slice(data).map_err(|_| PluginError::Api(UNEXPECTED.into()))?;
+    Ok(decode_reply(result)?)
+}
+
+/// What Claude Code said went wrong, worded by `explanation`. Signing in is Claude Code's, so it stays here rather
+/// than in the provider-neutral `AssistantFailure`, as on macOS.
+fn failure(message: &str) -> AssistantFailure {
+    AssistantFailure::Failed(explanation(message))
 }
 
 /// A brief from `claude`'s output, without the items it made up.
@@ -376,18 +399,23 @@ pub fn parse(data: &[u8], known_ids: &HashSet<String>) -> Result<Brief, PluginEr
 
 /// Turns what `claude` printed on failure into something the user can act on.
 pub fn explain(message: &str) -> PluginError {
+    PluginError::Api(explanation(message))
+}
+
+/// What `claude` printed on failure, worded for the user: Node.js missing, not signed in, or its own message.
+fn explanation(message: &str) -> String {
     let lowered = message.to_lowercase();
     // "env: node" (macOS), "'node' is not recognized" (Windows' cmd.exe running npm's claude.cmd).
     if ["env: node", "node: no such file", "node: command not found", "'node' is not recognized"]
         .iter()
         .any(|s| lowered.contains(s))
     {
-        return PluginError::Api(NEEDS_NODE.into());
+        return NEEDS_NODE.into();
     }
     if ["not logged in", "/login", "please log in"].iter().any(|s| lowered.contains(s)) {
-        return PluginError::Api(NOT_SIGNED_IN.into());
+        return NOT_SIGNED_IN.into();
     }
-    PluginError::Api(FAILED.replace("%@", if message.is_empty() { REQUEST_FAILED } else { message }))
+    FAILED.replace("%@", if message.is_empty() { REQUEST_FAILED } else { message })
 }
 
 pub struct ClaudeCodePlugin {
@@ -512,15 +540,32 @@ mod tests {
     #[test]
     fn surfaces_cli_errors() {
         let json = r#"{"type": "result", "is_error": true, "result": "Not logged in"}"#;
-        assert_eq!(
-            parse(json.as_bytes(), &HashSet::new()).err(),
-            Some(PluginError::Api("Claude Code: Not logged in".into()))
-        );
+        assert_eq!(parse(json.as_bytes(), &HashSet::new()).err(), Some(PluginError::Api(NOT_SIGNED_IN.into())));
+        let json = r#"{"type": "result", "is_error": true, "subtype": "error_during_execution", "result": "Boom"}"#;
+        assert_eq!(parse(json.as_bytes(), &HashSet::new()).err(), Some(PluginError::Api("Claude Code: Boom".into())));
         assert_eq!(
             parse(br#"{"is_error": true}"#, &HashSet::new()).err(),
             Some(PluginError::Api("Claude Code: the request failed.".into()))
         );
         assert_eq!(parse(b"Segmentation fault", &HashSet::new()).err(), Some(PluginError::Api(UNEXPECTED.into())));
+    }
+
+    /// Each kind of error Claude Code reports names its cause, as the other assistants do.
+    #[test]
+    fn names_the_cause_of_each_error_kind() {
+        let cases = [
+            (
+                r#"{"is_error": true, "subtype": "error_max_structured_output_retries"}"#,
+                AssistantFailure::NoStructuredAnswer,
+            ),
+            (r#"{"is_error": true, "subtype": "error_max_turns"}"#, AssistantFailure::TooManySteps),
+            (r#"{"is_error": true, "subtype": "error_max_budget_usd"}"#, AssistantFailure::SpendingLimit),
+            (r#"{"is_error": false, "subtype": "success"}"#, AssistantFailure::UnexpectedAnswer),
+            (r#"{"is_error": false, "structured_output": {"focus": []}}"#, AssistantFailure::UnexpectedAnswer),
+        ];
+        for (json, expected) in cases {
+            assert_eq!(parse(json.as_bytes(), &HashSet::new()).err(), Some(expected.into()), "{json}");
+        }
     }
 
     #[tokio::test]
@@ -559,13 +604,15 @@ mod tests {
               {{"id": "b", "action": "done", "until": "", "reason": "Merged elsewhere"}},
               {{"id": "c", "action": "reschedule", "until": "yesterday", "reason": "bad date"}},
               {{"id": "d", "action": "snooze", "until": "", "reason": "unknown action"}},
-              {{"id": "ghost", "action": "now", "until": "", "reason": "unknown item"}}
+              {{"id": "ghost", "action": "now", "until": "", "reason": "unknown item"}},
+              {{"id": "e", "action": "reschedule", "until": "2099-01-01T09:00:00Z", "reason": "far away"}}
             ]}}}}"#
         );
         let runner = RecordingRunner::new(&output);
-        let items: Vec<SnoozedItem> = ["a", "b", "c", "d"].iter().map(|id| snoozed(item(id), 3)).collect();
+        let items: Vec<SnoozedItem> = ["a", "b", "c", "d", "e"].iter().map(|id| snoozed(item(id), 3)).collect();
         let suggestions = plugin(&fake_claude(), &runner).triage(&items, now()).await.unwrap();
-        assert_eq!(suggestions.iter().map(|s| s.id.as_str()).collect::<Vec<_>>(), ["a", "b"]);
+        assert_eq!(suggestions.iter().map(|s| s.id.as_str()).collect::<Vec<_>>(), ["a", "b", "e"]);
+        assert_eq!(suggestions[2].until, Some(now() + chrono::Duration::days(60)));
         assert_eq!(
             (suggestions[0].action, suggestions[0].until),
             (TriageAction::Reschedule, prompt::parse_iso8601(&later))

@@ -7,12 +7,22 @@ struct BriefTests {
     let brief = Brief(summary: "s", focus: [], createdAt: now)
 
     @Test func staysFreshForTheCacheDuration() {
-        #expect(brief.isFresh(cacheMinutes: 30, now: now + 29 * 60))
-        #expect(!brief.isFresh(cacheMinutes: 30, now: now + 30 * 60))
+        #expect(brief.isFresh(for: [], cacheMinutes: 30, now: now + 29 * 60))
+        #expect(!brief.isFresh(for: [], cacheMinutes: 30, now: now + 30 * 60))
     }
 
     @Test func zeroMinutesMeansNoCache() {
-        #expect(!brief.isFresh(cacheMinutes: 0, now: now))
+        #expect(!brief.isFresh(for: [], cacheMinutes: 0, now: now))
+    }
+
+    @Test func briefNeedsTheSameItems() {
+        let items = [makeItem("1"), makeItem("2")]
+        let written = brief.writtenFrom(items)
+        #expect(written.isFresh(for: items.reversed(), cacheMinutes: 30, now: now))
+        #expect(!written.isFresh(for: [items[0]], cacheMinutes: 30, now: now))
+        #expect(!written.isFresh(for: items + [makeItem("3")], cacheMinutes: 30, now: now))
+        // Saved before the items were kept: time alone.
+        #expect(brief.isFresh(for: items, cacheMinutes: 30, now: now))
     }
 
     @Test func bundleSummaryNeedsTheSameItems() {

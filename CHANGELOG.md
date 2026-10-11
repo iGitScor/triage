@@ -9,11 +9,23 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - Recurring reminders: every day, every weekday or every week, with an optional end. Done puts one away until
   the next; Stop repeating ends the series.
+- At launch, Remora announces what arrived while it was closed; more than three new things become one notification.
+- **Update token…** on any account with a token, not only after a rejection: the account keeps its Done, snoozes and
+  pins.
+- Windows: a first-run tip about the tray, Ctrl+Alt+R and starting with Windows; Settings says when another app
+  holds Ctrl+Alt+R.
 
 ### Changed
 
 - Mac: GitLab avatars from Gravatar appear, as on Windows; avatars load over https only.
 - Website: the download buttons offer Windows first to visitors on Windows, then the Mac.
+- Windows: Pin is an icon in an item's hover bar, so the bar fits on one line in French.
+- The brief is fresh only while the inbox is the same: after a Done, a snooze or an arrival you can ask for a new one,
+  and items done or snoozed since leave its list. Every assistant.
+- Triage suggests return dates at most 60 days ahead, with every assistant.
+- A failed answer names its cause the same way with Claude Code, the Claude API and an OpenAI-compatible server:
+  cut off, declined, not in the expected form, too many steps, spending limit, or not signed in.
+- Docs: patched Vite and KaTeX for the documentation site (no known advisory left).
 
 ## 0.4.0 (2026-10-10)
 

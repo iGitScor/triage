@@ -129,7 +129,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-11T11:05:16.821712Z",
+            "date": "2026-10-11T11:45:24.569708Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -168,7 +168,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-11T10:45:16.821712Z",
+            "date": "2026-10-11T11:25:24.569708Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -201,7 +201,7 @@
               "title": "To review"
             },
             "context": "acme/search #77",
-            "date": "2026-10-11T00:45:16.821712Z",
+            "date": "2026-10-11T01:25:24.569708Z",
             "due": null,
             "id": "demo/11",
             "needsAction": true,
@@ -227,7 +227,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-13T21:05:16.821712Z",
+            "date": "2026-09-13T21:45:24.569708Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -259,7 +259,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-11T11:05:16.821712Z",
+            "date": "2026-10-11T11:45:24.569708Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -298,7 +298,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-11T10:45:16.821712Z",
+            "date": "2026-10-11T11:25:24.569708Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -330,7 +330,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-13T21:05:16.821712Z",
+            "date": "2026-09-13T21:45:24.569708Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -345,7 +345,7 @@
         "kind": "stale"
       }
     ],
-    "lastRefresh": "2026-10-11T15:45:16.849319Z",
+    "lastRefresh": "2026-10-11T16:25:24.594859Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -372,7 +372,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-11T15:15:16.821712Z",
+              "date": "2026-10-11T15:55:24.569708Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -398,7 +398,7 @@
                 "title": "To reply"
               },
               "context": "Direct message",
-              "date": "2026-10-11T13:25:16.821712Z",
+              "date": "2026-10-11T14:05:24.569708Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -446,7 +446,7 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-11T15:33:16.821712Z",
+              "date": "2026-10-11T16:13:24.569708Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
@@ -496,7 +496,7 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-11T14:10:16.821712Z",
+              "date": "2026-10-11T14:50:24.569708Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
@@ -550,7 +550,7 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-11T09:05:16.821712Z",
+              "date": "2026-10-11T09:45:24.569708Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
@@ -610,7 +610,7 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-11T15:37:16.821712Z",
+              "date": "2026-10-11T16:17:24.569708Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
@@ -663,7 +663,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-10T06:25:16.821712Z",
+              "date": "2026-10-10T07:05:24.569708Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -694,7 +694,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-11T11:05:16.821712Z",
+          "date": "2026-10-11T11:45:24.569708Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -733,7 +733,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-11T10:45:16.821712Z",
+          "date": "2026-10-11T11:25:24.569708Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -766,7 +766,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-11T00:45:16.821712Z",
+          "date": "2026-10-11T01:25:24.569708Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -792,7 +792,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-13T21:05:16.821712Z",
+          "date": "2026-09-13T21:45:24.569708Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -834,7 +834,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-10T14:45:16.821712Z",
+              "date": "2026-10-10T15:25:24.569708Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -873,7 +873,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-09T13:45:16.821712Z",
+              "date": "2026-10-09T14:25:24.569708Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
@@ -908,7 +908,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791716716|",
+          "fingerprint": "1791719124|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -921,7 +921,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791679516|diff",
+          "fingerprint": "1791681924|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
@@ -934,7 +934,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789333516|",
+          "fingerprint": "1789335924|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -947,7 +947,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791715516|checks.passing,diff",
+          "fingerprint": "1791717924|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -992,6 +992,7 @@
     "refreshMinutes": 5,
     "trayCount": "waitingOnMe",
     "wakeOnActivity": true,
+    "welcomed": false,
     "wholeInboxBrief": true
   },
   "snoozeReturns": {

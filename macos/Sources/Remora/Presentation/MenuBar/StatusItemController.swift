@@ -252,6 +252,11 @@ final class StatusItemController: NSObject {
         quickAdd.show(at: point, date: .now.addingTimeInterval(3_600))
     }
 
+    /// Opens the inbox if it isn't shown.
+    func showInbox() {
+        if !popover.isShown { togglePopover() }
+    }
+
     private func togglePopover() {
         guard let button = statusItem.button else { return }
         if popover.isShown {
