@@ -21,11 +21,11 @@ def count(folder: str, glob: str, pattern: str) -> int:
 RUST = r"^\s*#\[(?:tokio::)?test\]"
 counts = {
     "swift": count("macos/Tests", "*.swift", r"^\s*@Test\b"),
-    "crates/remora_core": count("windows/crates/remora_core", "*.rs", RUST),
-    "crates/remora_plugins": count("windows/crates/remora_plugins", "*.rs", RUST),
-    "crates/remora_app": count("windows/crates/remora_app", "*.rs", RUST),
-    "app/src-tauri": count("windows/app/src-tauri/src", "*.rs", RUST),
-    "app/src": count("windows/app/src", "*.test.ts", r"^\s*(?:test|it)\("),
+    "crates/remora_core": count("desktop/crates/remora_core", "*.rs", RUST),
+    "crates/remora_plugins": count("desktop/crates/remora_plugins", "*.rs", RUST),
+    "crates/remora_app": count("desktop/crates/remora_app", "*.rs", RUST),
+    "app/src-tauri": count("desktop/app/src-tauri/src", "*.rs", RUST),
+    "app/src": count("desktop/app/src", "*.test.ts", r"^\s*(?:test|it)\("),
 }
 cargo = sum(n for key, n in counts.items() if key.startswith(("crates/", "app/src-tauri")))
 
@@ -48,7 +48,7 @@ def readme(text: str) -> str:
 
 FILES = {
     "README.md": readme,
-    "windows/README.md": lambda text: parts_table(text, "type-checked"),
+    "desktop/README.md": lambda text: parts_table(text, "type-checked"),
     "docs/develop/windows.md": lambda text: parts_table(text, "type-checked"),
     "docs/fr/developper/windows.md": lambda text: parts_table(text, "types vérifiés"),
 }

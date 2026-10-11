@@ -153,6 +153,23 @@ A typing mistake never opens things up. The lists also accept a `REG_SZ` (`githu
 external AI, no AI server, no local server, no avatars, no updates; an unreadable `AIExcludedSources` or
 `AllowedAIModels` turns the assistant off), and Settings → Privacy names the value to fix.
 
+## Linux: a policy file
+
+The Linux app (preview) reads the same keys from **`/etc/remora/policy.json`**, at launch and at every refresh. Deploy
+it with Ansible, Puppet, Salt or a package; it must belong to root and be writable by root only (`0644`):
+
+```json
+{
+  "AllowedPlugins": ["github", "gitlab", "linear"],
+  "AllowExternalAI": false,
+  "AllowRemoteImages": true
+}
+```
+
+Lists are JSON arrays, switches `true` or `false`, text values strings. The same rule holds: a value of the wrong type
+is applied as strictly as possible and named in Settings → Privacy. A file that isn't valid JSON, isn't root's, or
+that others can write locks everything (no tool, no AI, no avatars, no updates) until it is fixed.
+
 ## Checking it on a Mac
 
 ```sh

@@ -14,7 +14,7 @@ pre-commit:
       run: swift format format --in-place {staged_files}
       stage_fixed: true
     rust:
-      root: windows/
+      root: desktop/
       glob: "*.rs"
       run: rustfmt {staged_files}
       stage_fixed: true

@@ -15,12 +15,12 @@ remplir avant la relecture.
 
 ## Fichiers partagés entre les dossiers
 
-`macos/`, `windows/`, `site/` et `docs/` se construisent chacun seul, sauf pour ces fichiers. Chaque lien est
+`macos/`, `desktop/`, `site/` et `docs/` se construisent chacun seul, sauf pour ces fichiers. Chaque lien est
 vérifié, et le workflow Windows tourne aussi quand l’un de ses fichiers partagés change.
 
 | Fichier partagé | Utilisé par | Tenu à jour par |
 |---|---|---|
-| `macos/scripts/translations_fr.py` | Le français des deux apps : `Localizable.strings` et `windows/app/src/i18n/fr.json` | `make i18n` ; `make i18n-check` échoue quand une chaîne n’a pas de français ou qu’un fichier est périmé |
+| `macos/scripts/translations_fr.py` | Le français des deux apps : `Localizable.strings` et `desktop/app/src/i18n/fr.json` | `make i18n` ; `make i18n-check` échoue quand une chaîne n’a pas de français ou qu’un fichier est périmé |
 | `scripts/make-emoji.py` | Les tables d’emoji des deux apps (`Emoji.swift`, `emoji.rs`) | `make i18n-check` |
 | `site/public/site/tokens.css` | Le site, la documentation (`docs/.vitepress/theme`) et l’app Windows (`main.ts`) | `scripts/tokens-check.py` (dans `make format-check`) pour les copies claire et sombre de la documentation ; `Theme.swift` sur Mac le reprend à la main |
 | `macos/Resources/Logos/` | Les logos des outils de l’app Windows (`Logo.svelte`) | Importés directement ; le serveur de dev Windows ne peut lire que ce dossier et `site/public/site` |

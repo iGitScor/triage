@@ -134,5 +134,5 @@ any string still missing a translation.
 
 ## The Windows port
 
-The Windows app has the same plugins in Rust (`windows/crates/remora_plugins`), with the same queries, mappings
+The Windows app has the same plugins in Rust (`desktop/crates/remora_plugins`), with the same queries, mappings
 and fixtures: port the plugin there too, or open an issue. See [Remora for Windows](./windows).

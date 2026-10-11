@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/iGitScor/triage/actions/workflows/macos.yml"><img alt="macOS" src="https://github.com/iGitScor/triage/actions/workflows/macos.yml/badge.svg" /></a>
-  <a href="https://github.com/iGitScor/triage/actions/workflows/windows.yml"><img alt="Windows" src="https://github.com/iGitScor/triage/actions/workflows/windows.yml/badge.svg" /></a>
+  <a href="https://github.com/iGitScor/triage/actions/workflows/desktop.yml"><img alt="Windows" src="https://github.com/iGitScor/triage/actions/workflows/desktop.yml/badge.svg" /></a>
   <a href="LICENSE"><img alt="License: GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-111111" /></a>
   <img alt="On-device" src="https://img.shields.io/badge/data-stays%20on%20device-b9ff66?labelColor=111111" />
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-111111" />
@@ -60,7 +60,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | Part | What it is | Stack |
 |---|---|---|
 | **Remora for macOS** [`macos/`](macos) | The menu bar app | Swift 6 (strict concurrency), SwiftUI and AppKit, NaturalLanguage |
-| **Remora for Windows** [`windows/`](windows) | The same rules, sources and assistant in a tray app for Windows 10 and 11, in preview: keyword sorting only, [what differs](https://triage.iscor.me/docs/develop/windows) | Rust, Tauri 2, Svelte |
+| **Remora for Windows** [`desktop/`](desktop) | The same rules, sources and assistant in a tray app for Windows 10 and 11, in preview: keyword sorting only, [what differs](https://triage.iscor.me/docs/develop/windows) | Rust, Tauri 2, Svelte |
 | **Website** [`site/`](site) | Marketing pages in English and French, static on Cloudflare | HTML, CSS, a Python generator |
 | **Docs** [`docs/`](docs) | The user guide, IT and compliance, and developer docs, in English and French | VitePress |
 
@@ -148,7 +148,7 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 | Suite | Tests | What it covers |
 |---|---|---|
 | macOS (Swift Testing) | 305 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
-| Windows (`cargo test`) | 301 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
+| Windows (`cargo test`) | 306 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 
@@ -168,7 +168,7 @@ make test                                # unit tests
 make run                                 # build build/Remora.app and launch it
 open build/Remora.app --args --demo      # sample data in a window, nothing saved
 
-cd windows && cargo test --workspace     # Windows core and plugins
+cd desktop && cargo test --workspace     # Windows and Linux core and plugins
 ```
 
 Copy `build/Remora.app` to `/Applications` and turn on *Open at login* in Settings.

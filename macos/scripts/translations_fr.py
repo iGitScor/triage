@@ -1,6 +1,14 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
+    # Linux
+    "Remora only runs a program named claude that you or the system own, from a folder on this computer, which %@ isn’t.": "Remora n’exécute qu’un programme nommé claude qui vous appartient ou appartient au système, depuis un dossier de cet ordinateur, ce que %@ n’est pas.",
+    "Inbox cache, settings and snooze history in %@. Tokens are in the system keyring.": "Cache de la boîte, réglages et historique des reports dans %@. Les jetons sont dans le trousseau du système.",
+    "It starts when you log in; change it in Settings → General.": "Remora démarre à l’ouverture de session ; changez-le dans Réglages → Général.",
+    "Remora lives in the system tray: open it from the fish’s menu.": "Remora vit dans la zone de notification : ouvrez-la depuis le menu du poisson.",
+    "Start at login": "Démarrer à l’ouverture de session",
+    "Your desktop doesn’t let apps listen for a shortcut: in your system’s keyboard settings, add one that runs %@.": "Votre bureau ne laisse pas les apps écouter un raccourci : dans les réglages clavier du système, ajoutez-en un qui lance %@.",
+    "No keyring is running: Remora keeps tokens in the system keyring (GNOME Keyring, KWallet or KeePassXC). Start or install one, then open Remora again.": "Aucun trousseau ne tourne : Remora garde les jetons dans le trousseau du système (GNOME Keyring, KWallet ou KeePassXC). Démarrez-en ou installez-en un, puis rouvrez Remora.",
     # Reactions
     "%@ %d including yours": "%@ %d, dont la vôtre",
     "%@ on your message in %@": "%@ sur votre message dans %@",
@@ -462,7 +470,7 @@ FR = {
     "Skip": "Passer",
     "⏎ open · D done · S snooze · → skip · Esc close": "⏎ ouvrir · D terminé · S reporter · → passer · Échap fermer",
     "All reviewed": "Tout est relu",
-    # Windows app (windows/app), on top of the strings it shares with the Mac app.
+    # Windows app (desktop/app), on top of the strings it shares with the Mac app.
     "%d need you": "%d vous attendent",
     "%d source(s) failed": "%d source(s) en échec",
     "Add another": "En ajouter un",
@@ -559,12 +567,16 @@ FR = {
     "Assignee": "Assignee",
     "The brief through the Claude Code signed in on this computer, on your Claude plan. No API key.": "Le brief par le Claude Code connecté sur cet ordinateur, avec votre abonnement Claude. Sans clé d’API.",
     "Only if Claude Code is installed somewhere unusual (run `where.exe claude` in a terminal).": "Seulement si Claude Code est installé à un endroit inhabituel (lancez `where.exe claude` dans un terminal).",
+    "Only if Claude Code is installed somewhere unusual (run `which claude` in a terminal).": "Seulement si Claude Code est installé à un endroit inhabituel (lancez `which claude` dans un terminal).",
     "Install Claude Code with Anthropic’s installer (recommended: it doesn’t need Node.js), then sign in once by running `claude` in a terminal.": "Installez Claude Code avec l’installeur d’Anthropic (conseillé : il n’a pas besoin de Node.js), puis connectez-vous une fois en lançant `claude` dans un terminal.",
     "Runs Claude Code on this computer, which sends the titles, contexts, authors and statuses of inbox items to Anthropic.": "Lance Claude Code sur cet ordinateur, qui envoie à Anthropic les titres, contextes, auteurs et statuts des éléments de la boîte.",
     "Couldn’t find Claude Code. Install it with Anthropic’s installer, or enter the path to claude (run `where.exe claude` in a terminal).": "Claude Code introuvable. Installez-le avec l’installeur d’Anthropic, ou indiquez le chemin de claude (lancez `where.exe claude` dans un terminal).",
+    "Couldn’t find Claude Code. Install it with Anthropic’s installer, or enter the path to claude (run `which claude` in a terminal).": "Claude Code introuvable. Installez-le avec l’installeur d’Anthropic, ou indiquez le chemin de claude (lancez `which claude` dans un terminal).",
     "Remora only runs a program named claude.exe or claude.cmd from a folder on this computer, which %@ isn’t.": "Remora ne lance qu’un programme nommé claude.exe ou claude.cmd, depuis un dossier de cet ordinateur, ce que %@ n’est pas.",
     "There is no program at %@. Run `where.exe claude` in a terminal and paste the path it shows.": "Aucun programme à %@. Lancez `where.exe claude` dans un terminal et collez le chemin affiché.",
+    "There is no program at %@. Run `which claude` in a terminal and paste the path it shows.": "Aucun programme à %@. Lancez `which claude` dans un terminal et collez le chemin affiché.",
     "%@ isn’t Claude Code. Run `where.exe claude` in a terminal and paste the path it shows.": "%@ n’est pas Claude Code. Lancez `where.exe claude` dans un terminal et collez le chemin affiché.",
+    "%@ isn’t Claude Code. Run `which claude` in a terminal and paste the path it shows.": "%@ n’est pas Claude Code. Lancez `which claude` dans un terminal et collez le chemin affiché.",
     "Claude Code returned an unexpected answer. Run `claude` in a terminal to check it’s signed in.": "Claude Code a renvoyé une réponse inattendue. Lancez `claude` dans un terminal pour vérifier qu’il est connecté.",
     "Claude Code isn’t signed in. Run `claude` in a terminal once to sign in.": "Claude Code n’est pas connecté. Lancez `claude` une fois dans un terminal pour vous connecter.",
     # AI-23: the OpenAI-compatible assistant.

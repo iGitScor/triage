@@ -142,5 +142,5 @@ textes encore sans traduction.
 
 ## Le portage Windows
 
-L’app Windows a les mêmes extensions en Rust (`windows/crates/remora_plugins`), avec les mêmes requêtes,
+L’app Windows a les mêmes extensions en Rust (`desktop/crates/remora_plugins`), avec les mêmes requêtes,
 conversions et fixtures : portez-y aussi l’extension, ou ouvrez une issue. Voir [Remora pour Windows](./windows).

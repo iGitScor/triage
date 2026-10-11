@@ -15,7 +15,7 @@ updates:
       tooling:
         update-types: [minor, patch]
   - package-ecosystem: npm
-    directory: /windows/app
+    directory: /desktop/app
     schedule: { interval: weekly }
     groups:
       interface:

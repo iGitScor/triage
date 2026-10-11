@@ -10,7 +10,7 @@ Thanks for helping. This page gets you from a fresh clone to a change ready for 
 | Folder | What | Needs |
 |---|---|---|
 | [`macos/`](macos) | The menu bar app: `RemoraCore` (rules), `RemoraPlugins` (sources, assistant), `Remora` (the app) | macOS 14+, Xcode 16 |
-| [`windows/`](windows) | The same rules and sources in Rust, and a Tauri 2 tray app with a Svelte interface | Rust, Node 22 |
+| [`desktop/`](desktop) | The same rules and sources in Rust, and a Tauri 2 tray app with a Svelte interface | Rust, Node 22 |
 | [`docs/`](docs) | The user guide, IT and compliance, and developer docs, in English and French (VitePress) | Node 22 |
 | [`site/`](site) | The marketing pages, written by `site/build.py`, served with the docs by Cloudflare | Python 3 |
 
@@ -24,7 +24,7 @@ Windows app.
 make setup        # Node packages (tooling, Windows interface, docs) and the pre-commit hook
 make test         # every test suite: Swift, then the Rust crates
 make mac-demo     # the Mac app with sample data in a window, nothing saved
-make win-demo     # the Windows app with sample data (runs on a Mac too)
+make desktop-demo     # the Windows app with sample data (runs on a Mac too)
 ```
 
 `make` alone lists every target. Each one calls the folder's own tooling, so the commands in the folder READMEs
@@ -37,9 +37,9 @@ keep working; on Windows without `make`, run those directly.
 - **Formatting is automatic.** The pre-commit hook formats what you commit: Biome for TypeScript, Svelte, CSS and
   JSON, `swift format`, `rustfmt` and ruff (through [uv](https://docs.astral.sh/uv/)). `make format` formats
   everything. Lines go up to 120 columns; the configs are `biome.json`, `macos/.swift-format`,
-  `windows/rustfmt.toml` and `ruff.toml`, with `.editorconfig` for editors.
+  `desktop/rustfmt.toml` and `ruff.toml`, with `.editorconfig` for editors.
 - **Both apps follow the same rules.** A change to a rule, a verb or a source in `RemoraCore` / `RemoraPlugins`
-  usually needs its Rust twin in `windows/crates` (or a line in [the Windows page](docs/develop/windows.md) saying
+  usually needs its Rust twin in `desktop/crates` (or a line in [the Windows page](docs/develop/windows.md) saying
   it isn't there yet), with a test on each side using the same fixture.
 - **Strings are English in the code.** Add the French to `macos/scripts/translations_fr.py`, then `make i18n`
   regenerates both apps' files. CI fails when a string the interface shows has no French: `L(…)` and SwiftUI texts
@@ -53,10 +53,10 @@ keep working; on Windows without `make`, run those directly.
   and its tests); tokens go only to the Keychain or the Credential Manager; no telemetry, analytics or crash
   reporting; nothing is sent to an AI unless external AI is allowed.
 
-- **Dependencies**: a new Rust crate needs a licence listed in `windows/deny.toml` (`make deps-check`, with
+- **Dependencies**: a new Rust crate needs a licence listed in `desktop/deny.toml` (`make deps-check`, with
   `cargo-deny`); Dependabot proposes updates every week.
 
-Commit messages follow the history: `feat(macos): …`, `fix(windows): …`, `docs: …`, `ci: …`, `i18n: …`.
+Commit messages follow the history: `feat(macos): …`, `fix(desktop): …`, `docs: …`, `ci: …`, `i18n: …`.
 
 ## Releases and the website
 

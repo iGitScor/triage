@@ -1,0 +1,47 @@
+# cargo deny check: known vulnerabilities, licences compatible with GPL-3.0-or-later, and crates only from
+# crates.io. Run by CI (.github/workflows/desktop.yml) and `make deps-check`.
+
+[graph]
+# What ships: the Windows and Linux app. Developing on a Mac pulls a few more crates that never reach users.
+targets = ["x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc", "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]
+
+[advisories]
+# Every RustSec advisory fails the check, unmaintained crates included, until it is fixed or explicitly ignored
+# here with a reason.
+ignore = [
+    # proc-macro-error is unmaintained: a build-time macro of gtk3-macros, in Tauri's GTK 3 stack on Linux. No code
+    # of it ships; it goes when Tauri moves off GTK 3.
+    { id = "RUSTSEC-2024-0370", reason = "build-time macro of Tauri's GTK 3 stack (Linux), nothing of it ships" },
+]
+
+[licenses]
+# Each of these can be combined with GPL-3.0-or-later. A new licence fails the check until someone looks at it.
+allow = [
+    "GPL-3.0-or-later",
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    # target-lexicon (Linux build scripts): the exception only adds permissions.
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "BSL-1.0",
+    "CC0-1.0",
+    "ISC",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Unlicense",
+    "Zlib",
+]
+confidence-threshold = 0.9
+
+[bans]
+# Two versions of one crate (windows-sys, winreg, dirs…) are reported, not refused.
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

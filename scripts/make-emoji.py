@@ -604,7 +604,7 @@ pub const MEANING_WORDS: &[(ReactionMeaning, &[&str])] = &[
 
 TARGETS = {
     ROOT / "macos/Sources/RemoraCore/Application/Emoji.swift": swift,
-    ROOT / "windows/crates/remora_core/src/emoji.rs": rust,
+    ROOT / "desktop/crates/remora_core/src/emoji.rs": rust,
 }
 
 if __name__ == "__main__":

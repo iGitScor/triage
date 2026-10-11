@@ -7,6 +7,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- Linux, in preview and community supported: an AppImage, which updates itself, and a .deb for Ubuntu and Debian.
+  Tokens stay in the system keyring (GNOME Keyring, KWallet or KeePassXC), data in a folder only you can read, and
+  IT can set the policy in `/etc/remora/policy.json`. Open it from the tray menu; on a desktop without a tray it
+  opens as a window. Notifications open their item. On Wayland, add a system shortcut that runs `remora --reminder`.
 - Slack: Remora sees whose turn each conversation is. When they wrote last, a question is to reply, information to
   read, and a thank-you or a lone 👍 finishes the conversation; when you wrote last, your question waits in
   Waiting and your answer finishes it. A finished conversation goes to Done and comes back when someone writes

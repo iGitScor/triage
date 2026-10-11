@@ -1,0 +1,34 @@
+[package]
+name = "remora_app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Remora's application layer for Windows and Linux: storage, credentials, policy and the inbox service. No UI."
+
+[dependencies]
+chrono = { version = "0.4.45", features = ["serde"] }
+futures = "0.3.34"
+remora_core = { version = "0.5.0", path = "../remora_core" }
+remora_plugins = { version = "0.5.0", path = "../remora_plugins" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+dirs = "7"
+uuid = { version = "1", features = ["v4"] }
+
+# The vault: the platform's own store, each target with only its backend.
+[target.'cfg(windows)'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+winreg = "0.56"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+# The kernel keyring as a cache over the Secret Service (GNOME Keyring, KWallet, KeePassXC), which keeps tokens
+# across reboots: the kernel keyring alone forgets them.
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["linux-native-sync-persistent", "crypto-rust"] }
+
+[dev-dependencies]
+async-trait = "0.1.92"
+tempfile = "3"
+tokio = { version = "1.53.2", features = ["macros", "rt-multi-thread"] }

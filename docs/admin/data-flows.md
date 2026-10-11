@@ -100,9 +100,16 @@ the rest of the disk. Settings → Privacy → **Erase local data** deletes the 
 already in the notification center stay until dismissed. The uninstaller’s “delete app data” option removes the
 folder too.
 
+### Linux (preview)
+
+The same files as on Windows, in `$XDG_DATA_HOME/fr.igitscor.remora` (usually `~/.local/share`), the folder readable
+by the user only (`0700`, files `0600`). Tokens are in the Secret Service (GNOME Keyring, KWallet or KeePassXC), entry
+`fr.igitscor.remora`, user `secrets`, which keeps them encrypted at rest; without a keyring running, Remora says so
+rather than starting without tokens. Policy: [`/etc/remora/policy.json`](./mdm#linux-a-policy-file).
+
 **On-device ML**: on macOS, sorting messages and comparing topics use Apple’s NaturalLanguage framework (sentence and
 word embeddings shipped with macOS); ranking and snooze advice use small statistics over the local history. The
-Windows app sorts with keyword rules only. Nothing is sent anywhere.
+Windows and Linux app sorts with keyword rules only. Nothing is sent anywhere.
 
 ## How it is enforced
 

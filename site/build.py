@@ -480,7 +480,7 @@ def home(lang: str) -> str:
             h1='Everything that<br /><span class="mark">needs you.</span>',
             lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions and Linear issues, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
             secondary="Privacy & compliance",
-            note="Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway.",
+            note="Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway. Linux, in preview: AppImage or .deb on the releases page.",
             notice="Remora speaks English and French, and so does on-device sorting.",
             desk_note="The real app, with sample data. One fish in the menu bar, one count per tool.",
             facts=[
@@ -633,7 +633,7 @@ def home(lang: str) -> str:
             h1='Tout ce qui a<br /><span class="mark">besoin de vous.</span>',
             lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack et tickets Linear, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
             secondary="Confidentialité et conformité",
-            note="Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même.",
+            note="Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même. Linux, en aperçu : AppImage ou .deb sur la page des versions.",
             notice="Remora parle français et anglais, tout comme le tri sur l’appareil.",
             desk_note="La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.",
             facts=[
@@ -826,7 +826,7 @@ def home(lang: str) -> str:
                     "description": t["description"],
                     "applicationCategory": "BusinessApplication",
                     "applicationSubCategory": "Productivity",
-                    "operatingSystem": "macOS 14 or later, Windows 10 or 11",
+                    "operatingSystem": "macOS 14 or later, Windows 10 or 11, Linux",
                     "softwareVersion": VERSION,
                     "inLanguage": ["en", "fr"],
                     "isAccessibleForFree": True,

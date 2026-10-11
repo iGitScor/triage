@@ -1,5 +1,5 @@
 # Shared basics for every editor. Each language's formatter has the details:
-# macos/.swift-format, windows/rustfmt.toml, biome.json, ruff.toml.
+# macos/.swift-format, desktop/rustfmt.toml, biome.json, ruff.toml.
 root = true
 
 [*]

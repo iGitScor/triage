@@ -17,11 +17,11 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 PLIST = ROOT / "macos/Resources/Info.plist"
-WORKSPACE = ROOT / "windows/Cargo.toml"
-CRATES = sorted((ROOT / "windows/crates").glob("*/Cargo.toml"))
-LOCK = ROOT / "windows/Cargo.lock"
-PACKAGE = ROOT / "windows/app/package.json"
-PACKAGE_LOCK = ROOT / "windows/app/package-lock.json"
+WORKSPACE = ROOT / "desktop/Cargo.toml"
+CRATES = sorted((ROOT / "desktop/crates").glob("*/Cargo.toml"))
+LOCK = ROOT / "desktop/Cargo.lock"
+PACKAGE = ROOT / "desktop/app/package.json"
+PACKAGE_LOCK = ROOT / "desktop/app/package-lock.json"
 WORKSPACE_PACKAGES = ("remora", "remora_core", "remora_plugins", "remora_app")
 
 PLIST_RE = re.compile(r"(<key>CFBundleShortVersionString</key>\s*<string>)([^<]*)(</string>)")
@@ -34,16 +34,16 @@ def read() -> dict[str, list[str]]:
     """Every place and the version it holds."""
     found = {
         "macos/Resources/Info.plist": [m.group(2) for m in PLIST_RE.finditer(PLIST.read_text())],
-        "windows/Cargo.toml": [m.group(2) for m in WORKSPACE_RE.finditer(WORKSPACE.read_text())],
-        "windows/Cargo.lock": [m.group(2) for m in LOCK_RE.finditer(LOCK.read_text())],
+        "desktop/Cargo.toml": [m.group(2) for m in WORKSPACE_RE.finditer(WORKSPACE.read_text())],
+        "desktop/Cargo.lock": [m.group(2) for m in LOCK_RE.finditer(LOCK.read_text())],
     }
     for crate in CRATES:
         versions = [m.group(2) for m in DEPENDENCY_RE.finditer(crate.read_text())]
         if versions:
             found[str(crate.relative_to(ROOT))] = versions
     package_lock = json.loads(PACKAGE_LOCK.read_text())
-    found["windows/app/package.json"] = [json.loads(PACKAGE.read_text())["version"]]
-    found["windows/app/package-lock.json"] = [package_lock["version"], package_lock["packages"][""]["version"]]
+    found["desktop/app/package.json"] = [json.loads(PACKAGE.read_text())["version"]]
+    found["desktop/app/package-lock.json"] = [package_lock["version"], package_lock["packages"][""]["version"]]
     return found
 
 

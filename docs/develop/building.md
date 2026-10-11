@@ -14,12 +14,12 @@ says what a change needs before review.
 
 ## Files shared between the folders
 
-`macos/`, `windows/`, `site/` and `docs/` build on their own, except for these files. Each link is checked, and the
+`macos/`, `desktop/`, `site/` and `docs/` build on their own, except for these files. Each link is checked, and the
 Windows workflow also runs when one of its shared files changes.
 
 | Shared file | Used by | Kept in step by |
 |---|---|---|
-| `macos/scripts/translations_fr.py` | Both apps' French: `Localizable.strings` and `windows/app/src/i18n/fr.json` | `make i18n`; `make i18n-check` fails when a string has no French or a file is stale |
+| `macos/scripts/translations_fr.py` | Both apps' French: `Localizable.strings` and `desktop/app/src/i18n/fr.json` | `make i18n`; `make i18n-check` fails when a string has no French or a file is stale |
 | `scripts/make-emoji.py` | The emoji tables of both apps (`Emoji.swift`, `emoji.rs`) | `make i18n-check` |
 | `site/public/site/tokens.css` | The site, the docs (`docs/.vitepress/theme`) and the Windows app (`main.ts`) | `scripts/tokens-check.py` (in `make format-check`) for the docs' light and dark copies; the Mac's `Theme.swift` mirrors it by hand |
 | `macos/Resources/Logos/` | The Windows app's tool logos (`Logo.svelte`) | Imported directly; the Windows dev server may read only this folder and `site/public/site` |

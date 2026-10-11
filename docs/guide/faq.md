@@ -50,6 +50,16 @@ for Windows 10 or 11, installed for your user only. It has the same rules, the s
 or an OpenAI-compatible server) and the same compliance model; see
 [Getting started](./getting-started#on-windows-preview) for what it doesn’t do yet.
 
+## Can I use it on Linux?
+
+Yes, in preview and community supported: [Remora-x86_64.AppImage](https://github.com/iGitScor/triage/releases/latest/download/Remora-x86_64.AppImage),
+which updates itself, or [Remora-amd64.deb](https://github.com/iGitScor/triage/releases/latest/download/Remora-amd64.deb)
+for Ubuntu and Debian (install the new one to update). It's the Windows app: same rules, tools and assistant, sorting
+with keywords only. It needs WebKitGTK 4.1, a keyring for the tokens (GNOME Keyring, KWallet or KeePassXC) and a
+tray: KDE, Cinnamon and XFCE have one; on GNOME add the AppIndicator extension, or Remora opens as a window. Open it
+from the fish's menu. On Wayland, add a shortcut in your system's keyboard settings that runs `remora --reminder`.
+Tested on Ubuntu 24.04 and Fedora KDE; x86_64 only for now.
+
 ## How do I erase everything?
 
 Settings → Privacy → **Erase local data…** disconnects every account, deletes the cache, history, settings and

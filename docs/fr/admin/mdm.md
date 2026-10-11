@@ -157,6 +157,25 @@ stricte (aucun outil, pas d’IA externe, aucun serveur d’IA, pas de serveur l
 un `AIExcludedSources` ou un `AllowedAIModels` illisible coupe l’assistant), et Réglages → Confidentialité indique la
 valeur à corriger.
 
+## Linux : un fichier de politique
+
+L’app Linux (en aperçu) lit les mêmes clés dans **`/etc/remora/policy.json`**, au lancement puis à chaque
+actualisation. Déployez-le par Ansible, Puppet, Salt ou un paquet ; il doit appartenir à root et n’être modifiable que
+par root (`0644`) :
+
+```json
+{
+  "AllowedPlugins": ["github", "gitlab", "linear"],
+  "AllowExternalAI": false,
+  "AllowRemoteImages": true
+}
+```
+
+Les listes sont des tableaux JSON, les interrupteurs `true` ou `false`, les textes des chaînes. La même règle vaut :
+une valeur du mauvais type est appliquée de la façon la plus stricte et nommée dans Réglages → Confidentialité. Un
+fichier qui n’est pas du JSON valide, n’appartient pas à root ou que d’autres peuvent modifier verrouille tout (aucun
+outil, pas d’IA, pas d’avatars, pas de mises à jour) jusqu’à ce qu’il soit corrigé.
+
 ## Vérifier sur un Mac
 
 ```sh

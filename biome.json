@@ -9,8 +9,8 @@
     "includes": [
       "**/*.{ts,js,mjs,svelte,css,json,jsonc}",
       "!**/package-lock.json",
-      "!windows/app/src/i18n/fr.json",
-      "!windows/app/src-tauri/gen"
+      "!desktop/app/src/i18n/fr.json",
+      "!desktop/app/src-tauri/gen"
     ]
   },
   "formatter": {

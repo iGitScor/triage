@@ -1,20 +1,26 @@
 ---
-title: Remora for Windows
-description: Remora for Windows, a Tauri 2 tray app in Rust and Svelte. What it does, what the Mac has that it does not yet, how it maps to the macOS app, and how to build it.
+title: Remora for Windows and Linux
+description: Remora for Windows and Linux (preview), a Tauri 2 tray app in Rust and Svelte. What it does, what the Mac has that it does not yet, how it maps to the macOS app, and how to build it.
 ---
 
-# Remora for Windows
+# Remora for Windows and Linux
 
-Status: **preview**, for colleagues on Windows. A [Tauri 2](https://tauri.app) tray app: a Rust core and a Svelte
-interface on WebView2. It ports the macOS rules and plugins with the same fixtures and tests, so both apps behave the
-same. Each release attaches `Remora-Setup.exe` (per-user install, no admin rights needed).
+Status: **preview**, for colleagues on Windows, and on Linux (community supported). A [Tauri 2](https://tauri.app)
+tray app: a Rust core and a Svelte interface on WebView2 (WebKitGTK on Linux). It ports the macOS rules and plugins
+with the same fixtures and tests, so the apps behave the same. Each release attaches `Remora-Setup.exe` (per-user
+install, no admin rights needed), `Remora-x86_64.AppImage` (updates itself) and `Remora-amd64.deb`.
+
+On Linux: tokens in the Secret Service (GNOME Keyring, KWallet, KeePassXC), data in `~/.local/share/fr.igitscor.remora`
+readable by you only, the policy in `/etc/remora/policy.json`, a window opened from the tray menu (or on its own where
+the desktop has no tray), notifications that open their item, and on Wayland a system shortcut running
+`remora --reminder` instead of Ctrl+Alt+R.
 
 | Part | What | Tests |
 |---|---|---|
 | `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 111 |
-| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 114 |
-| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 73 |
-| `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 3 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 115 |
+| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 76 |
+| `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 4 |
 | `app/src` | The Svelte interface, in English and French | type-checked, 37 |
 
 ## What Windows has, and what it doesn’t yet
@@ -66,10 +72,10 @@ interface never waits on a slow tool.
 
 ## Build and test
 
-Requires Rust ([rustup](https://rustup.rs/), which installs the version in `windows/rust-toolchain.toml`) and Node 22.
+Requires Rust ([rustup](https://rustup.rs/), which installs the version in `desktop/rust-toolchain.toml`) and Node 22.
 
 ```sh
-cd windows
+cd desktop
 cargo test                         # the library crates, on any OS
 cd app && npm ci
 npm run tauri dev -- -- --demo     # sample data in a window

@@ -1,21 +1,27 @@
 ---
-title: Remora pour Windows
-description: Remora pour Windows, une app de zone de notification Tauri 2 en Rust et Svelte. Ce qu’elle fait, ce que le Mac a et qu’elle n’a pas encore, sa correspondance avec l’app macOS, et comment la construire.
+title: Remora pour Windows et Linux
+description: Remora pour Windows et Linux (aperçu), une app de zone de notification Tauri 2 en Rust et Svelte. Ce qu’elle fait, ce que le Mac a et qu’elle n’a pas encore, sa correspondance avec l’app macOS, et comment la construire.
 ---
 
-# Remora pour Windows
+# Remora pour Windows et Linux
 
-Statut : **aperçu**, pour les collègues sous Windows. Une app de zone de notification [Tauri 2](https://tauri.app) :
-un cœur en Rust et une interface Svelte sur WebView2. Elle reprend les règles et les extensions de macOS avec les
-mêmes données de test et les mêmes tests, pour que les deux apps se comportent pareil. Chaque version publiée joint
-`Remora-Setup.exe` (installation par utilisateur, sans droits d’administrateur).
+Statut : **aperçu**, pour les collègues sous Windows, et sous Linux (avec le soutien de la communauté). Une app de
+zone de notification [Tauri 2](https://tauri.app) : un cœur en Rust et une interface Svelte sur WebView2 (WebKitGTK
+sous Linux). Elle reprend les règles et les extensions de macOS avec les mêmes données de test et les mêmes tests,
+pour que les apps se comportent pareil. Chaque version publiée joint `Remora-Setup.exe` (installation par
+utilisateur, sans droits d’administrateur), `Remora-x86_64.AppImage` (qui se met à jour seule) et `Remora-amd64.deb`.
+
+Sous Linux : les jetons dans le Secret Service (GNOME Keyring, KWallet, KeePassXC), les données dans
+`~/.local/share/fr.igitscor.remora` lisibles par vous seul, la politique dans `/etc/remora/policy.json`, une fenêtre
+ouverte depuis le menu de la zone de notification (ou d’elle-même là où le bureau n’en a pas), des notifications qui
+ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remora --reminder` au lieu de Ctrl+Alt+R.
 
 | Partie | Contenu | Tests |
 |---|---|---|
 | `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 111 |
-| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 114 |
-| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 73 |
-| `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 3 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 115 |
+| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 76 |
+| `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 37 |
 
 ## Ce que Windows a, et ce qu’il n’a pas encore
@@ -67,10 +73,10 @@ garder le verrou de la boîte de réception, donc l’interface n’attend jamai
 
 ## Construire et tester
 
-Demande Rust ([rustup](https://rustup.rs/), qui installe la version de `windows/rust-toolchain.toml`) et Node 22.
+Demande Rust ([rustup](https://rustup.rs/), qui installe la version de `desktop/rust-toolchain.toml`) et Node 22.
 
 ```sh
-cd windows
+cd desktop
 cargo test                         # the library crates, on any OS
 cd app && npm ci
 npm run tauri dev -- -- --demo     # sample data in a window

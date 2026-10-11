@@ -1,11 +1,12 @@
 name: Release
 
-# Set the version first (`make version V=0.3.2`), commit, then push the tag v0.3.2. Both apps are checked and built
-# in parallel; the release is published only when both succeed, with every file at once, so a failure never leaves
-# a half-published release. Each build job also writes its app's SBOM (CycloneDX, from the lockfiles) and signs two
+# Set the version first (`make version V=0.3.2`), commit, then push the tag v0.3.2. The apps (macOS, Windows, and
+# Linux in preview) are checked and built in parallel; the release is published only when all succeed, with every
+# file at once, so a failure never leaves a half-published release. Each build job also writes its app's SBOM (CycloneDX, from the lockfiles) and signs two
 # attestations for the file it built: where it was built from (provenance) and what is in it (the SBOM).
 # Anyone can check them: `gh attestation verify Remora.dmg --repo iGitScor/triage`. The files keep the same name in every release, so the website links to
-# https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg (and Remora-Setup.exe).
+# https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg (and Remora-Setup.exe, Remora-x86_64.AppImage,
+# Remora-amd64.deb).
 on:
   push:
     tags: ["v*"]
@@ -146,7 +147,7 @@ jobs:
       attestations: write
     defaults:
       run:
-        working-directory: windows
+        working-directory: desktop
         shell: bash
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -155,36 +156,36 @@ jobs:
       - name: SBOM
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
-          path: windows
+          path: desktop
           format: cyclonedx-json
-          output-file: windows/Remora-Setup.exe.cdx.json
+          output-file: desktop/Remora-Setup.exe.cdx.json
           upload-artifact: false
-      - name: Rust from windows/rust-toolchain.toml
+      - name: Rust from desktop/rust-toolchain.toml
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          workspaces: windows
+          workspaces: desktop
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: windows/app/package-lock.json
+          cache-dependency-path: desktop/app/package-lock.json
       - run: npm ci
-        working-directory: windows/app
+        working-directory: desktop/app
       # The same checks as windows.yml: a release never skips what CI runs.
       - name: French strings are up to date
         run: python scripts/make-i18n.py --check
-        working-directory: windows/app
+        working-directory: desktop/app
       - name: Type-check, test and build the interface
         run: npm run check && npm test && npm run build
-        working-directory: windows/app
+        working-directory: desktop/app
       - name: Lint
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace
       - name: Build the app and the installer
         run: npx tauri build
-        working-directory: windows/app
+        working-directory: desktop/app
       # Signed by SignPath with the SignPath Foundation certificate for open-source projects (see
       # docs/admin/code-signing.md). The app first, then the installer rebuilt around the signed app: the build
       # above already wrote the bundle type into the app, so the second bundling must not patch it again. Each
@@ -206,7 +207,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unsigned-app
-          path: windows/target/release/remora.exe
+          path: desktop/target/release/remora.exe
           if-no-files-found: error
       - name: Sign the app
         if: steps.signing.outputs.enabled == 'true'
@@ -219,20 +220,20 @@ jobs:
           artifact-configuration-slug: exe
           github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
           wait-for-completion-timeout-in-seconds: 3600
-          output-artifact-directory: windows/target/release
+          output-artifact-directory: desktop/target/release
       - name: Rebuild the installer around the signed app
         if: steps.signing.outputs.enabled == 'true'
         run: |
           rm -rf ../target/release/bundle/nsis
           npx tauri bundle --bundles nsis --no-binary-patching
-        working-directory: windows/app
+        working-directory: desktop/app
       - name: Upload the installer for signing
         id: unsigned-installer
         if: steps.signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unsigned-installer
-          path: windows/target/release/bundle/nsis/*-setup.exe
+          path: desktop/target/release/bundle/nsis/*-setup.exe
           if-no-files-found: error
       - name: Sign the installer
         if: steps.signing.outputs.enabled == 'true'
@@ -245,7 +246,7 @@ jobs:
           artifact-configuration-slug: exe
           github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
           wait-for-completion-timeout-in-seconds: 3600
-          output-artifact-directory: windows/signed
+          output-artifact-directory: desktop/signed
       - name: Name it for the release
         env:
           SIGNED: ${{ steps.signing.outputs.enabled }}
@@ -266,19 +267,92 @@ jobs:
       - name: Provenance
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
-          subject-path: windows/Remora-Setup.exe
+          subject-path: desktop/Remora-Setup.exe
       - name: SBOM attestation
         uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
         with:
-          subject-path: windows/Remora-Setup.exe
-          sbom-path: windows/Remora-Setup.exe.cdx.json
+          subject-path: desktop/Remora-Setup.exe
+          sbom-path: desktop/Remora-Setup.exe.cdx.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows
           path: |
-            windows/Remora-Setup.exe
-            windows/Remora-Setup.exe.sha256
-            windows/Remora-Setup.exe.cdx.json
+            desktop/Remora-Setup.exe
+            desktop/Remora-Setup.exe.sha256
+            desktop/Remora-Setup.exe.cdx.json
+          if-no-files-found: error
+
+  # Linux (preview, LINUX-01): an AppImage, which updates itself, and a .deb, updated by installing the new one. Built
+  # on the oldest supported Ubuntu, so the glibc it needs is old enough for most distributions.
+  linux:
+    needs: version
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write # signs the attestations (Sigstore, through GitHub's OIDC token)
+      attestations: write
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Tauri's system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev \
+            libssl-dev libdbus-1-dev
+      - name: SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: desktop
+          format: cyclonedx-json
+          output-file: desktop/Remora-x86_64.AppImage.cdx.json
+          upload-artifact: false
+      - name: Rust from desktop/rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: desktop/app
+      # The same checks as CI: a release never skips what CI runs.
+      - name: Lint and test
+        run: cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
+      - name: Build the AppImage and the .deb
+        run: npx tauri build --bundles appimage,deb
+        working-directory: desktop/app
+      - name: Name them for the release
+        run: |
+          cp target/release/bundle/appimage/*.AppImage Remora-x86_64.AppImage
+          cp target/release/bundle/deb/*.deb Remora-amd64.deb
+          cp Remora-x86_64.AppImage.cdx.json Remora-amd64.deb.cdx.json
+          sha256sum Remora-x86_64.AppImage > Remora-x86_64.AppImage.sha256
+          sha256sum Remora-amd64.deb > Remora-amd64.deb.sha256
+          cat ./*.sha256
+      - name: Provenance
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: |
+            desktop/Remora-x86_64.AppImage
+            desktop/Remora-amd64.deb
+      - name: SBOM attestation
+        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
+        with:
+          subject-path: |
+            desktop/Remora-x86_64.AppImage
+            desktop/Remora-amd64.deb
+          sbom-path: desktop/Remora-x86_64.AppImage.cdx.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux
+          path: |
+            desktop/Remora-x86_64.AppImage
+            desktop/Remora-x86_64.AppImage.sha256
+            desktop/Remora-x86_64.AppImage.cdx.json
+            desktop/Remora-amd64.deb
+            desktop/Remora-amd64.deb.sha256
+            desktop/Remora-amd64.deb.cdx.json
           if-no-files-found: error
 
   # The updater's signature, over the final (Authenticode-signed) installer and bound to this version, so an old
@@ -287,7 +361,7 @@ jobs:
   # the installer and Tauri's standalone CLI, pinned by checksum. It needn't follow app/package.json: the signature
   # format is the same across Tauri 2.
   windows-update:
-    needs: windows
+    needs: [windows, linux]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -298,27 +372,36 @@ jobs:
         with:
           name: windows
           path: dist
+      # The AppImage replaces itself with the same key; a .deb is updated by installing the new package.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux
+          path: dist
       - name: Sign the update
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "::warning::No TAURI_SIGNING_PRIVATE_KEY secret: Windows won't be offered this update."
+            echo "::warning::No TAURI_SIGNING_PRIVATE_KEY secret: Windows and Linux won't be offered this update."
             exit 0
           fi
           curl -fsSL -o "$RUNNER_TEMP/tauri.tgz" "$TAURI_CLI"
           echo "$TAURI_CLI_SHA256  $RUNNER_TEMP/tauri.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/tauri.tgz" -C "$RUNNER_TEMP" cargo-tauri
-          "$RUNNER_TEMP/cargo-tauri" signer sign --app-version "${GITHUB_REF_NAME#v}" dist/Remora-Setup.exe
+          for FILE in dist/Remora-Setup.exe dist/Remora-x86_64.AppImage; do
+            "$RUNNER_TEMP/cargo-tauri" signer sign --app-version "${GITHUB_REF_NAME#v}" "$FILE"
+          done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-update
-          path: dist/Remora-Setup.exe.sig
+          path: |
+            dist/Remora-Setup.exe.sig
+            dist/Remora-x86_64.AppImage.sig
           if-no-files-found: ignore
 
   publish:
-    needs: [macos, windows, windows-update]
+    needs: [macos, windows, linux, windows-update]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -351,6 +434,8 @@ jobs:
 
           **Windows (preview): [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe)** (Windows 10 or 11), installs for your user only. $SMARTSCREEN
 
+          **Linux (preview, community supported): [Remora-x86_64.AppImage](https://github.com/iGitScor/triage/releases/latest/download/Remora-x86_64.AppImage)**, which updates itself, or **[Remora-amd64.deb](https://github.com/iGitScor/triage/releases/latest/download/Remora-amd64.deb)** for Ubuntu and Debian (update by installing the new one). Needs WebKitGTK 4.1, a keyring (GNOME Keyring, KWallet or KeePassXC) and a tray (on GNOME, the AppIndicator extension; without one Remora opens as a window).
+
           **Check a download**: each file has its SHA-256 and its SBOM (\`.cdx.json\`, CycloneDX) next to it, and a signed record of the workflow run and commit it was built from: \`gh attestation verify Remora.dmg --repo iGitScor/triage\`.
           EOF
           # latest.json, what the apps read when updates are on (Tauri's format; the Mac has its own key).
@@ -359,7 +444,8 @@ jobs:
           import datetime, json, os, pathlib
           tag, repo = os.environ["GITHUB_REF_NAME"], os.environ["GITHUB_REPOSITORY"]
           base = f"https://github.com/{repo}/releases/download/{tag}"
-          files = {"macos-universal": ("Remora.dmg", "Remora.dmg.update-sig"), "windows-x86_64": ("Remora-Setup.exe", "Remora-Setup.exe.sig")}
+          files = {"macos-universal": ("Remora.dmg", "Remora.dmg.update-sig"), "windows-x86_64": ("Remora-Setup.exe", "Remora-Setup.exe.sig"),
+                   "linux-x86_64": ("Remora-x86_64.AppImage", "Remora-x86_64.AppImage.sig")}
           platforms = {key: {"url": f"{base}/{name}", "signature": pathlib.Path("dist", sig).read_text().strip()}
                        for key, (name, sig) in files.items() if pathlib.Path("dist", sig).exists()}
           if platforms:
@@ -374,5 +460,7 @@ jobs:
           EXTRA=()
           [ -f dist/latest.json ] && EXTRA=(dist/latest.json)
           gh release create "$GITHUB_REF_NAME" dist/Remora.dmg dist/Remora.dmg.sha256 dist/Remora.dmg.cdx.json \
-            dist/Remora-Setup.exe dist/Remora-Setup.exe.sha256 dist/Remora-Setup.exe.cdx.json "${EXTRA[@]}" \
+            dist/Remora-Setup.exe dist/Remora-Setup.exe.sha256 dist/Remora-Setup.exe.cdx.json \
+            dist/Remora-x86_64.AppImage dist/Remora-x86_64.AppImage.sha256 dist/Remora-x86_64.AppImage.cdx.json \
+            dist/Remora-amd64.deb dist/Remora-amd64.deb.sha256 dist/Remora-amd64.deb.cdx.json "${EXTRA[@]}" \
             --repo "$GITHUB_REPOSITORY" --title "Remora ${GITHUB_REF_NAME#v}" --notes-file notes.md --generate-notes --verify-tag

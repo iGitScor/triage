@@ -44,7 +44,7 @@ const develop: DefaultTheme.SidebarItem[] = [
       { text: 'Architecture', link: '/develop/' },
       { text: 'Writing a plugin', link: '/develop/plugins' },
       { text: 'Building and releasing', link: '/develop/building' },
-      { text: 'Remora for Windows', link: '/develop/windows' },
+      { text: 'Remora for Windows and Linux', link: '/develop/windows' },
     ],
   },
   {
@@ -60,7 +60,7 @@ const developFr: DefaultTheme.SidebarItem[] = [
       { text: 'Architecture', link: '/fr/developper/' },
       { text: 'Écrire une extension', link: '/fr/developper/extensions' },
       { text: 'Construire et publier', link: '/fr/developper/construire-et-publier' },
-      { text: 'Remora pour Windows', link: '/fr/developper/windows' },
+      { text: 'Remora pour Windows et Linux', link: '/fr/developper/windows' },
     ],
   },
   {

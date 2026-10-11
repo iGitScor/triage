@@ -104,9 +104,17 @@ BitLocker les chiffre avec le reste du disque. Réglages → Confidentialité �
 supprime les fichiers et les jetons ; les notifications déjà dans le centre de notifications y restent jusqu’à ce
 qu’elles soient fermées. L’option « supprimer les données de l’app » du désinstalleur retire aussi le dossier.
 
+### Linux (aperçu)
+
+Les mêmes fichiers que sous Windows, dans `$XDG_DATA_HOME/fr.igitscor.remora` (en général `~/.local/share`), un
+dossier lisible par l’utilisateur seul (`0700`, fichiers `0600`). Les jetons sont dans le Secret Service (GNOME
+Keyring, KWallet ou KeePassXC), entrée `fr.igitscor.remora`, utilisateur `secrets`, qui les garde chiffrés au repos ;
+sans trousseau actif, Remora le dit au lieu de démarrer sans jetons. Politique :
+[`/etc/remora/policy.json`](./mdm#linux-un-fichier-de-politique).
+
 **Apprentissage sur l’appareil** : sur macOS, le tri des messages et la comparaison des sujets utilisent le
 framework NaturalLanguage d’Apple (plongements de phrases et de mots fournis avec macOS) ; le classement et les
-conseils de report, de petites statistiques sur l’historique local. L’app Windows trie avec des règles de mots-clés
+conseils de report, de petites statistiques sur l’historique local. L’app Windows et Linux trie avec des règles de mots-clés
 seulement. Rien n’est envoyé.
 
 ## Comment c’est appliqué
