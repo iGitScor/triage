@@ -49,5 +49,7 @@ struct ConversationTests {
         #expect(assembler.placement(of: finished, state: nil, now: now) == .done)
         #expect(assembler.placement(of: finished, state: ItemState(pinned: true), now: now) == .inbox)
         #expect(assembler.layout(items: [finished], states: [:], now: now).done.count == 1)
+        let pinned = assembler.layout(items: [finished], states: ["f": ItemState(pinned: true)], now: now)
+        #expect(pinned.pinned.count == 1 && pinned.actionCount == 0, "shown where you pinned it, not counted")
     }
 }

@@ -227,9 +227,9 @@ impl InboxBundle {
         }
     }
 
-    /// Shown, but neither counted nor announced.
+    /// Shown, but neither counted nor announced: what's to read, and a finished conversation you pinned.
     pub fn is_quiet(&self) -> bool {
-        self.id == "verb.read"
+        self.id == "verb.read" || self.id == "verb.finished"
     }
 }
 

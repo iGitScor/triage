@@ -458,5 +458,8 @@ mod conversation_tests {
         assert_eq!(assembler.placement(&finished, None, now()), Placement::Done);
         let pinned = ItemState { pinned: true, ..Default::default() };
         assert_eq!(assembler.placement(&finished, Some(&pinned), now()), Placement::Inbox);
+        let states = std::collections::HashMap::from([("f".to_string(), pinned)]);
+        let layout = assembler.layout(&[finished], &states, now(), "");
+        assert!(layout.pinned.len() == 1 && layout.action_count() == 0, "shown where you pinned it, not counted");
     }
 }

@@ -25,7 +25,8 @@ public struct InboxBundle: Hashable, Codable, Sendable, Identifiable {
     }
 
     /// Shown, but neither counted in the menu bar nor announced.
-    public var isQuiet: Bool { id == Self.read.id }
+    /// Shown, but neither counted nor announced: what's to read, and a finished conversation you pinned.
+    public var isQuiet: Bool { id == Self.read.id || id == Self.finished.id }
 }
 
 // MARK: Verbs
