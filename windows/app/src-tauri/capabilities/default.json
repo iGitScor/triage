@@ -20,6 +20,7 @@
     "allow-slider-date",
     "allow-slider-progress",
     "allow-add-reminder",
+    "allow-stop-repeating",
     "allow-open-item",
     "allow-open-setup",
     "allow-sources",

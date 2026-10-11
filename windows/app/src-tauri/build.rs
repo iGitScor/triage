@@ -16,6 +16,7 @@ pub const COMMANDS: &[&str] = &[
     "slider_date",
     "slider_progress",
     "add_reminder",
+    "stop_repeating",
     "open_item",
     "open_setup",
     "sources",
