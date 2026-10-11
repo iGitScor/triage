@@ -4,53 +4,66 @@
       "allowed": true,
       "egress": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
       "error": null,
+      "errorKind": null,
       "hosts": ["api.github.com", "github.com", "avatars.githubusercontent.com"],
       "id": "github",
       "identity": "you",
       "name": null,
       "pluginId": "github",
       "pluginName": "GitHub",
+      "refusal": null,
+      "remarks": [],
       "settings": {}
     },
     {
       "allowed": true,
       "egress": "Reads your merge requests, approvals and pipelines from your GitLab host.",
       "error": null,
+      "errorKind": null,
       "hosts": ["gitlab.com"],
       "id": "gitlab",
       "identity": "you",
       "name": null,
       "pluginId": "gitlab",
       "pluginName": "GitLab",
+      "refusal": null,
+      "remarks": [],
       "settings": {}
     },
     {
       "allowed": true,
-      "egress": "Searches your recent mentions and direct messages in Slack.",
+      "egress": "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in.",
       "error": null,
+      "errorKind": null,
       "hosts": ["slack.com"],
       "id": "slack",
       "identity": "you",
       "name": null,
       "pluginId": "slack",
       "pluginName": "Slack",
+      "refusal": null,
+      "remarks": [],
       "settings": {}
     },
     {
       "allowed": true,
       "egress": "Reads issues assigned to you and your Linear inbox.",
       "error": null,
+      "errorKind": null,
       "hosts": ["api.linear.app", "public.linear.app"],
       "id": "linear",
       "identity": "you",
       "name": null,
       "pluginId": "linear",
       "pluginName": "Linear",
+      "refusal": null,
+      "remarks": [],
       "settings": {}
     }
   ],
   "inbox": {
     "accountNames": {},
+    "assistant": null,
     "connected": true,
     "counts": {
       "done": 0,
@@ -61,7 +74,278 @@
     },
     "demo": true,
     "errors": [],
-    "lastRefresh": "2026-10-08T18:33:49.488369Z",
+    "extras": {
+      "demo/1": {},
+      "demo/10": {},
+      "demo/11": {},
+      "demo/12": {},
+      "demo/13": {
+        "help": {
+          "days": 2,
+          "kind": "nudge",
+          "people": [
+            {
+              "avatarUrl": null,
+              "name": "erin",
+              "tone": null
+            },
+            {
+              "avatarUrl": null,
+              "name": "bob",
+              "tone": null
+            }
+          ]
+        }
+      },
+      "demo/2": {},
+      "demo/3": {},
+      "demo/4": {},
+      "demo/5": {},
+      "demo/6": {},
+      "demo/7": {},
+      "demo/8": {},
+      "demo/9": {}
+    },
+    "health": {
+      "state": "fine"
+    },
+    "insights": [
+      {
+        "at": "2026-10-12T07:00:00Z",
+        "id": "pileUp/1791788400.0",
+        "items": [
+          {
+            "accountId": "github",
+            "appUrl": null,
+            "author": {
+              "avatarUrl": null,
+              "name": "frank",
+              "tone": null
+            },
+            "badges": [],
+            "bundle": {
+              "id": "code.review",
+              "rank": 2,
+              "title": "To review"
+            },
+            "context": "acme/web #491",
+            "date": "2026-10-11T11:05:16.821712Z",
+            "due": null,
+            "id": "demo/10",
+            "needsAction": true,
+            "participants": [],
+            "pluginId": "github",
+            "preview": null,
+            "priority": null,
+            "title": "WEB-42 alert on upload failures",
+            "url": "https://github.com"
+          },
+          {
+            "accountId": "github",
+            "appUrl": null,
+            "author": {
+              "avatarUrl": null,
+              "name": "erin",
+              "tone": null
+            },
+            "badges": [
+              {
+                "id": "checks.passing",
+                "label": "Checks",
+                "notify": null,
+                "tone": "positive"
+              },
+              {
+                "id": "diff",
+                "label": "+64 −10",
+                "notify": null,
+                "tone": "neutral"
+              }
+            ],
+            "bundle": {
+              "id": "code.review",
+              "rank": 2,
+              "title": "To review"
+            },
+            "context": "acme/web #490",
+            "date": "2026-10-11T10:45:16.821712Z",
+            "due": null,
+            "id": "demo/9",
+            "needsAction": true,
+            "participants": [],
+            "pluginId": "github",
+            "preview": null,
+            "priority": null,
+            "title": "WEB-42 retry failed uploads",
+            "url": "https://github.com"
+          },
+          {
+            "accountId": "github",
+            "appUrl": null,
+            "author": {
+              "avatarUrl": null,
+              "name": "dave",
+              "tone": null
+            },
+            "badges": [
+              {
+                "id": "diff",
+                "label": "+820 −410",
+                "notify": null,
+                "tone": "neutral"
+              }
+            ],
+            "bundle": {
+              "id": "code.review",
+              "rank": 2,
+              "title": "To review"
+            },
+            "context": "acme/search #77",
+            "date": "2026-10-11T00:45:16.821712Z",
+            "due": null,
+            "id": "demo/11",
+            "needsAction": true,
+            "participants": [],
+            "pluginId": "github",
+            "preview": null,
+            "priority": null,
+            "title": "Refactor the search service",
+            "url": "https://github.com"
+          },
+          {
+            "accountId": "linear",
+            "appUrl": null,
+            "author": {
+              "avatarUrl": null,
+              "name": "Linear",
+              "tone": null
+            },
+            "badges": [],
+            "bundle": {
+              "id": "docs.tasks",
+              "rank": 5,
+              "title": "To do"
+            },
+            "context": "ENG-12",
+            "date": "2026-09-13T21:05:16.821712Z",
+            "due": null,
+            "id": "demo/12",
+            "needsAction": true,
+            "participants": [],
+            "pluginId": "linear",
+            "preview": null,
+            "priority": null,
+            "title": "Update the onboarding checklist",
+            "url": "https://linear.com"
+          }
+        ],
+        "kind": "pileUp"
+      },
+      {
+        "id": "cluster/demo/10,demo/9",
+        "items": [
+          {
+            "accountId": "github",
+            "appUrl": null,
+            "author": {
+              "avatarUrl": null,
+              "name": "frank",
+              "tone": null
+            },
+            "badges": [],
+            "bundle": {
+              "id": "code.review",
+              "rank": 2,
+              "title": "To review"
+            },
+            "context": "acme/web #491",
+            "date": "2026-10-11T11:05:16.821712Z",
+            "due": null,
+            "id": "demo/10",
+            "needsAction": true,
+            "participants": [],
+            "pluginId": "github",
+            "preview": null,
+            "priority": null,
+            "title": "WEB-42 alert on upload failures",
+            "url": "https://github.com"
+          },
+          {
+            "accountId": "github",
+            "appUrl": null,
+            "author": {
+              "avatarUrl": null,
+              "name": "erin",
+              "tone": null
+            },
+            "badges": [
+              {
+                "id": "checks.passing",
+                "label": "Checks",
+                "notify": null,
+                "tone": "positive"
+              },
+              {
+                "id": "diff",
+                "label": "+64 −10",
+                "notify": null,
+                "tone": "neutral"
+              }
+            ],
+            "bundle": {
+              "id": "code.review",
+              "rank": 2,
+              "title": "To review"
+            },
+            "context": "acme/web #490",
+            "date": "2026-10-11T10:45:16.821712Z",
+            "due": null,
+            "id": "demo/9",
+            "needsAction": true,
+            "participants": [],
+            "pluginId": "github",
+            "preview": null,
+            "priority": null,
+            "title": "WEB-42 retry failed uploads",
+            "url": "https://github.com"
+          }
+        ],
+        "kind": "cluster"
+      },
+      {
+        "id": "stale/demo/12",
+        "items": [
+          {
+            "accountId": "linear",
+            "appUrl": null,
+            "author": {
+              "avatarUrl": null,
+              "name": "Linear",
+              "tone": null
+            },
+            "badges": [],
+            "bundle": {
+              "id": "docs.tasks",
+              "rank": 5,
+              "title": "To do"
+            },
+            "context": "ENG-12",
+            "date": "2026-09-13T21:05:16.821712Z",
+            "due": null,
+            "id": "demo/12",
+            "needsAction": true,
+            "participants": [],
+            "pluginId": "linear",
+            "preview": null,
+            "priority": null,
+            "title": "Update the onboarding checklist",
+            "url": "https://linear.com"
+          }
+        ],
+        "kind": "stale"
+      }
+    ],
+    "lastRefresh": "2026-10-11T15:45:16.849319Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -88,7 +372,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-08T18:03:49.487343Z",
+              "date": "2026-10-11T15:15:16.821712Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -114,7 +398,7 @@
                 "title": "To reply"
               },
               "context": "Direct message",
-              "date": "2026-10-08T16:13:49.487343Z",
+              "date": "2026-10-11T13:25:16.821712Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -162,7 +446,7 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-08T18:21:49.487343Z",
+              "date": "2026-10-11T15:33:16.821712Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
@@ -212,7 +496,7 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-08T16:58:49.487343Z",
+              "date": "2026-10-11T14:10:16.821712Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
@@ -266,7 +550,7 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-08T11:53:49.487343Z",
+              "date": "2026-10-11T09:05:16.821712Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
@@ -326,7 +610,7 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-08T18:25:49.487343Z",
+              "date": "2026-10-11T15:37:16.821712Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
@@ -379,7 +663,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-07T09:13:49.487343Z",
+              "date": "2026-10-10T06:25:16.821712Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -410,7 +694,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-08T13:53:49.487343Z",
+          "date": "2026-10-11T11:05:16.821712Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -449,7 +733,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-08T13:33:49.487343Z",
+          "date": "2026-10-11T10:45:16.821712Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -482,7 +766,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-08T03:33:49.487343Z",
+          "date": "2026-10-11T00:45:16.821712Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -508,7 +792,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-10T23:53:49.487343Z",
+          "date": "2026-09-13T21:05:16.821712Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -550,7 +834,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-07T17:33:49.487343Z",
+              "date": "2026-10-10T14:45:16.821712Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -589,7 +873,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-06T16:33:49.487343Z",
+              "date": "2026-10-09T13:45:16.821712Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
@@ -615,13 +899,16 @@
         }
       ]
     },
+    "reconnectNames": [],
+    "remarks": [],
+    "reviewPace": 1.0,
     "states": {
       "demo/10": {
         "done": null,
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791467629|",
+          "fingerprint": "1791716716|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -634,7 +921,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791430429|diff",
+          "fingerprint": "1791679516|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
@@ -647,7 +934,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789084429|",
+          "fingerprint": "1789333516|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -660,7 +947,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791466429|checks.passing,diff",
+          "fingerprint": "1791715516|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -670,11 +957,33 @@
       }
     }
   },
+  "managed": {
+    "aiServer": null,
+    "allowExternalAi": null,
+    "allowLocalAi": null,
+    "allowRemoteImages": null,
+    "allowedAiServers": null,
+    "allowedPlugins": null,
+    "automaticUpdates": null,
+    "unreadable": []
+  },
+  "policy": {
+    "aiServer": null,
+    "allowExternalAi": false,
+    "allowLocalAi": null,
+    "allowRemoteImages": true,
+    "allowedAiServers": null,
+    "allowedPlugins": null,
+    "externalAiManagedOff": false
+  },
   "preferences": {
     "allowExternalAi": false,
     "allowRemoteImages": true,
     "allowedPlugins": null,
     "appearance": "system",
+    "assistantExcludedSources": [],
+    "briefCacheMinutes": 30,
+    "checkForUpdates": false,
     "focusWhileInProgress": true,
     "hiddenContentPlugins": [],
     "notifyArrivals": true,
@@ -682,10 +991,19 @@
     "openInApps": true,
     "refreshMinutes": 5,
     "trayCount": "waitingOnMe",
-    "wakeOnActivity": true
+    "wakeOnActivity": true,
+    "wholeInboxBrief": true
+  },
+  "snoozeReturns": {
+    "focus": "2026-10-12T07:00:00Z",
+    "motivation": "2026-10-12T07:00:00Z",
+    "noTime": "2026-10-12T07:00:00Z",
+    "notUrgent": "2026-10-12T07:00:00Z",
+    "waiting": "2026-10-14T07:00:00Z"
   },
   "sources": [
     {
+      "assistant": false,
       "manifest": {
         "egress": {
           "description": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
@@ -726,6 +1044,7 @@
       "refusal": null
     },
     {
+      "assistant": false,
       "manifest": {
         "egress": {
           "description": "Reads your merge requests, approvals and pipelines from your GitLab host.",
@@ -767,16 +1086,17 @@
       "refusal": null
     },
     {
+      "assistant": false,
       "manifest": {
         "egress": {
-          "description": "Searches your recent mentions and direct messages in Slack.",
+          "description": "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in.",
           "externalAi": false,
           "hosts": ["slack.com"]
         },
         "fields": [
           {
             "defaultValue": "",
-            "help": "A user token (xoxp-…) with the search:read scope.",
+            "help": "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies.",
             "isOptional": false,
             "isSecret": true,
             "key": "token",
@@ -802,12 +1122,13 @@
           "In the app page, open “Install App” and click “Install to <workspace>”, then Allow.",
           "Copy the “User OAuth Token” (it starts with xoxp-) and paste it below."
         ],
-        "setupUrl": "https://api.slack.com/apps?new_app=1&manifest_json=%7B%22display_information%22%3A%7B%22name%22%3A%22Remora%22%2C%22description%22%3A%22Mentions+and+DMs+in+your+inbox%22%7D%2C%22oauth_config%22%3A%7B%22scopes%22%3A%7B%22user%22%3A%5B%22search%3Aread%22%5D%7D%7D%2C%22settings%22%3A%7B%22org_deploy_enabled%22%3Afalse%2C%22socket_mode_enabled%22%3Afalse%2C%22token_rotation_enabled%22%3Afalse%7D%7D",
-        "summary": "Mentions and direct messages from the last few days."
+        "setupUrl": "https://api.slack.com/apps?new_app=1&manifest_json=%7B%22display_information%22%3A%7B%22name%22%3A%22Remora%22%2C%22description%22%3A%22Mentions+and+DMs+in+your+inbox%22%7D%2C%22oauth_config%22%3A%7B%22scopes%22%3A%7B%22user%22%3A%5B%22search%3Aread%22%2C%22channels%3Ahistory%22%2C%22groups%3Ahistory%22%5D%7D%7D%2C%22settings%22%3A%7B%22org_deploy_enabled%22%3Afalse%2C%22socket_mode_enabled%22%3Afalse%2C%22token_rotation_enabled%22%3Afalse%7D%7D",
+        "summary": "Mentions, direct messages and replies in your threads from the last few days."
       },
       "refusal": null
     },
     {
+      "assistant": false,
       "manifest": {
         "egress": {
           "description": "Reads issues assigned to you and your Linear inbox.",
@@ -835,6 +1156,235 @@
         ],
         "setupUrl": "https://linear.app/settings/account/security",
         "summary": "Issues assigned to you, and the mentions and comments waiting in your Linear inbox."
+      },
+      "refusal": null
+    },
+    {
+      "assistant": false,
+      "manifest": {
+        "egress": {
+          "description": "Reads open tasks from the Notion databases you choose.",
+          "externalAi": false,
+          "hosts": ["api.notion.com"]
+        },
+        "fields": [
+          {
+            "defaultValue": "",
+            "help": "A personal access token, or the secret of an internal connection.",
+            "isOptional": false,
+            "isSecret": true,
+            "key": "token",
+            "label": "Personal access token",
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "",
+            "help": "Open the database as a full page, then ••• → Copy link.",
+            "isOptional": false,
+            "isSecret": false,
+            "key": "databases",
+            "label": "Task databases",
+            "placeholder": "Database links, comma separated"
+          },
+          {
+            "defaultValue": "Assignee",
+            "help": "The people property that says who a task is for.",
+            "isOptional": false,
+            "isSecret": false,
+            "key": "assignee",
+            "label": "Assignee property",
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "Done, Complete, Archived",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "doneValues",
+            "label": "Done statuses",
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "",
+            "help": "Only needed with an internal connection, to find your tasks.",
+            "isOptional": true,
+            "isSecret": false,
+            "key": "email",
+            "label": "Your Notion email",
+            "placeholder": "you@company.com"
+          }
+        ],
+        "id": "notion",
+        "logo": "notion",
+        "name": "Notion",
+        "setupLabel": "Create a token",
+        "setupSteps": [
+          "Click “Create a token”, then “New token”. Name it Remora, keep the “Notion API” capability, pick an expiration and create it.",
+          "Copy the token (Notion shows it only once) and paste it below.",
+          "Paste the links of your task databases. No sharing needed: the token sees what you see.",
+          "No “New token” button? Your workspace limits tokens to owners: ask one, or use an internal connection’s secret."
+        ],
+        "setupUrl": "https://www.notion.so/developers/tokens",
+        "summary": "Open tasks assigned to you in the databases you choose."
+      },
+      "refusal": null
+    },
+    {
+      "assistant": true,
+      "manifest": {
+        "egress": {
+          "description": "Runs Claude Code on this computer, which sends the titles, contexts, authors and statuses of inbox items to Anthropic.",
+          "externalAi": true,
+          "hosts": []
+        },
+        "fields": [
+          {
+            "defaultValue": "",
+            "help": "Only if Claude Code is installed somewhere unusual (run `where.exe claude` in a terminal).",
+            "isOptional": true,
+            "isSecret": false,
+            "key": "path",
+            "label": "Path to claude",
+            "placeholder": "Found automatically"
+          },
+          {
+            "defaultValue": "",
+            "help": null,
+            "isOptional": true,
+            "isSecret": false,
+            "key": "model",
+            "label": "Model for the brief",
+            "placeholder": "Claude Code’s default"
+          },
+          {
+            "defaultValue": "claude-haiku-5-5",
+            "help": "A lighter model is enough for two sentences and uses less of your plan.",
+            "isOptional": false,
+            "isSecret": false,
+            "key": "digestModel",
+            "label": "Model for bundle summaries",
+            "placeholder": ""
+          }
+        ],
+        "id": "claude-code",
+        "logo": "claude",
+        "name": "Claude Code",
+        "setupLabel": "Install Claude Code",
+        "setupSteps": [
+          "Install Claude Code with Anthropic’s installer (recommended: it doesn’t need Node.js), then sign in once by running `claude` in a terminal.",
+          "Click Connect: Remora writes a first brief to check that everything works."
+        ],
+        "setupUrl": "https://claude.com/product/claude-code",
+        "summary": "The brief through the Claude Code signed in on this computer, on your Claude plan. No API key."
+      },
+      "refusal": "External AI is turned off in Privacy settings."
+    },
+    {
+      "assistant": true,
+      "manifest": {
+        "egress": {
+          "description": "Sends the titles, contexts, authors and statuses of inbox items to Anthropic.",
+          "externalAi": true,
+          "hosts": ["api.anthropic.com"]
+        },
+        "fields": [
+          {
+            "defaultValue": "",
+            "help": "An Anthropic API key from the Claude Console.",
+            "isOptional": false,
+            "isSecret": true,
+            "key": "token",
+            "label": "API key",
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "claude-opus-5-5",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "model",
+            "label": "Model for the brief",
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "claude-haiku-5-5",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "digestModel",
+            "label": "Model for bundle summaries",
+            "placeholder": ""
+          }
+        ],
+        "id": "claude",
+        "logo": "anthropic",
+        "name": "Claude API",
+        "setupLabel": "Create an API key",
+        "setupSteps": [
+          "Click “Create an API key” and sign in to the Claude Console.",
+          "Create a key and paste it below."
+        ],
+        "setupUrl": "https://platform.claude.com/settings/keys",
+        "summary": "The brief through an Anthropic API key. Item titles and context are sent to Anthropic."
+      },
+      "refusal": "External AI is turned off in Privacy settings."
+    },
+    {
+      "assistant": true,
+      "manifest": {
+        "egress": {
+          "description": "Sends the titles, contexts, authors and statuses of inbox items to the server you set.",
+          "externalAi": true,
+          "hosts": []
+        },
+        "fields": [
+          {
+            "defaultValue": "https://api.openai.com/v1",
+            "help": "The API's address, up to /v1. A server on this computer can use http, e.g. http://localhost:11434/v1.",
+            "isOptional": false,
+            "isSecret": false,
+            "key": "host",
+            "label": "Server",
+            "placeholder": "https://api.openai.com/v1"
+          },
+          {
+            "defaultValue": "",
+            "help": "From your provider. Not needed for a server on this computer.",
+            "isOptional": true,
+            "isSecret": true,
+            "key": "token",
+            "label": "API key",
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "model",
+            "label": "Model for the brief",
+            "placeholder": "Model id from your provider"
+          },
+          {
+            "defaultValue": "",
+            "help": null,
+            "isOptional": true,
+            "isSecret": false,
+            "key": "digestModel",
+            "label": "Model for bundle summaries",
+            "placeholder": "Same as the brief"
+          }
+        ],
+        "id": "openai",
+        "logo": null,
+        "name": "OpenAI-compatible",
+        "setupLabel": "",
+        "setupSteps": [
+          "Create an API key with your provider, or start the server on this computer.",
+          "Paste the server address, the key and the model id below."
+        ],
+        "setupUrl": null,
+        "summary": "The brief through OpenAI, Azure OpenAI, Mistral or a server on this computer. Item titles and context are sent to that server."
       },
       "refusal": null
     }

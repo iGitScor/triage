@@ -1,12 +1,13 @@
 //! Sample items for `--demo`, so the app can be explored without connecting anything. The same inbox as
 //! the macOS demo (made-up people and repositories), with Linear for tasks.
 
-use crate::Inbox;
+use crate::{Inbox, Managed, MemoryVault};
 use chrono::{DateTime, Duration, Utc};
 use remora_core::{
     Account, Badge, InboxBundle, InboxItem, ItemState, Person, Snooze, SnoozeClock, SnoozeMode, SnoozeReason, Tone,
 };
 use std::collections::HashMap;
+use std::sync::Arc;
 
 fn account(id: &str, plugin: &str) -> Account {
     Account {
@@ -249,11 +250,30 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
     inbox.load_demo(accounts, demo.items, states);
 }
 
+/// What the interface reads from the app, for the demo inbox: the preview's fixture
+/// (`app/src/fixtures/demo.json`, written by `make win-fixture`).
+pub fn fixture(now: DateTime<Utc>) -> serde_json::Value {
+    let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
+    load(&mut inbox, now);
+    serde_json::json!({
+        "inbox": crate::view::inbox_view(&inbox, "", true, &|key| key.to_string()),
+        "sources": inbox.sources(),
+        "accounts": inbox.account_infos(),
+        "preferences": inbox.preferences,
+        "managed": inbox.managed,
+        "policy": inbox.policy(),
+        "snoozeReturns": SnoozeReason::ALL
+            .iter()
+            .map(|reason| (serde_json::to_value(reason).unwrap(), inbox.suggested_return(*reason, now)))
+            .map(|(reason, date)| (reason.as_str().unwrap_or_default().to_string(), date))
+            .collect::<std::collections::BTreeMap<_, _>>(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Managed, MemoryVault};
-    use std::sync::Arc;
+    use std::collections::BTreeSet;
 
     #[test]
     fn the_demo_fills_every_tab() {
@@ -264,5 +284,36 @@ mod tests {
         assert!(layout.my_turn_items().count() >= 6);
         assert!(layout.waiting_count() >= 2);
         assert_eq!(layout.snoozed.len(), 4);
+    }
+
+    /// Every field path in a JSON value, array elements merged.
+    fn paths(value: &serde_json::Value, prefix: &str, out: &mut BTreeSet<String>) {
+        match value {
+            serde_json::Value::Object(map) => {
+                for (key, value) in map {
+                    let path = format!("{prefix}.{key}");
+                    paths(value, &path, out);
+                    out.insert(path);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                values.iter().for_each(|value| paths(value, &format!("{prefix}[]"), out))
+            }
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn the_preview_fixture_has_every_field_the_app_sends() {
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../../../app/src/fixtures/demo.json")).unwrap();
+        let (mut expected, mut found) = (BTreeSet::new(), BTreeSet::new());
+        paths(&super::fixture(Utc::now()), "", &mut expected);
+        paths(&fixture, "", &mut found);
+        assert_eq!(
+            expected.symmetric_difference(&found).collect::<Vec<_>>(),
+            Vec::<&String>::new(),
+            "app/src/fixtures/demo.json is stale: run `make win-fixture`"
+        );
     }
 }

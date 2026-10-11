@@ -9,7 +9,10 @@ import { chromium } from 'playwright-core'
 const root = new URL('..', import.meta.url).pathname
 const out = process.argv[2] ?? join(root, 'preview')
 mkdirSync(out, { recursive: true })
-const fixture = JSON.parse(readFileSync(join(root, 'src/fixtures/demo.json'), 'utf8'))
+const fixture = {
+  ...JSON.parse(readFileSync(join(root, 'src/fixtures/demo.json'), 'utf8')),
+  version: JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version,
+}
 
 const types = {
   '.html': 'text/html',
@@ -35,10 +38,11 @@ function mock(data) {
     accounts: () => data.accounts,
     settings: () => ({
       preferences: data.preferences,
-      managed: { unreadable: [] },
+      managed: data.managed,
       isManaged: false,
+      policy: data.policy,
       autostart: true,
-      version: '0.2.1',
+      version: data.version,
       dataDir: 'C:\\Users\\alice\\AppData\\Local\\Remora',
       shortcut: 'CommandOrControl+Alt+R',
     }),
@@ -50,8 +54,14 @@ function mock(data) {
     ],
     slider_date: ({ progress, from }) =>
       new Date((from ? Date.parse(from) : Date.now()) + steps[Math.round(progress * 18)] * 60_000).toISOString(),
+    slider_progress: () => 0.4,
+    snooze_advice: () => ({ returns: data.snoozeReturns, usual: null, nudge: null }),
+    update_status: () => ({ state: 'idle' }),
+    review_queue: () => [],
     'plugin:event|listen': () => 1,
+    'plugin:event|unlisten': () => null,
   }
+  window.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => {} }
   window.__TAURI_INTERNALS__ = {
     invoke: async (cmd, args) => (replies[cmd] ? replies[cmd](args ?? {}) : null),
     transformCallback: () => 1,
@@ -61,8 +71,8 @@ function mock(data) {
 
 const shots = [
   ['myturn', async () => {}],
-  ['waiting', (p) => p.getByRole('button', { name: /^(Waiting|En attente)/ }).click()],
-  ['snoozed', (p) => p.getByRole('button', { name: /^(Snoozed|Reportés)/ }).click()],
+  ['waiting', (p) => p.getByRole('tab', { name: /^(Waiting|En attente)/ }).click()],
+  ['snoozed', (p) => p.getByRole('tab', { name: /^(Snoozed|Reportés)/ }).click()],
   [
     'snooze-sheet',
     async (p) => {
@@ -81,14 +91,14 @@ const shots = [
     'general',
     async (p) => {
       await p.getByRole('button', { name: /^(Settings|Réglages)$/ }).click()
-      await p.getByRole('button', { name: /^(General|Général)$/ }).click()
+      await p.getByRole('tab', { name: /^(General|Général)$/ }).click()
     },
   ],
   [
     'privacy',
     async (p) => {
       await p.getByRole('button', { name: /^(Settings|Réglages)$/ }).click()
-      await p.getByRole('button', { name: /^(Privacy|Confidentialité)$/ }).click()
+      await p.getByRole('tab', { name: /^(Privacy|Confidentialité)$/ }).click()
     },
   ],
 ]

@@ -3,7 +3,7 @@
 # See CONTRIBUTING.md. On Windows without make, run the commands from windows/README.md directly.
 
 .DEFAULT_GOAL := help
-.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo win-test win-check win-demo i18n i18n-check test-counts \
+.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo win-test win-check win-demo win-fixture i18n i18n-check test-counts \
 	docs docs-build a11y site site-preview screenshots deploy clean
 
 help: ## List the targets
@@ -73,6 +73,10 @@ win-demo: ## The Windows tray app with sample data in a window (runs on a Mac to
 	cd windows/app && npm run tauri dev -- -- --demo
 
 # Strings: English in the code, French in macos/scripts/translations_fr.py for both apps.
+
+win-fixture: ## Regenerate the Windows preview's demo data (a test fails when it is stale)
+	cd windows && cargo run -q -p remora_app --example demo_view > app/src/fixtures/demo.json
+	npx biome format --write windows/app/src/fixtures/demo.json
 
 i18n: ## Regenerate the French strings of both apps from the dictionary
 	python3 macos/scripts/make-strings.py
