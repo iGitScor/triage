@@ -33,9 +33,8 @@ manques connus ci-dessous demeurent. Cette déclaration est revue à chaque vers
 
 ## Manques connus
 
-- **Windows** : le focus peut se perdre quand une confirmation remplace son bouton ; en session de relecture, Entrée
-  ouvre la pull request quel que soit le focus ; la fenêtre ne s’agrandit pas et le texte ne grossit pas au-delà de
-  la mise à l’échelle de Windows.
+- **Windows** : le focus peut se perdre quand une confirmation remplace son bouton ; la fenêtre ne s’agrandit pas et
+  le texte ne grossit pas au-delà de la mise à l’échelle de Windows.
 - **macOS** : les champs du formulaire de connexion sont nommés par leur texte indicatif ; les éléments du brief ne
   s’ouvrent qu’au clic.
 

@@ -33,8 +33,8 @@ statement is reviewed with each release.
 
 ## Known gaps
 
-- **Windows**: the focus can be lost when a confirmation replaces its button; in a review session Enter opens the
-  pull request whatever has the focus; the window can't grow and text can't be made bigger than Windows scaling.
+- **Windows**: the focus can be lost when a confirmation replaces its button; the window can't grow and text can't
+  be made bigger than Windows scaling.
 - **macOS**: the connect form's fields are named by their placeholders; the brief's focus items open only with a
   click.
 

@@ -10,7 +10,11 @@ import { offer } from './failures'
 import { REASONS } from './reasons'
 
 /** One item, or a whole group (*Snooze all…*): then no mode, the same reason and date for each. */
-let { items, onclose }: { items: Item[]; onclose: () => void } = $props()
+let {
+  items,
+  onclose,
+  onsnoozed,
+}: { items: Item[]; onclose: () => void /** After the snooze is saved. */; onsnoozed?: () => void } = $props()
 const many = $derived(items.length > 1)
 
 let advice: SnoozeAdvice | null = $state(null)
@@ -56,6 +60,7 @@ onMount(async () => {
         await api.snoozeMany(items.map((item) => item.id), date, reason, news)
         offer(t('%d items snoozed', items.length), t('Undo'), api.undo)
       } else await api.snooze(items[0].id, date, mode, reason, news)
+      onsnoozed?.()
       onclose()
     }}
   />

@@ -11,7 +11,13 @@ let {
   pace,
   onsnooze,
   onclose,
-}: { extras: Record<string, ItemExtras>; pace: number; onsnooze: (item: Item) => void; onclose: () => void } = $props()
+}: {
+  extras: Record<string, ItemExtras>
+  pace: number
+  /** Opens the snooze sheet; `then` runs once the item is snoozed, to move on as on macOS. */
+  onsnooze: (item: Item, then: () => void) => void
+  onclose: () => void
+} = $props()
 let queue: Item[] = $state([])
 let index = $state(0)
 const item = $derived(queue[index])
@@ -29,20 +35,28 @@ async function done() {
   index += 1
 }
 
+function snooze(current: Item) {
+  onsnooze(current, () => {
+    if (queue[index]?.id === current.id) index += 1
+  })
+}
+
+/** The session's keys, on the session only: a sheet opened from it (snooze) keeps its own. Enter on a button
+    presses that button; elsewhere it opens the review. */
 function keydown(event: KeyboardEvent) {
-  if (!item || event.target instanceof HTMLInputElement) return
-  if (event.key === 'Enter') api.openItem(item.id)
-  else if (event.key === 'd' || event.key === 'D') done()
-  else if (event.key === 's' || event.key === 'S') onsnooze(item)
-  else if (event.key === 'ArrowRight') index += 1
+  const target = event.target as HTMLElement
+  if (!item || event.ctrlKey || event.metaKey || event.altKey || target.matches('input, select, textarea')) return
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key
+  if (key === 'Enter' && !target.closest('button, a[href]')) api.openItem(item.id)
+  else if (key === 'd') done()
+  else if (key === 's') snooze(item)
+  else if (key === 'ArrowRight') index += 1
   else return
   event.preventDefault()
 }
 </script>
 
-<svelte:window onkeydown={keydown} />
-
-<div class="sheet" role="dialog" aria-modal="true" aria-label={t('Review session')} use:modal={onclose}>
+<div class="sheet" role="dialog" aria-modal="true" aria-label={t('Review session')} tabindex="-1" use:modal={onclose} onkeydown={keydown}>
   <div class="row">
     <strong>{t('Review session')}</strong>
     <span class="spacer"></span>
@@ -61,7 +75,7 @@ function keydown(event: KeyboardEvent) {
     <div class="row actions">
       <button type="button" class="pill primary" onclick={() => api.openItem(item.id)}>{t('Open')}</button>
       <button type="button" class="pill" onclick={done}>{t('Done')}</button>
-      <button type="button" class="pill" onclick={() => onsnooze(item)}>{t('Snooze…')}</button>
+      <button type="button" class="pill" onclick={() => snooze(item)}>{t('Snooze…')}</button>
       <button type="button" class="pill" onclick={() => (index += 1)}>{t('Skip')}</button>
     </div>
     <p class="muted hint">{t('⏎ open · D done · S snooze · → skip · Esc close')}</p>

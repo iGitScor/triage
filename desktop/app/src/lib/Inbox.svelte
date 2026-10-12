@@ -59,6 +59,8 @@ onMount(() => {
 })
 /** What the snooze sheet is for: one item, or a whole group. */
 let snoozing: Item[] | null = $state(null)
+/** What to do once the sheet's items are snoozed: the review session moves on. */
+let afterSnooze: (() => void) | null = null
 /// A message the waiting assistant wrote, to copy.
 let drafting: { item: Item; text: string } | null = $state(null)
 const ondraft = (item: Item, text: string) => (drafting = { item, text })
@@ -255,8 +257,8 @@ async function clearAll() {
     <button type="button" class="link plain muted" onclick={() => api.quit()}>{t('Quit')}</button>
   </footer>
 
-  {#if snoozing}<SnoozeSheet items={snoozing} onclose={() => (snoozing = null)} />{/if}
-  {#if reviewing && view}<ReviewSession extras={view.extras} pace={view.reviewPace} onsnooze={(i) => (snoozing = [i])} onclose={() => (reviewing = false)} />{/if}
+  {#if snoozing}<SnoozeSheet items={snoozing} onsnoozed={() => afterSnooze?.()} onclose={() => { snoozing = null; afterSnooze = null }} />{/if}
+  {#if reviewing && view}<ReviewSession extras={view.extras} pace={view.reviewPace} onsnooze={(i, then) => { snoozing = [i]; afterSnooze = then }} onclose={() => (reviewing = false)} />{/if}
   {#if showKeys}<KeyboardHelp onclose={() => (showKeys = false)} />{/if}
   {#if drafting}<DraftPanel item={drafting.item} text={drafting.text} onclose={() => (drafting = null)} />{/if}
 </div>
