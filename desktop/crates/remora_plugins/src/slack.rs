@@ -201,7 +201,8 @@ impl SlackPlugin {
         me: &str,
         team: Option<&str>,
         custom: &HashMap<String, String>,
-    ) -> (Vec<InboxItem>, Vec<String>) {
+    ) -> Result<(Vec<InboxItem>, Vec<remora_core::Message>), PluginError> {
+        let mut failed = None;
         let mut latest: HashMap<(String, String), Match> = HashMap::new();
         for message in mine.into_iter().filter(|m| !m.channel.is_direct()) {
             let key = (message.channel.id.clone(), message.thread_ts());
@@ -224,9 +225,15 @@ impl SlackPlugin {
             let replies = match self.call::<Replies>("conversations.replies", &query).await {
                 Ok(replies) => replies,
                 Err(PluginError::Api(message)) if message.ends_with("missing_scope") => {
-                    return (items, vec![MISSING_HISTORY.to_string()])
+                    return Ok((items, vec![MISSING_HISTORY.into()]))
                 }
-                Err(_) => continue,
+                Err(error) => {
+                    if let Some(limit) = crate::rate_limit_of(&error) {
+                        return Err(limit);
+                    }
+                    failed = failed.or(Some(error));
+                    continue;
+                }
             };
             let mention = format!("<@{me}>");
             // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
@@ -253,7 +260,8 @@ impl SlackPlugin {
                 .any(|r| r.date() < thread.date() && r.user.as_deref().is_some_and(|u| u != me) && r.bot_id.is_none());
             items.push(unanswered(&thread, answered, on_yours, &self.account_id, me, team));
         }
-        (items, vec![])
+        // A thread that couldn't be read is said, not passed over.
+        Ok((items, failed.iter().map(|e| crate::partial("Replies in your threads", e)).collect()))
     }
 }
 
@@ -456,7 +464,22 @@ impl SourcePlugin for SlackPlugin {
             self.reacted_by_you(&auth.user_id, &custom)
         );
         let (mentions, direct) = (mentions?.messages.matches, direct?.messages.matches);
-        let sent = sent.map(|s| s.messages.matches).unwrap_or_default();
+        let mut partial = vec![];
+        // Your own messages decide whose turn it is and which threads to read: best-effort, but said when missing.
+        let mut yours = |search: Result<Search, PluginError>| match search {
+            Ok(search) => Ok(search.messages.matches),
+            Err(error) => {
+                if let Some(limit) = crate::rate_limit_of(&error) {
+                    return Err(limit);
+                }
+                if partial.is_empty() {
+                    partial.push(crate::partial("Your recent messages", &error));
+                }
+                Ok(vec![])
+            }
+        };
+        let sent = yours(sent)?;
+        let mine = yours(mine)?;
         let heads = conversations(&mentions, &direct, &sent, &auth.user_id);
         // Search results carry no reactions: ask for those of the newest messages that matter, unless the token
         // can't read reactions at all.
@@ -472,11 +495,10 @@ impl SourcePlugin for SlackPlugin {
             &self.account_id,
             &reactions,
         );
-        let mine = mine.map(|s| s.messages.matches).unwrap_or_default();
-        let (threads, remarks) = self.thread_replies(mine, &auth.user_id, auth.team_id.as_deref(), &custom).await;
+        let (threads, remarks) = self.thread_replies(mine, &auth.user_id, auth.team_id.as_deref(), &custom).await?;
         snapshot.items.extend(threads);
-        // Fixed sentences: the interface has each one as it is.
-        snapshot.remarks.extend(remarks.into_iter().map(Into::into));
+        snapshot.remarks.extend(remarks);
+        snapshot.remarks.extend(partial);
         snapshot.remarks.extend(reactions_remark.map(Into::into));
         Ok(snapshot)
     }

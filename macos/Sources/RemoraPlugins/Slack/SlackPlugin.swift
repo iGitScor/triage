@@ -65,16 +65,24 @@ public struct SlackPlugin: SourcePlugin {
         let me = "<@\(auth.userId)>"
         async let mentions: Search = call("search.messages", ["query": "\(me) -from:\(me) after:\(since)"])
         async let direct: Search = call("search.messages", ["query": "to:me -from:\(me) after:\(since)"])
-        async let mine: Search? = try? call("search.messages", ["query": "from:\(me) is:thread after:\(since)"])
+        // Your own messages decide whose turn it is and which threads to read: best-effort, but said when missing.
+        async let mine = BestEffort.attempt {
+            try await call("search.messages", ["query": "from:\(me) is:thread after:\(since)"]) as Search
+        }
         // Your own recent messages: an answer of yours ends a conversation's turn.
-        async let sent: Search? = try? call("search.messages", ["query": "from:\(me) after:\(since)"])
+        async let sent = BestEffort.attempt {
+            try await call("search.messages", ["query": "from:\(me) after:\(since)"]) as Search
+        }
         // The workspace's own emoji first (kept a day): an alias of ✅ must count as ✅ wherever reactions decide.
         let custom = await customEmoji()
         async let yours = reactedByYou(me: auth.userId, custom: custom)
         let mentioned = try await mentions.messages.matches
         let written = try await direct.messages.matches
+        var partial: [String] = []
+        let ownSent = try BestEffort.unwrap(await sent, "Your recent messages", remarks: &partial)
+        let ownThreads = try BestEffort.unwrap(await mine, "Your recent messages", remarks: &partial)
         let heads = Self.conversations(
-            mentions: mentioned, direct: written, sent: await sent?.messages.matches ?? [], me: auth.userId)
+            mentions: mentioned, direct: written, sent: ownSent?.messages.matches ?? [], me: auth.userId)
         let (byYou, reactionsRemark) = await yours
         // Search results carry no reactions: ask for those of the newest messages that matter, unless the token
         // can't read reactions at all.
@@ -89,10 +97,10 @@ public struct SlackPlugin: SourcePlugin {
             accountID: accountID,
             reactions: byYou.merging(shown) { _, asked in asked }
         )
-        let threads = await threadReplies(
-            mine: await mine?.messages.matches ?? [], me: auth.userId, teamID: auth.teamId, custom: custom)
+        let threads = try await threadReplies(
+            mine: ownThreads?.messages.matches ?? [], me: auth.userId, teamID: auth.teamId, custom: custom)
         snapshot.items += threads.items
-        snapshot.remarks += threads.remarks + [reactionsRemark].compactMap { $0 }
+        snapshot.remarks += threads.remarks + [reactionsRemark].compactMap { $0 } + partial
         return snapshot
     }
 
@@ -250,7 +258,7 @@ public struct SlackPlugin: SourcePlugin {
     /// read or answer (one that mentions you is already a mention); without one, their reactions on your message
     /// speak: ❓ is a question for you, ✅ an answer, and otherwise your message waits (if it asked something, as
     /// `VerbClassifier` decides). Without the history scopes, a remark says how to add them.
-    func threadReplies(mine: [Match], me: String, teamID: String?, custom: [String: String] = [:]) async -> (
+    func threadReplies(mine: [Match], me: String, teamID: String?, custom: [String: String] = [:]) async throws -> (
         items: [InboxItem], remarks: [String]
     ) {
         var latest: [String: Match] = [:]
@@ -260,6 +268,7 @@ public struct SlackPlugin: SourcePlugin {
         }
         let threads = latest.values.sorted { $0.date > $1.date }.prefix(10)
         var items: [InboxItem] = []
+        var failed: [String] = []
         for mineLast in threads {
             let replies: Replies
             do {
@@ -279,6 +288,8 @@ public struct SlackPlugin: SourcePlugin {
                     ]
                 )
             } catch {
+                // A thread that couldn't be read is said, not passed over; a rate limit fails the fetch.
+                try BestEffort.note("Replies in your threads", error, remarks: &failed)
                 continue
             }
             // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
@@ -301,7 +312,7 @@ public struct SlackPlugin: SourcePlugin {
                     mineLast, answered: answered, reactions: Self.reactions(yours?.reactions, me: me, custom: custom),
                     accountID: accountID, me: me, teamID: teamID))
         }
-        return (items, [])
+        return (items, failed)
     }
 
     /// Your last message in a thread nobody wrote back in, as the item: `answered` when someone else wrote before

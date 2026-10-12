@@ -152,8 +152,17 @@ impl SourcePlugin for JiraPlugin {
             self.search(ASSIGNED_JQL, "summary,priority,duedate,status,updated", "50"),
             self.search(WATCHED_JQL, "summary,comment", "25"),
         );
-        // Mentions are a bonus: if that search fails, assigned issues still come through.
-        Ok(Self::snapshot(&me, &assigned?, &watched.unwrap_or_default(), &self.host, &self.account_id, Utc::now()))
+        // Mentions are a bonus: if that search fails, assigned issues still come through, and a remark says so.
+        let (watched, failed) = match watched {
+            Ok(page) => (page, None),
+            Err(error) => match crate::rate_limit_of(&error) {
+                Some(limit) => return Err(limit),
+                None => (SearchPage::default(), Some(crate::partial("Mentions and comments", &error))),
+            },
+        };
+        let mut snapshot = Self::snapshot(&me, &assigned?, &watched, &self.host, &self.account_id, Utc::now());
+        snapshot.remarks.extend(failed);
+        Ok(snapshot)
     }
 }
 

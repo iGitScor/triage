@@ -28,6 +28,10 @@ GET whose last answer had an `ETag` is sent conditionally: a 304 comes back to t
 to: `try await config.cache.value("user", lifetime: CacheLifetime.identity) { try await get("user") }`. A failed load
 keeps nothing.
 
+A request the items don't depend on (approvals, notifications, thread replies) can be best-effort: wrap it in
+`BestEffort.value("Approvals", remarks: &remarks) { … }` (Windows: `crate::partial`) so a failure becomes a remark
+the user sees, never a silent gap. A rate limit is rethrown, so the backoff waits it out.
+
 ## A minimal plugin
 
 ```swift

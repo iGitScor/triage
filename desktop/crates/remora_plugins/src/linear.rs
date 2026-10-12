@@ -91,12 +91,14 @@ impl LinearPlugin {
 impl SourcePlugin for LinearPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
         let issues: IssuesData = self.query(ISSUES_QUERY).await?;
-        // Notifications are a bonus: if their shape differs, issues still come through.
-        let notifications = self
-            .query::<NotificationsData>(NOTIFICATIONS_QUERY)
-            .await
-            .map(|d| d.notifications.nodes)
-            .unwrap_or_default();
+        // Notifications are a bonus: if they fail, issues still come through, and a remark says so.
+        let (notifications, failed) = match self.query::<NotificationsData>(NOTIFICATIONS_QUERY).await {
+            Ok(data) => (data.notifications.nodes, None),
+            Err(error) => match crate::rate_limit_of(&error) {
+                Some(limit) => return Err(limit),
+                None => (vec![], Some(crate::partial("Mentions and comments", &error))),
+            },
+        };
         let now = Utc::now();
         let mut items: Vec<InboxItem> =
             issues.viewer.assigned_issues.nodes.iter().map(|i| i.item(&self.account_id)).collect();
@@ -110,7 +112,7 @@ impl SourcePlugin for LinearPlugin {
         Ok(SourceSnapshot {
             identity: issues.viewer.name,
             items,
-            remarks: if cut { vec![crate::truncated("Linear")] } else { vec![] },
+            remarks: cut.then(|| crate::truncated("Linear")).into_iter().chain(failed).collect(),
         })
     }
 }
@@ -370,6 +372,7 @@ mod tests {
         let http = StubHttp::bodies(&[("notifications", broken), ("assignedIssues", &issues(&recent))]);
         let snapshot = LinearPlugin::new(&config(&[("token", "k")]), Arc::new(http)).unwrap().fetch().await.unwrap();
         assert_eq!(snapshot.items.len(), 4);
+        assert_eq!(snapshot.remarks.iter().map(|r| r.code.as_str()).collect::<Vec<_>>(), ["partial"], "and says so");
 
         let rejected = r#"{"errors": [{"message": "Authentication required"}]}"#;
         let http = StubHttp::bodies(&[("query", rejected)]);

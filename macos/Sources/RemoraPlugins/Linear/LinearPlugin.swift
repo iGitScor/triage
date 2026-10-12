@@ -38,9 +38,16 @@ public struct LinearPlugin: SourcePlugin {
 
     public func fetch() async throws -> SourceSnapshot {
         let issues: IssuesData = try await query(Self.issuesQuery)
-        // Notifications are a bonus: if their shape differs, issues still come through.
-        let notifications = (try? await query(Self.notificationsQuery) as NotificationsData)?.notifications.nodes ?? []
-        return Self.snapshot(viewer: issues.viewer, notifications: notifications, accountID: accountID, now: .now)
+        // Notifications are a bonus: if they fail, issues still come through, and a remark says so.
+        var remarks: [String] = []
+        let notifications =
+            try await BestEffort.value("Mentions and comments", remarks: &remarks) {
+                try await query(Self.notificationsQuery) as NotificationsData
+            }?.notifications.nodes ?? []
+        var snapshot = Self.snapshot(
+            viewer: issues.viewer, notifications: notifications, accountID: accountID, now: .now)
+        snapshot.remarks += remarks
+        return snapshot
     }
 
     static func snapshot(viewer: Viewer, notifications: [Notification], accountID: UUID, now: Date) -> SourceSnapshot {

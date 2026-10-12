@@ -55,6 +55,8 @@ rust = [
     re.compile(r'const NOTICE_[A-Z_]+: &str = "([^"]+)";'),
     re.compile(r'context: format!\("([^"]+)"'),
     re.compile(r'unwrap_or_else\(\|\| "([^"]+)"\.into\(\)\)'),
+    # What a remark says couldn't be read (`partial`).
+    re.compile(r'partial\("([^"]+)"'),
 ]
 steps = re.compile(r"setup_steps:\s*vec!\[(.*?)\]", re.DOTALL)
 

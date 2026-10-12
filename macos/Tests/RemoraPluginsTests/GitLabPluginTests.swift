@@ -38,6 +38,35 @@ struct GitLabPluginTests {
         #expect(!stored.contains("secret code"), "diff text is never kept")
     }
 
+    /// Approvals that can't be read are said, not passed over; a rate limit there fails the fetch, so the backoff
+    /// waits it out and the last items stay (CODE-02).
+    @Test func failedDetailsAreSaidAndARateLimitIsWaitedOut() async throws {
+        struct Limited: HTTPClient {
+            let base: StubHTTP
+            func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+                if request.url!.path.hasSuffix("/approvals") {
+                    return (
+                        Data(),
+                        HTTPURLResponse(url: request.url!, statusCode: 429, httpVersion: nil, headerFields: nil)!
+                    )
+                }
+                return try await base.send(request)
+            }
+        }
+        let routes = ["/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[\(mr)]"]
+        // No approvals, pipeline or diffs routes: each answers 404.
+        let plugin = try GitLabPlugin(
+            config: config(["host": "gitlab.acme.io", "token": "t"]), http: StubHTTP(routes: routes))
+        let snapshot = try await plugin.fetch()
+        #expect(snapshot.items.count == 2, "the merge requests still come")
+        #expect(snapshot.remarks.count == 1)
+        #expect(snapshot.remarks.first?.hasPrefix("Approvals, pipelines or changed files couldn’t be read") == true)
+
+        let limited = try GitLabPlugin(
+            config: config(["host": "gitlab.acme.io", "token": "t"]), http: Limited(base: StubHTTP(routes: routes)))
+        await #expect(throws: HTTPError.rateLimited(nil)) { try await limited.fetch() }
+    }
+
     /// One GraphQL request instead of two or three REST calls per merge request.
     @Test func detailsComeFromOneGraphQLRequest() async throws {
         let graphQL = """

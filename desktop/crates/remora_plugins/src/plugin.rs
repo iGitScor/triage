@@ -100,6 +100,22 @@ pub struct SourceSnapshot {
 /// Lists stop at 50 items each: past that, the tool has more than the inbox shows. Same text on macOS.
 pub const TRUNCATED: &str = "%@ has more than Remora shows: only the latest 50 of each list are listed.";
 
+/// A part of a fetch that failed while the rest came through (approvals, thread replies, notifications…): said as
+/// a remark, so the inbox doesn't look complete when it isn't (CODE-02). `what` is a fixed English phrase.
+pub fn partial(what: &str, error: &crate::PluginError) -> remora_core::Message {
+    remora_core::Message::new(
+        "partial",
+        vec![what.into(), error.message().text],
+        format!("{what} couldn’t be read: {error}"),
+    )
+}
+
+/// A rate limit is never best-effort: the whole fetch waits it out, so the backoff hears of it and the last items
+/// stay shown. Other failures of a secondary request become a remark (`partial`).
+pub fn rate_limit_of(error: &crate::PluginError) -> Option<crate::PluginError> {
+    matches!(error, crate::PluginError::RateLimited(_)).then(|| error.clone())
+}
+
 pub fn truncated(tool: &str) -> remora_core::Message {
     remora_core::Message::new("truncated", vec![tool.into()], TRUNCATED.replace("%@", tool))
 }

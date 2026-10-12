@@ -63,8 +63,8 @@ impl GitLabPlugin {
     }
 
     /// The REST way, one merge request at a time. Best-effort: a call that fails leaves that part out instead of
-    /// failing the whole account.
-    async fn item(&self, mr: MergeRequest, authored: bool) -> InboxItem {
+    /// failing the whole account, and is returned so the fetch can say so.
+    async fn item(&self, mr: MergeRequest, authored: bool) -> (InboxItem, Option<PluginError>) {
         let base = format!("projects/{}/merge_requests/{}", mr.project_id, mr.iid);
         let approvals_path = format!("{base}/approvals");
         let diffs_path = format!("{base}/diffs");
@@ -73,21 +73,27 @@ impl GitLabPlugin {
             if authored {
                 None
             } else {
-                self.get::<Vec<DiffFile>>(&diffs_path, &[("per_page", "50")]).await.ok()
+                Some(self.get::<Vec<DiffFile>>(&diffs_path, &[("per_page", "50")]).await)
             }
         };
         let (approvals, detail, files) =
             futures::join!(self.get::<Approvals>(&approvals_path, &[]), self.get::<Detail>(&base, &[]), files);
+        let failed = [approvals.as_ref().err(), detail.as_ref().err(), files.as_ref().and_then(|f| f.as_ref().err())]
+            .into_iter()
+            .flatten()
+            .next()
+            .cloned();
         let approvals = approvals.unwrap_or(Approvals { approved: None, approved_by: None });
-        Self::map(
+        let item = Self::map(
             mr,
             approvals,
             detail.unwrap_or(Detail { head_pipeline: None }),
-            files,
+            files.and_then(Result::ok),
             authored,
             &self.account_id,
             &self.host,
-        )
+        );
+        (item, failed)
     }
 
     /// Approvals, pipeline and changed files of every open merge request you wrote or review, in one GraphQL
@@ -215,12 +221,20 @@ impl SourcePlugin for GitLabPlugin {
         );
         let (authored, reviewing) = (authored?, reviewing?);
         // A full page means there may be more: GitLab's count header isn't always sent.
-        let remarks =
+        let mut remarks =
             if authored.len() >= 50 || reviewing.len() >= 50 { vec![crate::truncated("GitLab")] } else { vec![] };
         let all: Vec<(MergeRequest, bool)> =
             authored.into_iter().map(|mr| (mr, true)).chain(reviewing.into_iter().map(|mr| (mr, false))).collect();
         // One GraphQL request for every merge request's details; an instance where it fails gets the REST calls.
-        let details = if all.is_empty() { HashMap::new() } else { self.graphql_details().await.unwrap_or_default() };
+        let details = if all.is_empty() {
+            HashMap::new()
+        } else {
+            match self.graphql_details().await {
+                Ok(details) => details,
+                Err(PluginError::RateLimited(at)) => return Err(PluginError::RateLimited(at)),
+                Err(_) => HashMap::new(),
+            }
+        };
         let mut items = Vec::with_capacity(all.len());
         let mut rest = vec![];
         for (mr, authored) in all {
@@ -241,9 +255,20 @@ impl SourcePlugin for GitLabPlugin {
             }
         }
         let mut pending = rest.into_iter().peekable();
+        let mut failed = None;
         while pending.peek().is_some() {
             let chunk: Vec<_> = pending.by_ref().take(4).collect();
-            items.extend(join_all(chunk.into_iter().map(|(mr, authored)| self.item(mr, authored))).await);
+            for (item, error) in join_all(chunk.into_iter().map(|(mr, authored)| self.item(mr, authored))).await {
+                items.push(item);
+                failed = failed.or(error);
+            }
+        }
+        if let Some(error) = failed {
+            if let Some(limit) = crate::rate_limit_of(&error) {
+                return Err(limit);
+            }
+            // Without approvals, an approved merge request would wait as if it weren't: say so.
+            remarks.push(crate::partial("Approvals, pipelines or changed files", &error));
         }
         Ok(SourceSnapshot { identity: user.username, items, remarks })
     }
@@ -467,6 +492,36 @@ mod tests {
         assert_eq!(changes.file_count, 1);
         let stored = serde_json::to_string(review).unwrap();
         assert!(!stored.contains("secret code"), "diff text is never kept");
+    }
+
+    /// CODE-02: approvals that can't be read are said, not passed over; a rate limit there fails the fetch, so the
+    /// backoff waits it out and the last items stay.
+    #[tokio::test]
+    async fn failed_details_are_said_and_a_rate_limit_is_waited_out() {
+        struct Limited(StubHttp);
+        #[async_trait::async_trait]
+        impl crate::HttpClient for Limited {
+            async fn send(&self, request: crate::Request) -> Result<crate::Response, PluginError> {
+                if request.url.contains("/approvals") {
+                    return Ok(crate::Response { status: 429, body: String::new(), etag: None, reset: None });
+                }
+                self.0.send(request).await
+            }
+        }
+        let list = format!("[{MR}]");
+        let routes = [("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", list.as_str())];
+        let plugin = |http: Arc<dyn crate::HttpClient>| {
+            GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), http).unwrap()
+        };
+        // No approvals, pipeline or diffs routes: each answers 404.
+        let snapshot = plugin(Arc::new(StubHttp::paths(&routes))).fetch().await.unwrap();
+        assert_eq!(snapshot.items.len(), 2, "the merge requests still come");
+        assert_eq!(snapshot.remarks.len(), 1);
+        assert_eq!(snapshot.remarks[0].code, "partial");
+        assert_eq!(snapshot.remarks[0].args[0], "Approvals, pipelines or changed files");
+
+        let limited = plugin(Arc::new(Limited(StubHttp::paths(&routes)))).fetch().await;
+        assert_eq!(limited.err(), Some(PluginError::RateLimited(None)));
     }
 
     /// PERF-09: who the token belongs to is asked once, not at every refresh.

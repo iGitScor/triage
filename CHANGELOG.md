@@ -22,11 +22,17 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- When part of a tool can't be read (GitLab approvals or pipelines, Slack thread replies, Linear or Jira mentions),
+  the account says so instead of looking complete, and a rate limit there is waited out. A revoked or expired Slack
+  token asks for reconnecting on Windows and Linux too, and a brief is written again when one of its items changes.
+- Windows and Linux: the tray no longer wakes every 30 seconds while nothing is in progress.
 - Windows and Linux: errors are translated by what they are, not by matching their English, so a reworded message
   can't lose its French.
 - Applying a triage, Snooze all, and an insight's Spread them, Same time for all or Let them go are undone as a
   whole by one Undo (the triage used to put back only its last item). Windows and Linux now offer Undo after them.
-- Accessibility: the last icon-only buttons have spoken names; form errors are announced; the chosen snooze reason,
+- Accessibility: the Mac's connect form fields are named by their labels; VoiceOver hears a row's reviewers, review
+  estimate and waiting help; Undo is readable in dark mode; the Windows review session's keys no longer act behind
+  the snooze sheet; the last icon-only buttons have spoken names; form errors are announced; the chosen snooze reason,
   mode, preset and triage ticks are said to be selected; Windows' time slider says the time, and its Settings tells
   "Hide message content" and "Send to the assistant" apart.
 - GitHub: when GitHub slows Remora down (its secondary limit, or its GraphQL points running out), Remora waits until

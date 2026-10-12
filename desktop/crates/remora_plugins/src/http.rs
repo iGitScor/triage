@@ -634,7 +634,11 @@ mod tests {
             PluginError::InsecureField("host".into()),
             PluginError::UnknownPlugin("x".into()),
         ];
-        let codes = errors.iter().map(PluginError::message).chain([crate::truncated("Jira")]).map(|m| m.code);
+        let codes = errors
+            .iter()
+            .map(PluginError::message)
+            .chain([crate::truncated("Jira"), crate::partial("Replies in your threads", &PluginError::TimedOut)])
+            .map(|m| m.code);
         for code in codes {
             let key = if code.contains('.') { format!("'{code}':") } else { format!("  {code}:") };
             assert!(interface.contains(&key), "{code} has no wording in i18n.ts");

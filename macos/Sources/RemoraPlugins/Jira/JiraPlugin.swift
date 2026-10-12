@@ -59,9 +59,16 @@ public struct JiraPlugin: SourcePlugin {
     public func fetch() async throws -> SourceSnapshot {
         let me: Myself = try await cache.value("myself", lifetime: CacheLifetime.identity) { try await get("myself") }
         async let assigned = search(Self.assignedJQL, fields: "summary,priority,duedate,status,updated", max: 50)
-        let watched = (try? await search(Self.watchedJQL, fields: "summary,comment", max: 25)) ?? SearchPage()
-        return try await Self.snapshot(
+        // Mentions are a bonus: if that search fails, assigned issues still come through, and a remark says so.
+        var remarks: [String] = []
+        let watched =
+            try await BestEffort.value("Mentions and comments", remarks: &remarks) {
+                try await search(Self.watchedJQL, fields: "summary,comment", max: 25)
+            } ?? SearchPage()
+        var snapshot = try await Self.snapshot(
             me: me, assigned: assigned, watched: watched, host: host, accountID: accountID, now: .now)
+        snapshot.remarks += remarks
+        return snapshot
     }
 
     static func snapshot(

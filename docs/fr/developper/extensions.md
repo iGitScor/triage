@@ -30,6 +30,11 @@ l’extension sous la forme de cette dernière réponse.
 titulaire du jeton : `try await config.cache.value("user", lifetime: CacheLifetime.identity) { try await get("user") }`.
 Un chargement qui échoue ne garde rien.
 
+Une requête dont les éléments ne dépendent pas (approbations, notifications, réponses de fils) peut être au mieux :
+entourez-la de `BestEffort.value("Approvals", remarks: &remarks) { … }` (Windows : `crate::partial`) pour qu’un échec
+devienne une remarque visible, jamais un manque silencieux. Une limite de requêtes est relancée, pour que le
+ralentissement l’attende.
+
 ## Une extension minimale
 
 ```swift

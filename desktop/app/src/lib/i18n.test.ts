@@ -14,6 +14,9 @@ describe('messages from Rust', () => {
 
   it('say the HTTP status after the sentence', () => {
     expect(say(message('http.refused', ['400']))).toBe('Le serveur a refusé la demande. (HTTP 400)')
+    expect(say(message('partial', ['Replies in your threads', 'The server refused the request.']))).toBe(
+      'Impossible de lire les réponses de vos fils : Le serveur a refusé la demande.',
+    )
   })
 
   it('show a server’s own words as they are, and fixed sentences translated', () => {

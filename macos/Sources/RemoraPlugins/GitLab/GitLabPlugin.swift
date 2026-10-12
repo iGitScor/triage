@@ -62,34 +62,51 @@ public struct GitLabPlugin: SourcePlugin {
         }
         // Approvals, pipeline and changed files for every merge request in one GraphQL request, instead of two or
         // three REST calls each. An instance where it fails (older GitLab, GraphQL off) gets the REST calls.
-        let details = all.isEmpty ? [:] : ((try? await graphQLDetails()) ?? [:])
-        let items = try await all.concurrentMap(limit: 4) { mr, isAuthored in
-            if let found = details[mr.id] {
-                return Self.item(
+        var details: [Int: GraphQL.Details] = [:]
+        if !all.isEmpty {
+            do {
+                details = try await graphQLDetails()
+            } catch HTTPError.rateLimited(let until) {
+                throw HTTPError.rateLimited(until)
+            } catch {}  // An older GitLab, or GraphQL off: the REST calls below.
+        }
+        let found = details
+        let results = try await all.concurrentMap(limit: 4) { mr, isAuthored -> (InboxItem, Error?) in
+            if let found = found[mr.id] {
+                let item = Self.item(
                     mr: mr, approvals: found.approvals, detail: found.detail, files: isAuthored ? nil : found.files,
                     authored: isAuthored, accountID: self.accountID, host: self.host
                 )
+                return (item, nil)
             }
             return await self.item(for: mr, authored: isAuthored)
         }
         // A full page means there may be more: GitLab's count header isn't always sent.
         let truncated = try await [authored, reviewing].contains { $0.count >= 50 }
-        return SourceSnapshot(
-            identity: user.username, items: items, remarks: truncated ? [SourceSnapshot.truncated("GitLab")] : [])
+        var remarks = truncated ? [SourceSnapshot.truncated("GitLab")] : []
+        // Without approvals, an approved merge request would wait as if it weren't: say so.
+        if let failed = results.lazy.compactMap(\.1).first {
+            try BestEffort.note("Approvals, pipelines or changed files", failed, remarks: &remarks)
+        }
+        return SourceSnapshot(identity: user.username, items: results.map(\.0), remarks: remarks)
     }
 
     /// The REST way, one merge request at a time. Best-effort: a call that fails leaves that part out instead of
-    /// failing the whole account.
-    private func item(for mr: MergeRequest, authored: Bool) async -> InboxItem {
+    /// failing the whole account, and is returned so the fetch can say so.
+    private func item(for mr: MergeRequest, authored: Bool) async -> (InboxItem, Error?) {
         let base = "projects/\(mr.projectId)/merge_requests/\(mr.iid)"
-        async let approvals: Approvals? = try? get("\(base)/approvals")
-        async let detail: Detail? = try? get(base)
+        async let approvals = BestEffort.attempt { try await get("\(base)/approvals") as Approvals }
+        async let detail = BestEffort.attempt { try await get(base) as Detail }
         // Review prep: file paths only. The diff text in this response is never decoded.
-        let files: [DiffFile]? = authored ? nil : try? await get("\(base)/diffs", ["per_page": "50"])
-        return await Self.item(
-            mr: mr, approvals: approvals ?? Approvals(), detail: detail ?? Detail(), files: files,
-            authored: authored, accountID: accountID, host: host
+        let files: Result<[DiffFile], Error>? =
+            authored ? nil : await BestEffort.attempt { try await get("\(base)/diffs", ["per_page": "50"]) }
+        let (approved, detailed) = await (approvals, detail)
+        let failed = [approved.error, detailed.error, files?.error].compactMap { $0 }.first
+        let item = Self.item(
+            mr: mr, approvals: (try? approved.get()) ?? Approvals(), detail: (try? detailed.get()) ?? Detail(),
+            files: try? files?.get(), authored: authored, accountID: accountID, host: host
         )
+        return (item, failed)
     }
 
     static let detailsQuery = """
