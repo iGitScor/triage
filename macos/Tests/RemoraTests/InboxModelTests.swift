@@ -198,9 +198,9 @@ struct InboxModelTests {
         #expect(model.allItems.count == 2, "the inbox as it was")
 
         harness.network.set(online: true)
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(harness.server.requests > before, "refreshed when back online")
-        #expect(model.sourcesHealth == .fine)
+        await eventually("refreshed when back online") {
+            harness.server.requests > before && model.sourcesHealth == .fine
+        }
     }
 
     /// A source that fails for lack of a network isn't slowed down for it, and isn't "failing".

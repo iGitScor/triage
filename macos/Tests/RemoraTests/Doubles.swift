@@ -2,8 +2,26 @@ import CryptoKit
 import Foundation
 import RemoraCore
 import Security
+import Testing
 
 @testable import Remora
+
+/// Waits for background work the test can't await (a refresh when the network is back, a scheduled check) until
+/// `condition` holds, instead of sleeping a fixed time; records a failure after `timeout`.
+@MainActor
+func eventually(
+    _ comment: Comment, timeout: Duration = .seconds(5), sourceLocation: SourceLocation = #_sourceLocation,
+    _ condition: () -> Bool
+) async {
+    let deadline = ContinuousClock.now + timeout
+    while !condition() {
+        guard ContinuousClock.now < deadline else {
+            Issue.record(comment, sourceLocation: sourceLocation)
+            return
+        }
+        try? await Task.sleep(for: .milliseconds(5))
+    }
+}
 
 /// A fresh temporary folder per test, never Application Support.
 func temporaryFolder() -> URL {

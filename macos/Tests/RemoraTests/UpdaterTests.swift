@@ -7,17 +7,18 @@ import Testing
 /// Updates are opt-in, the organization can lock them, and only a signed, newer release is installed.
 @MainActor
 struct UpdaterTests {
-    @Test func nothingCallsHomeUntilTurnedOn() async throws {
+    @Test func nothingCallsHomeUntilTurnedOn() async {
         let harness = Harness()
         let model = harness.model()
         #expect(!model.preferences.checkForUpdates, "off by default")
         model.start()
-        try await Task.sleep(for: .milliseconds(50))
+        #expect(!model.updater.isScheduled, "no automatic check")
         #expect(harness.updates.manifestRequests == 0)
 
         model.preferences.checkForUpdates = true
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(harness.updates.manifestRequests == 1, "checks as soon as it's on")
+        #expect(model.updater.isScheduled)
+        await eventually("checks as soon as it's on") { model.updater.offer != nil }
+        #expect(harness.updates.manifestRequests == 1)
         #expect(model.updater.offer?.version.description == "0.4.0")
         #expect(harness.model().preferences.checkForUpdates, "saved")
     }
@@ -32,13 +33,13 @@ struct UpdaterTests {
         #expect(model.updater.state == .upToDate)
     }
 
-    @Test func theOrganizationCanTurnUpdatingOff() async throws {
+    @Test func theOrganizationCanTurnUpdatingOff() async {
         var harness = Harness()
         harness.managed.values[ManagedPolicy.automaticUpdatesKey] = false
         let model = harness.model()
         model.preferences.checkForUpdates = true
         await model.checkForUpdates()
-        try await Task.sleep(for: .milliseconds(50))
+        #expect(!model.updater.isScheduled, "no automatic check")
         #expect(harness.updates.manifestRequests == 0, "not even Check now")
         #expect(!model.effectivePreferences.checkForUpdates)
     }

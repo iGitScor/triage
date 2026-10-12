@@ -37,6 +37,8 @@ final class Updater {
     private(set) var lastCheck: Date?
     @ObservationIgnored private let system: UpdateSystem
     @ObservationIgnored private var schedule: Task<Void, Never>?
+    /// Whether automatic checks are running: off, nothing calls home.
+    var isScheduled: Bool { schedule != nil }
 
     init(system: UpdateSystem) {
         self.system = system
