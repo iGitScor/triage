@@ -76,6 +76,16 @@ struct GitHubPluginTests {
         await #expect(throws: HTTPError.unauthorized) { try await plugin.fetch() }
     }
 
+    /// GraphQL points used up: GitHub answers 200 with a RATE_LIMITED error, and the reset is in the headers.
+    @Test func graphQLRateLimitWaitsForTheReset() throws {
+        let body = #"{"errors": [{"type": "RATE_LIMITED", "message": "API rate limit exceeded"}]}"#
+        let response = try JSONDecoder.api().decode(GraphQLResponse.self, from: Data(body.utf8))
+        let reset = Date(timeIntervalSince1970: 1_800_000_600)
+        #expect(throws: HTTPError.rateLimited(reset)) {
+            try GitHubPlugin.snapshot(from: response, accountID: UUID(), resume: reset)
+        }
+    }
+
     @Test func requiresToken() {
         #expect(throws: PluginError.missingField("token")) {
             try GitHubPlugin(config: config(["host": "https://github.com"]), http: StubHTTP(routes: [:]))

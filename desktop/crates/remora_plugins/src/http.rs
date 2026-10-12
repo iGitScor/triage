@@ -69,6 +69,8 @@ pub struct Response {
     pub body: String,
     /// The answer's `ETag`, for `ConditionalHttpClient`.
     pub etag: Option<String>,
+    /// When the server's rate limit resets, in seconds since 1970: GitHub's GraphQL reports its limit in a 200.
+    pub reset: Option<i64>,
 }
 
 /// Errors are English sentences, translated by the UI.
@@ -233,6 +235,7 @@ impl HttpClient for ReqwestClient {
             return Err(PluginError::RateLimited(resume));
         }
         let etag = header("etag");
+        let reset = resume_time(header, chrono::Utc::now());
         // 304 is a 3xx too, but the answer to a conditional request (`ConditionalHttpClient`), not a redirect.
         if response.status().is_redirection() && status != 304 {
             // Only refused redirects get here (see `redirect_allowed`).
@@ -242,7 +245,7 @@ impl HttpClient for ReqwestClient {
             return Err(PluginError::BlockedRedirect(target.unwrap_or_else(|| "?".into())));
         }
         let body = read_capped(response, MAX_BODY).await?;
-        Ok(Response { status, body: String::from_utf8_lossy(&body).into_owned(), etag })
+        Ok(Response { status, body: String::from_utf8_lossy(&body).into_owned(), etag, reset })
     }
 }
 
@@ -266,8 +269,8 @@ pub async fn read_capped(mut response: reqwest::Response, limit: usize) -> Resul
 }
 
 /// A rate limit, and when to come back: `Some(resume)` for a 429, or a 403 with nothing left
-/// (`x-ratelimit-remaining` on GitHub, `RateLimit-Remaining` on GitLab). `resume` comes from `Retry-After` (seconds or
-/// a date), else from the reset time those two give in seconds since 1970.
+/// (`x-ratelimit-remaining` on GitHub, `RateLimit-Remaining` on GitLab) or a `Retry-After` (GitHub's secondary limit).
+/// `resume` is `resume_time`.
 pub fn rate_limit(
     status: u16,
     header: impl Fn(&str) -> Option<String>,
@@ -276,9 +279,15 @@ pub fn rate_limit(
     let exhausted = ["x-ratelimit-remaining", "ratelimit-remaining"]
         .iter()
         .any(|name| header(name).is_some_and(|v| v.trim() == "0"));
-    if status != 429 && !(status == 403 && exhausted) {
+    if status != 429 && !(status == 403 && (exhausted || header("retry-after").is_some())) {
         return None;
     }
+    Some(resume_time(header, now))
+}
+
+/// When a rate-limited server says to come back: `Retry-After` (seconds or a date), else the reset time GitHub and
+/// GitLab give in seconds since 1970.
+pub fn resume_time(header: impl Fn(&str) -> Option<String>, now: chrono::DateTime<chrono::Utc>) -> Option<i64> {
     let retry_after = header("retry-after").and_then(|value| {
         let value = value.trim().to_string();
         value
@@ -292,7 +301,7 @@ pub fn rate_limit(
             .iter()
             .find_map(|name| header(name).and_then(|v| v.trim().parse::<i64>().ok()))
     };
-    Some(retry_after.or_else(reset))
+    retry_after.or_else(reset)
 }
 
 /// Redirects stay on the same host, over https: the egress guard only sees the first URL, and headers such as
@@ -354,7 +363,7 @@ impl HttpClient for ConditionalHttpClient {
         }
         let response = self.base.send(request).await?;
         match (response.status, kept) {
-            (304, Some((etag, body))) => Ok(Response { status: 200, body, etag: Some(etag) }),
+            (304, Some((etag, body))) => Ok(Response { status: 200, body, etag: Some(etag), reset: response.reset }),
             (200..=299, _) if response.etag.is_some() => {
                 self.store.keep(&url, response.etag.clone().unwrap_or_default(), response.body.clone());
                 Ok(response)
@@ -416,9 +425,19 @@ impl ETagStore {
 
 /// Sends and decodes JSON, mapping HTTP failures to `PluginError`.
 pub async fn decode<T: DeserializeOwned>(http: &dyn HttpClient, request: Request) -> Result<T, PluginError> {
+    decode_with_reset(http, request).await.map(|(value, _)| value)
+}
+
+/// `decode`, with when the rate limit resets, for an API that reports failures in a 200 (GitHub's GraphQL limit).
+pub async fn decode_with_reset<T: DeserializeOwned>(
+    http: &dyn HttpClient,
+    request: Request,
+) -> Result<(T, Option<i64>), PluginError> {
     let response = http.send(request).await?;
     match response.status {
-        200..=299 => serde_json::from_str(&response.body).map_err(|e| PluginError::Decode(e.to_string())),
+        200..=299 => serde_json::from_str(&response.body)
+            .map(|value| (value, response.reset))
+            .map_err(|e| PluginError::Decode(e.to_string())),
         401 | 403 => Err(PluginError::Unauthorized),
         429 => Err(PluginError::RateLimited(None)),
         code => Err(PluginError::Status(code)),
@@ -462,9 +481,14 @@ mod tests {
                 request.headers.iter().find(|(name, _)| name == "If-None-Match").map(|(_, value)| value.clone());
             self.asked.lock().unwrap().push(condition.clone());
             if condition.is_some() && condition.as_deref() == self.etag {
-                return Ok(Response { status: 304, body: String::new(), etag: None });
+                return Ok(Response { status: 304, body: String::new(), etag: None, reset: None });
             }
-            Ok(Response { status: 200, body: format!("body of {}", request.url), etag: self.etag.map(str::to_string) })
+            Ok(Response {
+                status: 200,
+                body: format!("body of {}", request.url),
+                etag: self.etag.map(str::to_string),
+                reset: None,
+            })
         }
     }
 
@@ -554,7 +578,7 @@ mod tests {
         );
     }
 
-    /// GitHub's 403 with nothing left, GitLab's reset header, Retry-After, and a refused token.
+    /// GitHub's 403 with nothing left or a Retry-After, GitLab's reset header, Retry-After, and a refused token.
     #[test]
     fn rate_limits_are_recognised_with_their_reset_time() {
         let now: chrono::DateTime<chrono::Utc> = "2027-01-15T08:00:00Z".parse().unwrap();
@@ -576,6 +600,11 @@ mod tests {
             rate_limit(403, headers(&[("X-RateLimit-Remaining", "12")]), now),
             None,
             "a refused token, not a rate limit"
+        );
+        assert_eq!(
+            rate_limit(403, headers(&[("X-RateLimit-Remaining", "4000"), ("Retry-After", "60")]), now),
+            Some(Some(now.timestamp() + 60)),
+            "GitHub's secondary limit"
         );
         assert_eq!(rate_limit(200, headers(&[]), now), None);
     }

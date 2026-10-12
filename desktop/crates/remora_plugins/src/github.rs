@@ -1,5 +1,5 @@
 use crate::code_review::{Checks, CodeReview};
-use crate::{decode, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
+use crate::{decode_with_reset, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use remora_core::{ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Tone};
@@ -51,7 +51,16 @@ impl GitHubPlugin {
         Ok(GitHubPlugin { account_id: config.account_id.clone(), endpoint, token: config.required("token")?, http })
     }
 
-    pub fn snapshot(response: GraphQlResponse, account_id: &str) -> Result<SourceSnapshot, PluginError> {
+    /// `reset`: when GitHub's rate limit resets, from the answer's headers.
+    pub fn snapshot(
+        response: GraphQlResponse,
+        account_id: &str,
+        reset: Option<i64>,
+    ) -> Result<SourceSnapshot, PluginError> {
+        // GraphQL points used up: a 200 whose error says so.
+        if response.errors.as_ref().is_some_and(|e| e.iter().any(|e| e.kind.as_deref() == Some("RATE_LIMITED"))) {
+            return Err(PluginError::RateLimited(reset));
+        }
         let Some(data) = response.data else {
             let message = response
                 .errors
@@ -107,8 +116,8 @@ impl SourcePlugin for GitHubPlugin {
         let body = serde_json::json!({ "query": Self::QUERY, "variables": variables });
         let request =
             Request::post_json(&self.endpoint, &body)?.header("Authorization", format!("bearer {}", self.token));
-        let response: GraphQlResponse = decode(self.http.as_ref(), request).await?;
-        Self::snapshot(response, &self.account_id)
+        let (response, reset) = decode_with_reset::<GraphQlResponse>(self.http.as_ref(), request).await?;
+        Self::snapshot(response, &self.account_id, reset)
     }
 }
 
@@ -121,6 +130,8 @@ pub struct GraphQlResponse {
 #[derive(Deserialize)]
 struct Message {
     message: String,
+    #[serde(rename = "type")]
+    kind: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -462,6 +473,17 @@ mod tests {
         assert_eq!(
             GitHubPlugin::new(&config(&[("host", "github.com")]), Arc::new(StubHttp::paths(&[]))).err(),
             Some(PluginError::MissingField("token".into()))
+        );
+    }
+
+    /// GraphQL points used up: GitHub answers 200 with a RATE_LIMITED error, and the reset is in the headers.
+    #[test]
+    fn graphql_rate_limit_waits_for_the_reset() {
+        let body = r#"{"errors": [{"type": "RATE_LIMITED", "message": "API rate limit exceeded"}]}"#;
+        let response: GraphQlResponse = serde_json::from_str(body).unwrap();
+        assert_eq!(
+            GitHubPlugin::snapshot(response, "a", Some(1_800_000_600)).err(),
+            Some(PluginError::RateLimited(Some(1_800_000_600)))
         );
     }
 }

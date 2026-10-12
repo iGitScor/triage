@@ -28,8 +28,8 @@ impl HttpClient for StubHttp {
             self.by_path.iter().filter(|(suffix, _)| path.ends_with(suffix)).max_by_key(|(suffix, _)| suffix.len())
         });
         Ok(match answer {
-            Some((_, json)) => Response { status: 200, body: json.clone(), etag: None },
-            None => Response { status: 404, body: String::new(), etag: None },
+            Some((_, json)) => Response { status: 200, body: json.clone(), etag: None, reset: None },
+            None => Response { status: 404, body: String::new(), etag: None, reset: None },
         })
     }
 }

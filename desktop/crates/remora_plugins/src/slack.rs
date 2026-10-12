@@ -1192,7 +1192,7 @@ mod tests {
                 _ if value("query").starts_with("from:<@UME>") => self.sent.clone().unwrap_or(none),
                 _ => none,
             };
-            Ok(crate::Response { status: 200, body, etag: None })
+            Ok(crate::Response { status: 200, body, etag: None, reset: None })
         }
     }
 

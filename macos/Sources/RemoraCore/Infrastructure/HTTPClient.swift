@@ -91,17 +91,27 @@ extension HTTPClient {
         from request: URLRequest,
         using decoder: JSONDecoder = .api()
     ) async throws -> T {
+        try await decodeWithResponse(type, from: request, using: decoder).0
+    }
+
+    /// `decode`, with the response, for an API that reports failures in a 200 (GitHub's GraphQL rate limit).
+    public func decodeWithResponse<T: Decodable>(
+        _ type: T.Type,
+        from request: URLRequest,
+        using decoder: JSONDecoder = .api()
+    ) async throws -> (T, HTTPURLResponse) {
         let (data, response) = try await send(request)
         switch response.statusCode {
         case 200..<300:
-            return try decoder.decode(T.self, from: data)
+            return (try decoder.decode(T.self, from: data), response)
         case 429:
-            throw HTTPError.rateLimited(Self.resumeDate(response))
+            throw HTTPError.rateLimited(response.resumeDate())
+        // GitHub's primary limit leaves nothing remaining; its secondary limit says when to come back.
         case 403
         where ["x-ratelimit-remaining", "ratelimit-remaining"].contains {
             response.value(forHTTPHeaderField: $0) == "0"
-        }:
-            throw HTTPError.rateLimited(Self.resumeDate(response))
+        } || response.value(forHTTPHeaderField: "Retry-After") != nil:
+            throw HTTPError.rateLimited(response.resumeDate())
         case 401, 403:
             throw HTTPError.unauthorized
         case 300..<400:
@@ -115,11 +125,11 @@ extension HTTPClient {
     }
 }
 
-extension HTTPClient {
+extension HTTPURLResponse {
     /// When a rate-limited server says to come back: `Retry-After` (seconds or a date), else the reset time
     /// GitHub (`x-ratelimit-reset`) and GitLab (`RateLimit-Reset`) give in seconds since 1970.
-    static func resumeDate(_ response: HTTPURLResponse, now: Date = .now) -> Date? {
-        if let retry = response.value(forHTTPHeaderField: "Retry-After") {
+    public func resumeDate(now: Date = .now) -> Date? {
+        if let retry = value(forHTTPHeaderField: "Retry-After") {
             if let seconds = TimeInterval(retry.trimmingCharacters(in: .whitespaces)) {
                 return now.addingTimeInterval(seconds)
             }
@@ -129,7 +139,7 @@ extension HTTPClient {
             if let date = formatter.date(from: retry) { return date }
         }
         for header in ["x-ratelimit-reset", "ratelimit-reset"] {
-            if let value = response.value(forHTTPHeaderField: header), let epoch = TimeInterval(value) {
+            if let value = value(forHTTPHeaderField: header), let epoch = TimeInterval(value) {
                 return Date(timeIntervalSince1970: epoch)
             }
         }

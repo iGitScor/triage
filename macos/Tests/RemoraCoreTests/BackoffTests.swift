@@ -63,6 +63,14 @@ struct BackoffTests {
             await error(429, ["RateLimit-Reset": "1800000900"]) as? HTTPError
                 == .rateLimited(Date(timeIntervalSince1970: 1_800_000_900)))
         #expect(await error(429, [:]) as? HTTPError == .rateLimited(nil))
+        // GitHub's secondary limit: a 403 with requests left, and when to come back.
+        if case .rateLimited(let until?) = await error(403, ["X-RateLimit-Remaining": "4000", "Retry-After": "60"])
+            as? HTTPError
+        {
+            #expect(abs(until.timeIntervalSinceNow - 60) < 5)
+        } else {
+            Issue.record("GitHub's secondary limit read as a refused token")
+        }
         // A 403 with requests left is still a refused token.
         #expect(await error(403, ["X-RateLimit-Remaining": "12"]) as? HTTPError == .unauthorized)
         // Retry-After in seconds.

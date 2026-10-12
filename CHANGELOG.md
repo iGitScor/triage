@@ -3,6 +3,13 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Fixed
+
+- GitHub: when GitHub slows Remora down (its secondary limit, or its GraphQL points running out), Remora waits until
+  the time GitHub gives instead of asking you to reconnect a token that works.
+
 ## 0.6.0 (2026-10-11)
 
 ### Added

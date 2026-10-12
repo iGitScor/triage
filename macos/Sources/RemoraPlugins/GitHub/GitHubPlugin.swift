@@ -55,11 +55,16 @@ public struct GitHubPlugin: SourcePlugin {
                 "reviewing": "is:pr is:open archived:false review-requested:@me sort:updated-desc",
             ])
         let request = try URLRequest.post(endpoint, json: body, headers: ["Authorization": "bearer \(token)"])
-        let response = try await http.decode(GraphQLResponse.self, from: request)
-        return try Self.snapshot(from: response, accountID: accountID)
+        let (response, answer) = try await http.decodeWithResponse(GraphQLResponse.self, from: request)
+        return try Self.snapshot(from: response, accountID: accountID, resume: answer.resumeDate())
     }
 
-    static func snapshot(from response: GraphQLResponse, accountID: UUID) throws -> SourceSnapshot {
+    static func snapshot(from response: GraphQLResponse, accountID: UUID, resume: Date? = nil) throws -> SourceSnapshot
+    {
+        // GraphQL points used up: a 200 whose error says so, the reset time in the headers.
+        if response.errors?.contains(where: { $0.type == "RATE_LIMITED" }) == true {
+            throw HTTPError.rateLimited(resume)
+        }
         guard let data = response.data else {
             let message = response.errors?.first?.message ?? L("GitHub returned no data.")
             // A token GitHub no longer accepts: the user reconnects.
@@ -122,7 +127,10 @@ struct GraphQLResponse: Decodable {
         var issueCount: Int?
         var nodes: [PullRequest?]
     }
-    struct Message: Decodable { var message: String }
+    struct Message: Decodable {
+        var message: String
+        var type: String?
+    }
 
     var data: Payload?
     var errors: [Message]?

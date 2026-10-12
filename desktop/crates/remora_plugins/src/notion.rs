@@ -473,7 +473,7 @@ mod tests {
                 } else {
                     r#"{"results": [], "next_cursor": "c2"}"#
                 };
-                Ok(crate::Response { status: 200, body: body.into(), etag: None })
+                Ok(crate::Response { status: 200, body: body.into(), etag: None, reset: None })
             }
         }
         let http = Arc::new(Capture(std::sync::Mutex::new(vec![])));
@@ -563,6 +563,7 @@ mod tests {
                     status: 401,
                     body: r#"{"object": "error", "code": "unauthorized"}"#.into(),
                     etag: None,
+                    reset: None,
                 })
             }
         }
