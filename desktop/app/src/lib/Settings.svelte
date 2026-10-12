@@ -179,12 +179,15 @@ onMount(() => {
       <h2 class="section-title">{t('Notifications')}</h2>
       <label class="toggle"><input type="checkbox" checked={p.notifyArrivals} onchange={(e) => save({ notifyArrivals: e.currentTarget.checked })} />{t('New items that need me (reviews, mentions…)')}</label>
       <label class="toggle"><input type="checkbox" checked={p.notifyStatusChanges} onchange={(e) => save({ notifyStatusChanges: e.currentTarget.checked })} />{t('Status changes (approved, changes requested, checks failed)')}</label>
-      <h3 class="subsection">{t('Hide message content')}</h3>
-      {#each notifying as source (source.id)}
-        {@const forced = settings.managed.hiddenContentSources?.some((id) => id === source.id || id === '*') ?? false}
-        <label class="toggle" title={forced ? t('Managed by your organization') : undefined}><input type="checkbox" checked={forced || p.hiddenContentPlugins.includes(source.id)} disabled={forced} onchange={(e) => setHidden(source.id, e.currentTarget.checked)} />{source.name}</label>
-      {/each}
-      <p class="help">{t('Notifications still say where something happened (mention, channel, repository), not what was written.')}</p>
+      <!-- One group per list: the same tool names mean "hidden" here and "sent" below, so each says which. -->
+      <h3 class="subsection" id="hide-content-title">{t('Hide message content')}</h3>
+      <div role="group" aria-labelledby="hide-content-title" aria-describedby="hide-content-help">
+        {#each notifying as source (source.id)}
+          {@const forced = settings.managed.hiddenContentSources?.some((id) => id === source.id || id === '*') ?? false}
+          <label class="toggle" title={forced ? t('Managed by your organization') : undefined}><input type="checkbox" checked={forced || p.hiddenContentPlugins.includes(source.id)} disabled={forced} onchange={(e) => setHidden(source.id, e.currentTarget.checked)} />{source.name}</label>
+        {/each}
+      </div>
+      <p class="help" id="hide-content-help">{t('Notifications still say where something happened (mention, channel, repository), not what was written.')}</p>
 
       <h2 class="section-title">{t('Snooze')}</h2>
       <label class="toggle"><input type="checkbox" checked={p.wakeOnActivity} onchange={(e) => save({ wakeOnActivity: e.currentTarget.checked })} />{t('Bring snoozed items back early on new activity')}</label>
@@ -203,12 +206,14 @@ onMount(() => {
           </select>
         </label>
         <p class="help">{t('While fresh, Remora shows it again instead of asking the assistant.')}</p>
-        <h3 class="subsection">{t('Send to the assistant')}</h3>
-        {#each notifying as source (source.id)}
-          {@const kept = settings.managed.aiExcludedSources?.includes(source.id) ?? false}
-          <label class="toggle" title={kept ? t('Managed by your organization') : undefined}><input type="checkbox" checked={!kept && !p.assistantExcludedSources.includes(source.id)} disabled={kept} onchange={(e) => setSent(source.id, e.currentTarget.checked)} />{source.name}</label>
-        {/each}
-        <p class="help">{t("Items from a tool that's off never reach the assistant: not in the brief, summaries or triage.")}</p>
+        <h3 class="subsection" id="send-assistant-title">{t('Send to the assistant')}</h3>
+        <div role="group" aria-labelledby="send-assistant-title" aria-describedby="send-assistant-help">
+          {#each notifying as source (source.id)}
+            {@const kept = settings.managed.aiExcludedSources?.includes(source.id) ?? false}
+            <label class="toggle" title={kept ? t('Managed by your organization') : undefined}><input type="checkbox" checked={!kept && !p.assistantExcludedSources.includes(source.id)} disabled={kept} onchange={(e) => setSent(source.id, e.currentTarget.checked)} />{source.name}</label>
+          {/each}
+        </div>
+        <p class="help" id="send-assistant-help">{t("Items from a tool that's off never reach the assistant: not in the brief, summaries or triage.")}</p>
       {/if}
 
       <h2 class="section-title">{t('Appearance')}</h2>
