@@ -62,6 +62,8 @@ struct TrayLook {
 }
 
 static TRAY_LOOK: std::sync::Mutex<Option<TrayLook>> = std::sync::Mutex::new(None);
+/// The icon the tray shows: set again only when it changes (or after the fish swam).
+static TRAY_ICON: std::sync::Mutex<Option<TrayImage>> = std::sync::Mutex::new(None);
 
 fn tray_look() -> TrayLook {
     TRAY_LOOK.lock().ok().and_then(|look| look.clone()).unwrap_or_default()
@@ -373,8 +375,9 @@ async fn background(app: AppHandle) {
                     if !notices.is_empty() {
                         post(&app, &notices);
                         changed(&app).await;
-                    } else {
-                        // Keeps the elapsed time of a task in progress current.
+                    } else if tray_look().task.is_some() {
+                        // Keeps the elapsed time of a task in progress current; with none, nothing moves, so the
+                        // tray stays as it is and the inbox lock is left alone (PERF-17).
                         update_tray(&app).await;
                     }
                     if tokio::time::Instant::now() >= deadline { break }
@@ -430,13 +433,17 @@ pub(crate) async fn update_tray(app: &AppHandle) {
     let summary = TraySummary::of(&*app.state::<AppState>().inbox.lock().await, now);
     let Some(tray) = app.tray_by_id("main") else { return };
     let _ = tray.set_tooltip(Some(summary.tooltip(now, i18n::translator())));
-    let icon = match summary.icon() {
-        TrayImage::Focus => TRAY_FOCUS[0],
-        TrayImage::Attention => TRAY_ATTENTION,
-        TrayImage::Quiet => TRAY_QUIET,
-    };
-    if let Ok(image) = tauri::image::Image::from_bytes(icon) {
-        let _ = tray.set_icon(Some(image));
+    let kind = summary.icon();
+    let shown = TRAY_ICON.lock().ok().and_then(|mut last| last.replace(kind));
+    if shown != Some(kind) {
+        let icon = match kind {
+            TrayImage::Focus => TRAY_FOCUS[0],
+            TrayImage::Attention => TRAY_ATTENTION,
+            TrayImage::Quiet => TRAY_QUIET,
+        };
+        if let Ok(image) = tauri::image::Image::from_bytes(icon) {
+            let _ = tray.set_icon(Some(image));
+        }
     }
 
     let look = TrayLook { focused: summary.focused, task: summary.task, update: updates::offered(app).await };
@@ -462,7 +469,10 @@ async fn swim(app: AppHandle) {
             }
             tokio::time::sleep(Duration::from_millis(160)).await;
         }
-        // Back to the right icon, whatever changed meanwhile.
+        // Back to the right icon, whatever changed meanwhile: the swim drew over it.
+        if let Ok(mut last) = TRAY_ICON.lock() {
+            *last = None;
+        }
         update_tray(&app).await;
     }
 }
