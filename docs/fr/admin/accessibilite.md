@@ -36,9 +36,8 @@ manques connus ci-dessous demeurent. Cette déclaration est revue à chaque vers
 - **Windows** : le focus peut se perdre quand une confirmation remplace son bouton ; en session de relecture, Entrée
   ouvre la pull request quel que soit le focus ; la fenêtre ne s’agrandit pas et le texte ne grossit pas au-delà de
   la mise à l’échelle de Windows.
-- **macOS** : VoiceOver n’entend pas les relecteurs, l’estimation de relecture ni l’aide à l’attente d’une ligne ;
-  les champs du formulaire de connexion sont nommés par leur texte indicatif ; les éléments du brief ne s’ouvrent
-  qu’au clic.
+- **macOS** : les champs du formulaire de connexion sont nommés par leur texte indicatif ; les éléments du brief ne
+  s’ouvrent qu’au clic.
 
 Chaque manque est suivi, avec sa correction, dans la feuille de route du projet.
 

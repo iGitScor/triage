@@ -121,7 +121,38 @@ struct ItemRow: View {
         }
         parts += item.badges.map(\.label)
         if let reactions = item.reactions, !reactions.isEmpty { parts.append(ReactionChips.spoken(reactions)) }
+        parts += Self.spokenExtras(
+            participants: item.participants,
+            prep: item.bundle == .reviews ? ReviewPrep(item, pace: model.reviewPace) : nil,
+            help: onDraft == nil ? nil : model.waitingHelp(item))
         return parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
+    }
+
+    /// What the row draws besides its text, said for VoiceOver (the row is one element): the reviewers and what
+    /// each did, the review prep, and the waiting help.
+    static func spokenExtras(participants: [Person], prep: ReviewPrep?, help: WaitingAssistant.Help?) -> [String] {
+        var parts: [String] = []
+        if !participants.isEmpty {
+            parts.append(L("Reviewers: %@", participants.map(PeopleStack.describe).formatted(.list(type: .and))))
+        }
+        if let prep {
+            parts.append(
+                L(
+                    "Review: about %lld minutes, %@", prep.estimatedMinutes,
+                    L("%d file", plural: "%d files", prep.fileCount)))
+            parts += prep.flags.map(\.title)
+        }
+        switch help {
+        case .suggestReviewers(let people)?:
+            parts.append(L("No reviewer yet"))
+            parts.append(L("Suggested: %@", people.map(\.name).formatted(.list(type: .and))))
+        case .nudge(let people, let days)?:
+            let names = people.map(\.name).formatted(.list(type: .and))
+            parts.append(
+                days == 1 ? L("Waiting on %@ for a day", names) : L("Waiting on %@ for %lld days", names, days))
+        case nil: break
+        }
+        return parts
     }
 
     private var doneSwipe: SwipeAction {
