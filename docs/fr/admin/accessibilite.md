@@ -39,7 +39,6 @@ manques connus ci-dessous demeurent. Cette déclaration est revue à chaque vers
 - **macOS** : VoiceOver n’entend pas les relecteurs, l’estimation de relecture ni l’aide à l’attente d’une ligne ;
   les champs du formulaire de connexion sont nommés par leur texte indicatif ; les éléments du brief ne s’ouvrent
   qu’au clic.
-- **Les deux** : le bouton Annuler manque de contraste en mode sombre.
 
 Chaque manque est suivi, avec sa correction, dans la feuille de route du projet.
 

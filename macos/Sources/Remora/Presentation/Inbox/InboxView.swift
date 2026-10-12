@@ -621,7 +621,7 @@ private struct UndoBar: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "checkmark.circle.fill").foregroundStyle(Myna.accent)
-            Text(point.message).font(Myna.font(12.5, .medium)).foregroundStyle(Myna.backdrop)
+            Text(point.message).font(Myna.font(12.5, .medium)).foregroundStyle(Myna.onDark)
             Spacer()
             Button(L("Undo")) { withAnimation(.snappy) { model.undo() } }
                 .buttonStyle(.plain)
@@ -631,7 +631,8 @@ private struct UndoBar: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(Myna.ink, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        // Dark in both themes: lime Undo on a light bar (dark mode's ink) could barely be read.
+        .background(Myna.dark, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
         .padding(.horizontal, InboxView.gutter)
         .padding(.bottom, 6)
         .transition(.move(edge: .bottom).combined(with: .opacity))

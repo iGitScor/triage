@@ -56,4 +56,12 @@ struct ThemeTests {
         #expect(abs(Myna.textSize(11) - 14.3) < 0.001)
         #expect(abs(Myna.textSize(8) - 14.3) < 0.001, "the floor applies before scaling")
     }
+
+    /// The undo bar is dark in both themes, so its lime Undo and its message read well (A11Y-21).
+    @Test(arguments: [false, true])
+    func theUndoBarReadsInBothThemes(dark: Bool) {
+        let bar = resolve(Myna.dark, dark: dark, contrast: false)
+        #expect(ratio(resolve(Myna.accent, dark: dark, contrast: false), bar) >= 4.5)
+        #expect(ratio(resolve(Myna.onDark, dark: dark, contrast: false), bar) >= 4.5)
+    }
 }

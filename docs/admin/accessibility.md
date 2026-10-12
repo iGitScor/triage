@@ -37,7 +37,6 @@ statement is reviewed with each release.
   pull request whatever has the focus; the window can't grow and text can't be made bigger than Windows scaling.
 - **macOS**: VoiceOver doesn't hear the reviewers, the review estimate or the waiting help in a row; the connect
   form's fields are named by their placeholders; the brief's focus items open only with a click.
-- **Both**: the Undo button lacks contrast in dark mode.
 
 Each gap is tracked, with its fix, in the project's roadmap.
 
