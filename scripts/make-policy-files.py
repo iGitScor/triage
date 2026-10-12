@@ -242,7 +242,7 @@ def admx() -> str:
 def adml(french: bool) -> str:
     strings = [
         ("Remora", "Remora"),
-        ("SUPPORTED_Remora", "Remora 0.5 ou ultérieure" if french else "Remora 0.5 or later"),
+        ("SUPPORTED_Remora", "Remora 0.6 ou ultérieure" if french else "Remora 0.6 or later"),
     ]
     presentations = []
     for name, kind, title_en, help_en, title_fr, help_fr in KEYS:

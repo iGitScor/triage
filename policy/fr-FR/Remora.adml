@@ -6,7 +6,7 @@
   <resources>
     <stringTable>
       <string id="Remora">Remora</string>
-      <string id="SUPPORTED_Remora">Remora 0.5 ou ultérieure</string>
+      <string id="SUPPORTED_Remora">Remora 0.6 ou ultérieure</string>
       <string id="AllowedPlugins">Outils autorisés</string>
       <string id="AllowedPlugins_Help">Les outils qui peuvent être connectés et actualisés, par identifiant : github, gitlab, slack, linear, notion, claude-code, claude, openai. Tout autre est refusé.</string>
       <string id="AllowExternalAI">Autoriser l’IA externe</string>
