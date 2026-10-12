@@ -2,6 +2,7 @@
 // The assistant's proposal for each snoozed item: nothing changes until you tick and apply.
 import { api, type AssistantView, type Item, type TriageSuggestion } from './api'
 import { selection } from './assistant'
+import { offer } from './failures'
 import { t, translateMessage } from './i18n'
 import { when } from './time'
 
@@ -23,6 +24,14 @@ function label(s: TriageSuggestion): string {
     case 'now':
       return t('Do it now')
   }
+}
+
+/** Every ticked change at once, undone together. */
+async function apply() {
+  const changes = selected.filter((s) => s.action !== 'keep').length
+  await api.applyTriage(selected)
+  toggled = new Set()
+  if (changes) offer(changes === 1 ? t('%d change applied', 1) : t('%d changes applied', changes), t('Undo'), api.undo)
 }
 
 function toggle(s: TriageSuggestion) {
@@ -71,7 +80,7 @@ async function ask() {
       {/if}
     {/each}
     {#if assistant.triage.some((s) => s.action === 'done' || s.action === 'now')}<p class="muted note">{t('“Let it go” and “Do it now” are yours to tick.')}</p>{/if}
-    <button type="button" class="pill primary" disabled={!selected.length} onclick={() => { api.applyTriage(selected); toggled = new Set() }}>
+    <button type="button" class="pill primary" disabled={!selected.length} onclick={apply}>
       {t(selected.length === 1 ? 'Apply %d change' : 'Apply %d changes', selected.length)}
     </button>
   {/if}

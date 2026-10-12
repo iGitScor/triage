@@ -880,7 +880,13 @@ impl Inbox {
 
     /// Applies the ticked suggestions. Every "now" item comes back; only the first is opened, never a burst.
     /// Returns the item to open, if any.
+    /// The ticked suggestions, undone together by one Undo (each Done would otherwise replace it).
     pub fn apply_triage(&mut self, selected: &[TriageSuggestion], now: DateTime<Utc>) -> Option<String> {
+        let changes = selected.iter().any(|s| s.action != TriageAction::Keep);
+        if changes {
+            self.remember();
+        }
+        let undo = self.undo_point.clone();
         let mut open = None;
         for suggestion in selected {
             if self.item(&suggestion.id).is_none() {
@@ -901,6 +907,9 @@ impl Inbox {
                     open.get_or_insert_with(|| suggestion.id.clone());
                 }
             }
+        }
+        if changes {
+            self.undo_point = undo;
         }
         let applied: HashSet<&str> = selected.iter().map(|s| s.id.as_str()).collect();
         self.triage.retain(|s| !applied.contains(s.id.as_str()));
@@ -1011,6 +1020,7 @@ impl Inbox {
         reason: Option<SnoozeReason>,
         until_news: bool,
     ) {
+        self.remember();
         for id in ids {
             self.snooze(id, until, SnoozeMode::Hide, reason, until_news);
         }
@@ -1037,6 +1047,7 @@ impl Inbox {
 
     /// A pile-up, 30 minutes apart from its slot.
     pub fn spread(&mut self, ids: &[String], from: DateTime<Utc>) {
+        self.remember();
         let items: Vec<InboxItem> = ids.iter().filter_map(|id| self.item(id)).collect();
         for (id, until) in SnoozeAdvisor::new().spread(&items, from) {
             self.reschedule(&id, until);
@@ -1050,6 +1061,7 @@ impl Inbox {
         else {
             return;
         };
+        self.remember();
         for id in ids {
             self.reschedule(id, earliest);
         }
@@ -2404,6 +2416,29 @@ mod tests {
         assert!(inbox.states["b"].done.is_some());
         assert!(inbox.states.get("c").and_then(|s| s.snooze.as_ref()).is_none(), "back in the inbox");
         assert!(inbox.triage.is_empty());
+
+        // One Undo puts the whole triage back, not just the last Done.
+        assert!(inbox.undo());
+        assert!(["a", "b", "c"].iter().all(|id| inbox.states[*id].snooze.as_ref().is_some_and(|s| s.until < later)));
+        assert!(inbox.states["b"].done.is_none());
+    }
+
+    /// Snooze all and the insight cards' Spread and Same time for all can be undone as a whole.
+    #[test]
+    fn bulk_snoozes_and_moves_are_undone_together() {
+        let mut inbox = inbox();
+        inbox.apply(snapshot(vec![item("a", InboxBundle::reviews()), item("b", InboxBundle::reviews())]), now());
+        let ids = ["a".to_string(), "b".to_string()];
+        let soon = now() + Duration::hours(1);
+        inbox.snooze_many(&ids, soon, None, false);
+        inbox.spread(&ids, now() + Duration::days(2));
+        assert!(inbox.states["a"].snooze.as_ref().unwrap().until > soon);
+        assert!(inbox.undo());
+        assert!(ids.iter().all(|id| inbox.states[id].snooze.as_ref().map(|s| s.until) == Some(soon)));
+        inbox.align_returns(&ids);
+        assert!(inbox.undo());
+        assert!(!inbox.undo(), "one level, as before");
+        assert!(inbox.states["a"].snooze.is_some());
     }
 
     /// Links between tools follow the items: a Linear ticket and the PR that names it.

@@ -66,8 +66,8 @@ Une conversation terminée va dans **Terminés**, comme si vous l’aviez marqu�
 
 - **Terminé** masque un élément jusqu’à ce qu’il change : un commit, une approbation, un commentaire, une réponse.
   Il revient alors tout seul dans *À moi*. **Tout effacer**, dans l’onglet Terminés, vide la liste ; les éléments
-  effacés reviennent quand même s’il y a du nouveau. Après Terminé, *Tout marquer comme terminé* ou *Tout effacer*,
-  **Annuler** s’affiche quelques secondes (⌘Z sur Mac, Ctrl+Z sur Windows). Retirer un compte demande confirmation :
+  effacés reviennent quand même s’il y a du nouveau. Après Terminé, *Tout marquer comme terminé*, *Tout reporter*, *Tout effacer*,
+  un tri ou la correction d’un constat, **Annuler** s’affiche quelques secondes (⌘Z sur Mac, Ctrl+Z sur Windows). Retirer un compte demande confirmation :
   son jeton est supprimé.
 - **Épingler** garde un élément en haut de *À moi*, quoi qu’il arrive ensuite.
 

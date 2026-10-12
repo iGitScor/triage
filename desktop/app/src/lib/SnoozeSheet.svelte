@@ -6,6 +6,7 @@ import { api, type Item, type SnoozeAdvice, type SnoozeReason } from './api'
 import TimePicker from './TimePicker.svelte'
 import { t } from './i18n'
 import { modal } from './modal'
+import { offer } from './failures'
 import { REASONS } from './reasons'
 
 /** One item, or a whole group (*Snooze all…*): then no mode, the same reason and date for each. */
@@ -51,8 +52,10 @@ onMount(async () => {
     {start}
     onpick={async (date, mode) => {
       const news = reason === 'waiting' && untilNews
-      if (many) await api.snoozeMany(items.map((item) => item.id), date, reason, news)
-      else await api.snooze(items[0].id, date, mode, reason, news)
+      if (many) {
+        await api.snoozeMany(items.map((item) => item.id), date, reason, news)
+        offer(t('%d items snoozed', items.length), t('Undo'), api.undo)
+      } else await api.snooze(items[0].id, date, mode, reason, news)
       onclose()
     }}
   />

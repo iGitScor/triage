@@ -376,6 +376,35 @@ struct InboxModelTests {
         #expect(model.layout.done.count == 2, "back in Done, not cleared")
     }
 
+    /// A triage, Snooze all or an insight's Spread is undone as a whole, not item by item.
+    @Test func bulkActionsAreUndoneTogether() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let (first, second) = (try issue(model), try issue(model, "ENG-43"))
+        let soon = Date.now.addingTimeInterval(3_600)
+        model.snoozeMany([first, second], until: soon, reason: nil)
+        #expect(model.undoPoint?.message == "2 items snoozed")
+
+        let later = Date.now.addingTimeInterval(86_400)
+        model.apply([
+            TriageSuggestion(id: first.id, action: .done, reason: "Stale"),
+            TriageSuggestion(id: second.id, action: .reschedule, until: later, reason: "Waiting on Bob"),
+        ])
+        #expect(model.undoPoint?.message == "2 changes applied")
+        #expect(model.state(of: first).done != nil && model.state(of: second).snooze?.until == later)
+        model.undo()
+        #expect(model.state(of: first).done == nil && model.state(of: first).snooze?.until == soon)
+        #expect(model.state(of: second).snooze?.until == soon, "the reschedule is undone too")
+
+        model.spread([first, second], from: later)
+        #expect(model.undoPoint?.message == "2 returns moved")
+        model.undo()
+        #expect(model.state(of: first).snooze?.until == soon && model.state(of: second).snooze?.until == soon)
+        model.undo()
+        model.undo()
+        #expect(model.state(of: first).snooze?.until == soon, "one level of Undo, as before")
+    }
+
     /// Clear all also clears what the tool put in Done (your ✅ in Slack, a finished conversation).
     @Test func clearAllClearsWhatTheToolPutInDone() throws {
         let harness = Harness()

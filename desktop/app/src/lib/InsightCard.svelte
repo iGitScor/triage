@@ -1,6 +1,7 @@
 <script lang="ts">
 // One pattern in the snoozed pile at a time, with what fixes it, as on macOS.
 import { api, type SnoozeInsight } from './api'
+import { offer } from './failures'
 import { t } from './i18n'
 import { when } from './time'
 
@@ -53,19 +54,33 @@ async function act(i: SnoozeInsight) {
       const advice = await api.snoozeAdvice(i.items[0].id)
       await api.snoozeMany(ids(i), advice.returns.motivation, 'motivation')
       await api.dismissInsight(id(i))
+      undoable(snoozedMessage(ids(i).length))
       break
     }
     case 'pileUp':
       await api.spread(ids(i), i.at)
+      undoable(movedMessage(ids(i).length))
       break
     case 'cluster':
       await api.alignReturns(ids(i))
       await api.dismissInsight(id(i))
+      undoable(movedMessage(ids(i).length))
       break
     case 'stale':
       await api.sweep(ids(i))
+      undoable(ids(i).length === 1 ? t('%d item marked as done', 1) : t('%d items marked as done', ids(i).length))
       break
   }
+}
+
+/** What an insight changed, with Undo for a few seconds, as everywhere else. */
+const undoable = (message: string) => offer(message, t('Undo'), api.undo)
+const movedMessage = (n: number) => (n === 1 ? t('%d return moved', n) : t('%d returns moved', n))
+const snoozedMessage = (n: number) => (n === 1 ? t('%d item snoozed', n) : t('%d items snoozed', n))
+
+async function letGo(itemId: string) {
+  await api.toggleDone(itemId)
+  undoable(t('Marked as done'))
 }
 
 const actions: Record<SnoozeInsight['kind'], string> = {
@@ -87,7 +102,7 @@ const actions: Record<SnoozeInsight['kind'], string> = {
     <p>{message(insight)}</p>
     <div class="row">
       <button type="button" class="pill primary" onclick={() => act(insight)}>{t(actions[insight.kind])}</button>
-      {#if insight.kind === 'loop'}<button type="button" class="pill" onclick={() => api.toggleDone(insight.item.id)}>{t('Let it go')}</button>{/if}
+      {#if insight.kind === 'loop'}<button type="button" class="pill" onclick={() => letGo(insight.item.id)}>{t('Let it go')}</button>{/if}
       <span class="spacer"></span>
       <button type="button" class="link muted" onclick={() => api.dismissInsight(id(insight))}>{t('Not now')}</button>
     </div>

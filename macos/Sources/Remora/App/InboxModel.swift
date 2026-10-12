@@ -921,6 +921,7 @@ final class InboxModel {
     }
 
     func snoozeMany(_ items: [InboxItem], until date: Date, reason: SnoozeReason?, untilNews: Bool = false) {
+        remember(L("%lld item snoozed", plural: "%lld items snoozed", items.count))
         batch {
             for item in items {
                 snooze(item, until: date, mode: .hide, note: nil, reason: reason, untilNews: untilNews)
@@ -1039,6 +1040,7 @@ final class InboxModel {
 
     /// Spreads a pile-up 30 minutes apart from its slot.
     func spread(_ items: [InboxItem], from start: Date) {
+        remember(L("%lld return moved", plural: "%lld returns moved", items.count))
         batch {
             for (id, date) in advisor.spread(items, from: start) {
                 if let item = item(id) { reschedule(item, to: date) }
@@ -1049,6 +1051,7 @@ final class InboxModel {
     /// Brings every item back at the earliest of their return times.
     func alignReturns(_ items: [InboxItem]) {
         guard let earliest = items.compactMap({ state(of: $0).snooze?.until }).min() else { return }
+        remember(L("%lld return moved", plural: "%lld returns moved", items.count))
         batch {
             for item in items { reschedule(item, to: earliest) }
         }
@@ -1081,19 +1084,24 @@ final class InboxModel {
         }
     }
 
+    /// The ticked suggestions, undone together by one Undo.
     func apply(_ suggestions: [TriageSuggestion]) {
+        let changes = suggestions.filter { $0.action != .keep }.count
+        if changes > 0 { remember(L("%lld change applied", plural: "%lld changes applied", changes)) }
         var opened = false
-        for suggestion in suggestions {
-            guard let item = item(suggestion.id) else { continue }
-            switch suggestion.action {
-            case .keep: break
-            case .reschedule: if let until = suggestion.until { reschedule(item, to: until) }
-            case .done: toggleDone(item)
-            case .now:
-                // Every "now" item comes back to the inbox; only the first opens, never a burst of links.
-                unsnooze(item)
-                if !opened { open(item) }
-                opened = true
+        batch {
+            for suggestion in suggestions {
+                guard let item = item(suggestion.id) else { continue }
+                switch suggestion.action {
+                case .keep: break
+                case .reschedule: if let until = suggestion.until { reschedule(item, to: until) }
+                case .done: if state(of: item).done == nil { markDone(item) }
+                case .now:
+                    // Every "now" item comes back to the inbox; only the first opens, never a burst of links.
+                    unsnooze(item)
+                    if !opened { open(item) }
+                    opened = true
+                }
             }
         }
         let applied = Set(suggestions.map(\.id))
