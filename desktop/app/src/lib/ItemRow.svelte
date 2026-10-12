@@ -58,7 +58,7 @@ function open(event: MouseEvent) {
 </script>
 
 <article class="item card" class:reminded={itemState?.remindedAt || itemState?.startedAt}>
-  <button type="button" class="open" onpointerdown={() => getSelection()?.removeAllRanges()} onclick={open} title={t('Open (Shift: in the browser)')}>
+  <button type="button" class="open" onpointerdown={() => getSelection()?.removeAllRanges()} onclick={open} title={t('Open (Shift: in the browser)')} aria-keyshortcuts="Enter Shift+Enter E S P">
     <span class="avatar" aria-hidden="true">
       {#if item.author?.avatarUrl}<img src={avatarSrc(item.author.avatarUrl)} alt="" />{:else}{initial(item.author?.name ?? item.context)}{/if}
     </span>
@@ -154,7 +154,7 @@ function open(event: MouseEvent) {
   {/if}
   <div class="actions">
     <!-- Pin and Stop repeating are icons only, so the bar fits on one line in French too. -->
-    <button type="button" class="action" onclick={() => api.togglePin(item.id)} aria-label={t(itemState?.pinned ? 'Unpin' : 'Pin')} title={t(itemState?.pinned ? 'Unpin' : 'Pin')}><Icon name="pin" size={14} /></button>
+    <button type="button" class="action" data-action="pin" onclick={() => api.togglePin(item.id)} aria-label={t(itemState?.pinned ? 'Unpin' : 'Pin')} title={t(itemState?.pinned ? 'Unpin' : 'Pin')}><Icon name="pin" size={14} /></button>
     {#if itemState?.startedAt}
       <button type="button" class="action" onclick={() => api.stop(item.id)}><Icon name="stop" size={14} />{t('Stop')}</button>
     {:else}
@@ -163,12 +163,12 @@ function open(event: MouseEvent) {
     {#if snoozed}
       <button type="button" class="action" onclick={() => api.unsnooze(item.id)}><Icon name="moon" size={14} />{t('Unsnooze')}</button>
     {:else}
-      <button type="button" class="action" onclick={() => onsnooze(item)}><Icon name="moon" size={14} />{t('Snooze…')}</button>
+      <button type="button" class="action" data-action="snooze" onclick={() => onsnooze(item)}><Icon name="moon" size={14} />{t('Snooze…')}</button>
     {/if}
     {#if item.recurrence}
       <button type="button" class="action" onclick={() => api.stopRepeating(item.id)} aria-label={t('Stop repeating')} title={t('Stop repeating')}><Icon name="repeat" size={14} /></button>
     {/if}
-    <button type="button" class="action" onclick={markDone}><Icon name="done" size={14} />{t(done ? 'Move to inbox' : 'Done')}</button>
+    <button type="button" class="action" data-action="done" onclick={markDone}><Icon name="done" size={14} />{t(done ? 'Move to inbox' : 'Done')}</button>
   </div>
 </article>
 

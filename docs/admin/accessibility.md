@@ -14,7 +14,7 @@ statement is reviewed with each release.
 | | macOS | Windows (preview) |
 |---|---|---|
 | Screen reader | VoiceOver reads each item as one button, with its tool, verb, time and reactions; the actions rotor has Mark as done, Snooze, Pin, Start and the linked items. The menu bar item says how many items need you. | Narrator hears each item and its actions, what a refresh brought, when an action fails, and each screen's heading. |
-| Keyboard | ↑ ↓ or J K, ⏎, E (done), S (snooze), P (pin), ⌘F, ⌘Z, Esc; the time scrubber and every sheet work without a pointer, and overlays keep the focus inside. | Tab through every control; tabs with the arrow keys; sheets keep the focus inside and give it back on close; Ctrl+Z undoes. |
+| Keyboard | ↑ ↓ or J K, ⏎, E (done), S (snooze), P (pin), ⌘F, ⌘Z, Esc; the time scrubber and every sheet work without a pointer, and overlays keep the focus inside. | The same keys with Enter and Ctrl, → ← to an item's buttons; one Tab stop per list; tabs with the arrow keys; sheets keep the focus inside and give it back on close. |
 | Drag gestures | Each swipe or drag has a button, menu or key: a new reminder too, from the fish's menu. | None needed: each row has buttons, and a new reminder is Ctrl+Alt+R. |
 | Motion | Reduce Motion: nothing slides, springs or spins. | Animation effects off: the same. |
 | Contrast and colour | Increase Contrast darkens text and borders; reviewer and check states have a symbol and a label, not only a colour. | Contrast themes give pills, chips and cards a border; states have a label. |
@@ -33,13 +33,11 @@ statement is reviewed with each release.
 
 ## Known gaps
 
-- **Windows**: no arrow-key navigation or shortcuts in the inbox; the focus can be lost when an item leaves the
-  list; in a review session Enter opens the pull request whatever has the focus; the window can't grow and text
-  can't be made bigger than Windows scaling.
+- **Windows**: the focus can be lost when a confirmation replaces its button; in a review session Enter opens the
+  pull request whatever has the focus; the window can't grow and text can't be made bigger than Windows scaling.
 - **macOS**: VoiceOver doesn't hear the reviewers, the review estimate or the waiting help in a row; the connect
   form's fields are named by their placeholders; the brief's focus items open only with a click.
-- **Both**: the Undo button lacks contrast in dark mode; a few icon-only buttons have no spoken name; a chosen
-  option and form errors aren't announced.
+- **Both**: the Undo button lacks contrast in dark mode.
 
 Each gap is tracked, with its fix, in the project's roadmap.
 

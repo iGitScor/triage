@@ -16,6 +16,8 @@ import { announce } from './announce'
 import { offer } from './failures'
 import { linux, t, translateMessage } from './i18n'
 import { tablist } from './tablist'
+import { focusFirstRow, rowKeys } from './rowkeys'
+import KeyboardHelp from './KeyboardHelp.svelte'
 import { relative } from './time'
 
 type Tab = 'inProgress' | 'myTurn' | 'waiting' | 'snoozed' | 'done'
@@ -61,6 +63,38 @@ let snoozing: Item[] | null = $state(null)
 let drafting: { item: Item; text: string } | null = $state(null)
 const ondraft = (item: Item, text: string) => (drafting = { item, text })
 let refreshing = $state(false)
+let panel: HTMLElement | undefined = $state()
+let search: HTMLInputElement | undefined = $state()
+let showKeys = $state(false)
+
+/** The inbox's keys outside the list, as on the Mac: Ctrl+F searches, Ctrl+R refreshes (rowkeys.ts has the rest). */
+function onwindowkey(event: KeyboardEvent) {
+  if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
+  if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return
+  const key = event.key.toLowerCase()
+  if (key === 'f') {
+    event.preventDefault()
+    search?.focus()
+    search?.select()
+  } else if (key === 'r') {
+    // Not the web view's own reload.
+    event.preventDefault()
+    refresh()
+  }
+}
+
+/** ↓ goes to the list; Esc clears the search and goes there too, rather than closing the window. */
+function onsearchkey(event: KeyboardEvent) {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    focusFirstRow(panel)
+  } else if (event.key === 'Escape' && query) {
+    event.preventDefault()
+    event.stopPropagation()
+    query = ''
+    focusFirstRow(panel)
+  }
+}
 /// The brief card (when an assistant is connected) and the review session.
 let showBrief = $state(false)
 let reviewing = $state(false)
@@ -109,6 +143,8 @@ async function clearAll() {
 }
 </script>
 
+<svelte:window onkeydown={onwindowkey} />
+
 <div class="screen">
   <header class="row top">
     <Fish size={30} />
@@ -142,10 +178,10 @@ async function clearAll() {
 
   <label class="search">
     <Icon name="search" size={16} />
-    <input class="field" type="search" placeholder={t('Search')} aria-label={t('Search')} bind:value={query} />
+    <input class="field" type="search" placeholder={t('Search')} aria-label={t('Search')} aria-keyshortcuts="Control+F" bind:this={search} bind:value={query} onkeydown={onsearchkey} />
   </label>
 
-  <div class="scroll" role="tabpanel" id="inbox-panel" aria-labelledby="tab-{tab}">
+  <div class="scroll" role="tabpanel" id="inbox-panel" aria-labelledby="tab-{tab}" bind:this={panel} use:rowKeys>
     {#if welcome && view && !view.demo}
       <div class="card welcome">
         <p>{linux ? t('Remora lives in the system tray: open it from the fish’s menu.') : t('Remora lives in the system tray: click the fish to open it. If it’s hidden, click ^ next to the clock and drag the fish onto the taskbar to keep it in sight.')}</p>
@@ -214,12 +250,14 @@ async function clearAll() {
       {/if}
     {/if}
     <span class="spacer"></span>
+    <button type="button" class="icon-button" onclick={() => (showKeys = true)} aria-label={t('Keyboard shortcuts')} title={t('Keyboard shortcuts')}><Icon name="keyboard" size={15} /></button>
     <button type="button" class="link plain" onclick={onreminder}><Icon name="plus" size={15} /> {t('Reminder')}</button>
     <button type="button" class="link plain muted" onclick={() => api.quit()}>{t('Quit')}</button>
   </footer>
 
   {#if snoozing}<SnoozeSheet items={snoozing} onclose={() => (snoozing = null)} />{/if}
   {#if reviewing && view}<ReviewSession extras={view.extras} pace={view.reviewPace} onsnooze={(i) => (snoozing = [i])} onclose={() => (reviewing = false)} />{/if}
+  {#if showKeys}<KeyboardHelp onclose={() => (showKeys = false)} />{/if}
   {#if drafting}<DraftPanel item={drafting.item} text={drafting.text} onclose={() => (drafting = null)} />{/if}
 </div>
 

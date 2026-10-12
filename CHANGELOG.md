@@ -12,6 +12,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
   (personal access token).
 - Windows and Linux: notifications have the Mac's buttons: **Done**, **Snooze 1 hour** and **Tomorrow 9:00**, and
   on a reminder **Start** and **10 more minutes**. On Linux, where the desktop shows them.
+- Windows and Linux: the inbox works from the keyboard, as on the Mac: ↑ ↓ or J K between items, Enter opens
+  (Shift+Enter in the browser), E done, S snooze, P pin, Ctrl+F search, Ctrl+R refresh, → ← to an item's buttons.
+  Tab stops on one item instead of every button, and the keyboard button lists the keys.
 - Windows and Linux: each group has a menu (⋯) with **Mark all as done**, which can be undone, and **Snooze all…**,
   with a reason and *Until there’s news*, as on the Mac.
 - Docs: an accessibility statement for IT (For IT and compliance → Accessibility): the level aimed at, what each
@@ -19,6 +22,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Accessibility: the last icon-only buttons have spoken names; form errors are announced; the chosen snooze reason,
+  mode, preset and triage ticks are said to be selected; Windows' time slider says the time, and its Settings tells
+  "Hide message content" and "Send to the assistant" apart.
 - GitHub: when GitHub slows Remora down (its secondary limit, or its GraphQL points running out), Remora waits until
   the time GitHub gives instead of asking you to reconnect a token that works.
 - Mac: Erase local data names any file it couldn't delete, and its folder, instead of saying everything was erased.

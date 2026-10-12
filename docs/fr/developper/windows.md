@@ -22,7 +22,7 @@ ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remo
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 123 |
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 82 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
-| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 42 |
+| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 49 |
 
 ## Ce que Windows a, et ce qu’il n’a pas encore
 
@@ -43,7 +43,7 @@ ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remo
 | Réglages gérés | Toutes les clés de [MDM](/fr/admin/mdm) | Toutes les clés : dans le registre sous Windows, dans `/etc/remora/policy.json` sous Linux |
 | Taille du texte | Réglages → Général | La mise à l’échelle de Windows |
 | Nouveau rappel | Glisser le poisson de la barre des menus | Un raccourci global, Ctrl+Alt+R : on ne peut pas glisser une icône de la zone de notification |
-| Terminé, Reporter sur une ligne | Balayer, ou le clavier | Des boutons sur chaque ligne |
+| Terminé, Reporter sur une ligne | Balayer, ou le clavier | Des boutons sur chaque ligne, ou le clavier |
 
 ## Même modèle, équivalents Windows
 

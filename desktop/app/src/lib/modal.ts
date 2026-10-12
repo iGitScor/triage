@@ -1,6 +1,8 @@
 // A sheet that behaves as a dialog for the keyboard: focus moves into it, Tab stays inside, Esc closes it (before
 // the window's own Esc, which hides Remora), and focus goes back to what opened it.
 
+import { FOCUS_LOST } from './rowkeys'
+
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
 export function modal(node: HTMLElement, close: () => void) {
@@ -42,8 +44,9 @@ export function modal(node: HTMLElement, close: () => void) {
     },
     destroy() {
       node.removeEventListener('keydown', onKey)
-      // The opener may be gone (a snoozed item leaves the list): then focus stays where the browser puts it.
+      // The opener may be gone (a snoozed item leaves the list): then the list puts the focus back (rowkeys.ts).
       if (opener?.isConnected) opener.focus()
+      else document.dispatchEvent(new CustomEvent(FOCUS_LOST))
     },
   }
 }

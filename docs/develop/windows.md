@@ -21,7 +21,7 @@ the desktop has no tray), notifications that open their item, and on Wayland a s
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 123 |
 | `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 82 |
 | `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 4 |
-| `app/src` | The Svelte interface, in English and French | type-checked, 42 |
+| `app/src` | The Svelte interface, in English and French | type-checked, 49 |
 
 ## What Windows has, and what it doesn’t yet
 
@@ -42,7 +42,7 @@ the desktop has no tray), notifications that open their item, and on Wayland a s
 | Managed settings | All the keys in [MDM](/admin/mdm) | All the keys: in the registry on Windows, in `/etc/remora/policy.json` on Linux |
 | Text size | Settings → General | Windows’ own scaling |
 | New reminder | Drag the menu bar fish down | A global shortcut, Ctrl+Alt+R: tray icons can’t be dragged |
-| Done, Snooze on a row | Swipe, or the keyboard | Buttons on each row |
+| Done, Snooze on a row | Swipe, or the keyboard | Buttons on each row, or the keyboard |
 
 ## Same model, Windows equivalents
 

@@ -90,7 +90,8 @@ take in at a glance.
 - **Right-click an item** (Mac) for every action: Open, Open in browser, Copy link, Pin, Snooze…, Mark as done.
 - **Keyboard** (Mac): ↑ ↓ or J K move between items, ⏎ opens (⌥⏎ in the browser), E marks done, S snoozes, P pins. ⌘F
   searches (or just start typing), Esc leaves the search, ⌘R refreshes, ⌘Z undoes. The keyboard button at the bottom
-  lists them.
+  lists them. On Windows and Linux: the same with Enter (Shift+Enter in the browser) and Ctrl, plus → and ← to an
+  item's other buttons; Tab stops on one item, not on each button.
 - **VoiceOver** reads each item as one button; the actions rotor has Mark as done, Snooze, Pin, Start and the
   linked items. The menu bar item says how many items need you, or the task in progress.
 - **Less motion**: with Reduce Motion (macOS) or Animation effects off (Windows), nothing slides, springs or
