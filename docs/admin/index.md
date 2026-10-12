@@ -19,6 +19,7 @@ data leaves the computer except to the tools the user, or the organization, allo
 | Where is data stored? | On the computer only: a few JSON files in the user’s own folder, tokens in the login Keychain (macOS) or the Credential Manager (Windows). |
 | AI? | On-device only by default (Apple’s NaturalLanguage framework on macOS, keyword rules on Windows). The assistant (Claude or an OpenAI-compatible server) is opt-in, and can be forbidden. |
 | Can IT lock it down? | Yes: allowed tools, external AI, the assistant’s servers and avatars, through a configuration profile (macOS) or Group Policy and Intune (Windows). |
+| Accessibility? | Aims at WCAG 2.1 AA, partially conformant today: VoiceOver, Narrator and the keyboard, with the known gaps listed in the [accessibility statement](./accessibility). |
 | Source code? | Public, GPL-3.0-or-later: [github.com/iGitScor/triage](https://github.com/iGitScor/triage). |
 
 ## How it is enforced

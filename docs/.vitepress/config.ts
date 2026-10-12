@@ -33,6 +33,7 @@ const adminEn: DefaultTheme.SidebarItem[] = [
       { text: 'Managing the policy (MDM)', link: '/admin/mdm' },
       { text: 'Deploying Remora', link: '/admin/deployment' },
       { text: 'Code signing policy', link: '/admin/code-signing' },
+      { text: 'Accessibility', link: '/admin/accessibility' },
     ],
   },
 ]
@@ -94,6 +95,7 @@ const adminFr: DefaultTheme.SidebarItem[] = [
       { text: 'Gérer la politique (MDM)', link: '/fr/admin/mdm' },
       { text: 'Déployer Remora', link: '/fr/admin/deploiement' },
       { text: 'Politique de signature du code', link: '/fr/admin/signature-du-code' },
+      { text: 'Accessibilité', link: '/fr/admin/accessibilite' },
     ],
   },
 ]

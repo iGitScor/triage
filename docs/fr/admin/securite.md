@@ -64,6 +64,7 @@ la page qui donne le détail. Elle couvre l’app macOS et, quand elle diffère,
 | Signature du code | **Pas encore** : l’app Mac est signée ad hoc et non notarisée, et l’installeur Windows n’est pas signé. L’utilisateur confirme le premier lancement. Vous pouvez construire et signer votre propre copie avec votre Developer ID. Ce qui sera signé, et par qui : [Politique de signature du code](./signature-du-code). |
 | Mises à jour | Désactivées par défaut. Une fois activées (Réglages → Général, ou `AutomaticUpdates`), Remora interroge GitHub une fois par jour et installe une nouvelle version quand l’utilisateur le choisit. Chaque téléchargement doit porter la signature de la clé de publication pour cette version (Ed25519 sous macOS, minisign de Tauri sous Windows), et sous macOS la nouvelle app doit être signée par le même certificat. `AutomaticUpdates` à faux désactive entièrement les mises à jour, pour les parcs que vous redéployez vous-même. |
 | Dépendances | L’app macOS n’utilise aucun paquet tiers. Les crates Rust et paquets npm de l’app Windows sont figés par des fichiers de verrouillage, vérifiés chaque semaine (vulnérabilités et licences) et listés dans son SBOM. |
+| Accessibilité | Niveau AA des WCAG 2.1 visé, partiellement conforme ; le site et la documentation sont vérifiés avec axe en CI. Voir la [déclaration d’accessibilité](./accessibilite). |
 | Tests | Chaque modification exécute en CI les tests des deux apps, dont les contrôles des destinations, des redirections, des liens et de la politique. |
 
 ## Signalement des vulnérabilités

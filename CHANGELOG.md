@@ -9,6 +9,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - Windows and Linux: each group has a menu (⋯) with **Mark all as done**, which can be undone, and **Snooze all…**,
   with a reason and *Until there’s news*, as on the Mac.
+- Docs: an accessibility statement for IT (For IT and compliance → Accessibility): the level aimed at, what each
+  app supports, how it is checked, and the known gaps.
 
 ### Fixed
 

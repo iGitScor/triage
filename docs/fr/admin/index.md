@@ -20,6 +20,7 @@ les outils que l’utilisateur, ou l’organisation, autorise.**
 | Où sont les données ? | Sur l’ordinateur seulement : quelques fichiers JSON dans le dossier de l’utilisateur, les jetons dans le trousseau de session (macOS) ou le Gestionnaire d’identification (Windows). |
 | Et l’IA ? | Sur l’appareil seulement par défaut (framework NaturalLanguage d’Apple sur macOS, règles de mots-clés sur Windows). L’assistant (Claude ou un serveur OpenAI-compatible) est facultatif, et peut être interdit. |
 | La DSI peut-elle verrouiller ? | Oui : outils autorisés, IA externe, serveurs de l’assistant et avatars, par un profil de configuration (macOS) ou une stratégie de groupe et Intune (Windows). |
+| Accessibilité ? | Vise le niveau AA des WCAG 2.1, partiellement conforme aujourd’hui : VoiceOver, le Narrateur et le clavier, avec les manques connus listés dans la [déclaration d’accessibilité](./accessibilite). |
 | Code source ? | Public, GPL-3.0-or-later : [github.com/iGitScor/triage](https://github.com/iGitScor/triage). |
 
 ## Comment c’est appliqué
