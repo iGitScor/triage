@@ -229,10 +229,12 @@ pub async fn connect(
     let _writes = state.vault_writes.lock().await;
     let (vault, all) = {
         let mut inbox = state.inbox.lock().await;
+        let inbox_key = inbox.connected_id(&account, &snapshot.identity);
         (
             inbox.vault(),
+            // Connected again (same person, tool and server): the token goes to the existing account.
             inbox.secrets_after(|all| {
-                all.insert(account.id.clone(), secrets);
+                all.insert(inbox_key, secrets);
             })?,
         )
     };

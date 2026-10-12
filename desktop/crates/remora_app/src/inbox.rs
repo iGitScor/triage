@@ -1297,12 +1297,37 @@ impl Inbox {
         snapshot: SourceSnapshot,
         now: DateTime<Utc>,
     ) -> Result<(), Message> {
+        let key = self.connected_id(&account, &snapshot.identity);
         let all = self.secrets_after(|all| {
-            all.insert(account.id.clone(), secrets);
+            all.insert(key, secrets);
         })?;
         self.vault.save(&all)?;
         self.finish_connect_saved(account, all, snapshot, now);
         Ok(())
+    }
+
+    /// The account already connected for the same person on the same tool and server, as on macOS
+    /// (`isSame(as:identity:)`): connecting it again updates that one instead of adding a duplicate.
+    pub fn existing_account(&self, account: &Account, identity: &str) -> Option<&Account> {
+        if identity.is_empty() {
+            return None;
+        }
+        // "gitlab.acme.io", "https://gitlab.acme.io/" and an empty field (the default host) compare by host.
+        let host = |account: &Account| {
+            let value = account.settings.get("host").map(|h| h.trim()).filter(|h| !h.is_empty())?;
+            let rest = value.split_once("://").map_or(value, |(_, rest)| rest);
+            Some(rest.split(['/', ':', '?', '#']).next().unwrap_or_default().to_lowercase())
+        };
+        self.accounts.iter().find(|saved| {
+            saved.plugin_id == account.plugin_id
+                && saved.identity.as_deref().is_some_and(|known| known.eq_ignore_ascii_case(identity))
+                && host(saved) == host(account)
+        })
+    }
+
+    /// The id a newly connected account's token is kept under: the existing account's when it is the same one.
+    pub fn connected_id(&self, account: &Account, identity: &str) -> String {
+        self.existing_account(account, identity).map_or_else(|| account.id.clone(), |a| a.id.clone())
     }
 
     pub fn finish_connect_saved(
@@ -1313,6 +1338,24 @@ impl Inbox {
         now: DateTime<Utc>,
     ) {
         self.secrets = Some(saved);
+        // The same account connected again: it keeps its id, so Done, snoozes and pins stay; a new name replaces
+        // the old one, and its items come under its id.
+        if let Some(existing) = self.existing_account(&account, &snapshot.identity).map(|a| a.id.clone()) {
+            let mut snapshot = snapshot;
+            for item in &mut snapshot.items {
+                item.account_id = existing.clone();
+                if let Some(rest) = item.id.strip_prefix(account.id.as_str()) {
+                    item.id = format!("{existing}{rest}");
+                }
+            }
+            if let (Some(name), Some(saved)) = (account.name, self.accounts.iter_mut().find(|a| a.id == existing)) {
+                saved.name = Some(name);
+                self.persist(ACCOUNTS, &self.accounts);
+            }
+            self.backoff.remove(&existing);
+            self.apply(vec![(existing, Ok(snapshot))], now);
+            return;
+        }
         account.identity = Some(snapshot.identity.clone());
         let id = account.id.clone();
         self.accounts.push(account);
@@ -1947,6 +1990,65 @@ mod tests {
 
         inbox.disconnect(&id).unwrap();
         assert!(inbox.accounts.is_empty() && vault.load().unwrap().is_empty());
+    }
+
+    /// Connecting the same account again (same person, tool and server) updates it: no second account, no
+    /// duplicate items, its states and new name kept, one token in the vault. As on macOS.
+    #[test]
+    fn connecting_the_same_account_again_updates_it() {
+        let vault = Arc::new(MemoryVault::default());
+        let mut inbox = Inbox::in_memory(vault.clone(), Managed::default());
+        let connect = |inbox: &mut Inbox, name: Option<&str>, token: &str| {
+            let secrets = HashMap::from([("token".to_string(), token.to_string())]);
+            let (account, _) = inbox
+                .prepare_connect("linear", name.map(Into::into), HashMap::new(), &secrets, Arc::new(NoNetwork))
+                .unwrap();
+            let mut issue = item("x", InboxBundle::tasks());
+            issue.id = format!("{}/issue-1", account.id);
+            issue.account_id = account.id.clone();
+            let snapshot = SourceSnapshot { identity: "Alice".into(), items: vec![issue], remarks: vec![] };
+            inbox.finish_connect(account, secrets, snapshot, now()).unwrap();
+        };
+        connect(&mut inbox, None, "lin_old");
+        let id = inbox.accounts[0].id.clone();
+        let issue = inbox.all_items()[0].id.clone();
+        inbox.toggle_pin(&issue);
+
+        connect(&mut inbox, Some("Work"), "lin_new");
+        assert_eq!(
+            inbox.accounts.iter().map(|a| a.id.as_str()).collect::<Vec<_>>(),
+            [id.as_str()],
+            "no second account"
+        );
+        assert_eq!(inbox.accounts[0].name.as_deref(), Some("Work"));
+        assert_eq!(
+            inbox.all_items().iter().map(|i| i.id.as_str()).collect::<Vec<_>>(),
+            [issue.as_str()],
+            "no duplicate"
+        );
+        assert!(inbox.states[&issue].pinned, "states kept");
+        let saved = vault.load().unwrap();
+        assert_eq!((saved.len(), saved[&id]["token"].as_str()), (1, "lin_new"));
+    }
+
+    /// Same person and tool, another server: another account. Another person: another account.
+    #[test]
+    fn the_same_tool_on_another_host_is_another_account() {
+        let mut inbox = inbox();
+        let base = inbox.accounts[0].clone();
+        let account = |host: &str| Account {
+            plugin_id: "gitlab".into(),
+            settings: HashMap::from([("host".to_string(), host.to_string())]),
+            ..base.clone()
+        };
+        let mut saved = account("gitlab.acme.io");
+        saved.id = "saved".into();
+        saved.identity = Some("alice".into());
+        inbox.accounts.push(saved);
+        assert!(inbox.existing_account(&account("https://gitlab.acme.io/"), "Alice").is_some());
+        assert!(inbox.existing_account(&account("gitlab.other.io"), "alice").is_none());
+        assert!(inbox.existing_account(&account("gitlab.acme.io"), "bob").is_none());
+        assert!(inbox.existing_account(&account("gitlab.acme.io"), "").is_none());
     }
 
     #[test]

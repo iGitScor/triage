@@ -19,7 +19,7 @@ the desktop has no tray), notifications that open their item, and on Wayland a s
 |---|---|---|
 | `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 112 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 124 |
-| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 83 |
+| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 85 |
 | `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 4 |
 | `app/src` | The Svelte interface, in English and French | type-checked, 52 |
 
