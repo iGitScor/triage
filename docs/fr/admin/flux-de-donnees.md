@@ -90,7 +90,8 @@ HTTP** : les requêtes ne sont pas écrites sur le disque, et le cache laissé p
 
 Réglages → Confidentialité → **Effacer les données locales…** supprime tout cela : les fichiers JSON, tous les
 éléments du trousseau enregistrés par Remora (ou par son ancien nom, Perch), les notifications programmées et
-reçues, et l’ancien cache HTTP. Déconnecter un compte retire son jeton, ses éléments et ses notifications.
+reçues, et l’ancien cache HTTP. Un fichier qu’il ne peut pas supprimer est nommé, avec son dossier, au lieu d’être
+compté comme effacé. Déconnecter un compte retire son jeton, ses éléments et ses notifications.
 
 ### Windows
 

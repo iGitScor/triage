@@ -500,6 +500,7 @@ FR = {
     "What to remember?": "Que faut-il retenir ?",
     "When": "Quand",
     "Work, Client…": "Boulot, Client…",
+    "Some files couldn’t be erased: %@. Delete them from %@.": "Certains fichiers n’ont pas pu être effacés : %@. Supprimez-les de %@.",
     "Keychain access was refused. Try again and choose Always Allow.": "L’accès au trousseau a été refusé. Réessayez et choisissez Toujours autoriser.",
     "OK": "OK",
     "Remora can’t read its Keychain item, so it leaves it unchanged. Quit and reopen Remora, or use Erase local data in Settings → Privacy to start again.": "Remora ne peut pas lire son élément du trousseau, donc il n’y touche pas. Quittez et rouvrez Remora, ou utilisez Effacer les données locales dans Réglages → Confidentialité pour repartir de zéro.",

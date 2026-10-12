@@ -1253,13 +1253,34 @@ final class InboxModel {
         preferences = Preferences()
         // Nothing pending or in progress may land after the files are gone.
         writer.discard()
-        if let files = try? FileManager.default.contentsOfDirectory(
-            at: environment.folder, includingPropertiesForKeys: nil)
-        {
-            for file in files { try? FileManager.default.removeItem(at: file) }
-        }
+        let left = Self.removeContents(of: environment.folder)
         environment.removeURLCaches()
+        if !left.isEmpty {
+            var keychainError: String?
+            if case .failure(let error) = keychain { keychainError = error.localizedDescription }
+            throw EraseError(files: left, folder: environment.folder.path, keychain: keychainError)
+        }
         try keychain.get()
+    }
+
+    /// Deletes everything in `folder` and returns the names it couldn't (the folder's own name when it can't be read).
+    static func removeContents(of folder: URL) -> [String] {
+        let files: [URL]
+        do {
+            files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+        } catch CocoaError.fileReadNoSuchFile {
+            return []
+        } catch {
+            return [folder.lastPathComponent]
+        }
+        return files.compactMap { file in
+            do {
+                try FileManager.default.removeItem(at: file)
+                return nil
+            } catch {
+                return file.lastPathComponent
+            }
+        }
     }
 
     /// The token goes first: when the Keychain refuses, the account stays, with the reason under it.

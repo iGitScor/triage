@@ -85,8 +85,9 @@ code is never stored. Remora keeps **no HTTP cache**: requests aren’t written 
 versions left in `~/Library/Caches/fr.igitscor.remora` and `~/Library/HTTPStorages` is deleted at launch.
 
 Settings → Privacy → **Erase local data…** deletes all of the above: the JSON files, every Keychain item Remora
-(or its earlier name, Perch) stored, scheduled and delivered notifications, and the old HTTP cache. Disconnecting
-one account removes its token, its items and its notifications.
+(or its earlier name, Perch) stored, scheduled and delivered notifications, and the old HTTP cache. A file it can't
+delete is named, with its folder, rather than reported as erased. Disconnecting one account removes its token, its
+items and its notifications.
 
 ### Windows
 

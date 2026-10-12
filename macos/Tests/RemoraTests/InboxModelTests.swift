@@ -490,6 +490,24 @@ struct InboxModelTests {
         #expect(harness.notifier.removedAll)
     }
 
+    /// A file Erase can't delete is named, not passed over as erased; the rest is still cleared.
+    @Test func eraseNamesTheFilesItCouldNotDelete() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let locked = harness.folder.appending(path: "locked")
+        try FileManager.default.createDirectory(at: locked, withIntermediateDirectories: true)
+        try Data("message content".utf8).write(to: locked.appending(path: "kept.json"))
+        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: locked.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: locked.path) }
+        #expect(throws: EraseError(files: ["locked"], folder: harness.folder.path, keychain: nil)) {
+            try model.eraseLocalData()
+        }
+        #expect(model.accounts.isEmpty && model.allItems.isEmpty)
+        #expect(harness.secrets.erased)
+        let left = try FileManager.default.contentsOfDirectory(atPath: harness.folder.path)
+        #expect(left == ["locked"], "everything else is gone")
+    }
+
     /// Erase leaves no file, token, notification or HTTP cache behind.
     @Test func eraseLeavesNothing() async throws {
         let harness = Harness()
