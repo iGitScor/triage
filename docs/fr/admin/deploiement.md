@@ -31,7 +31,8 @@ fichiers de verrouillage ; il est attesté de la même façon. L’app Mac n’a
 
 ## Signature, Gatekeeper et trousseau
 
-Les versions sont pour l’instant signées **ad hoc**, pas avec un Developer ID Apple, et ne sont pas notarisées. Deux
+Les versions sont pour l’instant signées **ad hoc**, pas avec un Developer ID Apple, et ne sont pas notarisées (la
+[politique de signature du code](./signature-du-code) dit ce qui change une fois la signature en place). Deux
 conséquences :
 
 - **Gatekeeper** bloque le premier lancement. Les utilisateurs font clic droit → Ouvrir, ou, sous macOS 15 et

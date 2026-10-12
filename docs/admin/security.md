@@ -77,7 +77,8 @@ security fixes.
 ## Known limits today
 
 - No Apple Developer ID signature or notarization, and no signed Windows installer: Gatekeeper and SmartScreen
-  warn on first launch, and macOS asks for Keychain access again after each update.
+  warn on first launch, and macOS asks for Keychain access again after each update ([code signing
+  policy](./code-signing)).
 - Updates are off by default: until the user or IT turns them on, keeping users current is up to them.
 - On Windows, the local files are plain JSON readable by the user's account and administrators, and the policy
   covers fewer settings than on macOS.

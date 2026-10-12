@@ -1,6 +1,6 @@
 ---
 title: Politique de signature du code
-description: Comment les versions de Remora sont signées. Sous Windows, par SignPath avec le certificat de la SignPath Foundation ; sous macOS, avec le certificat propre à Remora, pas encore notarisé. Qui approuve une signature, ce qui est signé, et l’engagement de confidentialité.
+description: Comment les versions de Remora sont signées, aujourd’hui et une fois la signature en place. Aujourd’hui l’app Mac est signée ad hoc et l’installeur Windows n’est pas signé ; ensuite, SignPath sous Windows et le certificat propre à Remora sous macOS. Qui approuve une signature, et l’engagement de confidentialité.
 ---
 
 # Politique de signature du code
@@ -8,14 +8,19 @@ description: Comment les versions de Remora sont signées. Sous Windows, par Sig
 Signature gratuite du code sous Windows fournie par [SignPath.io](https://about.signpath.io), certificat de la
 [SignPath Foundation](https://signpath.org).
 
-Cette signature est en cours de mise en place : d’ici là, les notes de chaque version disent si ses fichiers sont signés.
+Cette page est le seul endroit qui dit comment les versions sont signées ; les autres pages y renvoient. Les notes de
+chaque version disent aussi comment ses propres fichiers ont été signés.
 
 ## Ce qui est signé
 
-| Plateforme | Fichiers | Signé par |
-|---|---|---|
-| Windows | `Remora-Setup.exe` et le `Remora.exe` qu’il installe | SignPath, avec le certificat de la SignPath Foundation. Windows affiche *SignPath Foundation* comme éditeur. |
-| macOS | `Remora.app` dans `Remora.dmg` | Le certificat propre à Remora : macOS reconnaît chaque mise à jour comme la même app, et le trousseau cesse de demander. Ce n’est pas un Developer ID d’Apple : l’app n’est pas encore notarisée, et Gatekeeper demande toujours la première fois. |
+| Plateforme | Fichiers | Aujourd’hui (jusqu’à 0.6.0) | Une fois en place |
+|---|---|---|---|
+| macOS | `Remora.app` dans `Remora.dmg` | **Ad hoc**, sans notarisation. Gatekeeper demande la première fois, et le trousseau redemande une fois après chaque mise à jour, car macOS reconnaît une app ad hoc à son build exact. | Le certificat propre à Remora : macOS reconnaît chaque mise à jour comme la même app, et le trousseau cesse de demander. Ce n’est toujours pas un Developer ID d’Apple : Gatekeeper demande la première fois tant que l’app n’est pas notarisée. |
+| Windows | `Remora-Setup.exe` et le `Remora.exe` qu’il installe | **Non signé.** SmartScreen avertit la première fois (*Informations complémentaires* → *Exécuter quand même*). | SignPath, avec le certificat de la SignPath Foundation. Windows affiche *SignPath Foundation* comme éditeur. |
+| Linux | `Remora-x86_64.AppImage`, `Remora-amd64.deb` | **Non signés**, comme la plupart des AppImage ; vérifiez le SHA-256 et la provenance de build ci-dessous. | Pas de changement prévu. |
+
+Pour éviter ces demandes dès aujourd’hui, une organisation peut construire et signer sa propre copie avec son
+Developer ID ou son certificat de signature de code : voir [Déployer Remora](./deploiement).
 
 Seul le [workflow de publication](https://github.com/iGitScor/triage/blob/main/.github/workflows/release.yml) signe,
 et seulement pour un tag de version poussé sur [le dépôt](https://github.com/iGitScor/triage). Rien de construit

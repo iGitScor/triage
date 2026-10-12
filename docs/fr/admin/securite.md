@@ -77,7 +77,8 @@ publié. Seule la dernière version reçoit les correctifs de sécurité.
 ## Limites actuelles
 
 - Pas de signature Developer ID d’Apple ni de notarisation, et pas d’installeur Windows signé : Gatekeeper et
-  SmartScreen avertissent au premier lancement, et macOS redemande l’accès au trousseau après chaque mise à jour.
+  SmartScreen avertissent au premier lancement, et macOS redemande l’accès au trousseau après chaque mise à jour
+  ([politique de signature du code](./signature-du-code)).
 - Mises à jour désactivées par défaut : tant que l’utilisateur ou la DSI ne les active pas, garder les postes à jour leur revient.
 - Sur Windows, les fichiers locaux sont du JSON en clair lisible par le compte de l’utilisateur et les
   administrateurs, et la politique couvre moins de réglages que sur macOS.

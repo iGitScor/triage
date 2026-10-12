@@ -22,7 +22,8 @@ même**. macOS ne demande qu’une fois par version.
 
 Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une
 app qui n’est pas signée par un développeur Apple enregistré. Choisissez **Toujours autoriser** : il ne redemandera
-pas avant la prochaine mise à jour.
+pas avant la prochaine mise à jour. Comment les versions sont signées, et ce qui va changer : la [politique de
+signature du code](/fr/admin/signature-du-code).
 
 ## Comment obtenir les nouvelles versions ?
 

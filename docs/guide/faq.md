@@ -20,7 +20,8 @@ open it once, then System Settings → Privacy & Security → **Open Anyway**. m
 ## Why does macOS ask for my Keychain password?
 
 Remora keeps all your tokens in one Keychain item. macOS asks once per new version of an app that isn’t signed
-by a registered Apple developer. Choose **Always Allow** and it won’t ask again until the next update.
+by a registered Apple developer. Choose **Always Allow** and it won’t ask again until the next update. How releases
+are signed, and what will change: the [code signing policy](/admin/code-signing).
 
 ## How do I get new versions?
 

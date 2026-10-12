@@ -31,7 +31,8 @@ the same way. The Mac app has no third-party packages, so its SBOM is short.
 
 ## Signing, Gatekeeper and the Keychain
 
-Releases are currently signed **ad hoc**, not with an Apple Developer ID, and not notarized. Two consequences:
+Releases are currently signed **ad hoc**, not with an Apple Developer ID, and not notarized (the [code signing
+policy](./code-signing) says what changes once signing is set up). Two consequences:
 
 - **Gatekeeper** blocks the first launch. Users right-click → Open, or, on macOS 15 and later, System Settings →
   Privacy & Security → Open Anyway. Once per version.

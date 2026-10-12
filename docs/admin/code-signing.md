@@ -1,6 +1,6 @@
 ---
 title: Code signing policy
-description: How Remora's releases are signed. On Windows, by SignPath with the SignPath Foundation certificate; on macOS, with Remora's own certificate, not yet notarized. Who approves a signature, what is signed, and the privacy commitment.
+description: How Remora's releases are signed, today and once signing is set up. Today the Mac app is signed ad hoc and the Windows installer isn't signed; next, SignPath on Windows and Remora's own certificate on macOS. Who approves a signature, and the privacy commitment.
 ---
 
 # Code signing policy
@@ -8,14 +8,19 @@ description: How Remora's releases are signed. On Windows, by SignPath with the 
 Free code signing on Windows provided by [SignPath.io](https://about.signpath.io), certificate by
 [SignPath Foundation](https://signpath.org).
 
-This signing is being set up: until it is, each release's notes say whether its files are signed.
+This page is the one place that says how releases are signed; the other pages link here. Each release's notes also
+say how its own files were signed.
 
 ## What is signed
 
-| Platform | Files | Signed by |
-|---|---|---|
-| Windows | `Remora-Setup.exe` and the `Remora.exe` it installs | SignPath, with the SignPath Foundation certificate. Windows shows *SignPath Foundation* as the publisher. |
-| macOS | `Remora.app` in `Remora.dmg` | Remora's own certificate, so macOS recognizes each update as the same app and the Keychain stops asking. It isn't an Apple Developer ID: the app is not notarized yet, and Gatekeeper still asks the first time. |
+| Platform | Files | Today (up to 0.6.0) | Once set up |
+|---|---|---|---|
+| macOS | `Remora.app` in `Remora.dmg` | **Ad hoc**, not notarized. Gatekeeper asks the first time, and the Keychain asks once after each update, because macOS recognizes an ad hoc app by its exact build. | Remora's own certificate: macOS recognizes each update as the same app and the Keychain stops asking. Still not an Apple Developer ID, so Gatekeeper asks the first time until the app is notarized. |
+| Windows | `Remora-Setup.exe` and the `Remora.exe` it installs | **Not signed.** SmartScreen warns the first time (*More info* → *Run anyway*). | SignPath, with the SignPath Foundation certificate. Windows shows *SignPath Foundation* as the publisher. |
+| Linux | `Remora-x86_64.AppImage`, `Remora-amd64.deb` | **Not signed**, like most AppImages; check the SHA-256 and the build provenance below. | No change planned. |
+
+To avoid the prompts today, an organization can build and sign its own copy with its Developer ID or code-signing
+certificate: see [Deploying Remora](./deployment).
 
 Only the [release workflow](https://github.com/iGitScor/triage/blob/main/.github/workflows/release.yml) signs, and
 only for a version tag pushed to [the repository](https://github.com/iGitScor/triage). Nothing built elsewhere,

@@ -207,7 +207,7 @@ The documentation is at **[triage.iscor.me/docs](https://triage.iscor.me/docs/)*
 
 Set the version (`make version V=0.7.0`), commit, then push the tag `v0.7.0`: [the release
 workflow](.github/workflows/release.yml) checks that the tag matches the source, tests and builds both apps (signed
-ad hoc for now), and publishes `Remora.dmg`, `Remora-Setup.exe`, the AppImage and the .deb with their SHA-256, SBOM
+as the [code signing policy](https://triage.iscor.me/docs/admin/code-signing) says), and publishes `Remora.dmg`, `Remora-Setup.exe`, the AppImage and the .deb with their SHA-256, SBOM
 and signed build provenance in one GitHub release, only if every build succeeds. The download links above always point to the latest one.
 
 ## Website
