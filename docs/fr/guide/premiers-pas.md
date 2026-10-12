@@ -6,7 +6,7 @@ description: Installer Remora sur votre Mac ou votre PC Windows, l’ouvrir la p
 # Premiers pas
 
 Remora vit dans la barre des menus de votre Mac, ou dans la zone de notification de la barre des tâches de Windows.
-Elle rassemble ce qui a besoin de vous dans GitHub, GitLab, Slack, Linear et Notion, et le range par ce que vous avez
+Elle rassemble ce qui a besoin de vous dans GitHub, GitLab, Slack, Linear, Jira et Notion, et le range par ce que vous avez
 à faire. Pas de compte à créer, pas de serveur : tout se passe sur votre ordinateur.
 
 ## Installer

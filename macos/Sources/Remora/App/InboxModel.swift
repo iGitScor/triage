@@ -382,13 +382,15 @@ final class InboxModel {
     }
 
     /// Hosts a tool's pictures come from without the tool ever being asked anything there: GitLab serves most
-    /// avatars from Gravatar, Slack a workspace's own emoji from its edge. Images only, and only while the policy
+    /// avatars from Gravatar (Jira Cloud too), Slack a workspace's own emoji from its edge. Images only, and only while the policy
     /// allows them; never a request with a token.
     /// Same list on Windows (`view.rs`).
     static let imageOnlyHosts = [
         "gitlab": ["secure.gravatar.com", "www.gravatar.com"],
         // A workspace's own emoji, in reactions.
         "slack": ["emoji.slack-edge.com"],
+        // Jira Cloud's avatars: Gravatar, falling back to Atlassian's initials pictures.
+        "jira": ["secure.gravatar.com", "www.gravatar.com", "atl-paas.net"],
     ]
 
     // MARK: Assistant

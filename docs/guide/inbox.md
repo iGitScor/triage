@@ -24,11 +24,11 @@ Inside *My turn*, items are grouped by what you have to do, whatever the tool th
 | Verb | For example |
 |---|---|
 | **Reminders** | A reminder you set, now due |
-| **To reply** | A Slack question, a mention in a Linear comment |
+| **To reply** | A Slack question, a mention in a Linear or Jira comment |
 | **To review** | A review request on GitHub or GitLab |
 | **To fix** | Your merge request with changes requested or failing checks |
 | **Ready to merge** | Your merge request, approved and green |
-| **To do** | A Linear issue assigned to you |
+| **To do** | A Linear or Jira issue assigned to you |
 | **To read** | An FYI, an announcement. Shown last, never counted |
 | **Waiting on others** | In the *Waiting* tab |
 
@@ -73,7 +73,7 @@ again. *Clear all* clears it like the rest. When Remora isn't sure, it stays in 
 Inside each verb, Remora puts first:
 
 1. what’s overdue or due today;
-2. the tool’s priority (Linear *Urgent*, then *High*…). Low priority and Linear’s Backlog are shown, not counted;
+2. the tool’s priority (Linear *Urgent*, Jira *Highest*, then *High*…). Low priority and Linear’s Backlog are shown, not counted;
 3. the nearest due date;
 4. the most recent activity.
 

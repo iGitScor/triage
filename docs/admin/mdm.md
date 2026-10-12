@@ -32,7 +32,7 @@ the policy.
 
 `AIServer` and the last five are settings, not privacy rules: they don’t make Settings → Privacy read-only.
 
-Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (Claude API),
+Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `jira`, `notion`, `claude-code` (Claude Code), `claude` (Claude API),
 `openai` (OpenAI-compatible). To choose the assistant, list only that one in `AllowedPlugins`.
 
 For example, Claude allowed for code reviews and tasks, never for Slack, and only with Sonnet and Haiku:

@@ -1,12 +1,12 @@
 ---
 layout: home
 title: Documentation
-description: How to use Remora, the inbox for GitHub, GitLab, Slack, Linear and Notion in the Mac menu bar or the Windows tray; how IT can deploy and lock it down; and how to write a plugin.
+description: How to use Remora, the inbox for GitHub, GitLab, Slack, Linear, Jira and Notion in the Mac menu bar or the Windows tray; how IT can deploy and lock it down; and how to write a plugin.
 
 hero:
   name: Remora
   text: Everything that needs you. Nothing that doesn’t.
-  tagline: One inbox in the menu bar or the Windows tray for code reviews, merge requests, Slack, Linear and Notion, sorted by what you have to do. It runs on your computer and talks only to the tools you allow.
+  tagline: One inbox in the menu bar or the Windows tray for code reviews, merge requests, Slack, Linear, Jira and Notion, sorted by what you have to do. It runs on your computer and talks only to the tools you allow.
   image:
     src: /favicon.svg
     alt: Remora

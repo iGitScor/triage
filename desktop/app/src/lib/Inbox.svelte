@@ -158,7 +158,7 @@ async function clearAll() {
     {#if view && !view.connected && !view.demo}
       <div class="card welcome">
         <strong>{t('Connect a tool to get started')}</strong>
-        <p class="muted">{t('GitHub, GitLab, Slack, Linear or Notion. Remora only reads, and only talks to the tools you allow.')}</p>
+        <p class="muted">{t('GitHub, GitLab, Slack, Linear, Jira or Notion. Remora only reads, and only talks to the tools you allow.')}</p>
         <button type="button" class="pill primary" onclick={onsettings}>{t('Connect a tool')}</button>
       </div>
     {:else if view}

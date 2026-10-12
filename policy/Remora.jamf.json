@@ -14,6 +14,7 @@
           "gitlab",
           "slack",
           "linear",
+          "jira",
           "notion",
           "claude-code",
           "claude",
@@ -45,6 +46,7 @@
           "gitlab",
           "slack",
           "linear",
+          "jira",
           "notion",
           "reminders"
         ]
@@ -92,6 +94,7 @@
           "gitlab",
           "slack",
           "linear",
+          "jira",
           "notion",
           "reminders"
         ]

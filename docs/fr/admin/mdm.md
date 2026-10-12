@@ -32,7 +32,7 @@ peut plus modifier la politique.
 
 `AIServer` et les cinq dernières sont des réglages, pas des règles de confidentialité : elles ne verrouillent pas Réglages → Confidentialité.
 
-Identifiants : `github`, `gitlab`, `slack`, `linear`, `notion`, `claude-code` (Claude Code), `claude` (API Claude),
+Identifiants : `github`, `gitlab`, `slack`, `linear`, `jira`, `notion`, `claude-code` (Claude Code), `claude` (API Claude),
 `openai` (OpenAI-compatible). Pour choisir l’assistant, ne listez que celui-là dans `AllowedPlugins`.
 
 Par exemple, Claude autorisé pour les revues de code et les tâches, jamais pour Slack, et seulement avec Sonnet et

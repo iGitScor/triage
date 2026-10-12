@@ -1,6 +1,6 @@
 ---
 title: Connecting your tools
-description: Step by step, connect GitHub (and Enterprise), GitLab (and self-hosted), Slack, Linear and Notion to Remora, and optionally the assistant. Which token, which permission, and what Remora reads.
+description: Step by step, connect GitHub (and Enterprise), GitLab (and self-hosted), Slack, Linear, Jira and Notion to Remora, and optionally the assistant. Which token, which permission, and what Remora reads.
 ---
 
 # Connecting your tools
@@ -78,6 +78,20 @@ and comments from your Linear inbox.
 
 Urgent and High issues are marked as such; Low and Backlog issues are shown but not counted. Overdue and
 due-today issues get a notification.
+
+## Jira
+
+Shows the issues assigned to you that aren't done, with their priority, due date and status, plus the comments of
+the last week that mention you, on issues you watch (Jira watches for you the issues you create, are assigned or
+comment on). Works with Jira Cloud and Jira Data Center.
+
+- **Jira Cloud**: set the **Host** (`your-company.atlassian.net`), then **Create a token**: Atlassian opens your API
+  tokens. Create one named Remora, paste it, and enter the **E-mail** you sign in to Jira with.
+- **Jira Data Center**: set your Jira's host, then in Jira open your profile → **Personal Access Tokens**, create
+  one, paste it, and leave the e-mail empty.
+
+Highest (or Blocker, Critical) issues are urgent and High (or Major) are high; Low and Lowest are shown but not
+counted. Overdue and due-today issues get a notification. A mention on an issue you don't watch doesn't show up.
 
 ## Notion
 

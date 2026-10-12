@@ -24,11 +24,11 @@ Dans *À moi*, les éléments sont rangés par ce que vous avez à faire, quel q
 | Verbe | Par exemple |
 |---|---|
 | **Rappels** | Un rappel que vous avez créé, arrivé à échéance |
-| **À répondre** | Une question sur Slack, une mention dans un commentaire Linear |
+| **À répondre** | Une question sur Slack, une mention dans un commentaire Linear ou Jira |
 | **À relire** | Une demande de relecture sur GitHub ou GitLab |
 | **À corriger** | Votre merge request avec des modifications demandées ou des tests en échec |
 | **Prêtes à fusionner** | Votre merge request, approuvée et au vert |
-| **À faire** | Un ticket Linear qui vous est assigné |
+| **À faire** | Un ticket Linear ou Jira qui vous est assigné |
 | **À lire** | Une info, une annonce. Affiché en dernier, jamais compté |
 | **En attente des autres** | Dans l’onglet *En attente* |
 
@@ -76,7 +76,7 @@ Une conversation terminée va dans **Terminés**, comme si vous l’aviez marqu�
 Dans chaque verbe, Remora place d’abord :
 
 1. ce qui est en retard ou à faire aujourd’hui ;
-2. la priorité de l’outil (Linear *Urgent*, puis *High*…). La priorité basse et le Backlog de Linear sont
+2. la priorité de l’outil (Linear *Urgent*, Jira *Highest*, puis *High*…). La priorité basse et le Backlog de Linear sont
    affichés, pas comptés ;
 3. l’échéance la plus proche ;
 4. l’activité la plus récente.

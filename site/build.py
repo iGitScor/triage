@@ -564,6 +564,7 @@ def home(lang: str) -> str:
                 ),
                 ("slack", "Slack", "Mentions and direct messages, opened in the Slack app."),
                 ("linear", "Linear", "Issues assigned to you with their priority and due date, plus unread mentions."),
+                ("jira", "Jira", "Issues assigned to you and comments that mention you. Cloud or Data Center."),
                 (
                     "claude",
                     "Claude or OpenAI (optional)",
@@ -732,6 +733,11 @@ def home(lang: str) -> str:
                     "linear",
                     "Linear",
                     "Les tickets qui vous sont assignés, avec priorité et échéance, plus les mentions non lues.",
+                ),
+                (
+                    "jira",
+                    "Jira",
+                    "Les tickets qui vous sont assignés et les commentaires qui vous mentionnent. Cloud ou Data Center.",
                 ),
                 (
                     "claude",
@@ -1321,6 +1327,12 @@ def privacy(lang: str) -> str:
                     "Allowed",
                 ),
                 (
+                    "Jira",
+                    "Your Jira host: <code>*.atlassian.net</code>, or your Data Center",
+                    "Your token (and e-mail on Cloud); searches for issues assigned to you, and for the comments of the last week on issues you watch",
+                    "Allowed",
+                ),
+                (
                     "Notion",
                     "<code>api.notion.com</code>",
                     "Your token; who you are, then the tasks assigned to you in the databases you chose",
@@ -1340,7 +1352,7 @@ def privacy(lang: str) -> str:
                 ),
                 (
                     "Avatars",
-                    "Image hosts of your connected tools, Gravatar for GitLab, and <code>emoji.slack-edge.com</code> for a workspace’s own emoji",
+                    "Image hosts of your connected tools, Gravatar for GitLab and Jira, and <code>emoji.slack-edge.com</code> for a workspace’s own emoji",
                     "An image request, never with a token",
                     "Allowed",
                 ),
@@ -1475,6 +1487,12 @@ def privacy(lang: str) -> str:
                     "Autorisé",
                 ),
                 (
+                    "Jira",
+                    "Votre hôte Jira : <code>*.atlassian.net</code>, ou votre Data Center",
+                    "Votre jeton (et l’e-mail sur Cloud) ; des recherches des tickets qui vous sont assignés, et des commentaires de la dernière semaine sur les tickets que vous suivez",
+                    "Autorisé",
+                ),
+                (
                     "Notion",
                     "<code>api.notion.com</code>",
                     "Votre jeton ; qui vous êtes, puis les tâches qui vous sont assignées dans les bases choisies",
@@ -1494,7 +1512,7 @@ def privacy(lang: str) -> str:
                 ),
                 (
                     "Avatars",
-                    "Les serveurs d’images de vos outils connectés, Gravatar pour GitLab, et <code>emoji.slack-edge.com</code> pour les emoji propres à un espace de travail",
+                    "Les serveurs d’images de vos outils connectés, Gravatar pour GitLab et Jira, et <code>emoji.slack-edge.com</code> pour les emoji propres à un espace de travail",
                     "Une requête d’image, jamais avec un jeton",
                     "Autorisé",
                 ),

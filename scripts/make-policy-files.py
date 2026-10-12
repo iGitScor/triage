@@ -14,8 +14,8 @@ from xml.sax.saxutils import escape
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "policy"
 DOMAIN = "fr.igitscor.remora"
-PLUGINS = ["github", "gitlab", "slack", "linear", "notion", "claude-code", "claude", "openai"]
-SOURCES = ["github", "gitlab", "slack", "linear", "notion", "reminders"]
+PLUGINS = ["github", "gitlab", "slack", "linear", "jira", "notion", "claude-code", "claude", "openai"]
+SOURCES = ["github", "gitlab", "slack", "linear", "jira", "notion", "reminders"]
 
 # name, type (list, bool, string, minutes), English title and help, French title and help.
 KEYS = [

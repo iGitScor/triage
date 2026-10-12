@@ -7,6 +7,7 @@ public enum PluginRegistry {
         GitLabPlugin.self,
         SlackPlugin.self,
         LinearPlugin.self,
+        JiraPlugin.self,
         NotionPlugin.self,
     ]
 

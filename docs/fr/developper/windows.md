@@ -19,7 +19,7 @@ ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remo
 | Partie | Contenu | Tests |
 |---|---|---|
 | `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 111 |
-| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 116 |
+| `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 123 |
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 80 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 41 |
@@ -28,7 +28,7 @@ ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remo
 
 | | macOS | Windows |
 |---|---|---|
-| Sources : GitHub, GitLab, Slack, Linear, Notion | ✓ | ✓ |
+| Sources : GitHub, GitLab, Slack, Linear, Jira, Notion | ✓ | ✓ |
 | L’assistant : brief, résumés ✦ des groupes, tri des éléments reportés, par l’API Claude, Claude Code ou un serveur OpenAI-compatible | ✓ | ✓ |
 | Raisons de report, retours suggérés (sans les week-ends), constats (boucles, embouteillages, sujets proches, éléments sans nouvelles) | ✓ | ✓ |
 | Préparation des relectures (estimation sans fichiers de verrouillage, fichiers, zones sensibles, votre rythme) et sessions de relecture | ✓ | ✓ |

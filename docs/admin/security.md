@@ -22,7 +22,7 @@ details. It covers the macOS app and, where it differs, the Windows app (in prev
 
 | Question | Answer |
 |---|---|
-| What data does it read? | The user's pull and merge requests, review requests, Slack mentions and direct messages, Linear and Notion tasks: titles, authors, statuses, message text, links. File paths and line counts of a change, never code. |
+| What data does it read? | The user's pull and merge requests, review requests, Slack mentions and direct messages, Linear, Jira and Notion tasks, Jira comments that mention them: titles, authors, statuses, message text, links. File paths and line counts of a change, never code. |
 | Where does it go? | Only to the tool it came from, and to the AI provider the user connects, if the organization allows it: Anthropic for Claude, or an OpenAI-compatible server it can pin with `AIServer` and `AllowedAIServers`. Each tool's hosts are declared in the app and enforced: any other host is refused. See [Data flows](./data-flows). |
 | Credentials | The user's own tokens, typed by the user, kept in the login Keychain (macOS) or Credential Manager (Windows). Never written to files or logs, never put in a URL. |
 | Personal data | Names and avatars of the people in those items. Nothing is collected about the user beyond what their tools already hold. |

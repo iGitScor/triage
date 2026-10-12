@@ -1,6 +1,6 @@
 ---
 title: Connecter vos outils
-description: Pas à pas, connecter GitHub (et Enterprise), GitLab (et auto-hébergé), Slack, Linear et Notion à Remora, et l’assistant en option. Quel jeton, quelle permission, et ce que Remora lit.
+description: Pas à pas, connecter GitHub (et Enterprise), GitLab (et auto-hébergé), Slack, Linear, Jira et Notion à Remora, et l’assistant en option. Quel jeton, quelle permission, et ce que Remora lit.
 ---
 
 # Connecter vos outils
@@ -80,6 +80,23 @@ mentions et commentaires non lus de votre boîte Linear.
 
 Les tickets *Urgent* et *High* sont signalés ; *Low* et le Backlog sont affichés mais pas comptés. Les tickets en
 retard ou à rendre aujourd’hui déclenchent une notification.
+
+## Jira
+
+Affiche les tickets qui vous sont assignés et ne sont pas terminés, avec leur priorité, leur échéance et leur
+statut, plus les commentaires de la dernière semaine qui vous mentionnent, sur les tickets que vous suivez (Jira vous
+fait suivre ceux que vous créez, qui vous sont assignés ou que vous commentez). Fonctionne avec Jira Cloud et Jira
+Data Center.
+
+- **Jira Cloud** : indiquez l’**Hôte** (`votre-entreprise.atlassian.net`), puis **Créer un jeton** : Atlassian ouvre
+  vos jetons d’API. Créez-en un nommé Remora, collez-le, et indiquez l’**E-mail** avec lequel vous vous connectez à
+  Jira.
+- **Jira Data Center** : indiquez l’hôte de votre Jira, puis dans Jira ouvrez votre profil → **Jetons d’accès
+  personnels**, créez-en un, collez-le, et laissez l’e-mail vide.
+
+Les tickets *Highest* (ou *Blocker*, *Critical*) sont urgents et *High* (ou *Major*) importants ; *Low* et *Lowest*
+sont affichés mais pas comptés. Les tickets en retard ou à rendre aujourd’hui déclenchent une notification. Une
+mention sur un ticket que vous ne suivez pas n’apparaît pas.
 
 ## Notion
 

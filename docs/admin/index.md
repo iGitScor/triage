@@ -6,7 +6,7 @@ description: What a security or compliance review of Remora needs to know. No se
 # For IT and compliance
 
 Remora is a menu bar app on macOS, and a tray app on Windows (in preview), that reads your people’s work tools (GitHub,
-GitLab, Slack, Linear, Notion) and shows what needs them. It is built for organizations with strict data rules: **no
+GitLab, Slack, Linear, Jira, Notion) and shows what needs them. It is built for organizations with strict data rules: **no
 data leaves the computer except to the tools the user, or the organization, allows.**
 
 ## In short
@@ -33,7 +33,7 @@ flowchart LR
     Store[("Local files<br/>+ Keychain or Credential Manager")]
     UI --- Store
   end
-  Client --> Tools["GitHub · GitLab · Slack · Linear · Notion<br/>(allowed tools only)"]
+  Client --> Tools["GitHub · GitLab · Slack · Linear · Jira · Notion<br/>(allowed tools only)"]
   Client -. "only if the policy allows it" .-> Claude["AI provider: Anthropic or an OpenAI-compatible server"]
   Client -- "any other host" --x Blocked["Blocked"]
 ```

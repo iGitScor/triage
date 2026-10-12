@@ -17,11 +17,12 @@ and a policy under `HKLM\SOFTWARE\Policies\Remora` (Group Policy or Intune).
 | GitLab | The configured GitLab host | The user’s token; read requests for their merge requests, then one GraphQL query for their approvals, pipelines and changed file paths and line counts. The diff text in responses is never decoded or stored | Allowed |
 | Slack | `slack.com` | The user token; search requests for the user’s mentions, direct messages, own thread messages and own recent messages, then the replies of up to 10 of those threads (`conversations.replies`, read-only history scopes); the messages the user reacted to (`reactions.list`), the reactions on up to 15 recent messages (`reactions.get`, each kept 10 minutes) and the workspace’s own emoji (`emoji.list`, once a day) | Allowed |
 | Linear | `api.linear.app`, `public.linear.app` | The API key; read requests for assigned issues and notifications | Allowed |
+| Jira | The configured Jira host (Cloud: `*.atlassian.net`; or a Data Center host) | The API token with the user's e-mail (Cloud), or a personal access token (Data Center); the user's identity, a search for the issues assigned to them, and one for the comments of the last 7 days on the issues they watch, read for mentions of them | Allowed |
 | Notion | `api.notion.com` | The token; the user's identity, then queries of the chosen databases for tasks assigned to the user | Allowed |
 | Claude Code | Anthropic, through the local `claude` program | A few fields of each inbox item: see [What reaches the assistant](#what-reaches-claude) | **Off** |
 | Claude API | `api.anthropic.com` | The API key, and the same fields as Claude Code | **Off** |
 | OpenAI-compatible | The server set in the account or by `AIServer`: OpenAI, Azure OpenAI, Mistral…, or a server on this computer | The API key, if any, and the same fields as Claude Code. The provider’s own terms (retention, training) apply to what it receives | **Off**; a server on this computer is allowed unless the organization refuses it (`AllowLocalAI`) |
-| Avatars | Image hosts of allowed, connected tools only, over https; GitLab avatars also from Gravatar (`secure.gravatar.com`, `www.gravatar.com`), and a Slack workspace’s own emoji from `emoji.slack-edge.com` | An image request, never with a token | Allowed |
+| Avatars | Image hosts of allowed, connected tools only, over https; GitLab and Jira Cloud avatars also from Gravatar (`secure.gravatar.com`, `www.gravatar.com`) and Jira's default pictures (`*.atl-paas.net`), and a Slack workspace’s own emoji from `emoji.slack-edge.com` | An image request, never with a token | Allowed |
 | Updates | `github.com`, and GitHub's download servers (`*.githubusercontent.com`) | A request for `latest.json` once a day, and the new version when the user installs it. No identifier, token or content | **Off** (`AutomaticUpdates`) |
 
 Data from the tools comes **back** to the computer and stays there. There is **no telemetry, no analytics, no crash
@@ -123,8 +124,8 @@ Windows and Linux app sorts with keyword rules only. Nothing is sent anywhere.
 3. **External AI off by default.** An assistant that sends content off the computer (Claude, or an OpenAI-compatible
    server elsewhere) is refused until external AI is allowed; the brief, summaries and triage then appear in the UI.
    A server on this computer follows `AllowLocalAI` instead.
-4. **Avatars** load only from the hosts of allowed, connected tools, GitLab's Gravatar images and Slack's workspace
-   emoji: no other third party.
+4. **Avatars** load only from the hosts of allowed, connected tools, GitLab's and Jira's Gravatar images, Jira's
+   default pictures and Slack's workspace emoji: no other third party.
 5. **Settings → Privacy** shows each connected account’s destinations and whether it is allowed.
 
 The organization can lock all of this: [Managing the policy with MDM](./mdm).

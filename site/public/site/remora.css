@@ -75,6 +75,9 @@
 .logo-linear {
   --logo: url("/site/logos/linear.svg");
 }
+.logo-jira {
+  --logo: url("/site/logos/jira.svg");
+}
 .logo-notion {
   --logo: url("/site/logos/notion.svg");
 }

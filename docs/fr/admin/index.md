@@ -6,7 +6,7 @@ description: Ce qu’une revue sécurité ou conformité de Remora doit savoir. 
 # DSI et conformité
 
 Remora est une app de barre des menus sur macOS, et de zone de notification sur Windows (en aperçu), qui lit les
-outils de travail de vos équipes (GitHub, GitLab, Slack, Linear, Notion) et montre ce qui a besoin d’elles. Elle est
+outils de travail de vos équipes (GitHub, GitLab, Slack, Linear, Jira, Notion) et montre ce qui a besoin d’elles. Elle est
 pensée pour les organisations aux règles strictes sur les données : **aucune donnée ne quitte l’ordinateur, sauf vers
 les outils que l’utilisateur, ou l’organisation, autorise.**
 
@@ -34,7 +34,7 @@ flowchart LR
     Store[("Fichiers locaux<br/>+ trousseau ou Gestionnaire d'identification")]
     UI --- Store
   end
-  Client --> Tools["GitHub · GitLab · Slack · Linear · Notion<br/>(outils autorisés seulement)"]
+  Client --> Tools["GitHub · GitLab · Slack · Linear · Jira · Notion<br/>(outils autorisés seulement)"]
   Client -. "seulement si la politique l'autorise" .-> Claude["Fournisseur d’IA : Anthropic ou un serveur OpenAI-compatible"]
   Client -- "toute autre adresse" --x Blocked["Bloqué"]
 ```

@@ -61,9 +61,9 @@ Then connect a first tool: [getting started](https://triage.iscor.me/docs/guide/
 ---
 
 Remora is one inbox in your Mac’s menu bar, or the system tray on Windows and Linux, for everything that needs you:
-code reviews, your own merge requests, Slack mentions and DMs, Linear issues, Notion tasks and your own reminders. It
-sorts them by **what you have to do** (*To reply*, *To review*, *To fix*, *Ready to merge*…), not by where they came
-from, and shows no more than you can take in.
+code reviews, your own merge requests, Slack mentions and DMs, Linear and Jira issues, Notion tasks and your own
+reminders. It sorts them by **what you have to do** (*To reply*, *To review*, *To fix*, *Ready to merge*…), not by
+where they came from, and shows no more than you can take in.
 
 It is built for teams with strict data rules: **nothing leaves the computer except to the tools you allow**. There is
 no Remora server, no account and no telemetry; sorting, ranking and advice run on the device. An assistant (Claude, or
@@ -124,6 +124,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | GitLab (+ self-hosted) | Merge requests you opened or review, approvals, pipelines | Token: `read_api` |
 | Slack | Mentions, DMs and replies in your threads from the last N days; your questions still waiting; reactions (✅ moves an item to Done) | User token `xoxp-…`: `search:read`, `channels:history`, `groups:history`, `reactions:read`, `emoji:read` |
 | Linear | Issues assigned to you (priority, due date), unread mentions and comments | Personal API key |
+| Jira (Cloud or Data Center) | Issues assigned to you (priority, due date, status), and recent comments that mention you | Cloud: API token and e-mail; Data Center: personal access token |
 | Notion | Open tasks assigned to you in chosen databases | Personal access token, or an internal connection's secret |
 | Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this computer |
 | Claude API | Brief, summaries, triage | Anthropic API key |
@@ -164,8 +165,8 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 
 | Suite | Tests | What it covers |
 |---|---|---|
-| macOS (Swift Testing) | 307 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
-| Windows (`cargo test`) | 311 | The same rules, the five source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry and Linux policy, storage, the inbox service, and what the tray shows |
+| macOS (Swift Testing) | 314 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
+| Windows (`cargo test`) | 318 | The same rules, the six source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry and Linux policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 
