@@ -21,17 +21,17 @@ pub enum FailureKind {
 #[serde(rename_all = "camelCase")]
 pub struct Failure {
     pub kind: FailureKind,
-    pub message: String,
+    pub message: crate::Message,
 }
 
 pub const OFFLINE: &str = "Offline: Remora tries again when the connection is back.";
 pub const UNREACHABLE: &str = "Can’t reach the server. Check the address, or your VPN if it needs one.";
 
 impl Failure {
-    pub fn new(kind: FailureKind, message: impl Into<String>) -> Self {
+    pub fn new(kind: FailureKind, message: impl Into<crate::Message>) -> Self {
         let message = match kind {
-            FailureKind::Offline => OFFLINE.to_string(),
-            FailureKind::Unreachable => UNREACHABLE.to_string(),
+            FailureKind::Offline => OFFLINE.into(),
+            FailureKind::Unreachable => UNREACHABLE.into(),
             _ => message.into(),
         };
         Failure { kind, message }
@@ -106,6 +106,6 @@ mod tests {
             ]),
             SourcesHealth::Failing { count: 2 }
         );
-        assert_eq!(f(FailureKind::Offline).message, OFFLINE, "network failures say what they mean");
+        assert_eq!(f(FailureKind::Offline).message.text, OFFLINE, "network failures say what they mean");
     }
 }

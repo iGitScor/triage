@@ -4,7 +4,7 @@ use crate::{changed, save_secrets, AppState, REMINDER_SHORTCUT};
 use chrono::{DateTime, Duration, Local, NaiveDate, TimeZone, Utc};
 use remora_app::view::{inbox_view, InboxView};
 use remora_app::{paths, AccountInfo, Managed, Preferences, SourceInfo};
-use remora_core::{CompliancePolicy, Preset, RecurrenceRule, SnoozeClock, SnoozeMode, SnoozeReason};
+use remora_core::{CompliancePolicy, Message, Preset, RecurrenceRule, SnoozeClock, SnoozeMode, SnoozeReason};
 use remora_plugins::{links, registry};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -12,7 +12,8 @@ use tauri::{AppHandle, Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_opener::OpenerExt;
 
-type Result<T> = std::result::Result<T, String>;
+/// Errors reach the interface as a code and its values, translated there by code (`MESSAGES` in i18n.ts).
+type Result<T> = std::result::Result<T, Message>;
 
 #[tauri::command]
 pub async fn inbox(state: State<'_, AppState>, query: String) -> Result<InboxView> {
@@ -149,7 +150,7 @@ pub async fn open(app: &AppHandle, id: &str, in_browser: bool) -> Result<()> {
     let in_app = plan.app.as_deref().is_some_and(|url| opener.open_url(url, None::<&str>).is_ok());
     if !in_app {
         if let Some(url) = plan.web.as_deref() {
-            opener.open_url(url, None::<&str>).map_err(|e| e.to_string())?;
+            opener.open_url(url, None::<&str>).map_err(|e| Message::from(e.to_string()))?;
         }
     }
     changed(app).await;
@@ -161,15 +162,15 @@ pub async fn open(app: &AppHandle, id: &str, in_browser: bool) -> Result<()> {
 pub fn open_setup(app: AppHandle, plugin_id: String, host: Option<String>) -> Result<()> {
     let manifest = registry::manifest(&plugin_id).ok_or("No setup page for this tool.")?;
     let url = links::setup_url(&manifest, host.as_deref()).ok_or("No setup page for this tool.")?;
-    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+    app.opener().open_url(url, None::<&str>).map_err(|e| Message::from(e.to_string()))
 }
 
 /// Settings → Updates: the licences of what the app bundles (DEP-07), shipped next to it.
 #[tauri::command]
 pub fn open_notices(app: AppHandle) -> Result<()> {
     use tauri::Manager;
-    let path = app.path().resource_dir().map_err(|e| e.to_string())?.join("THIRD-PARTY-NOTICES.txt");
-    app.opener().open_path(path.to_string_lossy(), None::<&str>).map_err(|e| e.to_string())
+    let path = app.path().resource_dir().map_err(|e| Message::from(e.to_string()))?.join("THIRD-PARTY-NOTICES.txt");
+    app.opener().open_path(path.to_string_lossy(), None::<&str>).map_err(|e| Message::from(e.to_string()))
 }
 
 #[tauri::command]
@@ -202,12 +203,9 @@ pub async fn connect(
             (account, plugin, inbox.preferences.whole_inbox_brief, inbox.brief_items(Utc::now()))
         };
         let brief = if whole_inbox {
-            Some(plugin.brief(&items, Utc::now()).await.map_err(|e| e.to_string())?)
+            Some(plugin.brief(&items, Utc::now()).await?)
         } else {
-            plugin
-                .digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now())
-                .await
-                .map_err(|e| e.to_string())?;
+            plugin.digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now()).await?;
             None
         };
         let _writes = state.vault_writes.lock().await;
@@ -227,7 +225,7 @@ pub async fn connect(
     }
     let (account, plugin) =
         state.inbox.lock().await.prepare_connect(&plugin_id, name, settings, &secrets, state.http.clone())?;
-    let snapshot = plugin.fetch().await.map_err(|e| e.to_string())?;
+    let snapshot = plugin.fetch().await?;
     let _writes = state.vault_writes.lock().await;
     let (vault, all) = {
         let mut inbox = state.inbox.lock().await;
@@ -265,10 +263,7 @@ pub async fn reconnect(
         }
     };
     if let Some(plugin) = assistant {
-        plugin
-            .digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now())
-            .await
-            .map_err(|e| e.to_string())?;
+        plugin.digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now()).await?;
         let _writes = state.vault_writes.lock().await;
         let (vault, all) = {
             let mut inbox = state.inbox.lock().await;
@@ -285,7 +280,7 @@ pub async fn reconnect(
         return Ok(());
     }
     let plugin = state.inbox.lock().await.prepare_reconnect(&account_id, &secrets, state.http.clone())?;
-    let snapshot = plugin.fetch().await.map_err(|e| e.to_string())?;
+    let snapshot = plugin.fetch().await?;
     let _writes = state.vault_writes.lock().await;
     let (vault, all) = {
         let mut inbox = state.inbox.lock().await;
@@ -385,7 +380,7 @@ pub async fn set_preferences(app: AppHandle, state: State<'_, AppState>, prefere
 #[tauri::command]
 pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<()> {
     let launcher = app.autolaunch();
-    if enabled { launcher.enable() } else { launcher.disable() }.map_err(|e| e.to_string())
+    if enabled { launcher.enable() } else { launcher.disable() }.map_err(|e| Message::from(e.to_string()))
 }
 
 #[tauri::command]
@@ -527,7 +522,7 @@ pub async fn make_brief(app: AppHandle, state: State<'_, AppState>, force: bool)
         let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
         (from, plugin?, inbox.brief_items(Utc::now()))
     };
-    let brief = plugin.brief(&items, Utc::now()).await.map_err(|e| e.to_string())?;
+    let brief = plugin.brief(&items, Utc::now()).await?;
     state.inbox.lock().await.keep_brief(&from, brief.written_from(&items));
     changed(&app).await;
     Ok(())
@@ -546,7 +541,7 @@ pub async fn summarize(app: AppHandle, state: State<'_, AppState>, bundle_id: St
         let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
         (from, plugin?, items)
     };
-    let text = plugin.digest(&items, &topic, Utc::now()).await.map_err(|e| e.to_string())?;
+    let text = plugin.digest(&items, &topic, Utc::now()).await?;
     state.inbox.lock().await.keep_summary(&from, &bundle_id, remora_core::BundleSummary::new(text, &items, Utc::now()));
     changed(&app).await;
     Ok(())
@@ -565,7 +560,7 @@ pub async fn triage(app: AppHandle, state: State<'_, AppState>) -> Result<()> {
         let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
         (from, plugin?, snoozed)
     };
-    let suggestions = plugin.triage(&snoozed, Utc::now()).await.map_err(|e| e.to_string())?;
+    let suggestions = plugin.triage(&snoozed, Utc::now()).await?;
     state.inbox.lock().await.keep_triage(&from, suggestions);
     changed(&app).await;
     Ok(())

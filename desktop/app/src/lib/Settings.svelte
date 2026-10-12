@@ -5,7 +5,7 @@ import { api, type Account, type Preferences, type Settings, type Source, type U
 import ConnectForm from './ConnectForm.svelte'
 import Icon from './Icon.svelte'
 import Logo from './Logo.svelte'
-import { linux, t, translateMessage } from './i18n'
+import { linux, say, t, translateMessage } from './i18n'
 
 /** What a system shortcut runs on Wayland, where Remora can't listen for one itself. */
 const REMINDER_COMMAND = 'remora --reminder'
@@ -123,10 +123,10 @@ onMount(() => {
                   <strong>{account.name ?? account.identity ?? source.manifest.name}</strong>
                   {#if account.name && account.identity}<span class="muted"> · {account.identity}</span>{/if}
                   {#if account.refusal && !source.refusal}<span class="error"> · {t(account.refusal)}</span>{/if}
-                  {#if account.error}<span class={account.errorKind === 'offline' || account.errorKind === 'rateLimited' ? 'muted' : 'error'}> · {translateMessage(account.error)}</span>{/if}
+                  {#if account.error}<span class={account.errorKind === 'offline' || account.errorKind === 'rateLimited' ? 'muted' : 'error'}> · {say(account.error)}</span>{/if}
                   {#if account.errorKind === 'auth'}<button type="button" class="link" onclick={() => (reconnecting = account.id)}>{t('Reconnect…')}</button>
                   {:else if source.manifest.fields.some((f) => f.isSecret)}<span class="muted"> ·&nbsp;</span><button type="button" class="link" onclick={() => (reconnecting = reconnecting === account.id ? null : account.id)}>{t('Update token…')}</button>{/if}
-                  {#each account.remarks as remark (remark)}<span class="remark muted">{translateMessage(remark)}</span>{/each}
+                  {#each account.remarks as remark (remark.text)}<span class="remark muted">{say(remark)}</span>{/each}
                 </span>
                 <button type="button" class="icon-button" onclick={() => { renaming = account.id; newName = account.name ?? '' }} aria-label={t('Rename')} title={t('Rename')}><Icon name="pencil" size={15} /></button>
                 <button type="button" class="link danger-link" onclick={() => (confirming = account.id)}>{t('Disconnect')}</button>

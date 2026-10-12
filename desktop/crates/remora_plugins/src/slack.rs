@@ -470,8 +470,9 @@ impl SourcePlugin for SlackPlugin {
         let mine = mine.map(|s| s.messages.matches).unwrap_or_default();
         let (threads, remarks) = self.thread_replies(mine, &auth.user_id, auth.team_id.as_deref(), &custom).await;
         snapshot.items.extend(threads);
-        snapshot.remarks.extend(remarks);
-        snapshot.remarks.extend(reactions_remark);
+        // Fixed sentences: the interface has each one as it is.
+        snapshot.remarks.extend(remarks.into_iter().map(Into::into));
+        snapshot.remarks.extend(reactions_remark.map(Into::into));
         Ok(snapshot)
     }
 }
@@ -1361,7 +1362,7 @@ mod tests {
             ..Default::default()
         });
         let snapshot = SlackPlugin::new(&config(&[("token", "xoxp")]), http.clone()).unwrap().fetch().await.unwrap();
-        assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].contains("reactions:read"));
+        assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].text.contains("reactions:read"));
         assert_eq!(snapshot.items.len(), 1, "everything else works");
         assert_eq!(http.calls("reactions.get"), 0);
     }
@@ -1458,7 +1459,7 @@ mod tests {
         let http =
             Arc::new(SlackStub { mine, replies: r#"{"ok": false, "error": "missing_scope"}"#, ..Default::default() });
         let snapshot = SlackPlugin::new(&config(&[("token", "xoxp")]), http).unwrap().fetch().await.unwrap();
-        assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].contains("channels:history"));
+        assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].text.contains("channels:history"));
         assert!(!snapshot.items.iter().any(|i| i.context.starts_with("Thread")));
     }
 }

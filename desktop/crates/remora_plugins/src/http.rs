@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use remora_core::host_matches;
+use remora_core::Message;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::{HashMap, VecDeque};
@@ -146,6 +147,39 @@ impl fmt::Display for PluginError {
 }
 
 impl std::error::Error for PluginError {}
+
+impl PluginError {
+    /// For the interface: a stable code and its values (`MESSAGES` in i18n.ts), with this English sentence. What a
+    /// server or the system wrote stays as it is.
+    pub fn message(&self) -> Message {
+        let text = self.to_string();
+        let with = |code: &str, value: &str| Message::new(code, vec![value.to_string()], text.clone());
+        match self {
+            PluginError::Unauthorized => Message::new("unauthorized", vec![], text),
+            PluginError::Status(404) => with("http.notFound", "404"),
+            PluginError::Status(code @ 500..) => with("http.serverError", &code.to_string()),
+            PluginError::Status(code) => with("http.refused", &code.to_string()),
+            PluginError::Api(_) => text.into(),
+            PluginError::BlockedHost(host) => with("blockedHost", host),
+            PluginError::BlockedRedirect(host) => with("blockedRedirect", host),
+            PluginError::RateLimited(_) => Message::new("rateLimited", vec![], text),
+            PluginError::Network(message) => with("network", message),
+            PluginError::TimedOut => with("network", "timed out"),
+            PluginError::TooLarge(limit) => with("tooLarge", &(limit / 1_000_000).to_string()),
+            PluginError::Decode(message) => with("decode", message),
+            PluginError::MissingField(key) => with("missingField", key),
+            PluginError::InvalidField(key) => with("invalidField", key),
+            PluginError::InsecureField(key) => with("insecureField", key),
+            PluginError::UnknownPlugin(id) => with("unknownPlugin", id),
+        }
+    }
+}
+
+impl From<PluginError> for Message {
+    fn from(error: PluginError) -> Self {
+        error.message()
+    }
+}
 
 #[async_trait]
 pub trait HttpClient: Send + Sync {
@@ -576,6 +610,38 @@ mod tests {
             PluginError::TooLarge(MAX_BODY).to_string(),
             "The server’s answer is too large: Remora reads at most 5 MB."
         );
+    }
+
+    /// Every code an error or remark can carry has its English in the interface (`MESSAGES` in i18n.ts), which is
+    /// where it is translated: a code with no wording there would show only the English text.
+    #[test]
+    fn every_message_code_has_its_wording_in_the_interface() {
+        let interface = include_str!("../../../app/src/lib/i18n.ts");
+        let errors = [
+            PluginError::Unauthorized,
+            PluginError::Status(404),
+            PluginError::Status(502),
+            PluginError::Status(400),
+            PluginError::BlockedHost("evil.io".into()),
+            PluginError::BlockedRedirect("evil.io".into()),
+            PluginError::RateLimited(None),
+            PluginError::Network("reset".into()),
+            PluginError::TimedOut,
+            PluginError::TooLarge(MAX_BODY),
+            PluginError::Decode("eof".into()),
+            PluginError::MissingField("token".into()),
+            PluginError::InvalidField("host".into()),
+            PluginError::InsecureField("host".into()),
+            PluginError::UnknownPlugin("x".into()),
+        ];
+        let codes = errors.iter().map(PluginError::message).chain([crate::truncated("Jira")]).map(|m| m.code);
+        for code in codes {
+            let key = if code.contains('.') { format!("'{code}':") } else { format!("  {code}:") };
+            assert!(interface.contains(&key), "{code} has no wording in i18n.ts");
+        }
+        // A server's own words stay as they are.
+        assert!(PluginError::Api("Slack: invalid_auth".into()).message().is_text());
+        assert_eq!(PluginError::Status(404).message().args, ["404"]);
     }
 
     /// GitHub's 403 with nothing left or a Retry-After, GitLab's reset header, Retry-After, and a refused token.

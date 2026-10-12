@@ -4,9 +4,10 @@ use chrono::{DateTime, Utc};
 use remora_core::{
     notices, while_closed, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief, BundleSummary,
     CompliancePolicy, Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder,
-    Mark, Notice, NoticeKind, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule, ReviewPace, ReviewPrep,
-    ReviewTiming, Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem,
-    SourcesHealth, TriageAction, TriageSuggestion, VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
+    Mark, Message, Notice, NoticeKind, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule, ReviewPace,
+    ReviewPrep, ReviewTiming, Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord,
+    SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion, VerbClassifier, WaitingAssistant, WaitingHelp,
+    AI_SERVER_PLUGIN,
 };
 use remora_plugins::{
     claude, links, registry, AssistantPlugin, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError,
@@ -39,7 +40,7 @@ pub struct FetchJob {
 
 pub type FetchResult = (String, Result<SourceSnapshot, PluginError>);
 /// The assistant to ask, with its account's id (an answer is kept only while that account still answers).
-pub type AssistantJob = (String, Result<Box<dyn AssistantPlugin>, String>);
+pub type AssistantJob = (String, Result<Box<dyn AssistantPlugin>, Message>);
 
 /// Runs fetches concurrently.
 pub async fn run(jobs: Vec<FetchJob>) -> Vec<FetchResult> {
@@ -74,11 +75,11 @@ pub struct AccountInfo {
     pub allowed: bool,
     /// Why it's blocked, when it is.
     pub refusal: Option<String>,
-    pub error: Option<String>,
+    pub error: Option<Message>,
     /// What fixes it: `auth` gets a Reconnect button.
     pub error_kind: Option<FailureKind>,
     /// What the last fetch said besides its items: a list cut at its limit, a missing permission.
-    pub remarks: Vec<String>,
+    pub remarks: Vec<Message>,
 }
 
 /// What opening an item opens: `app` first when there is one, then `web` if the app didn't open.
@@ -118,7 +119,7 @@ pub struct Inbox {
     /// Each failing account's last failure, by kind.
     errors: HashMap<String, Failure>,
     /// What each account's last fetch said besides its items.
-    remarks: HashMap<String, Vec<String>>,
+    remarks: HashMap<String, Vec<Message>>,
     /// Accounts that failed lately, and when to ask them again.
     backoff: HashMap<String, Backoff>,
     synced: HashSet<String>,
@@ -282,7 +283,7 @@ impl Inbox {
             .collect()
     }
 
-    pub fn errors(&self) -> Vec<String> {
+    pub fn errors(&self) -> Vec<Message> {
         self.errors.values().map(|f| f.message.clone()).collect()
     }
 
@@ -291,13 +292,13 @@ impl Inbox {
         SourcesHealth::of(&self.errors)
     }
 
-    pub fn remarks(&self) -> Vec<String> {
+    pub fn remarks(&self) -> Vec<Message> {
         self.remarks.values().flatten().cloned().collect()
     }
 
     // MARK: Refreshing
 
-    fn secrets(&mut self) -> Result<&Secrets, String> {
+    fn secrets(&mut self) -> Result<&Secrets, Message> {
         if self.secrets.is_none() {
             self.secrets = Some(self.vault.load()?);
         }
@@ -323,7 +324,7 @@ impl Inbox {
     }
 
     /// Every account's tokens after `change`, to save with `Vault::save`, then pass to a `…_saved` method.
-    pub fn secrets_after(&mut self, change: impl FnOnce(&mut Secrets)) -> Result<Secrets, String> {
+    pub fn secrets_after(&mut self, change: impl FnOnce(&mut Secrets)) -> Result<Secrets, Message> {
         let mut all = self.secrets()?.clone();
         change(&mut all);
         Ok(all)
@@ -363,7 +364,7 @@ impl Inbox {
             match registry::make(&account, &account_secrets, guarded, cache) {
                 Ok(plugin) => jobs.push(FetchJob { account_id: account.id.clone(), plugin }),
                 Err(error) => {
-                    self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, error.to_string()));
+                    self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, error.message()));
                 }
             }
         }
@@ -393,7 +394,7 @@ impl Inbox {
                 Err(error) => {
                     let kind = if offline { FailureKind::Offline } else { error.kind() };
                     if kind == FailureKind::Offline {
-                        self.errors.insert(account_id, Failure::new(kind, error.to_string()));
+                        self.errors.insert(account_id, Failure::new(kind, error.message()));
                         continue;
                     }
                     let resume = match error {
@@ -404,7 +405,7 @@ impl Inbox {
                         _ => None,
                     };
                     self.backoff.entry(account_id.clone()).or_default().failed(now, interval, resume);
-                    self.errors.insert(account_id, Failure::new(kind, error.to_string()));
+                    self.errors.insert(account_id, Failure::new(kind, error.message()));
                 }
                 Ok(snapshot) => {
                     self.backoff.remove(&account_id);
@@ -735,12 +736,12 @@ impl Inbox {
 
     /// The organization's Claude Code path wins over the account's, and still passes the plugin's own checks; one
     /// that can't be read turns Claude Code off.
-    fn with_managed_claude_code_path(&self, account: &mut Account) -> Result<(), String> {
+    fn with_managed_claude_code_path(&self, account: &mut Account) -> Result<(), Message> {
         if account.plugin_id != claude::code::ID {
             return Ok(());
         }
         match self.managed.claude_code_path.as_deref() {
-            Some("") => Err(CLAUDE_CODE_PATH_UNREADABLE.to_string()),
+            Some("") => Err(CLAUDE_CODE_PATH_UNREADABLE.into()),
             Some(path) => {
                 account.settings.insert("path".into(), path.to_string());
                 Ok(())
@@ -761,7 +762,7 @@ impl Inbox {
         account: &Account,
         http: Arc<dyn HttpClient>,
         language: &str,
-    ) -> Result<Box<dyn AssistantPlugin>, String> {
+    ) -> Result<Box<dyn AssistantPlugin>, Message> {
         let secrets = self.secrets()?.get(&account.id).cloned().unwrap_or_default();
         self.assistant_with(account, &secrets, http, language)
     }
@@ -774,14 +775,14 @@ impl Inbox {
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
         language: &str,
-    ) -> Result<Box<dyn AssistantPlugin>, String> {
+    ) -> Result<Box<dyn AssistantPlugin>, Message> {
         let manifest = claude::assistant_manifests()
             .into_iter()
             .find(|m| m.id == account.plugin_id)
             .ok_or("Unknown assistant.")?;
         let account = &self.with_policy_server(account);
         if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
-            return Err(refusal.to_string());
+            return Err(refusal.into());
         }
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
@@ -790,7 +791,7 @@ impl Inbox {
         let mut constrained = account.clone();
         constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
         self.with_managed_claude_code_path(&mut constrained)?;
-        claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.to_string())
+        claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.message())
     }
 
     /// The assistant to ask now, with its account's id for `keep_*`, or None when there is none or it isn't allowed.
@@ -1092,7 +1093,7 @@ impl Inbox {
         repeat: Option<RecurrenceRule>,
         until: Option<DateTime<Utc>>,
         now: DateTime<Utc>,
-    ) -> Result<String, String> {
+    ) -> Result<String, Message> {
         if title.trim().is_empty() {
             return Err("Type what to remember.".into());
         }
@@ -1152,7 +1153,7 @@ impl Inbox {
     /// What opening an item opens, as a click in the inbox or a notification does: the tool's app when the
     /// preference allows it (`app`, tried first), else the web page (`web`). Only web pages and the tools' apps
     /// are ever opened (`links`). The item stops being reminded.
-    pub fn open_plan(&mut self, id: &str, in_browser: bool) -> Result<OpenPlan, String> {
+    pub fn open_plan(&mut self, id: &str, in_browser: bool) -> Result<OpenPlan, Message> {
         let item = self.item(id).ok_or("This item is gone.")?;
         self.opened(id);
         let http_hosts = links::http_hosts(self.accounts.iter().find(|a| a.id == item.account_id));
@@ -1172,10 +1173,10 @@ impl Inbox {
         settings: HashMap<String, String>,
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
-    ) -> Result<(Account, Box<dyn SourcePlugin>), String> {
+    ) -> Result<(Account, Box<dyn SourcePlugin>), Message> {
         let manifest = registry::manifest(plugin_id).ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
         if let Some(refusal) = self.policy().refusal(&manifest) {
-            return Err(refusal.to_string());
+            return Err(refusal.into());
         }
         let account = Account {
             id: uuid::Uuid::new_v4().to_string(),
@@ -1186,7 +1187,7 @@ impl Inbox {
         };
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
-        let plugin = registry::make(&account, secrets, guarded, Default::default()).map_err(|e| e.to_string())?;
+        let plugin = registry::make(&account, secrets, guarded, Default::default()).map_err(|e| e.message())?;
         Ok((account, plugin))
     }
 
@@ -1200,7 +1201,7 @@ impl Inbox {
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
         language: &str,
-    ) -> Result<(Account, Box<dyn AssistantPlugin>), String> {
+    ) -> Result<(Account, Box<dyn AssistantPlugin>), Message> {
         let manifest = claude::assistant_manifests()
             .into_iter()
             .find(|m| m.id == plugin_id)
@@ -1213,7 +1214,7 @@ impl Inbox {
             identity: None,
         });
         if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
-            return Err(refusal.to_string());
+            return Err(refusal.into());
         }
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
@@ -1222,7 +1223,7 @@ impl Inbox {
         let mut constrained = account.clone();
         constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
         self.with_managed_claude_code_path(&mut constrained)?;
-        let plugin = claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.to_string())?;
+        let plugin = claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.message())?;
         Ok((account, plugin))
     }
 
@@ -1231,7 +1232,7 @@ impl Inbox {
         &mut self,
         account: Account,
         secrets: HashMap<String, String>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Message> {
         let all = self.assistant_secrets(&account, secrets)?;
         self.vault.save(&all)?;
         self.finish_assistant_connect_saved(account, all);
@@ -1243,7 +1244,7 @@ impl Inbox {
         &mut self,
         account: &Account,
         secrets: HashMap<String, String>,
-    ) -> Result<Secrets, String> {
+    ) -> Result<Secrets, Message> {
         let previous: Vec<String> =
             self.accounts.iter().filter(|a| claude::is_assistant(&a.plugin_id)).map(|a| a.id.clone()).collect();
         self.secrets_after(|all| {
@@ -1295,7 +1296,7 @@ impl Inbox {
         secrets: HashMap<String, String>,
         snapshot: SourceSnapshot,
         now: DateTime<Utc>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Message> {
         let all = self.secrets_after(|all| {
             all.insert(account.id.clone(), secrets);
         })?;
@@ -1325,17 +1326,17 @@ impl Inbox {
         account_id: &str,
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
-    ) -> Result<Box<dyn SourcePlugin>, String> {
+    ) -> Result<Box<dyn SourcePlugin>, Message> {
         let account =
             self.accounts.iter().find(|a| a.id == account_id).ok_or("This account is no longer connected.")?;
         let manifest =
             registry::manifest(&account.plugin_id).ok_or_else(|| format!("Unknown plugin “{}”.", account.plugin_id))?;
         if let Some(refusal) = self.policy().refusal(&manifest) {
-            return Err(refusal.to_string());
+            return Err(refusal.into());
         }
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
-        registry::make(account, secrets, guarded, Default::default()).map_err(|e| e.to_string())
+        registry::make(account, secrets, guarded, Default::default()).map_err(|e| e.message())
     }
 
     /// Saves the new token of an account whose fetch worked with it, and its items.
@@ -1345,7 +1346,7 @@ impl Inbox {
         secrets: HashMap<String, String>,
         snapshot: SourceSnapshot,
         now: DateTime<Utc>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Message> {
         if !self.accounts.iter().any(|a| a.id == account_id) {
             return Err("This account is no longer connected.".into());
         }
@@ -1362,7 +1363,7 @@ impl Inbox {
         saved: Secrets,
         snapshot: SourceSnapshot,
         now: DateTime<Utc>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Message> {
         if !self.accounts.iter().any(|a| a.id == account_id) {
             return Err("This account is no longer connected.".into());
         }
@@ -1380,7 +1381,7 @@ impl Inbox {
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
         language: &str,
-    ) -> Result<Box<dyn AssistantPlugin>, String> {
+    ) -> Result<Box<dyn AssistantPlugin>, Message> {
         let account = self
             .accounts
             .iter()
@@ -1390,7 +1391,7 @@ impl Inbox {
     }
 
     /// The tokens are saved: an account reconnected without a fetch (the assistant) uses them from now on.
-    pub fn finish_reconnect_secrets(&mut self, account_id: &str, saved: Secrets) -> Result<(), String> {
+    pub fn finish_reconnect_secrets(&mut self, account_id: &str, saved: Secrets) -> Result<(), Message> {
         if !self.accounts.iter().any(|a| a.id == account_id) {
             return Err("This account is no longer connected.".into());
         }
@@ -1405,7 +1406,7 @@ impl Inbox {
         self.persist(ACCOUNTS, &self.accounts);
     }
 
-    pub fn disconnect(&mut self, account_id: &str) -> Result<(), String> {
+    pub fn disconnect(&mut self, account_id: &str) -> Result<(), Message> {
         let all = self.secrets_after(|all| {
             all.remove(account_id);
         })?;
@@ -1432,13 +1433,13 @@ impl Inbox {
     }
 
     /// Settings → Privacy → Erase local data: every account, file and token.
-    pub fn erase_local_data(&mut self) -> Result<(), String> {
+    pub fn erase_local_data(&mut self) -> Result<(), Message> {
         self.vault.save(&Secrets::new())?;
         self.erase_local_data_saved()
     }
 
     /// Erase, the tokens already deleted. The files go under the lock, so no save can bring one back.
-    pub fn erase_local_data_saved(&mut self) -> Result<(), String> {
+    pub fn erase_local_data_saved(&mut self) -> Result<(), Message> {
         self.remarks.clear();
         self.undo_point = None;
         if let Some(store) = &self.store {
@@ -1917,7 +1918,7 @@ mod tests {
         assert!(inbox.fetch_jobs(Arc::new(NoNetwork), now(), false).is_empty());
         assert_eq!(inbox.errors(), ["Not allowed by your privacy policy."]);
         let refused = inbox.prepare_connect("github", None, HashMap::new(), &HashMap::new(), Arc::new(NoNetwork));
-        assert_eq!(refused.err().as_deref(), Some("Not allowed by your privacy policy."));
+        assert_eq!(refused.err().map(|e| e.text).as_deref(), Some("Not allowed by your privacy policy."));
         assert!(!inbox.sources().iter().find(|s| s.manifest.id == "github").unwrap().refusal.is_none());
     }
 
@@ -2210,7 +2211,7 @@ mod tests {
         assert_eq!(inbox.review_pace(), 1.0, "not before five");
     }
 
-    fn connect_openai(inbox: &Inbox, host: &str) -> Result<Account, String> {
+    fn connect_openai(inbox: &Inbox, host: &str) -> Result<Account, Message> {
         let settings = HashMap::from([("host".to_string(), host.to_string()), ("model".to_string(), "m".to_string())]);
         let secrets = HashMap::from([("token".to_string(), "sk".to_string())]);
         inbox.prepare_assistant_connect("openai", None, settings, &secrets, Arc::new(NoNetwork), "en").map(|(a, _)| a)
@@ -2258,7 +2259,10 @@ mod tests {
         assert!(info.allowed && inbox.assistant_account().is_some());
 
         inbox.managed.allowed_ai_servers = Some(vec!["https://api.openai.com/v1".into()]);
-        assert_eq!(connect_openai(&inbox, "https://api.openai.com/v1").err().as_deref(), Some(SERVER_NOT_ALLOWED));
+        assert_eq!(
+            connect_openai(&inbox, "https://api.openai.com/v1").err().map(|e| e.text).as_deref(),
+            Some(SERVER_NOT_ALLOWED)
+        );
         let info = inbox.account_infos().into_iter().find(|a| a.account.plugin_id == "openai").unwrap();
         assert_eq!(info.refusal.as_deref(), Some(SERVER_NOT_ALLOWED));
         assert!(inbox.assistant_account().is_none(), "a forced server outside the list turns the assistant off");
@@ -2269,16 +2273,25 @@ mod tests {
     fn local_ai_servers_follow_the_policy() {
         let mut inbox = inbox();
         assert!(connect_openai(&inbox, "http://localhost:11434/v1").is_ok());
-        assert_eq!(connect_openai(&inbox, "https://api.openai.com/v1").err().as_deref(), Some(EXTERNAL_AI_OFF));
+        assert_eq!(
+            connect_openai(&inbox, "https://api.openai.com/v1").err().map(|e| e.text).as_deref(),
+            Some(EXTERNAL_AI_OFF)
+        );
         inbox.managed = Managed { allow_external_ai: Some(false), ..Managed::default() };
-        assert_eq!(connect_openai(&inbox, "http://localhost:11434/v1").err().as_deref(), Some(EXTERNAL_AI_OFF));
+        assert_eq!(
+            connect_openai(&inbox, "http://localhost:11434/v1").err().map(|e| e.text).as_deref(),
+            Some(EXTERNAL_AI_OFF)
+        );
         inbox.managed.allow_local_ai = Some(true);
         assert!(connect_openai(&inbox, "http://localhost:11434/v1").is_ok());
         inbox.managed = Managed { allow_external_ai: Some(true), allow_local_ai: Some(false), ..Managed::default() };
-        assert_eq!(connect_openai(&inbox, "http://127.0.0.1:1234/v1").err().as_deref(), Some(LOCAL_AI_NOT_ALLOWED));
+        assert_eq!(
+            connect_openai(&inbox, "http://127.0.0.1:1234/v1").err().map(|e| e.text).as_deref(),
+            Some(LOCAL_AI_NOT_ALLOWED)
+        );
         assert!(connect_openai(&inbox, "https://api.openai.com/v1").is_ok());
         assert_eq!(
-            connect_openai(&inbox, "http://llm.lan/v1").err().as_deref(),
+            connect_openai(&inbox, "http://llm.lan/v1").err().map(|e| e.text).as_deref(),
             Some("Only a server on this computer can use http: use https."),
         );
     }
@@ -2301,7 +2314,7 @@ mod tests {
                 .map(|(account, _)| account)
         };
         inbox.managed.claude_code_path = Some(String::new());
-        assert_eq!(connect(&inbox).err().as_deref(), Some(CLAUDE_CODE_PATH_UNREADABLE));
+        assert_eq!(connect(&inbox).err().map(|e| e.text).as_deref(), Some(CLAUDE_CODE_PATH_UNREADABLE));
     }
 
     /// `AllowedAIModels` keeps both of its models within the list; an empty summary model too.

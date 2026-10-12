@@ -393,7 +393,8 @@ mod tests {
         let cut =
             remarks(RESPONSE.replace(r#""reviewing": {"nodes""#, r#""reviewing": {"issueCount": 73, "nodes""#)).await;
         assert_eq!(cut, [crate::truncated("GitHub")]);
-        assert_eq!(cut[0], "GitHub has more than Remora shows: only the latest 50 of each list are listed.");
+        assert_eq!(cut[0].text, "GitHub has more than Remora shows: only the latest 50 of each list are listed.");
+        assert_eq!((cut[0].code.as_str(), cut[0].args.as_slice()), ("truncated", ["GitHub".to_string()].as_slice()));
     }
 
     #[tokio::test]

@@ -1,7 +1,9 @@
 // Typed calls to the Rust commands (src-tauri/src/commands.rs). Field names follow serde's camelCase.
 import { invoke } from '@tauri-apps/api/core'
 import { CommandError, report } from './failures'
-import { translateMessage } from './i18n'
+import { type Message, say } from './i18n'
+
+export type { Message }
 
 export type Tone = 'neutral' | 'accent' | 'positive' | 'warning' | 'negative'
 export interface Person {
@@ -75,8 +77,8 @@ export interface InboxView {
   layout: Layout
   counts: { inProgress: number; myTurn: number; waiting: number; snoozed: number; done: number }
   lastRefresh?: string | null
-  errors: string[]
-  remarks: string[]
+  errors: Message[]
+  remarks: Message[]
   connected: boolean
   demo: boolean
   accountNames: Record<string, string>
@@ -206,9 +208,9 @@ export interface Account {
   allowed: boolean
   /** Why it's blocked, when it is. */
   refusal?: string | null
-  error?: string | null
+  error?: Message | null
   errorKind?: FailureKind | null
-  remarks: string[]
+  remarks: Message[]
 }
 export type TrayCount = 'waitingOnMe' | 'everything' | 'hidden'
 export type Appearance = 'system' | 'light' | 'dark'
@@ -286,11 +288,17 @@ export interface Preset {
 export type SnoozeMode = 'hide' | 'remind'
 
 /** Calls a Rust command. A failure is shown to the user (translated) unless `quiet`, then rethrown, marked as shown. */
+function isMessage(value: unknown): value is Message {
+  return typeof value === 'object' && value !== null && 'code' in value && 'text' in value
+}
+
 async function call<T>(command: string, args?: Record<string, unknown>, options: { quiet?: boolean } = {}): Promise<T> {
   try {
     return await invoke<T>(command, args)
   } catch (error) {
-    const message = translateMessage(error instanceof Error ? error.message : String(error))
+    // A command's error is a Message (a code and its values); anything else is the system's own words.
+    const said = isMessage(error) ? error : error instanceof Error ? error.message : String(error)
+    const message = say(said)
     if (!options.quiet) report(message)
     throw new CommandError(message, !options.quiet)
   }

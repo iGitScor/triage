@@ -22,12 +22,12 @@ pub struct InboxView {
     pub layout: InboxLayout,
     pub counts: Counts,
     pub last_refresh: Option<DateTime<Utc>>,
-    pub errors: Vec<String>,
+    pub errors: Vec<remora_core::Message>,
     /// What the footer says about the sources, and the accounts to reconnect by name.
     pub health: remora_core::SourcesHealth,
     pub reconnect_names: Vec<String>,
     /// Lists cut at their limit, missing permissions: in the footer, details in Settings.
-    pub remarks: Vec<String>,
+    pub remarks: Vec<remora_core::Message>,
     pub connected: bool,
     pub demo: bool,
     /// Account names to show next to items, only when a tool has several accounts.

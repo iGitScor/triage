@@ -14,7 +14,7 @@ import TriagePanel from './TriagePanel.svelte'
 import ReviewSession from './ReviewSession.svelte'
 import { announce } from './announce'
 import { offer } from './failures'
-import { linux, t, translateMessage } from './i18n'
+import { linux, say, t } from './i18n'
 import { tablist } from './tablist'
 import { focusFirstRow, rowKeys } from './rowkeys'
 import KeyboardHelp from './KeyboardHelp.svelte'
@@ -234,18 +234,18 @@ async function clearAll() {
       <span class="muted"><Icon name="offline" size={14} /> {view.lastRefresh ? t('Offline · updated %@', relative(view.lastRefresh)) : t('Offline')}</span>
     {:else if view?.health.state === 'reconnect'}
       {@const names = view.reconnectNames}
-      <button type="button" class="link warn" onclick={onsettings} title={view.errors.map(translateMessage).join('\n')}>
+      <button type="button" class="link warn" onclick={onsettings} title={view.errors.map(say).join('\n')}>
         {names.length === 1 ? t('%@ needs reconnecting', names[0]) : t('%d sources need reconnecting', names.length)}
       </button>
     {:else if view?.health.state === 'failing'}
-      <button type="button" class="link error" onclick={onsettings} title={view.errors.map(translateMessage).join('\n')}>
+      <button type="button" class="link error" onclick={onsettings} title={view.errors.map(say).join('\n')}>
         {view.health.count === 1 ? t('1 source failing') : t('%d sources failing', view.health.count)}
       </button>
     {:else}
       <span class="muted">{view?.lastRefresh ? t('Updated %@', relative(view.lastRefresh)) : ''}</span>
       {#if view?.remarks.length}
         <!-- A list cut at its limit, a missing permission: the details are in Settings. -->
-        {@const said = view.remarks.map(translateMessage).join('\n')}
+        {@const said = view.remarks.map(say).join('\n')}
         <button type="button" class="icon-button" onclick={onsettings} title={said} aria-label={said}><Icon name="info" size={15} /></button>
       {/if}
     {/if}

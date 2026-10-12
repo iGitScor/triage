@@ -22,6 +22,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Windows and Linux: errors are translated by what they are, not by matching their English, so a reworded message
+  can't lose its French.
 - Applying a triage, Snooze all, and an insight's Spread them, Same time for all or Let them go are undone as a
   whole by one Undo (the triage used to put back only its last item). Windows and Linux now offer Undo after them.
 - Accessibility: the last icon-only buttons have spoken names; form errors are announced; the chosen snooze reason,

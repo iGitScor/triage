@@ -92,16 +92,16 @@ impl PluginConfig {
 pub struct SourceSnapshot {
     pub identity: String,
     pub items: Vec<InboxItem>,
-    /// What the user should know about this fetch, in English (the interface translates it): a list cut at its
-    /// limit, a permission missing.
-    pub remarks: Vec<String>,
+    /// What the user should know about this fetch (the interface translates it by code): a list cut at its limit, a
+    /// permission missing.
+    pub remarks: Vec<remora_core::Message>,
 }
 
 /// Lists stop at 50 items each: past that, the tool has more than the inbox shows. Same text on macOS.
 pub const TRUNCATED: &str = "%@ has more than Remora shows: only the latest 50 of each list are listed.";
 
-pub fn truncated(tool: &str) -> String {
-    TRUNCATED.replace("%@", tool)
+pub fn truncated(tool: &str) -> remora_core::Message {
+    remora_core::Message::new("truncated", vec![tool.into()], TRUNCATED.replace("%@", tool))
 }
 
 #[async_trait]

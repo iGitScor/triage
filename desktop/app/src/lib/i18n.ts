@@ -22,30 +22,47 @@ export function t(key: string, ...args: (string | number)[]): string {
   return (dictionary[key] ?? key).replace(PLACEHOLDER, (m) => String(args[i++] ?? m))
 }
 
-/** Keys with a placeholder, most specific first, as patterns: "Network error: %@" matches "Network error: timed out". */
-const templates = Object.keys(dictionary)
-  .filter((key) => /%(?:@|lld|d)/.test(key) && /[A-Za-z]{2}/.test(key.replace(PLACEHOLDER, '')))
-  .sort((a, b) => b.replace(PLACEHOLDER, '').length - a.replace(PLACEHOLDER, '').length)
-  .map((key) => ({
-    key,
-    pattern: new RegExp(
-      `^${key
-        .split(PLACEHOLDER)
-        .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-        .join('(.+?)')}$`,
-      's',
-    ),
-  }))
+/** What Rust says to the user: a stable code and its values, with the English (`Message` in remora_core). */
+export type Message = { code: string; args: string[]; text: string }
 
 /**
- * A message the backend wrote with values in it (an error): translated by the key it was made from, its values
- * translated too when they are messages themselves ("%@ (HTTP %@)"). Only for messages: titles go through t().
+ * Each code's English, the key its French is found by. Wording lives here, not in the Rust that raised it, so
+ * changing a Rust sentence can't break a translation, and no message is matched by pattern (CODE-01).
+ */
+const MESSAGES: Record<string, string> = {
+  // t-keys
+  unauthorized: 'The token was rejected. Check it and its scopes.',
+  'http.notFound': 'The server couldn’t find what Remora asked for: check the address and what the token can see.',
+  'http.serverError': 'The server had a problem: Remora tries again at the next refresh.',
+  'http.refused': 'The server refused the request.',
+  blockedHost: 'Blocked: %@ is not an allowed destination.',
+  blockedRedirect: 'Blocked: the server redirected to %@.',
+  rateLimited: 'Too many requests: Remora waits a little before trying again.',
+  network: 'Network error: %@',
+  tooLarge: 'The server’s answer is too large: Remora reads at most %@ MB.',
+  decode: 'Unexpected answer from the server: %@',
+  missingField: '“%@” is required.',
+  invalidField: '“%@” is not valid.',
+  insecureField: '“%@” must start with https://: the token would travel unencrypted.',
+  unknownPlugin: 'Unknown plugin “%@”.',
+  truncated: '%@ has more than Remora shows: only the latest 50 of each list are listed.',
+}
+
+/** A message from Rust, in the interface's language: by its code, else as the fixed sentence it is. */
+export function say(message: Message | string): string {
+  if (typeof message === 'string') return translateMessage(message)
+  const english = MESSAGES[message.code]
+  if (!english) return translateMessage(message.text)
+  // A network error's reason ("timed out") is a fixed sentence of its own.
+  const args = message.args.map(translateMessage)
+  if (message.code.startsWith('http.')) return t('%@ (HTTP %@)', t(english), ...args)
+  return t(english, ...args)
+}
+
+/**
+ * A fixed sentence from the backend or the system, translated when the dictionary has it as is; a server's own
+ * words stay as they are. Messages with values come as codes (`say`), never matched by pattern.
  */
 export function translateMessage(message: string): string {
-  if (message in dictionary) return dictionary[message]
-  for (const { key, pattern } of templates) {
-    const values = message.match(pattern)
-    if (values) return t(key, ...values.slice(1).map(translateMessage))
-  }
-  return message
+  return dictionary[message] ?? message
 }
