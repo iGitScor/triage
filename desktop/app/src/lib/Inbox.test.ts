@@ -59,3 +59,16 @@ describe('Inbox tabs', () => {
     expect(selected(container)).toBe('tab-inProgress')
   })
 })
+
+describe('First-run tip', () => {
+  it('offers to start with Windows, off until chosen', async () => {
+    const onautostart = vi.fn()
+    const { getByLabelText } = render(Inbox, {
+      props: { ...props(view()), welcome: { shortcut: null, autostart: false }, onautostart },
+    })
+    const toggle = getByLabelText('Start with Windows') as HTMLInputElement
+    expect(toggle.checked).toBe(false)
+    await fireEvent.click(toggle)
+    expect(onautostart).toHaveBeenCalledWith(true)
+  })
+})

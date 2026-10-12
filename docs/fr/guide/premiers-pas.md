@@ -39,8 +39,9 @@ Réglages → Général → **Ouvrir à la connexion**, pour retrouver Remora ch
 Remora se place dans la zone de notification de la barre des tâches (cliquez sur **^** si elle est masquée, et
 glissez-la près de l’horloge pour la garder visible). Un clic ouvre la boîte ; un clic droit, le menu. Les icônes de
 la zone de notification ne se tirent pas sous Windows : un nouveau rappel se crée avec **Ctrl+Alt+R**, de partout.
-Réglages → Général → **Lancer au démarrage de Windows** la démarre à l’ouverture de session. La première fois, un
-conseil en haut de la boîte rappelle tout cela ; si une autre app utilise déjà Ctrl+Alt+R, Réglages → Général le dit.
+La première fois, un conseil en haut de la boîte rappelle tout cela, avec un interrupteur **Lancer au démarrage de
+Windows** (aussi dans Réglages → Général) : il est éteint tant que vous ne l’allumez pas, et sans lui les rappels
+attendent que vous ouvriez Remora. Si une autre app utilise déjà Ctrl+Alt+R, Réglages → Général le dit.
 
 La version Windows a ce qu’a le Mac : les cinq outils, le report avec raisons et constats, la préparation et les
 sessions de relecture, l’assistant d’attente et l’assistant (Claude ou un serveur OpenAI-compatible). Elle trie les

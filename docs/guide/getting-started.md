@@ -36,8 +36,9 @@ Settings → General → **Open at login**, so Remora is there every morning.
 
 Remora sits in the notification area of the taskbar (click **^** if it’s hidden, and drag it next to the clock to
 keep it visible). Click it to open the inbox; right-click it for the menu. Tray icons can’t be dragged on Windows, so a
-new reminder is **Ctrl+Alt+R**, from anywhere. Settings → General → **Start with Windows** starts it at sign-in. A tip at the top of
-the inbox recalls all this the first time; if another app already uses Ctrl+Alt+R, Settings → General says so.
+new reminder is **Ctrl+Alt+R**, from anywhere. A tip at the top of the inbox recalls all this the first time, with a
+**Start with Windows** switch (also in Settings → General): it's off until you turn it on, and without it reminders
+wait until you open Remora. If another app already uses Ctrl+Alt+R, Settings → General says so.
 
 The Windows version has what the Mac has: the five tools, snooze with reasons and insights, review prep and sessions,
 the waiting assistant and the assistant (Claude or an OpenAI-compatible server). It sorts messages with keywords

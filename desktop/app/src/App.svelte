@@ -18,7 +18,10 @@ let shortcut = $state('Ctrl+Alt+R')
 let settings = $state<SettingsData | null>(null)
 const welcome = $derived(
   settings && !settings.preferences.welcomed
-    ? { shortcut: settings.shortcutRegistered ? settings.shortcut.replace('CommandOrControl', 'Ctrl') : null }
+    ? {
+        shortcut: settings.shortcutRegistered ? settings.shortcut.replace('CommandOrControl', 'Ctrl') : null,
+        autostart: settings.autostart,
+      }
     : null,
 )
 
@@ -26,6 +29,12 @@ const welcome = $derived(
 async function welcomed() {
   if (!settings) return
   await api.setPreferences({ ...settings.preferences, welcomed: true })
+  apply(await api.settings())
+}
+
+/** Start at login, chosen from the first-run tip. */
+async function autostart(enabled: boolean) {
+  await api.setAutostart(enabled)
   apply(await api.settings())
 }
 
@@ -104,7 +113,7 @@ onMount(() => {
 {:else if screen === 'reminder'}
   <QuickReminder {shortcut} onclose={() => (screen = 'inbox')} />
 {:else}
-  <Inbox {view} bind:query {welcome} onwelcomed={welcomed} onsettings={() => (screen = 'settings')} onreminder={() => (screen = 'reminder')} />
+  <Inbox {view} bind:query {welcome} onwelcomed={welcomed} onautostart={autostart} onsettings={() => (screen = 'settings')} onreminder={() => (screen = 'reminder')} />
 {/if}
 
 <Toast />

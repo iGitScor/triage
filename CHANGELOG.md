@@ -9,6 +9,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - GitHub: when GitHub slows Remora down (its secondary limit, or its GraphQL points running out), Remora waits until
   the time GitHub gives instead of asking you to reconnect a token that works.
+- Windows: the first-run tip no longer says Remora starts with Windows when it doesn't. It has the **Start with
+  Windows** switch right there, says how to find the fish when Windows hides it under ^, and the empty inbox names
+  Notion too.
 
 ## 0.6.0 (2026-10-11)
 

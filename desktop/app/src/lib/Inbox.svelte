@@ -26,14 +26,16 @@ let {
   onreminder,
   welcome = null,
   onwelcomed = () => {},
+  onautostart = () => {},
 }: {
   view: InboxView | null
   query: string
   onsettings: () => void
   onreminder: () => void
   /** The first-run tip, until dismissed: the reminder shortcut, or null when another app holds it. */
-  welcome?: { shortcut: string | null } | null
+  welcome?: { shortcut: string | null; autostart: boolean } | null
   onwelcomed?: () => void
+  onautostart?: (enabled: boolean) => void
 } = $props()
 
 let tab: Tab = $state('myTurn')
@@ -145,16 +147,17 @@ async function clearAll() {
   <div class="scroll" role="tabpanel" id="inbox-panel" aria-labelledby="tab-{tab}">
     {#if welcome && view && !view.demo}
       <div class="card welcome">
-        <p>{linux ? t('Remora lives in the system tray: open it from the fish’s menu.') : t('Remora lives in the system tray: click the fish to open it.')}</p>
+        <p>{linux ? t('Remora lives in the system tray: open it from the fish’s menu.') : t('Remora lives in the system tray: click the fish to open it. If it’s hidden, click ^ next to the clock and drag the fish onto the taskbar to keep it in sight.')}</p>
         {#if welcome.shortcut}<p>{t('Press %@ from anywhere to add a reminder.', welcome.shortcut)}</p>{/if}
-        <p>{linux ? t('It starts when you log in; change it in Settings → General.') : t('It starts with Windows; change it in Settings → General.')}</p>
+        <label class="toggle"><input type="checkbox" checked={welcome.autostart} onchange={(e) => onautostart(e.currentTarget.checked)} />{linux ? t('Start at login') : t('Start with Windows')}</label>
+        <p class="muted">{t('Without it, reminders and notifications wait until you open Remora. You can change it later in Settings → General.')}</p>
         <button type="button" class="pill" onclick={onwelcomed}>{t('Got it')}</button>
       </div>
     {/if}
     {#if view && !view.connected && !view.demo}
       <div class="card welcome">
         <strong>{t('Connect a tool to get started')}</strong>
-        <p class="muted">{t('GitHub, GitLab, Slack or Linear. Remora only reads, and only talks to the tools you allow.')}</p>
+        <p class="muted">{t('GitHub, GitLab, Slack, Linear or Notion. Remora only reads, and only talks to the tools you allow.')}</p>
         <button type="button" class="pill primary" onclick={onsettings}>{t('Connect a tool')}</button>
       </div>
     {:else if view}

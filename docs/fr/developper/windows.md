@@ -22,7 +22,7 @@ ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remo
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 116 |
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 79 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
-| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 37 |
+| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 38 |
 
 ## Ce que Windows a, et ce qu’il n’a pas encore
 

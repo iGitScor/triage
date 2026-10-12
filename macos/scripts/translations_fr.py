@@ -6,7 +6,6 @@ FR = {
     # Linux
     "Remora only runs a program named claude that you or the system own, from a folder on this computer, which %@ isn’t.": "Remora n’exécute qu’un programme nommé claude qui vous appartient ou appartient au système, depuis un dossier de cet ordinateur, ce que %@ n’est pas.",
     "Inbox cache, settings and snooze history in %@. Tokens are in the system keyring.": "Cache de la boîte, réglages et historique des reports dans %@. Les jetons sont dans le trousseau du système.",
-    "It starts when you log in; change it in Settings → General.": "Remora démarre à l’ouverture de session ; changez-le dans Réglages → Général.",
     "Remora lives in the system tray: open it from the fish’s menu.": "Remora vit dans la zone de notification : ouvrez-la depuis le menu du poisson.",
     "Start at login": "Démarrer à l’ouverture de session",
     "Your desktop doesn’t let apps listen for a shortcut: in your system’s keyboard settings, add one that runs %@.": "Votre bureau ne laisse pas les apps écouter un raccourci : dans les réglages clavier du système, ajoutez-en un qui lance %@.",
@@ -483,7 +482,7 @@ FR = {
     "Demo": "Démo",
     "Disconnect": "Déconnecter",
     "From anywhere: %@": "Depuis n’importe où : %@",
-    "GitHub, GitLab, Slack or Linear. Remora only reads, and only talks to the tools you allow.": "GitHub, GitLab, Slack ou Linear. Remora ne fait que lire, et ne parle qu’aux outils autorisés.",
+    "GitHub, GitLab, Slack, Linear or Notion. Remora only reads, and only talks to the tools you allow.": "GitHub, GitLab, Slack, Linear ou Notion. Remora ne fait que lire, et ne parle qu’aux outils autorisés.",
     "How": "Comment",
     "Inbox cache, settings and snooze history in %@. Tokens are in the Windows Credential Manager.": "Cache, réglages et historique des reports dans %@. Les jetons sont dans le Gestionnaire d’identification Windows.",
     "New reminder from anywhere: %@": "Nouveau rappel depuis n’importe où : %@",
@@ -606,8 +605,14 @@ FR = {
     "Open Remora to see them.": "Ouvrez Remora pour les voir.",
     "Update token…": "Mettre à jour le jeton…",
     "Ctrl+Alt+R is used by another app: use + Reminder in the inbox instead.": "Ctrl+Alt+R est utilisé par une autre app : utilisez + Rappel dans la boîte à la place.",
-    "Remora lives in the system tray: click the fish to open it.": "Remora vit dans la zone de notification : cliquez sur le poisson pour l’ouvrir.",
+    "Remora lives in the system tray: click the fish to open it. If it’s hidden, click ^ next to the clock and drag the fish onto the taskbar to keep it in sight.": (
+        "Remora vit dans la zone de notification : cliquez sur le poisson pour l’ouvrir. S’il est caché, cliquez sur ^ "
+        "près de l’horloge et faites glisser le poisson dans la barre des tâches pour le garder en vue."
+    ),
     "Press %@ from anywhere to add a reminder.": "Appuyez sur %@ de partout pour ajouter un rappel.",
-    "It starts with Windows; change it in Settings → General.": "Remora démarre avec Windows ; changez-le dans Réglages → Général.",
+    "Without it, reminders and notifications wait until you open Remora. You can change it later in Settings → General.": (
+        "Sans cela, rappels et notifications attendent que vous ouvriez Remora. Vous pourrez le changer plus tard dans "
+        "Réglages → Général."
+    ),
     "Got it": "Compris",
 }
