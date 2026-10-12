@@ -20,7 +20,7 @@ ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remo
 |---|---|---|
 | `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 111 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira et Notion ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 123 |
-| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 80 |
+| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 82 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 41 |
 
@@ -39,7 +39,7 @@ ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remo
 | Liens entre outils (une PR et son ticket) | Clés de ticket, mots et embeddings sur l’appareil | Clés de ticket et mots : moins de liens |
 | Tri des messages par le sens | Mots-clés, puis un modèle de langue sur l’appareil | Mots-clés seulement : sans correspondance, un message va dans *À répondre* |
 | Mises à jour (sur option), hors ligne et reconnexion, politique de confidentialité | ✓ | ✓ |
-| Boutons dans les notifications (Terminé, Reporter) | ✓ | Pas encore : un clic ouvre l’élément |
+| Boutons dans les notifications (Terminé, Reporter, Commencer sur un rappel) | ✓ | ✓ (sous Linux, là où le bureau les affiche) |
 | Réglages gérés | Toutes les clés de [MDM](/fr/admin/mdm) | Toutes les clés : dans le registre sous Windows, dans `/etc/remora/policy.json` sous Linux |
 | Taille du texte | Réglages → Général | La mise à l’échelle de Windows |
 | Nouveau rappel | Glisser le poisson de la barre des menus | Un raccourci global, Ctrl+Alt+R : on ne peut pas glisser une icône de la zone de notification |

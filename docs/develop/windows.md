@@ -19,7 +19,7 @@ the desktop has no tray), notifications that open their item, and on Wayland a s
 |---|---|---|
 | `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 111 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira and Notion; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 123 |
-| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 80 |
+| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 82 |
 | `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 4 |
 | `app/src` | The Svelte interface, in English and French | type-checked, 41 |
 
@@ -38,7 +38,7 @@ the desktop has no tray), notifications that open their item, and on Wayland a s
 | Links between tools (a PR and its ticket) | Ticket keys, words and on-device embeddings | Ticket keys and words: fewer links |
 | Sorting messages by meaning | Keywords, then an on-device language model | Keywords only: without one, a message goes to *To reply* |
 | Updates (opt-in), offline and reconnect, privacy policy | ✓ | ✓ |
-| Buttons in notifications (Done, Snooze) | ✓ | Not yet: a click opens the item |
+| Buttons in notifications (Done, Snooze, Start on a reminder) | ✓ | ✓ (on Linux, where the desktop shows them) |
 | Managed settings | All the keys in [MDM](/admin/mdm) | All the keys: in the registry on Windows, in `/etc/remora/policy.json` on Linux |
 | Text size | Settings → General | Windows’ own scaling |
 | New reminder | Drag the menu bar fish down | A global shortcut, Ctrl+Alt+R: tray icons can’t be dragged |

@@ -3,7 +3,7 @@
 
 use crate::{Inbox, TrayCount};
 use chrono::{DateTime, Utc};
-use remora_core::Notice;
+use remora_core::{Notice, NoticeKind, WHILE_CLOSED_SUFFIX};
 use std::collections::HashMap;
 
 /// English text → the system's language, from the interface's dictionary (src/i18n/fr.json).
@@ -142,6 +142,65 @@ pub fn notification_text(notice: &Notice, t: &Translator) -> (String, String, St
     (title, first, lines.next().unwrap_or_default())
 }
 
+/// A button on a notification, as on macOS (`NotificationAction`): the same ids, labels and choice of buttons.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NotificationAction {
+    Done,
+    SnoozeTenMinutes,
+    SnoozeHour,
+    SnoozeTomorrow,
+    Start,
+}
+
+impl NotificationAction {
+    const ALL: [NotificationAction; 5] = [
+        NotificationAction::Done,
+        NotificationAction::SnoozeTenMinutes,
+        NotificationAction::SnoozeHour,
+        NotificationAction::SnoozeTomorrow,
+        NotificationAction::Start,
+    ];
+
+    /// What the button sends back when pressed.
+    pub fn id(self) -> &'static str {
+        match self {
+            NotificationAction::Done => "remora.done",
+            NotificationAction::SnoozeTenMinutes => "remora.snooze.10m",
+            NotificationAction::SnoozeHour => "remora.snooze.1h",
+            NotificationAction::SnoozeTomorrow => "remora.snooze.tomorrow",
+            NotificationAction::Start => "remora.start",
+        }
+    }
+
+    pub fn from_id(id: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|action| action.id() == id)
+    }
+
+    /// English, translated with the rest.
+    pub fn title(self) -> &'static str {
+        match self {
+            NotificationAction::Done => "Done",
+            NotificationAction::SnoozeTenMinutes => "10 more minutes",
+            NotificationAction::SnoozeHour => "Snooze 1 hour",
+            NotificationAction::SnoozeTomorrow => "Tomorrow 9:00",
+            NotificationAction::Start => "Start",
+        }
+    }
+
+    /// An arrival or a change: Done, then snooze an hour or until tomorrow. A reminder: Start first, and a shorter
+    /// snooze. The summary of what arrived while Remora was closed has no single item, so no buttons.
+    pub fn for_notice(notice: &Notice) -> Vec<Self> {
+        use NotificationAction::*;
+        if notice.item_id.ends_with(WHILE_CLOSED_SUFFIX) {
+            vec![]
+        } else if notice.kind == NoticeKind::Reminder {
+            vec![Start, Done, SnoozeTenMinutes, SnoozeHour]
+        } else {
+            vec![Done, SnoozeHour, SnoozeTomorrow]
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -276,5 +335,37 @@ mod tests {
             notification_text(&summary[0], &Translator::english()),
             ("5 new while Remora was closed".into(), "GitHub".into(), "Open Remora to see them.".into())
         );
+    }
+
+    /// The Mac's buttons: Done and two snoozes on an arrival, Start first on a reminder, none on the summary.
+    #[test]
+    fn notifications_have_the_macs_buttons() {
+        let notice = |kind, item_id: &str| Notice {
+            kind,
+            item_id: item_id.into(),
+            title: "To review".into(),
+            subtitle: String::new(),
+            body: String::new(),
+            url: None,
+            count: None,
+        };
+        let ids = |notice: &Notice| NotificationAction::for_notice(notice).iter().map(|a| a.id()).collect::<Vec<_>>();
+        assert_eq!(
+            ids(&notice(NoticeKind::Arrival, "a1/7")),
+            ["remora.done", "remora.snooze.1h", "remora.snooze.tomorrow"]
+        );
+        assert_eq!(
+            ids(&notice(NoticeKind::Reminder, "reminder/1")),
+            ["remora.start", "remora.done", "remora.snooze.10m", "remora.snooze.1h"]
+        );
+        assert!(ids(&notice(NoticeKind::Arrival, &format!("a1{WHILE_CLOSED_SUFFIX}"))).is_empty());
+        for action in NotificationAction::ALL {
+            assert_eq!(NotificationAction::from_id(action.id()), Some(action));
+        }
+        assert_eq!(NotificationAction::from_id("remora.other"), None);
+        let french = Translator::new(Some("fr-FR"), FRENCH);
+        for action in NotificationAction::ALL {
+            assert_ne!(french.t(action.title()), action.title(), "{} has French", action.title());
+        }
     }
 }

@@ -43,9 +43,9 @@ La première fois, un conseil en haut de la boîte rappelle tout cela, avec un i
 Windows** (aussi dans Réglages → Général) : il est éteint tant que vous ne l’allumez pas, et sans lui les rappels
 attendent que vous ouvriez Remora. Si une autre app utilise déjà Ctrl+Alt+R, Réglages → Général le dit.
 
-La version Windows a ce qu’a le Mac : les cinq outils, le report avec raisons et constats, la préparation et les
+La version Windows a ce qu’a le Mac : les six outils, le report avec raisons et constats, la préparation et les
 sessions de relecture, l’assistant d’attente et l’assistant (Claude ou un serveur OpenAI-compatible). Elle trie les
-messages par mots-clés seulement, et ses notifications n’ont pas encore de boutons ; la liste complète est dans
+messages par mots-clés seulement ; la liste complète est dans
 [Remora pour Windows](/fr/developper/windows#ce-que-windows-a-et-ce-qu-il-n-a-pas-encore).
 
 ## Connecter un premier outil

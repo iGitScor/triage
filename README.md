@@ -109,7 +109,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 - **Learns your habits** on your computer: what you handle fast and what you push back breaks ties within a bundle,
   and a small star says why.
 - **Notifications**: new review requests, mentions and tasks, approvals, changes requested, failed checks, due
-  reminders. Done and Snooze buttons on the Mac; on Windows, a click opens the item.
+  reminders, with Done and Snooze buttons; a click opens the item.
 - **Opens in the right app**: Slack and Linear items open in their desktop app when it's installed, with the browser
   as fallback.
 - **Assistant (optional)**: with Claude Code on your plan, the Claude API or an OpenAI-compatible server, a 3-sentence brief, bundle summaries
@@ -166,7 +166,7 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 | Suite | Tests | What it covers |
 |---|---|---|
 | macOS (Swift Testing) | 314 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
-| Windows (`cargo test`) | 318 | The same rules, the six source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry and Linux policy, storage, the inbox service, and what the tray shows |
+| Windows (`cargo test`) | 320 | The same rules, the six source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry and Linux policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 

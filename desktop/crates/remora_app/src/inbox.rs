@@ -616,6 +616,30 @@ impl Inbox {
         });
     }
 
+    /// A button pressed on a notification. Done on an item already done does nothing, as on macOS.
+    pub fn perform(&mut self, action: crate::tray::NotificationAction, id: &str, now: DateTime<Utc>) {
+        use crate::tray::NotificationAction::*;
+        if self.item(id).is_none() {
+            return;
+        }
+        match action {
+            Done if self.states.get(id).and_then(|s| s.done.as_ref()).is_none() => {
+                self.toggle_done(id, now);
+            }
+            Done => {}
+            SnoozeTenMinutes => self.snooze(id, now + chrono::Duration::minutes(10), SnoozeMode::Hide, None, false),
+            SnoozeHour => self.snooze(id, now + chrono::Duration::hours(1), SnoozeMode::Hide, None, false),
+            SnoozeTomorrow => self.snooze(
+                id,
+                remora_core::SnoozeClock::tomorrow_morning(now.with_timezone(&chrono::Local)),
+                SnoozeMode::Hide,
+                None,
+                false,
+            ),
+            Start => self.start(id, now),
+        }
+    }
+
     /// Puts a started item back where it was before.
     pub fn stop(&mut self, id: &str) {
         self.update(id, |s| s.started_at = None);
@@ -1773,6 +1797,36 @@ mod tests {
         inbox.toggle_done("1", now());
         inbox.clear_done(now());
         assert!(inbox.layout(now(), "").done.is_empty(), "cleared items leave the Done tab");
+    }
+
+    /// A notification's buttons: Done (once), snooze for an hour or until tomorrow morning, Start.
+    #[test]
+    fn notification_buttons_act_on_their_item() {
+        use crate::tray::NotificationAction;
+        let mut inbox = inbox();
+        inbox.apply(
+            snapshot(vec![
+                item("1", InboxBundle::reviews()),
+                item("2", InboxBundle::reviews()),
+                item("3", InboxBundle::reviews()),
+            ]),
+            now(),
+        );
+        inbox.perform(NotificationAction::Done, "1", now());
+        inbox.perform(NotificationAction::Done, "1", now());
+        assert!(inbox.states["1"].done.is_some(), "Done twice stays done");
+        inbox.perform(NotificationAction::SnoozeHour, "2", now());
+        assert_eq!(inbox.states["2"].snooze.as_ref().map(|s| s.until), Some(now() + Duration::hours(1)));
+        inbox.perform(NotificationAction::SnoozeTomorrow, "3", now());
+        let back = inbox.states["3"].snooze.as_ref().unwrap().until.with_timezone(&chrono::Local);
+        assert_eq!(
+            (back.date_naive(), back.format("%H:%M").to_string()),
+            ((now() + Duration::days(1)).with_timezone(&chrono::Local).date_naive(), "09:00".into())
+        );
+        inbox.perform(NotificationAction::Start, "3", now());
+        assert!(inbox.states["3"].started_at.is_some() && inbox.states["3"].snooze.is_none());
+        inbox.perform(NotificationAction::Done, "gone", now());
+        assert!(!inbox.states.contains_key("gone"), "an item no longer there is left alone");
     }
 
     /// *Snooze all…* on a group: the same date and reason for each, and "until there's news" kept.

@@ -8,7 +8,7 @@ mod i18n;
 mod linux;
 mod updates;
 
-use remora_app::tray::{notification_text, TrayImage, TraySummary};
+use remora_app::tray::{notification_text, NotificationAction, TrayImage, TraySummary};
 use remora_app::{demo, paths, CredentialVault, Inbox, JsonStore, Managed, MemoryVault, Secrets, Vault};
 use remora_core::Notice;
 use remora_plugins::{HttpClient, ReqwestClient};
@@ -487,17 +487,26 @@ fn animations_enabled() -> bool {
 fn post(app: &AppHandle, notices: &[Notice]) {
     for notice in notices {
         let (title, first, second) = notification_text(notice, i18n::translator());
-        if let Err(error) = toast(app, &title, &first, &second, &notice.item_id) {
+        let buttons = NotificationAction::for_notice(notice);
+        if let Err(error) = toast(app, &title, &first, &second, &notice.item_id, &buttons) {
             eprintln!("Remora: notification failed: {error}");
         }
     }
 }
 
-/// A Windows toast that opens its item when clicked, as the inbox does. The notification plugin has no click
-/// callback on desktop, so the toast is built directly, with the plugin's attribution: the app's identifier once
-/// installed, PowerShell's while developing (an unregistered id would show nothing).
+/// A Windows toast that opens its item when clicked, as the inbox does, with the Mac's buttons (Done, Snooze…). The
+/// notification plugin has no click callback on desktop, so the toast is built directly, with the plugin's
+/// attribution: the app's identifier once installed, PowerShell's while developing (an unregistered id would show
+/// nothing).
 #[cfg(windows)]
-fn toast(app: &AppHandle, title: &str, first: &str, second: &str, item_id: &str) -> Result<(), String> {
+fn toast(
+    app: &AppHandle,
+    title: &str,
+    first: &str,
+    second: &str,
+    item_id: &str,
+    buttons: &[NotificationAction],
+) -> Result<(), String> {
     use tauri_winrt_notification::Toast;
     let developing = tauri::utils::platform::current_exe()
         .ok()
@@ -506,16 +515,31 @@ fn toast(app: &AppHandle, title: &str, first: &str, second: &str, item_id: &str)
     let identifier = app.config().identifier.clone();
     let app_id = if developing { Toast::POWERSHELL_APP_ID } else { identifier.as_str() };
     let (handle, id) = (app.clone(), item_id.to_string());
-    Toast::new(app_id)
-        .title(title)
-        .text1(first)
-        .text2(second)
-        .on_activated(move |_| {
-            clicked(&handle, &id);
+    let translator = i18n::translator();
+    let toast = buttons.iter().fold(Toast::new(app_id).title(title).text1(first).text2(second), |toast, button| {
+        toast.add_button(&translator.t(button.title()), button.id())
+    });
+    toast
+        .on_activated(move |pressed| {
+            // A button sends its id; a click on the toast itself sends nothing.
+            match pressed.as_deref().and_then(NotificationAction::from_id) {
+                Some(action) => perform(&handle, action, &id),
+                None => clicked(&handle, &id),
+            }
             Ok(())
         })
         .show()
         .map_err(|error| error.to_string())
+}
+
+/// A notification's button was pressed: the inbox acts on its item as the same button in the window would.
+#[cfg(any(windows, target_os = "linux"))]
+fn perform(app: &AppHandle, action: NotificationAction, id: &str) {
+    let (handle, id) = (app.clone(), id.to_string());
+    tauri::async_runtime::spawn(async move {
+        handle.state::<AppState>().inbox.lock().await.perform(action, &id, chrono::Utc::now());
+        changed(&handle).await;
+    });
 }
 
 /// A notification was clicked: its item opens, as in the inbox. What arrived while the app was closed has no single
@@ -534,25 +558,32 @@ fn clicked(app: &AppHandle, id: &str) {
     });
 }
 
-/// A Linux notification that opens its item when clicked: the notification plugin has no click callback, so it is
-/// sent directly, with a default action, and its answer awaited on a thread of its own.
+/// A Linux notification that opens its item when clicked, with the Mac's buttons where the desktop shows them: the
+/// notification plugin has no click callback, so it is sent directly, with a default action, and its answer awaited
+/// on a thread of its own.
 #[cfg(target_os = "linux")]
-fn toast(app: &AppHandle, title: &str, first: &str, second: &str, item_id: &str) -> Result<(), String> {
+fn toast(
+    app: &AppHandle,
+    title: &str,
+    first: &str,
+    second: &str,
+    item_id: &str,
+    buttons: &[NotificationAction],
+) -> Result<(), String> {
     let body = [first, second].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n");
-    let shown = notify_rust::Notification::new()
-        .appname("Remora")
-        .icon("remora")
-        .summary(title)
-        .body(&body)
-        .action("default", &i18n::translator().t("Open"))
-        .show()
-        .map_err(|error| error.to_string())?;
+    let translator = i18n::translator();
+    let mut notification = notify_rust::Notification::new();
+    notification.appname("Remora").icon("remora").summary(title).body(&body).action("default", &translator.t("Open"));
+    for button in buttons {
+        notification.action(button.id(), &translator.t(button.title()));
+    }
+    let shown = notification.show().map_err(|error| error.to_string())?;
     let (handle, id) = (app.clone(), item_id.to_string());
     std::thread::spawn(move || {
-        shown.wait_for_action(|action| {
-            if action == "default" {
-                clicked(&handle, &id);
-            }
+        shown.wait_for_action(|pressed| match NotificationAction::from_id(pressed) {
+            Some(action) => perform(&handle, action, &id),
+            None if pressed == "default" => clicked(&handle, &id),
+            None => {}
         })
     });
     Ok(())
@@ -560,7 +591,14 @@ fn toast(app: &AppHandle, title: &str, first: &str, second: &str, item_id: &str)
 
 /// Elsewhere (developing on a Mac) the plugin shows it; clicking it does nothing.
 #[cfg(not(any(windows, target_os = "linux")))]
-fn toast(app: &AppHandle, title: &str, first: &str, second: &str, _item_id: &str) -> Result<(), String> {
+fn toast(
+    app: &AppHandle,
+    title: &str,
+    first: &str,
+    second: &str,
+    _item_id: &str,
+    _buttons: &[NotificationAction],
+) -> Result<(), String> {
     let body = [first, second].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n");
     app.notification().builder().title(title).body(body).show().map_err(|error| error.to_string())
 }
