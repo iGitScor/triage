@@ -431,6 +431,7 @@
  "Snoozed %d×": "Reporté %d×",
  "Snoozed until %@": "Reporté jusqu’à %@",
  "Snooze…": "Reporter…",
+ "Some files couldn’t be erased: %@. Delete them from %@.": "Certains fichiers n’ont pas pu être effacés : %@. Supprimez-les de %@.",
  "Someone": "Quelqu’un",
  "Soon": "Bientôt",
  "Sources": "Sources",
