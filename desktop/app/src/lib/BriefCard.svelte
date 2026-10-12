@@ -32,7 +32,7 @@ const byId = $derived(new Map(items.map((i) => [i.id, i])))
   <div class="row">
     <strong>✦ {t('Your brief')}</strong>
     <span class="spacer"></span>
-    <button type="button" class="link" disabled={busy || assistant.briefFresh} title={assistant.briefFresh ? t('This brief is still fresh (Settings → General → Assistant)') : t('Write a new brief')} onclick={() => write(true)}>↻</button>
+    <button type="button" class="link" disabled={busy || assistant.briefFresh} title={assistant.briefFresh ? t('This brief is still fresh (Settings → General → Assistant)') : t('Write a new brief')} aria-label={t('Write a new brief')} onclick={() => write(true)}><span aria-hidden="true">↻</span></button>
   </div>
   {#if error}
     <p class="error">{error}</p>

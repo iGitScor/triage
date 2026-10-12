@@ -703,6 +703,8 @@ private struct SearchField: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Myna.muted)
+                .help("Clear search")
+                .accessibilityLabel(L("Clear search"))
             }
         }
         .font(Myna.font(13))
@@ -776,6 +778,7 @@ private struct BundleHeader: View {
                 }
                 .buttonStyle(.plain)
                 .help(L(summaryShown ? "Hide the summary" : "Summarize this bundle"))
+                .accessibilityLabel(L(summaryShown ? "Hide the summary" : "Summarize this bundle"))
             }
             if let startSession {
                 Button(action: startSession) {

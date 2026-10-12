@@ -110,6 +110,7 @@ private struct AccountRow: View {
                             .buttonStyle(.plain)
                             .foregroundStyle(Myna.muted)
                             .help("Rename")
+                            .accessibilityLabel(L("Rename"))
                     }
                 }
                 let failure = model.errors[account.id]

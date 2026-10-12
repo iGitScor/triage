@@ -33,7 +33,9 @@ struct BriefCard: View {
                     .opacity(model.isBriefFresh ? 0.35 : 1)
                     .help(
                         model.isBriefFresh
-                            ? L("This brief is still fresh (Settings → General → Assistant)") : L("Write a new brief"))
+                            ? L("This brief is still fresh (Settings → General → Assistant)") : L("Write a new brief")
+                    )
+                    .accessibilityLabel(L("Write a new brief"))
                 }
             }
 

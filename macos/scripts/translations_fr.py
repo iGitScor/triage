@@ -231,6 +231,7 @@ FR = {
     "Assistant": "Assistant",
     "Remove": "Retirer",
     "Rename": "Renommer",
+    "Clear search": "Effacer la recherche",
     "Name": "Nom",
     "Name (optional)": "Nom (facultatif)",
     "Tells accounts apart, e.g. “Work” or “Side project”.": "Pour distinguer vos comptes, par ex. « Travail » ou « Perso ».",

@@ -125,8 +125,8 @@ async function clearAll() {
   <div class="tabs" role="tablist" aria-label={t('Inbox')} use:tablist>
     <div class="segment" role="presentation">
       {#if running}
-        <button type="button" role="tab" id="tab-inProgress" aria-selected={tab === 'inProgress'} aria-controls="inbox-panel" tabindex={tab === 'inProgress' ? 0 : -1} class="pill" class:selected={tab === 'inProgress'} onclick={() => (tab = 'inProgress')} title={t('In progress')} aria-label={t('In progress')}>
-          <Icon name="play" size={12} /> <span class="count">{running}</span>
+        <button type="button" role="tab" id="tab-inProgress" aria-selected={tab === 'inProgress'} aria-controls="inbox-panel" tabindex={tab === 'inProgress' ? 0 : -1} class="pill" class:selected={tab === 'inProgress'} onclick={() => (tab = 'inProgress')} title={t('In progress')}>
+          <Icon name="play" size={12} /> <span class="visually-hidden">{t('In progress')}</span> <span class="count">{running}</span>
         </button>
       {/if}
       <button type="button" role="tab" id="tab-myTurn" aria-selected={tab === 'myTurn'} aria-controls="inbox-panel" tabindex={tab === 'myTurn' ? 0 : -1} class="pill" class:selected={tab === 'myTurn'} onclick={() => (tab = 'myTurn')}>

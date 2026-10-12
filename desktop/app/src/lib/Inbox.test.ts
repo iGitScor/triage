@@ -57,6 +57,8 @@ describe('Inbox tabs', () => {
     const { container } = render(Inbox, { props: props(view(1)) })
     expect(tabs(container)[0].id).toBe('tab-inProgress')
     expect(selected(container)).toBe('tab-inProgress')
+    expect(tabs(container)[0].getAttribute('aria-label')).toBeNull()
+    expect(tabs(container)[0].textContent?.replace(/\s+/g, ' ').trim()).toBe('In progress 1')
   })
 })
 

@@ -68,7 +68,7 @@ function open(event: MouseEvent) {
         <span class="context">{translateMessage(item.context)}{item.recurrence ? ` · ${repeatLabel(item.recurrence)}` : ''}{account ? ` · ${account}` : ''}</span>
         <span class="spacer"></span>
         {#if snoozed}<span class="back"><Icon name="moon" size={12} /> {when(snoozed)}</span>{:else}
-          {#if extras?.ranking}<span class="star" title={extras.ranking} aria-label={extras.ranking}>★</span>{/if}
+          {#if extras?.ranking}<span class="star" title={extras.ranking} aria-hidden="true">★</span><span class="visually-hidden">{extras.ranking}</span>{/if}
           <span class="muted" aria-hidden="true">{ago(item.date)}</span>
           <span class="visually-hidden">{relative(item.date)}</span>
         {/if}
