@@ -1,15 +1,15 @@
 # Remora
 
-> Remora is an inbox in your Mac’s menu bar or the Windows system tray: code reviews, merge requests, Slack mentions and Linear issues, sorted by what you have to do. On-device, no account, only the tools you allow.
+> Remora is an inbox in your Mac’s menu bar or the system tray on Windows and Linux: code reviews, merge requests, Slack mentions, Linear and Jira issues and Notion tasks, sorted by what you have to do. On-device, no account, only the tools you allow.
 
 Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
 (To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
-ranking on the device, and only talks to the tools the user or their organization allows. A Windows tray app is in
-preview. French pages: https://triage.iscor.me/fr/.
+ranking on the device, and only talks to the tools the user or their organization allows: GitHub, GitLab, Slack, Linear, Jira and Notion. A tray
+app for Windows and Linux is in preview. French pages: https://triage.iscor.me/fr/.
 
 ## Pages
 
-- [Remora — Menu bar inbox for GitHub, GitLab, Slack and Linear](https://triage.iscor.me/en/): Code reviews, merge requests, Slack mentions and Linear issues in one inbox in your Mac’s menu bar or the Windows tray, sorted by what to do. Free, open source, on-device, no account.
+- [Remora — One inbox for GitHub, GitLab, Slack, Linear, Jira and Notion](https://triage.iscor.me/en/): Code reviews, merge requests, slack mentions, linear and jira issues and notion tasks in one inbox in your Mac’s menu bar or the Windows and Linux tray, sorted by what to do. Free, open source, on-device, no account.
 - [Features — Remora, the menu bar inbox for developers](https://triage.iscor.me/en/features): Verbs instead of apps, Done and Pin, snooze with a reason, reminders from the menu bar or a shortcut, review prep and sessions, a waiting assistant. All of Remora.
 - [Privacy & compliance — Remora sends nothing but to your tools](https://triage.iscor.me/en/privacy): No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow.
 
@@ -17,6 +17,7 @@ preview. French pages: https://triage.iscor.me/fr/.
 
 - [Download for Mac](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)
 - [Download for Windows (preview)](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe)
+- [Linux (preview): AppImage and .deb](https://triage.iscor.me/docs/guide/faq#can-i-use-it-on-linux)
 - [Source code](https://github.com/iGitScor/triage)
 - [Documentation](https://triage.iscor.me/docs/): the user guide, IT and compliance, and writing a plugin
 - [Connecting your tools](https://triage.iscor.me/docs/guide/connecting-tools)

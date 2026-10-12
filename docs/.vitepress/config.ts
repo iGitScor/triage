@@ -17,7 +17,7 @@ const guideEn: DefaultTheme.SidebarItem[] = [
       { text: 'The inbox', link: '/guide/inbox' },
       { text: 'Snooze and reminders', link: '/guide/snooze-and-reminders' },
       { text: 'Reviews', link: '/guide/reviews' },
-      { text: 'The assistant (Claude)', link: '/guide/assistant' },
+      { text: 'The assistant', link: '/guide/assistant' },
       { text: 'FAQ and troubleshooting', link: '/guide/faq' },
     ],
   },
@@ -79,7 +79,7 @@ const guideFr: DefaultTheme.SidebarItem[] = [
       { text: 'La boîte de réception', link: '/fr/guide/boite-de-reception' },
       { text: 'Reporter et rappels', link: '/fr/guide/reporter-et-rappels' },
       { text: 'Les relectures', link: '/fr/guide/relectures' },
-      { text: 'L’assistant (Claude)', link: '/fr/guide/assistant' },
+      { text: 'L’assistant', link: '/fr/guide/assistant' },
       { text: 'Questions et dépannage', link: '/fr/guide/faq' },
     ],
   },
@@ -133,8 +133,8 @@ const twinOf = (path: string) =>
 const urlOf = (path: string) => `${SITE}/docs/${path.replace(/(^|\/)index$/, '$1')}`
 
 const DESCRIPTIONS = {
-  en: 'Remora documentation: connecting GitHub, GitLab, Slack and Linear, the menu bar inbox, snooze and reminders, compliance and MDM, and writing a plugin.',
-  fr: 'Documentation de Remora : connecter GitHub, GitLab, Slack et Linear, la boîte de réception, reporter et rappels, conformité et MDM.',
+  en: 'Remora documentation: connecting GitHub, GitLab, Slack, Linear, Jira and Notion, the inbox in the menu bar or tray, snooze and reminders, compliance and MDM, and writing a plugin.',
+  fr: 'Documentation de Remora : connecter GitHub, GitLab, Slack, Linear, Jira et Notion, la boîte de réception, reporter et rappels, conformité et MDM.',
 }
 
 export default withMermaid(

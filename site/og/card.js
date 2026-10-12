@@ -1,11 +1,11 @@
 var copy = {
   en: {
     title: 'Everything that <span class="mark">needs you.</span>',
-    sub: 'One menu bar inbox for code reviews, merge requests, Slack and Linear. On your computer, nothing else.',
+    sub: 'One inbox in your menu bar or tray for code reviews, merge requests, Slack, Linear, Jira and Notion. On your computer, nothing else.',
   },
   fr: {
     title: 'Tout ce qui a <span class="mark">besoin de vous.</span>',
-    sub: 'Une seule boîte dans la barre des menus pour relectures, merge requests, Slack et Linear. Sur votre ordinateur, rien d’autre.',
+    sub: 'Une seule boîte, barre des menus ou zone de notification, pour relectures, merge requests, Slack, Linear, Jira et Notion. Sur votre ordinateur, rien d’autre.',
   },
 }
 var params = new URLSearchParams(location.search)

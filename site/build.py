@@ -19,6 +19,12 @@ ROOT = pathlib.Path(__file__).parent / "public"
 ORIGIN = "https://triage.iscor.me"
 REPO = "https://github.com/iGitScor/triage"
 DMG = REPO + "/releases/latest/download/Remora.dmg"
+# What Remora gathers and where it lives, said once per language: titles, descriptions, the hero, llms.txt.
+WHAT = {
+    "en": "code reviews, merge requests, Slack mentions, Linear and Jira issues and Notion tasks",
+    "fr": "relectures de code, merge requests, mentions Slack, tickets Linear et Jira et tâches Notion",
+}
+TOOLS = {"en": "GitHub, GitLab, Slack, Linear, Jira and Notion", "fr": "GitHub, GitLab, Slack, Linear, Jira et Notion"}
 EXE = REPO + "/releases/latest/download/Remora-Setup.exe"
 # The released version, from the source `make version` sets, so the page's structured data never goes stale.
 VERSION = plistlib.loads((pathlib.Path(__file__).parent.parent / "macos/Resources/Info.plist").read_bytes())[
@@ -92,7 +98,7 @@ T = {
     "en": {
         "locale": "en_US",
         "tagline": "Everything that needs you. Nothing that doesn’t.",
-        "description": "Remora is an inbox in your Mac’s menu bar or the Windows system tray: code reviews, merge requests, Slack mentions and Linear issues, sorted by what you have to do. On-device, no account, only the tools you allow.",
+        "description": f"Remora is an inbox in your Mac’s menu bar or the system tray on Windows and Linux: {WHAT['en']}, sorted by what you have to do. On-device, no account, only the tools you allow.",
         "skip": "Skip to content",
         "nav": {"features": "Features", "privacy": "Privacy & compliance"},
         "nav_label": "Main navigation",
@@ -139,11 +145,11 @@ T = {
             "Tool logos: Simple Icons (CC0) · Outfit font (OFL)",
         ),
         "clock": "Thu 9:41",
-        "og_alt": "Remora: everything that needs you, in your Mac’s menu bar. The inbox with replies, reviews and tasks sorted by what to do.",
+        "og_alt": "Remora: everything that needs you, in your menu bar or tray. One inbox for code reviews, merge requests, Slack, Linear, Jira and Notion, on your computer.",
         "seo": {
             "home": (
-                "Remora — Menu bar inbox for GitHub, GitLab, Slack and Linear",
-                "Code reviews, merge requests, Slack mentions and Linear issues in one inbox in your Mac’s menu bar or the Windows tray, sorted by what to do. Free, open source, on-device, no account.",
+                f"Remora — One inbox for {TOOLS['en']}",
+                f"{WHAT['en'].capitalize()} in one inbox in your Mac’s menu bar or the Windows and Linux tray, sorted by what to do. Free, open source, on-device, no account.",
             ),
             "features": (
                 "Features — Remora, the menu bar inbox for developers",
@@ -164,7 +170,7 @@ T = {
     "fr": {
         "locale": "fr_FR",
         "tagline": "Tout ce qui a besoin de vous. Rien de plus.",
-        "description": "Remora est une boîte de réception dans la barre des menus du Mac ou la zone de notification de Windows : relectures de code, merge requests, mentions Slack et tickets Linear, rangés par ce que vous avez à faire. Sur l’appareil, sans compte, seulement les outils autorisés.",
+        "description": f"Remora est une boîte de réception dans la barre des menus du Mac ou la zone de notification de Windows et Linux : {WHAT['fr']}, rangés par ce que vous avez à faire. Sur l’appareil, sans compte, seulement les outils autorisés.",
         "skip": "Aller au contenu",
         "nav": {"features": "Fonctionnalités", "privacy": "Confidentialité et conformité"},
         "nav_label": "Navigation principale",
@@ -211,11 +217,11 @@ T = {
             "Logos des outils : Simple Icons (CC0) · police Outfit (OFL)",
         ),
         "clock": "jeu. 9:41",
-        "og_alt": "Remora : tout ce qui a besoin de vous, dans la barre des menus du Mac. La boîte avec réponses, relectures et tâches rangées par ce qu’il faut faire.",
+        "og_alt": "Remora : tout ce qui a besoin de vous, dans la barre des menus ou la zone de notification. Une seule boîte pour relectures, merge requests, Slack, Linear, Jira et Notion, sur votre ordinateur.",
         "seo": {
             "home": (
-                "Remora — Boîte de réception GitHub, GitLab, Slack et Linear pour Mac et Windows",
-                "Relectures de code, merge requests, mentions Slack et tickets Linear dans une seule boîte, dans la barre des menus du Mac ou la zone de notification de Windows. Gratuit, open source, sans compte.",
+                f"Remora — Une seule boîte pour {TOOLS['fr']}",
+                f"{WHAT['fr'].capitalize()} dans une seule boîte, dans la barre des menus du Mac ou la zone de notification de Windows et Linux. Gratuit, open source, sans compte.",
             ),
             "features": (
                 "Fonctionnalités — Remora, la boîte de réception des développeurs",
@@ -478,14 +484,14 @@ def home(lang: str) -> str:
         c = dict(
             eyebrow="Menu bar inbox · macOS · Windows",
             h1='Everything that<br /><span class="mark">needs you.</span>',
-            lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions and Linear issues, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
+            lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions, Linear and Jira issues and Notion tasks, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
             secondary="Privacy & compliance",
             note="Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway. Linux, in preview: AppImage or .deb on the releases page.",
             notice="Remora speaks English and French, and so does on-device sorting.",
             desk_note="The real app, with sample data. One fish in the menu bar, one count per tool.",
             facts=[
                 ("0", "servers, accounts or trackers of ours"),
-                ("5", "tools: GitHub, GitLab, Slack, Linear and Notion"),
+                ("6", f"tools: {TOOLS['en']}"),
                 ("5", "items per verb, the rest folded away"),
                 ("100%", "of sorting and ranking done on your computer"),
             ],
@@ -632,14 +638,14 @@ def home(lang: str) -> str:
         c = dict(
             eyebrow="Barre des menus · macOS · Windows",
             h1='Tout ce qui a<br /><span class="mark">besoin de vous.</span>',
-            lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack et tickets Linear, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
+            lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack, tickets Linear et Jira et tâches Notion, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
             secondary="Confidentialité et conformité",
             note="Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même. Linux, en aperçu : AppImage ou .deb sur la page des versions.",
             notice="Remora parle français et anglais, tout comme le tri sur l’appareil.",
             desk_note="La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.",
             facts=[
                 ("0", "serveur, compte ou traceur de notre part"),
-                ("5", "outils : GitHub, GitLab, Slack, Linear et Notion"),
+                ("6", f"outils : {TOOLS['fr']}"),
                 ("5", "éléments par verbe, le reste replié"),
                 ("100 %", "du tri et du classement faits sur votre ordinateur"),
             ],
@@ -1781,8 +1787,8 @@ def llms() -> str:
 
 Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
 (To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
-ranking on the device, and only talks to the tools the user or their organization allows. A Windows tray app is in
-preview. French pages: {ORIGIN}/fr/.
+ranking on the device, and only talks to the tools the user or their organization allows: {TOOLS["en"]}. A tray
+app for Windows and Linux is in preview. French pages: {ORIGIN}/fr/.
 
 ## Pages
 
@@ -1791,6 +1797,7 @@ preview. French pages: {ORIGIN}/fr/.
 
 - [Download for Mac]({DMG})
 - [Download for Windows (preview)]({EXE})
+- [Linux (preview): AppImage and .deb]({ORIGIN}/docs/guide/faq#can-i-use-it-on-linux)
 - [Source code]({REPO})
 - [Documentation]({ORIGIN}/docs/): the user guide, IT and compliance, and writing a plugin
 - [Connecting your tools]({ORIGIN}/docs/guide/connecting-tools)
