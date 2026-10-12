@@ -56,6 +56,10 @@ pub fn app_manifest_url() -> String {
 }
 
 /// Recent mentions and direct messages, found with Slack's search API.
+/// Slack's errors for a token that no longer works: revoked, expired, or its account deactivated. Same list as macOS.
+pub const REJECTED_TOKEN: [&str; 5] =
+    ["invalid_auth", "not_authed", "token_revoked", "token_expired", "account_inactive"];
+
 pub struct SlackPlugin {
     account_id: String,
     token: String,
@@ -85,7 +89,8 @@ impl SlackPlugin {
         let envelope: serde_json::Value = decode(self.http.as_ref(), request).await?;
         if envelope.get("ok").and_then(|v| v.as_bool()) != Some(true) {
             let error = envelope.get("error").and_then(|v| v.as_str()).unwrap_or("unknown error");
-            return Err(if matches!(error, "invalid_auth" | "not_authed") {
+            // A token that no longer works, whatever Slack calls it: the user reconnects. Same list as macOS.
+            return Err(if REJECTED_TOKEN.contains(&error) {
                 PluginError::Unauthorized
             } else {
                 PluginError::Api(format!("Slack: {error}"))
@@ -1119,9 +1124,16 @@ mod tests {
 
     #[tokio::test]
     async fn reports_slack_errors() {
-        let http = StubHttp::paths(&[("/auth.test", r#"{"ok": false, "error": "invalid_auth"}"#)]);
-        let result = SlackPlugin::new(&config(&[("token", "bad")]), Arc::new(http)).unwrap().fetch().await;
-        assert_eq!(result.err(), Some(PluginError::Unauthorized));
+        // Every way Slack says the token no longer works asks for reconnecting, as on macOS.
+        for error in REJECTED_TOKEN {
+            let answer = format!(r#"{{"ok": false, "error": "{error}"}}"#);
+            let http = StubHttp::paths(&[("/auth.test", &answer)]);
+            let result = SlackPlugin::new(&config(&[("token", "bad")]), Arc::new(http)).unwrap().fetch().await;
+            assert_eq!(result.err(), Some(PluginError::Unauthorized), "{error}");
+        }
+        let http = StubHttp::paths(&[("/auth.test", r#"{"ok": false, "error": "ratelimited_by_admin"}"#)]);
+        let result = SlackPlugin::new(&config(&[("token", "t")]), Arc::new(http)).unwrap().fetch().await;
+        assert_eq!(result.err(), Some(PluginError::Api("Slack: ratelimited_by_admin".into())));
     }
 
     #[test]

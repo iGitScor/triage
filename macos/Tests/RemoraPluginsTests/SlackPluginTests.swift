@@ -129,8 +129,10 @@ struct SlackPluginTests {
         #expect(person.needsAction)
     }
 
-    @Test func reportsSlackErrors() async throws {
-        let http = StubHTTP(routes: ["/auth.test": #"{"ok": false, "error": "invalid_auth"}"#])
+    /// Every way Slack says the token no longer works asks for reconnecting; the same list as on Windows.
+    @Test(arguments: ["invalid_auth", "not_authed", "token_revoked", "token_expired", "account_inactive"])
+    func reportsSlackErrors(error: String) async throws {
+        let http = StubHTTP(routes: ["/auth.test": #"{"ok": false, "error": "\#(error)"}"#])
         await #expect(throws: HTTPError.unauthorized) {
             try await SlackPlugin(config: config(["token": "bad"]), http: http).fetch()
         }
