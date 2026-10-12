@@ -212,6 +212,8 @@ private struct ReasonPicker: View {
                             .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
+                    // The fill alone says which one is chosen: VoiceOver says it too.
+                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }
         }
@@ -243,6 +245,7 @@ private struct ModeSwitch: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(mode == value ? .isSelected : [])
     }
 }
 
@@ -269,6 +272,7 @@ private struct PresetButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 

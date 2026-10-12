@@ -53,12 +53,12 @@ $effect(() => {
 <div class="picker">
   <div class="presets">
     {#each presets as preset (preset.label)}
-      <button type="button" class="pill" class:selected={base === preset.date} onclick={() => choose(preset)}>{t(preset.label)}</button>
+      <button type="button" class="pill" class:selected={base === preset.date} aria-pressed={base === preset.date} onclick={() => choose(preset)}>{t(preset.label)}</button>
     {/each}
   </div>
   <label class="slider">
     <span class="muted">{base ? t('Then adjust') : t('Or slide')}</span>
-    <input type="range" min="0" max="1" step={1 / 18} bind:value={progress} oninput={update} aria-label={t('When')} />
+    <input type="range" min="0" max="1" step={1 / 18} bind:value={progress} oninput={update} aria-label={t('When')} aria-valuetext={date ? when(date) : undefined} />
   </label>
   <div class="row when">
     <strong>{date ? when(date) : ''}</strong>

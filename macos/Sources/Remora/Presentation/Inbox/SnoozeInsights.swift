@@ -202,6 +202,8 @@ struct TriagePanel: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // Ticked means the suggestion is applied: the circle alone doesn't say so to VoiceOver.
+        .accessibilityAddTraits(included ? .isSelected : [])
     }
 
     private func label(_ suggestion: TriageSuggestion) -> String {
