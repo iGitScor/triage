@@ -30,7 +30,7 @@ impl WaitingAssistant {
     pub fn help(
         &self,
         item: &InboxItem,
-        items: &[InboxItem],
+        items: &[&InboxItem],
         me: Option<&str>,
         now: DateTime<Utc>,
     ) -> Option<WaitingHelp> {
@@ -50,7 +50,7 @@ impl WaitingAssistant {
     }
 
     /// The source's suggestions first, then who reviews most often in the same repo.
-    pub fn reviewers(&self, item: &InboxItem, items: &[InboxItem], me: Option<&str>, limit: usize) -> Vec<Person> {
+    pub fn reviewers(&self, item: &InboxItem, items: &[&InboxItem], me: Option<&str>, limit: usize) -> Vec<Person> {
         let excluded: HashSet<String> =
             [me, item.author.as_ref().map(|a| a.name.as_str())].into_iter().flatten().map(str::to_lowercase).collect();
         let place = context_key(&item.context);
@@ -149,7 +149,7 @@ mod tests {
         ];
         let item = mine("1", vec![], 1, Some(vec![person("dave")]));
         assert_eq!(
-            WaitingAssistant::default().help(&item, &others, Some("alice"), now()),
+            WaitingAssistant::default().help(&item, &others.iter().collect::<Vec<_>>(), Some("alice"), now()),
             Some(WaitingHelp::SuggestReviewers(vec![person("dave"), person("erin"), person("frank")]))
         );
     }

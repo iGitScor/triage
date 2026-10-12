@@ -936,10 +936,20 @@ impl Inbox {
         (item.bundle == InboxBundle::reviews()).then(|| ReviewPrep::new(item, self.review_pace())).flatten()
     }
 
-    /// Who could review your PR, or a nudge when its reviewers stay silent.
+    /// Who could review your PR, or a nudge when its reviewers stay silent. Asked for every shown item: one that
+    /// isn't waiting on anyone returns at once, and the others read the inbox by reference, never copying it.
     pub fn waiting_help(&self, item: &InboxItem, now: DateTime<Utc>) -> Option<WaitingHelp> {
+        if item.bundle != InboxBundle::awaiting() {
+            return None;
+        }
         let me = self.accounts.iter().find(|a| a.id == item.account_id).and_then(|a| a.identity.as_deref());
-        WaitingAssistant::default().help(item, &self.all_items(), me, now)
+        let items: Vec<&InboxItem> = self
+            .accounts
+            .iter()
+            .filter(|a| self.allows(&a.plugin_id))
+            .flat_map(|a| self.items.get(&a.id).into_iter().flatten())
+            .collect();
+        WaitingAssistant::default().help(item, &items, me, now)
     }
 
     /// The message to paste for this help: who could review, or a kind nudge. Nothing is sent.
