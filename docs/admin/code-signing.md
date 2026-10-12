@@ -13,7 +13,7 @@ say how its own files were signed.
 
 ## What is signed
 
-| Platform | Files | Today (up to 0.6.0) | Once set up |
+| Platform | Files | Today | Once set up |
 |---|---|---|---|
 | macOS | `Remora.app` in `Remora.dmg` | **Ad hoc**, not notarized. Gatekeeper asks the first time, and the Keychain asks once after each update, because macOS recognizes an ad hoc app by its exact build. | Remora's own certificate: macOS recognizes each update as the same app and the Keychain stops asking. Still not an Apple Developer ID, so Gatekeeper asks the first time until the app is notarized. |
 | Windows | `Remora-Setup.exe` and the `Remora.exe` it installs | **Not signed.** SmartScreen warns the first time (*More info* → *Run anyway*). | SignPath, with the SignPath Foundation certificate. Windows shows *SignPath Foundation* as the publisher. |

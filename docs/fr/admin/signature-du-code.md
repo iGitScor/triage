@@ -13,7 +13,7 @@ chaque version disent aussi comment ses propres fichiers ont été signés.
 
 ## Ce qui est signé
 
-| Plateforme | Fichiers | Aujourd’hui (jusqu’à 0.6.0) | Une fois en place |
+| Plateforme | Fichiers | Aujourd’hui | Une fois en place |
 |---|---|---|---|
 | macOS | `Remora.app` dans `Remora.dmg` | **Ad hoc**, sans notarisation. Gatekeeper demande la première fois, et le trousseau redemande une fois après chaque mise à jour, car macOS reconnaît une app ad hoc à son build exact. | Le certificat propre à Remora : macOS reconnaît chaque mise à jour comme la même app, et le trousseau cesse de demander. Ce n’est toujours pas un Developer ID d’Apple : Gatekeeper demande la première fois tant que l’app n’est pas notarisée. |
 | Windows | `Remora-Setup.exe` et le `Remora.exe` qu’il installe | **Non signé.** SmartScreen avertit la première fois (*Informations complémentaires* → *Exécuter quand même*). | SignPath, avec le certificat de la SignPath Foundation. Windows affiche *SignPath Foundation* comme éditeur. |
