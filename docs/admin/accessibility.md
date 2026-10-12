@@ -35,8 +35,7 @@ statement is reviewed with each release.
 
 - **Windows**: the focus can be lost when a confirmation replaces its button; the window can't grow and text can't
   be made bigger than Windows scaling.
-- **macOS**: the connect form's fields are named by their placeholders; the brief's focus items open only with a
-  click.
+- **macOS**: the brief's focus items open only with a click.
 
 Each gap is tracked, with its fix, in the project's roadmap.
 

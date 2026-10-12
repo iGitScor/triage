@@ -298,12 +298,16 @@ private struct ConnectForm: View {
         }
     }
 
+    /// A labelled field. The label above it is its spoken name and the help below its hint: built from a
+    /// placeholder, the field would be named "github.com", or nothing at all for a token.
     private func field(_ label: String, help: String?, @ViewBuilder input: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(L(label)).font(Myna.font(12, .semibold))
+            Text(L(label)).font(Myna.font(12, .semibold)).accessibilityHidden(true)
             input().textFieldStyle(.roundedBorder)
+                .accessibilityLabel(L(label))
+                .accessibilityHint(help.map { L($0) } ?? "")
             if let help {
-                Text(L(help)).font(Myna.font(11)).foregroundStyle(Myna.muted)
+                Text(L(help)).font(Myna.font(11)).foregroundStyle(Myna.muted).accessibilityHidden(true)
             }
         }
     }
