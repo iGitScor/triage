@@ -390,12 +390,12 @@ jobs:
       TAURI_CLI: https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.1/cargo-tauri-x86_64-unknown-linux-gnu.tgz
       TAURI_CLI_SHA256: 04ef3a9a2ed7b7dc479bef08ab40deee80065c99fc778f79ebce775eb72bbeff
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: windows
           path: dist
       # The AppImage replaces itself with the same key; a .deb is updated by installing the new package.
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: linux
           path: dist
@@ -432,7 +432,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: policy
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: dist
           merge-multiple: true
