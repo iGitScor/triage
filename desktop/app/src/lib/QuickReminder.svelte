@@ -61,7 +61,7 @@ async function add(date: string) {
         {/if}
       </div>
     </TimePicker>
-    {#if error}<p class="error">{error}</p>{/if}
+    {#if error}<p class="error" role="alert">{error}</p>{/if}
     <p class="help">{t('From anywhere: %@', shortcut.replace('CommandOrControl', 'Ctrl'))}</p>
   </div>
 </div>

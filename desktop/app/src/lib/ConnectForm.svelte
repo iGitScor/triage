@@ -72,7 +72,7 @@ const ready = $derived(fields.every((f) => f.isOptional || values[f.key]?.trim()
       <input class="field" placeholder={t('Work, Client…')} bind:value={name} />
     </label>
   {/if}
-  {#if error}<p class="error">{error}</p>{/if}
+  {#if error}<p class="error" role="alert">{error}</p>{/if}
   <div class="row">
     <span class="spacer"></span>
     <button type="button" class="link" onclick={ondone}>{t('Cancel')}</button>

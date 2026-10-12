@@ -333,6 +333,8 @@ private struct ConnectForm: View {
                 dismiss()
             } catch {
                 self.error = error.localizedDescription
+                // Shown under the form, and said aloud: VoiceOver users pressed Connect and would hear nothing.
+                AccessibilityNotification.Announcement(error.localizedDescription).post()
             }
         }
     }

@@ -76,7 +76,7 @@ describe('ConnectForm', () => {
     })
   })
 
-  it('says why it failed, and stays open', async () => {
+  it('says why it failed, aloud too, and stays open', async () => {
     invoke.mockRejectedValue('The token was refused.')
     const ondone = vi.fn()
     const { container } = render(ConnectForm, { props: { manifest: gitlab, ondone } })
@@ -84,6 +84,7 @@ describe('ConnectForm', () => {
     await fireEvent.click(submit(container))
 
     await waitFor(() => expect(container.querySelector('.error')?.textContent).toBe('The token was refused.'))
+    expect(container.querySelector('.error')?.getAttribute('role')).toBe('alert')
     expect(ondone).not.toHaveBeenCalled()
     expect(submit(container).disabled).toBe(false)
   })
