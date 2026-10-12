@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/iGitScor/triage/actions/workflows/macos.yml"><img alt="macOS" src="https://github.com/iGitScor/triage/actions/workflows/macos.yml/badge.svg" /></a>
-  <a href="https://github.com/iGitScor/triage/actions/workflows/desktop.yml"><img alt="Windows" src="https://github.com/iGitScor/triage/actions/workflows/desktop.yml/badge.svg" /></a>
+  <a href="https://github.com/iGitScor/triage/actions/workflows/desktop.yml"><img alt="Windows and Linux" src="https://github.com/iGitScor/triage/actions/workflows/desktop.yml/badge.svg" /></a>
   <a href="LICENSE"><img alt="License: GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-111111" /></a>
   <img alt="On-device" src="https://img.shields.io/badge/data-stays%20on%20device-b9ff66?labelColor=111111" />
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-111111" />
@@ -21,6 +21,7 @@
 <p align="center">
   <a href="https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg">Download for Mac</a> ·
   <a href="https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe">Download for Windows (preview)</a> ·
+  <a href="https://triage.iscor.me/docs/guide/faq#can-i-use-it-on-linux">Linux (preview)</a> ·
   <a href="https://triage.iscor.me/en/">Website</a> ·
   <a href="https://triage.iscor.me/docs/">Documentation</a> ·
   <a href="https://triage.iscor.me/docs/admin/">For IT and compliance</a>
@@ -43,11 +44,26 @@
   </tr>
 </table>
 
+## Install
+
+- **Mac** (macOS 14 or later): [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg),
+  then drag Remora to Applications. It isn't notarized yet: the first time, right-click Remora → Open (on macOS 15:
+  System Settings → Privacy & Security → Open Anyway).
+- **Windows 10 or 11** (preview): [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe),
+  a per-user install with no admin rights. It isn't signed yet: if SmartScreen warns, click More info → Run anyway.
+- **Linux** (preview, community supported, x86_64): [Remora-x86_64.AppImage](https://github.com/iGitScor/triage/releases/latest/download/Remora-x86_64.AppImage),
+  which updates itself, or [Remora-amd64.deb](https://github.com/iGitScor/triage/releases/latest/download/Remora-amd64.deb)
+  for Ubuntu and Debian. It needs a keyring for the tokens, and lives in the tray (on GNOME, add the AppIndicator
+  extension, or it opens as a window); [details](https://triage.iscor.me/docs/guide/faq#can-i-use-it-on-linux).
+
+Then connect a first tool: [getting started](https://triage.iscor.me/docs/guide/getting-started).
+
 ---
 
-Remora is one inbox in your Mac’s menu bar or the Windows system tray for everything that needs you: code reviews, your own merge requests, Slack
-mentions and DMs, Linear issues and your own reminders. It sorts them by **what you have to do** (*To reply*,
-*To review*, *To fix*, *Ready to merge*…), not by where they came from, and shows no more than you can take in.
+Remora is one inbox in your Mac’s menu bar, or the system tray on Windows and Linux, for everything that needs you:
+code reviews, your own merge requests, Slack mentions and DMs, Linear issues, Notion tasks and your own reminders. It
+sorts them by **what you have to do** (*To reply*, *To review*, *To fix*, *Ready to merge*…), not by where they came
+from, and shows no more than you can take in.
 
 It is built for teams with strict data rules: **nothing leaves the computer except to the tools you allow**. There is
 no Remora server, no account and no telemetry; sorting, ranking and advice run on the device. An assistant (Claude, or
@@ -60,7 +76,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | Part | What it is | Stack |
 |---|---|---|
 | **Remora for macOS** [`macos/`](macos) | The menu bar app | Swift 6 (strict concurrency), SwiftUI and AppKit, NaturalLanguage |
-| **Remora for Windows** [`desktop/`](desktop) | The same rules, sources and assistant in a tray app for Windows 10 and 11, in preview: keyword sorting only, [what differs](https://triage.iscor.me/docs/develop/windows) | Rust, Tauri 2, Svelte |
+| **Remora for Windows and Linux** [`desktop/`](desktop) | The same rules, sources and assistant in a tray app for Windows 10 and 11 and Linux, in preview: keyword sorting only, [what differs](https://triage.iscor.me/docs/develop/windows) | Rust, Tauri 2, Svelte |
 | **Website** [`site/`](site) | Marketing pages in English and French, static on Cloudflare | HTML, CSS, a Python generator |
 | **Docs** [`docs/`](docs) | The user guide, IT and compliance, and developer docs, in English and French | VitePress |
 
@@ -78,7 +94,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 - **Menu bar** (Mac): one count, or one per tool ordered by the most pressing verb. Click to open, **drag down to
   cast a reminder** (a bubble shows when it comes back; further down is later), right-click for Refresh, New
   reminder, Settings and Quit. Two-finger swipes: right for Done, left for Snooze.
-- **System tray** (Windows): one count; Ctrl+Alt+R casts a reminder from anywhere, and Done and Snooze are buttons on
+- **System tray** (Windows and Linux): one count; Ctrl+Alt+R casts a reminder from anywhere, and Done and Snooze are buttons on
   each row.
 - **Snooze with a reason**: waiting for someone, no time now, needs focus, not urgent, not feeling it. Each reason
   suggests a return time; *waiting* can come back "until there's news". Presets, or a scrubber: minutes, then
@@ -124,9 +140,10 @@ Accounts can be named ("Work GitLab", "Client Slack"), several per tool. Setup: 
   computer; then the AI features appear.
 - **Managed policy.** IT can lock the allowed tools, external AI and avatars with an MDM configuration profile
   (`fr.igitscor.remora`: `AllowedPlugins`, `AllowExternalAI`, `AllowRemoteImages`); on Windows, under
-  `HKLM\SOFTWARE\Policies\Remora`.
+  `HKLM\SOFTWARE\Policies\Remora`; on Linux, in `/etc/remora/policy.json`.
 - **Local data.** Tokens in one Keychain item; everything else in `~/Library/Application Support/Remora/`. On
-  Windows, the Credential Manager and `%LOCALAPPDATA%\fr.igitscor.remora`.
+  Windows, the Credential Manager and `%LOCALAPPDATA%\fr.igitscor.remora`; on Linux, the Secret Service and
+  `~/.local/share/fr.igitscor.remora`, readable by you only.
   Settings → Privacy lists every data flow and erases local data. No telemetry, analytics or crash reporting.
 
 Every flow, the MDM profile and deployment, for IT and compliance teams: [the admin docs](https://triage.iscor.me/docs/admin/).
@@ -140,7 +157,7 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
   Calibrated for precision: a missed group beats a wrong one.
 - **Compliance enforced at one point.** A guarded HTTP client per plugin, a policy object readable from MDM, and
   tests for look-alike domains.
-- **One spec, two apps.** The Windows app ports the Swift rules and plugins to Rust with the same fixtures and tests;
+- **One spec, two apps.** The Windows and Linux app ports the Swift rules and plugins to Rust with the same fixtures and tests;
   `native-tls` uses the Windows certificate store, so corporate root certificates just work.
 
 ## Quality
@@ -148,19 +165,13 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 | Suite | Tests | What it covers |
 |---|---|---|
 | macOS (Swift Testing) | 307 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
-| Windows (`cargo test`) | 311 | The same rules, the four source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry policy, storage, the inbox service, and what the tray shows |
+| Windows (`cargo test`) | 311 | The same rules, the five source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry and Linux policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 
-## Getting started
+## Building it yourself
 
-**Download** [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg) (macOS 14 or
-later), open it and drag Remora to Applications. It isn't notarized yet: the first time, right-click Remora →
-Open (on macOS 15: System Settings → Privacy & Security → Open Anyway). On Windows 10 or 11, run
-[Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe) (preview, per-user
-install); it isn't signed yet, so if SmartScreen warns, click More info → Run anyway.
-
-To build it yourself. Requirements: macOS 14 or later and Xcode 16 (Swift 6 toolchain); Rust ([rustup](https://rustup.rs/)) for the Windows app.
+Requirements: macOS 14 or later and Xcode 16 (Swift 6 toolchain); Rust ([rustup](https://rustup.rs/)) for the Windows and Linux app.
 
 ```sh
 cd macos
@@ -186,18 +197,18 @@ The documentation is at **[triage.iscor.me/docs](https://triage.iscor.me/docs/)*
   [the inbox](https://triage.iscor.me/docs/guide/inbox), [snooze and reminders](https://triage.iscor.me/docs/guide/snooze-and-reminders), [reviews](https://triage.iscor.me/docs/guide/reviews),
   [the assistant](https://triage.iscor.me/docs/guide/assistant), [FAQ](https://triage.iscor.me/docs/guide/faq).
 - **For IT and compliance**: [overview](https://triage.iscor.me/docs/admin/), [data flows](https://triage.iscor.me/docs/admin/data-flows),
-  [MDM policy](https://triage.iscor.me/docs/admin/mdm), [deployment](https://triage.iscor.me/docs/admin/deployment), [code signing policy](https://triage.iscor.me/docs/admin/code-signing).
+  [MDM policy](https://triage.iscor.me/docs/admin/mdm), [deployment](https://triage.iscor.me/docs/admin/deployment), [code signing policy](https://triage.iscor.me/docs/admin/code-signing),
+  [accessibility](https://triage.iscor.me/docs/admin/accessibility).
 - **Developers**: [architecture](https://triage.iscor.me/docs/develop/), [writing a plugin](https://triage.iscor.me/docs/develop/plugins),
-  [building and releasing](https://triage.iscor.me/docs/develop/building), [Windows](https://triage.iscor.me/docs/develop/windows),
+  [building and releasing](https://triage.iscor.me/docs/develop/building), [Windows and Linux](https://triage.iscor.me/docs/develop/windows),
   [proposal: delegation](https://triage.iscor.me/docs/develop/proposals/delegation).
 
 ## Releasing
 
-Set the version (`make version V=0.3.2`), commit, then push the tag `v0.3.2`: [the release
+Set the version (`make version V=0.7.0`), commit, then push the tag `v0.7.0`: [the release
 workflow](.github/workflows/release.yml) checks that the tag matches the source, tests and builds both apps (signed
-ad hoc for now), and publishes `Remora.dmg` and `Remora-Setup.exe` with their SHA-256, SBOM and signed build provenance in one
-GitHub release, only if
-both succeed. The download links above always point to the latest one.
+ad hoc for now), and publishes `Remora.dmg`, `Remora-Setup.exe`, the AppImage and the .deb with their SHA-256, SBOM
+and signed build provenance in one GitHub release, only if every build succeeds. The download links above always point to the latest one.
 
 ## Website
 
