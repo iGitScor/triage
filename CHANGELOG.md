@@ -5,6 +5,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Added
+
+- Windows and Linux: each group has a menu (⋯) with **Mark all as done**, which can be undone, and **Snooze all…**,
+  with a reason and *Until there’s news*, as on the Mac.
+
 ### Fixed
 
 - GitHub: when GitHub slows Remora down (its secondary limit, or its GraphQL points running out), Remora waits until

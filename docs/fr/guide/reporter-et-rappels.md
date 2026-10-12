@@ -38,7 +38,8 @@ retour que vous choisissez d’habitude.
 **Faire revenir les éléments reportés en cas de nouvelle activité** (Réglages → Général → Reporter) réveille un
 élément masqué dès qu’il change. *Jusqu’à du nouveau* le fait pour un seul élément, quel que soit le réglage.
 
-**Tout reporter**, sur l’en-tête d’un verbe (Mac), reporte tout le groupe d’un coup.
+**Tout reporter…**, dans le menu de l’en-tête d’un groupe (⋯), reporte tout le groupe d’un coup ; **Tout marquer
+comme terminé** est juste à côté.
 
 ### Les conseils
 

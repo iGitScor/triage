@@ -2,6 +2,7 @@
 import { api, type AssistantView, type Group, type Item, type ItemExtras, type ItemState } from './api'
 import Icon from './Icon.svelte'
 import ItemRow from './ItemRow.svelte'
+import { offer } from './failures'
 import { t, translateMessage } from './i18n'
 
 let {
@@ -11,6 +12,7 @@ let {
   extras = {},
   assistant = null,
   onsnooze,
+  onsnoozeall,
   ondraft,
   onreview,
 }: {
@@ -19,6 +21,8 @@ let {
   accounts: Record<string, string>
   extras?: Record<string, ItemExtras>
   onsnooze: (item: Item) => void
+  /** *Snooze all…*: the snooze sheet, for every item of the group. */
+  onsnoozeall?: (items: Item[]) => void
   ondraft?: (item: Item, text: string) => void
   assistant?: AssistantView | null
   onreview?: () => void
@@ -39,6 +43,25 @@ async function summarize() {
   } finally {
     summarizing = false
   }
+}
+
+// What acts on the whole group, in one menu, as on the Mac: the header stays one line.
+let menuOpen = $state(false)
+let menuButton: HTMLButtonElement | undefined = $state()
+function closeMenu(refocus = false) {
+  menuOpen = false
+  if (refocus) menuButton?.focus()
+}
+/** Every item of the group done, with Undo for a few seconds. */
+async function sweep() {
+  closeMenu(true)
+  const count = group.items.length
+  await api.sweep(group.items.map((item) => item.id))
+  offer(t(count === 1 ? '%d item marked as done' : '%d items marked as done', count), t('Undo'), api.undo)
+}
+function snoozeAll() {
+  closeMenu()
+  onsnoozeall?.(group.items)
 }
 
 const icons: Record<string, string> = {
@@ -73,6 +96,31 @@ const quiet = $derived(group.bundle.id === 'verb.read' || group.bundle.id === 'v
     {#if onreview && group.bundle.id === 'code.review' && group.items.length > 1}
       <button type="button" class="link small" onclick={onreview}>{t('Start session')}</button>
     {/if}
+    <div
+      class="menu-anchor"
+      role="presentation"
+      onkeydown={(e) => e.key === 'Escape' && menuOpen && (e.stopPropagation(), closeMenu(true))}
+      onfocusout={(e) => !e.currentTarget.contains(e.relatedTarget as Node | null) && closeMenu()}
+    >
+      <button
+        type="button"
+        class="link small icon-only"
+        bind:this={menuButton}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        title={t('Actions for the whole group')}
+        aria-label={t('Actions for the whole group')}
+        onclick={() => (menuOpen = !menuOpen)}
+      ><Icon name="more" size={16} /></button>
+      {#if menuOpen}
+        <div class="menu" role="menu">
+          {#if onsnoozeall && group.items.length > 1}
+            <button type="button" role="menuitem" onclick={snoozeAll}><Icon name="moon" size={14} />{t('Snooze all…')}</button>
+          {/if}
+          <button type="button" role="menuitem" onclick={sweep}><Icon name="done" size={14} />{t('Mark all as done')}</button>
+        </div>
+      {/if}
+    </div>
     {#if assistant}
       <button type="button" class="link small" aria-pressed={showSummary} title={t('Summarize')} aria-label={t('Summarize')} onclick={summarize}>✦</button>
     {/if}
@@ -148,5 +196,41 @@ const quiet = $derived(group.bundle.id === 'verb.read' || group.bundle.id === 'v
   }
   .more {
     margin: 0 0 4px 4px;
+  }
+  .menu-anchor {
+    position: relative;
+  }
+  .icon-only {
+    display: inline-flex;
+    padding: 2px;
+  }
+  .menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 5;
+    display: grid;
+    min-width: 190px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
+  }
+  .menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    color: var(--ink);
+    font-size: 13px;
+    text-align: start;
+  }
+  .menu button:hover,
+  .menu button:focus-visible {
+    background: var(--accent-soft);
   }
 </style>

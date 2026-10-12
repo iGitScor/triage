@@ -970,9 +970,15 @@ impl Inbox {
         });
     }
 
-    pub fn snooze_many(&mut self, ids: &[String], until: DateTime<Utc>, reason: Option<SnoozeReason>) {
+    pub fn snooze_many(
+        &mut self,
+        ids: &[String],
+        until: DateTime<Utc>,
+        reason: Option<SnoozeReason>,
+        until_news: bool,
+    ) {
         for id in ids {
-            self.snooze(id, until, SnoozeMode::Hide, reason, false);
+            self.snooze(id, until, SnoozeMode::Hide, reason, until_news);
         }
     }
 
@@ -1767,6 +1773,20 @@ mod tests {
         inbox.toggle_done("1", now());
         inbox.clear_done(now());
         assert!(inbox.layout(now(), "").done.is_empty(), "cleared items leave the Done tab");
+    }
+
+    /// *Snooze all…* on a group: the same date and reason for each, and "until there's news" kept.
+    #[test]
+    fn a_whole_group_is_snoozed_at_once() {
+        let mut inbox = inbox();
+        inbox.apply(snapshot(vec![item("1", InboxBundle::reviews()), item("2", InboxBundle::reviews())]), now());
+        let ids = ["1".to_string(), "2".to_string()];
+        inbox.snooze_many(&ids, now() + Duration::days(1), Some(SnoozeReason::Waiting), true);
+        assert_eq!(inbox.layout(now(), "").snoozed.len(), 2);
+        assert!(ids.iter().all(|id| inbox.states[id]
+            .snooze
+            .as_ref()
+            .is_some_and(|s| s.until_news == Some(true) && s.reason == Some(SnoozeReason::Waiting))));
     }
 
     #[test]

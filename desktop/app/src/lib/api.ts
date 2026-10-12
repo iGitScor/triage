@@ -315,8 +315,8 @@ export const api = {
   dismissInsight: (id: string) => call<void>('dismiss_insight', { id }),
   spread: (ids: string[], from: string) => call<void>('spread', { ids, from }),
   alignReturns: (ids: string[]) => call<void>('align_returns', { ids }),
-  snoozeMany: (ids: string[], until: string, reason: SnoozeReason | null) =>
-    call<void>('snooze_many', { ids, until, reason }),
+  snoozeMany: (ids: string[], until: string, reason: SnoozeReason | null, untilNews = false) =>
+    call<void>('snooze_many', { ids, until, reason, untilNews }),
   sweep: (ids: string[]) => call<void>('sweep', { ids }),
   waitingDraft: (id: string) => call<string | null>('waiting_draft', { id }),
   reviewQueue: () => call<Item[]>('review_queue'),

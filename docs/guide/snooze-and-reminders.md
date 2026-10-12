@@ -38,7 +38,8 @@ you usually pick there.
 **Bring snoozed items back early on new activity** (Settings → General → Snooze) wakes a hidden item as soon as
 something changes on it. *Until there’s news* does that for one item, whatever the setting.
 
-**Snooze all** on a verb’s header (Mac) snoozes the whole group at once.
+**Snooze all…**, in the menu on a group’s header (⋯), snoozes the whole group at once; **Mark all as done** is next
+to it.
 
 ### Insights
 

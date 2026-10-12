@@ -487,8 +487,9 @@ pub async fn snooze_many(
     ids: Vec<String>,
     until: DateTime<Utc>,
     reason: Option<SnoozeReason>,
+    until_news: bool,
 ) -> Result<()> {
-    state.inbox.lock().await.snooze_many(&ids, until, reason);
+    state.inbox.lock().await.snooze_many(&ids, until, reason, until_news);
     changed(&app).await;
     Ok(())
 }

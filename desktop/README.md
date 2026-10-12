@@ -7,9 +7,9 @@ Windows and Linux: a Rust core, a Svelte interface on WebView2 (WebKitGTK on Lin
 |---|---|---|
 | `crates/remora_core` | Domain and rules, ported from the macOS `RemoraCore`: verbs, My turn / Waiting, prioritizer, Done and snooze rules, notifications, snooze clock and advisor, review prep, waiting assistant, ranking, links, the assistant's policy, compliance policy | 111 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear and Notion; the assistant through Claude Code, the Claude API or an OpenAI-compatible server; an HTTP client limited to each plugin's declared hosts | 116 |
-| `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\fr.igitscor.remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 79 |
+| `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\fr.igitscor.remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 80 |
 | `app/src-tauri` | The tray icon and its popup, notifications, start with Windows, the Ctrl+Alt+R reminder shortcut, the commands the interface calls | 4 |
-| `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked, 38 |
+| `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked, 41 |
 
 Not yet on Windows: sorting by meaning (messages are sorted with keyword rules only; without one, a message goes
 to *To reply*), links found by on-device embeddings (ticket keys and shared words only), notification buttons, a text

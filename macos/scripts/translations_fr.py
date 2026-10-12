@@ -545,6 +545,8 @@ FR = {
     "%d snoozed item went quiet": "%d élément reporté sans nouvelles",
     "%d source failing": "%d source en erreur",
     "%lld item marked as done": "%lld élément marqué comme terminé",
+    "%d item marked as done": "%d élément marqué comme terminé",
+    "%d items marked as done": "%d éléments marqués comme terminés",
     "%lld items marked as done": "%lld éléments marqués comme terminés",
     "Apply %d change": "Appliquer %d changement",
     "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %@. %@\n%@\nThanks!": "Salut %@, petite relance sur « %@ » : en attente de relecture depuis %@. %@\n%@\nMerci !",

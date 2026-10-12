@@ -8,7 +8,9 @@ import { t } from './i18n'
 import { modal } from './modal'
 import { REASONS } from './reasons'
 
-let { item, onclose }: { item: Item; onclose: () => void } = $props()
+/** One item, or a whole group (*Snooze all…*): then no mode, the same reason and date for each. */
+let { items, onclose }: { items: Item[]; onclose: () => void } = $props()
+const many = $derived(items.length > 1)
 
 let advice: SnoozeAdvice | null = $state(null)
 let reason: SnoozeReason | null = $state(null)
@@ -21,18 +23,18 @@ function pick(value: SnoozeReason) {
 }
 
 onMount(async () => {
-  advice = await api.snoozeAdvice(item.id)
+  advice = await api.snoozeAdvice(items[0].id)
   if (advice.usual) pick(advice.usual)
 })
 </script>
 
 <div class="sheet" role="dialog" aria-modal="true" aria-label={t('Snooze')} use:modal={onclose}>
   <div class="row">
-    <strong>{t('Snooze')}</strong>
+    <strong>{many ? t('Snooze %d items until…', items.length) : t('Snooze')}</strong>
     <span class="spacer"></span>
     <button type="button" class="link" onclick={onclose}>{t('Cancel')}</button>
   </div>
-  <p class="muted sheet-title">{item.title}</p>
+  <p class="muted sheet-title">{items.slice(0, 3).map((item) => item.title).join(' · ')}</p>
   <div class="reasons" role="group" aria-label={t('Why? (optional)')}>
     <span class="muted label">{t('Why? (optional)')}</span>
     {#each REASONS as [value, label] (value)}
@@ -45,9 +47,12 @@ onMount(async () => {
   {/if}
   <TimePicker
     confirm={t('Snooze')}
+    showMode={!many}
     {start}
     onpick={async (date, mode) => {
-      await api.snooze(item.id, date, mode, reason, reason === 'waiting' && untilNews)
+      const news = reason === 'waiting' && untilNews
+      if (many) await api.snoozeMany(items.map((item) => item.id), date, reason, news)
+      else await api.snooze(items[0].id, date, mode, reason, news)
       onclose()
     }}
   />

@@ -55,7 +55,8 @@ onMount(() => {
   const unlisten = listen('opened', () => (tab = running > 0 ? 'inProgress' : 'myTurn'))
   return () => unlisten.then((f) => f())
 })
-let snoozing: Item | null = $state(null)
+/** What the snooze sheet is for: one item, or a whole group. */
+let snoozing: Item[] | null = $state(null)
 /// A message the waiting assistant wrote, to copy.
 let drafting: { item: Item; text: string } | null = $state(null)
 const ondraft = (item: Item, text: string) => (drafting = { item, text })
@@ -162,18 +163,18 @@ async function clearAll() {
       </div>
     {:else if view}
       {#if tab === 'inProgress'}
-        {#each view.layout.inProgress as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = i)} {ondraft} />{/each}
+        {#each view.layout.inProgress as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = [i])} {ondraft} />{/each}
         {#if !view.layout.inProgress.length}<p class="empty muted">{t(empty.inProgress)}</p>{/if}
       {:else if tab === 'myTurn'}
         {#if showBrief && view.assistant?.wholeInbox}<BriefCard assistant={view.assistant} items={briefItems} />{/if}
         {#if view.layout.pinned.length}
           <h2 class="section-title">{t('Pinned')}</h2>
-          {#each view.layout.pinned as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = i)} {ondraft} />{/each}
+          {#each view.layout.pinned as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = [i])} {ondraft} />{/each}
         {/if}
-        {#each view.layout.myTurn as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = i)} {ondraft} onreview={() => (reviewing = true)} />{/each}
+        {#each view.layout.myTurn as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} onreview={() => (reviewing = true)} />{/each}
         {#if !view.layout.pinned.length && !view.layout.myTurn.length}<p class="empty muted">{t(empty.myTurn)}</p>{/if}
       {:else if tab === 'waiting'}
-        {#each view.layout.waiting as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = i)} {ondraft} />{/each}
+        {#each view.layout.waiting as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} />{/each}
         {#if !view.layout.waiting.length}<p class="empty muted">{t(empty.waiting)}</p>{/if}
       {:else}
         {@const items = tab === 'snoozed' ? view.layout.snoozed : view.layout.done}
@@ -184,7 +185,7 @@ async function clearAll() {
         {#if tab === 'done' && items.length}
           <div class="row clear"><span class="spacer"></span><button type="button" class="link" onclick={clearAll}>{t('Clear all')}</button></div>
         {/if}
-        {#each items as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = i)} {ondraft} />{/each}
+        {#each items as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = [i])} {ondraft} />{/each}
         {#if !items.length}<p class="empty muted">{t(empty[tab])}</p>{/if}
       {/if}
     {/if}
@@ -217,8 +218,8 @@ async function clearAll() {
     <button type="button" class="link plain muted" onclick={() => api.quit()}>{t('Quit')}</button>
   </footer>
 
-  {#if snoozing}<SnoozeSheet item={snoozing} onclose={() => (snoozing = null)} />{/if}
-  {#if reviewing && view}<ReviewSession extras={view.extras} pace={view.reviewPace} onsnooze={(i) => (snoozing = i)} onclose={() => (reviewing = false)} />{/if}
+  {#if snoozing}<SnoozeSheet items={snoozing} onclose={() => (snoozing = null)} />{/if}
+  {#if reviewing && view}<ReviewSession extras={view.extras} pace={view.reviewPace} onsnooze={(i) => (snoozing = [i])} onclose={() => (reviewing = false)} />{/if}
   {#if drafting}<DraftPanel item={drafting.item} text={drafting.text} onclose={() => (drafting = null)} />{/if}
 </div>
 
