@@ -82,7 +82,7 @@ struct PrivacyPane: View {
             }
 
             Section(L("Data on this Mac")) {
-                Text(AppFolder.url.path).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
+                Text(AppFolder.url.path).font(Myna.system(11)).textSelection(.enabled)
                 Text(L("Inbox cache, settings and snooze history. Tokens are in the Keychain.")).font(Myna.font(11))
                     .foregroundStyle(Myna.muted)
                 // A file Remora couldn't read (kept aside, never overwritten) or save.

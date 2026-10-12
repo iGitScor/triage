@@ -119,7 +119,7 @@ struct ReactionChips: View {
                         }
                         .frame(width: 13, height: 13)
                     } else {
-                        Text(reaction.emoji).font(.system(size: 11)).lineLimit(1)
+                        Text(reaction.emoji).font(Myna.system(11, design: .default)).lineLimit(1)
                     }
                     if reaction.count > 1 {
                         Text("\(reaction.count)").font(Myna.font(10, .semibold)).foregroundStyle(Myna.inkSoft)

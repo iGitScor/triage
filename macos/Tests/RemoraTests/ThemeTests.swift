@@ -47,4 +47,13 @@ struct ThemeTests {
                 > resolve(Myna.line, dark: dark, contrast: false).alphaComponent)
         #expect(resolve(Myna.onDark(opacity: 0.5), dark: dark, contrast: true).alphaComponent >= 0.9)
     }
+
+    /// Every text size, the monospaced and rounded ones too, keeps the 11 pt floor and follows Settings → General.
+    @Test func textSizesFollowTheSetting() {
+        defer { Myna.textScale = 1 }
+        #expect(Myna.textSize(9) == 11 && Myna.textSize(13) == 13)
+        Myna.textScale = 1.3
+        #expect(abs(Myna.textSize(11) - 14.3) < 0.001)
+        #expect(abs(Myna.textSize(8) - 14.3) < 0.001, "the floor applies before scaling")
+    }
 }

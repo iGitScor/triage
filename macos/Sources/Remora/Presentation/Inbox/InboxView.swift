@@ -664,7 +664,7 @@ private struct ShortcutsList: View {
         Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 6) {
             ForEach(rows, id: \.keys) { row in
                 GridRow {
-                    Text(row.keys).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(
+                    Text(row.keys).font(Myna.system(12, .semibold, design: .rounded)).foregroundStyle(
                         Myna.ink)
                     Text(L(row.action)).font(Myna.font(12.5)).foregroundStyle(Myna.inkSoft)
                 }

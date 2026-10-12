@@ -46,9 +46,19 @@ enum Myna {
     static let smallestText: CGFloat = 11
     @MainActor static var textScale: CGFloat = 1
 
+    /// A size as shown: never under 11 pt, then scaled.
+    @MainActor static func textSize(_ size: CGFloat) -> CGFloat { max(smallestText, size) * textScale }
+
     @MainActor static func font(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        let size = max(smallestText, size) * textScale
+        let size = textSize(size)
         return Fonts.outfit(size: size, weight: weight) ?? .system(size: size, weight: weight, design: .rounded)
+    }
+
+    /// The system's monospaced (paths, line counts) or rounded (key caps) face, at the same size as `font`.
+    @MainActor static func system(
+        _ size: CGFloat, _ weight: Font.Weight = .regular, design: Font.Design = .monospaced
+    ) -> Font {
+        .system(size: textSize(size), weight: weight, design: design)
     }
 
     static func color(for tone: Tone) -> (foreground: Color, background: Color) {

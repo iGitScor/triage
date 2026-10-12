@@ -38,10 +38,10 @@ struct ReviewPrepLine: View {
             if expanded {
                 ForEach(prep.topFiles, id: \.path) { file in
                     HStack {
-                        Text(file.path).font(.system(size: 11, design: .monospaced)).lineLimit(1).truncationMode(.head)
+                        Text(file.path).font(Myna.system(11)).lineLimit(1).truncationMode(.head)
                         Spacer()
                         if let additions = file.additions, let deletions = file.deletions {
-                            Text("+\(additions) −\(deletions)").font(.system(size: 11, design: .monospaced))
+                            Text("+\(additions) −\(deletions)").font(Myna.system(11))
                                 .foregroundStyle(Myna.muted)
                         }
                     }
