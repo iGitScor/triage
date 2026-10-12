@@ -51,7 +51,9 @@ keep working; on Windows without `make`, run those directly.
   in [`CHANGELOG.md`](CHANGELOG.md). Keep it short.
 - **Privacy rules hold**: a plugin declares every host it reaches (`egress`, enforced by the guarded HTTP client
   and its tests); tokens go only to the Keychain or the Credential Manager; no telemetry, analytics or crash
-  reporting; nothing is sent to an AI unless external AI is allowed.
+  reporting; nothing is sent to an AI unless external AI is allowed. A new or changed flow (a host, an API call, a
+  field the assistant gets) updates both lists of flows, in English and French: [Data flows](docs/admin/data-flows.md)
+  and the website's privacy page (`privacy()` in `site/build.py`).
 
 - **Dependencies**: a new Rust crate needs a licence listed in `desktop/deny.toml` (`make deps-check`, with
   `cargo-deny`); Dependabot proposes updates every week.

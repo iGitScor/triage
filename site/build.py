@@ -1299,31 +1299,37 @@ def privacy(lang: str) -> str:
                 (
                     "GitHub",
                     "<code>api.github.com</code>, <code>github.com</code>, avatars, or your GitHub Enterprise host",
-                    "Your token; read requests for your pull requests, review requests and changed file paths",
+                    "Your token; read requests for your pull requests, review requests, and changed file paths and line counts",
                     "Allowed",
                 ),
                 (
                     "GitLab",
                     "Your GitLab host",
-                    "Your token; read requests for your merge requests, approvals, pipelines and changed file paths",
+                    "Your token; read requests for your merge requests, approvals, pipelines, and changed file paths and line counts. Diffs are never read",
                     "Allowed",
                 ),
                 (
                     "Slack",
                     "<code>slack.com</code>",
-                    "Your user token; searches for your mentions and direct messages",
+                    "Your user token; searches for your mentions, direct messages and your own recent messages, the replies in up to 10 of your threads, reactions (yours, and on up to 15 recent messages) and the workspace’s own emoji",
                     "Allowed",
                 ),
                 (
                     "Linear",
-                    "<code>api.linear.app</code>",
+                    "<code>api.linear.app</code>, <code>public.linear.app</code>",
                     "Your API key; read requests for assigned issues and notifications",
+                    "Allowed",
+                ),
+                (
+                    "Notion",
+                    "<code>api.notion.com</code>",
+                    "Your token; who you are, then the tasks assigned to you in the databases you chose",
                     "Allowed",
                 ),
                 (
                     "Claude",
                     "Anthropic, through Claude Code or <code>api.anthropic.com</code>",
-                    "Titles, contexts, authors and statuses of inbox items",
+                    "For each inbox item: its verb, title (only the first line of a Slack message), context, author, statuses, age and what its reactions mean; to sort the Snoozed tab, also the snooze reason and count. Never tokens, links, code or the rest of a message",
                     "<strong>Off</strong>",
                 ),
                 (
@@ -1332,6 +1338,18 @@ def privacy(lang: str) -> str:
                     "The same fields as Claude",
                     "<strong>Off</strong>, except a server on your computer",
                 ),
+                (
+                    "Avatars",
+                    "Image hosts of your connected tools, Gravatar for GitLab, and <code>emoji.slack-edge.com</code> for a workspace’s own emoji",
+                    "An image request, never with a token",
+                    "Allowed",
+                ),
+                (
+                    "Updates",
+                    "<code>github.com</code> and GitHub’s download servers",
+                    "A check for a new version once a day, then the download you choose. No identifier or content",
+                    "<strong>Off</strong>",
+                ),
             ],
             stay_eyebrow="On your computer",
             stay_title="What stays where",
@@ -1339,9 +1357,12 @@ def privacy(lang: str) -> str:
             stay_rows=[
                 (
                     "Inbox cache, states, reminders, snooze history, preferences",
-                    "<code>~/Library/Application Support/Remora</code>, protected by FileVault; on Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code>",
+                    "<code>~/Library/Application Support/Remora</code>, protected by FileVault; on Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code>; on Linux, <code>~/.local/share/fr.igitscor.remora</code>, readable by you only",
                 ),
-                ("Tokens", "One item in your login Keychain; one entry in the Credential Manager on Windows"),
+                (
+                    "Tokens",
+                    "One item in your login Keychain; one entry in the Credential Manager on Windows; the Secret Service (GNOME Keyring, KWallet) on Linux",
+                ),
                 (
                     "What you handle fast or snooze",
                     "<code>learning.json</code>, used for ranking on this computer only",
@@ -1432,31 +1453,37 @@ def privacy(lang: str) -> str:
                 (
                     "GitHub",
                     "<code>api.github.com</code>, <code>github.com</code>, avatars, ou votre GitHub Enterprise",
-                    "Votre jeton ; des lectures de vos pull requests, demandes de relecture et chemins des fichiers modifiés",
+                    "Votre jeton ; des lectures de vos pull requests, demandes de relecture, et chemins et nombre de lignes des fichiers modifiés",
                     "Autorisé",
                 ),
                 (
                     "GitLab",
                     "Votre serveur GitLab",
-                    "Votre jeton ; des lectures de vos merge requests, approbations, pipelines et chemins des fichiers modifiés",
+                    "Votre jeton ; des lectures de vos merge requests, approbations, pipelines, et chemins et nombre de lignes des fichiers modifiés. Les diffs ne sont jamais lus",
                     "Autorisé",
                 ),
                 (
                     "Slack",
                     "<code>slack.com</code>",
-                    "Votre jeton utilisateur ; des recherches de vos mentions et messages directs",
+                    "Votre jeton utilisateur ; des recherches de vos mentions, messages directs et de vos messages récents, les réponses de 10 de vos fils au plus, les réactions (les vôtres, et celles de 15 messages récents au plus) et les emoji propres à l’espace de travail",
                     "Autorisé",
                 ),
                 (
                     "Linear",
-                    "<code>api.linear.app</code>",
+                    "<code>api.linear.app</code>, <code>public.linear.app</code>",
                     "Votre clé d’API ; des lectures des tickets assignés et des notifications",
+                    "Autorisé",
+                ),
+                (
+                    "Notion",
+                    "<code>api.notion.com</code>",
+                    "Votre jeton ; qui vous êtes, puis les tâches qui vous sont assignées dans les bases choisies",
                     "Autorisé",
                 ),
                 (
                     "Claude",
                     "Anthropic, via Claude Code ou <code>api.anthropic.com</code>",
-                    "Titres, contextes, auteurs et statuts des éléments",
+                    "Pour chaque élément : son verbe, son titre (la première ligne seulement d’un message Slack), son contexte, son auteur, ses statuts, son âge et le sens de ses réactions ; pour trier les reportés, aussi la raison et le nombre de reports. Jamais de jetons, de liens, de code ni le reste d’un message",
                     "<strong>Désactivé</strong>",
                 ),
                 (
@@ -1465,6 +1492,18 @@ def privacy(lang: str) -> str:
                     "Les mêmes champs que pour Claude",
                     "<strong>Désactivé</strong>, sauf un serveur sur votre ordinateur",
                 ),
+                (
+                    "Avatars",
+                    "Les serveurs d’images de vos outils connectés, Gravatar pour GitLab, et <code>emoji.slack-edge.com</code> pour les emoji propres à un espace de travail",
+                    "Une requête d’image, jamais avec un jeton",
+                    "Autorisé",
+                ),
+                (
+                    "Mises à jour",
+                    "<code>github.com</code> et les serveurs de téléchargement de GitHub",
+                    "Une vérification par jour d’une nouvelle version, puis le téléchargement que vous choisissez. Aucun identifiant ni contenu",
+                    "<strong>Désactivé</strong>",
+                ),
             ],
             stay_eyebrow="Sur votre ordinateur",
             stay_title="Ce qui reste, et où",
@@ -1472,11 +1511,11 @@ def privacy(lang: str) -> str:
             stay_rows=[
                 (
                     "Cache, états, rappels, historique des reports, préférences",
-                    "<code>~/Library/Application Support/Remora</code>, protégé par FileVault ; sous Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code>",
+                    "<code>~/Library/Application Support/Remora</code>, protégé par FileVault ; sous Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> ; sous Linux, <code>~/.local/share/fr.igitscor.remora</code>, lisible par vous seul",
                 ),
                 (
                     "Jetons",
-                    "Un seul élément de votre trousseau de session ; une entrée du Gestionnaire d’identification sous Windows",
+                    "Un seul élément de votre trousseau de session ; une entrée du Gestionnaire d’identification sous Windows ; le Secret Service (GNOME Keyring, KWallet) sous Linux",
                 ),
                 (
                     "Ce que vous traitez vite ou reportez",
