@@ -28,8 +28,14 @@ public struct Brief: Codable, Equatable, Sendable {
     /// The same brief, remembering the items it was written from.
     public func writtenFrom(_ items: [InboxItem]) -> Brief {
         var brief = self
-        brief.itemIDs = items.map(\.id).sorted()
+        brief.itemIDs = Self.keys(items)
         return brief
+    }
+
+    /// Each item and its state (`fingerprint`): an approval, a failing check or a new reply makes a brief or summary
+    /// stale, not only an item done or arrived. Stored where the ids were, so an older one just counts as stale.
+    static func keys(_ items: [InboxItem]) -> [String] {
+        items.map { "\($0.id)#\($0.fingerprint)" }.sorted()
     }
 
     /// When a new brief may be written; until then the current one is reused.
@@ -37,9 +43,10 @@ public struct Brief: Codable, Equatable, Sendable {
         createdAt.addingTimeInterval(Double(max(0, cacheMinutes)) * 60)
     }
 
-    /// Recent, and written from the same items: an item done, snoozed or arrived since makes it stale.
+    /// Recent, and written from the same items as they are now: an item done, snoozed, arrived or changed since
+    /// makes it stale.
     public func isFresh(for items: [InboxItem], cacheMinutes: Int, now: Date = .now) -> Bool {
-        now < freshUntil(cacheMinutes: cacheMinutes) && (itemIDs.map { $0 == items.map(\.id).sorted() } ?? true)
+        now < freshUntil(cacheMinutes: cacheMinutes) && (itemIDs.map { $0 == Self.keys(items) } ?? true)
     }
 }
 
@@ -51,13 +58,13 @@ public struct BundleSummary: Codable, Equatable, Sendable {
 
     public init(text: String, items: [InboxItem], createdAt: Date = .now) {
         self.text = text
-        self.itemIDs = items.map(\.id).sorted()
+        self.itemIDs = Brief.keys(items)
         self.createdAt = createdAt
     }
 
-    /// Reused only while recent and while the bundle still holds the same items.
+    /// Reused only while recent and while the bundle still holds the same items, unchanged.
     public func isFresh(for items: [InboxItem], cacheMinutes: Int, now: Date = .now) -> Bool {
-        now < createdAt.addingTimeInterval(Double(max(0, cacheMinutes)) * 60) && itemIDs == items.map(\.id).sorted()
+        now < createdAt.addingTimeInterval(Double(max(0, cacheMinutes)) * 60) && itemIDs == Brief.keys(items)
     }
 }
 

@@ -65,10 +65,12 @@ pub struct BundleSummary {
     pub created_at: DateTime<Utc>,
 }
 
+/// Each item and its state (`fingerprint`), sorted: an approval, a failing check or a new reply makes a brief or
+/// summary stale, not only an item done or arrived. Stored where the ids were, so an older one just counts as stale.
 fn sorted_ids(items: &[InboxItem]) -> Vec<String> {
-    let mut ids: Vec<String> = items.iter().map(|i| i.id.clone()).collect();
-    ids.sort();
-    ids
+    let mut keys: Vec<String> = items.iter().map(|i| format!("{}#{}", i.id, i.fingerprint())).collect();
+    keys.sort();
+    keys
 }
 
 impl BundleSummary {
@@ -249,6 +251,19 @@ mod tests {
         assert!(brief.is_fresh(&items, 30, now()));
     }
 
+    /// An item that changed (approved, a failing check, a new reply) makes a brief or summary stale too.
+    #[test]
+    fn a_changed_item_makes_them_stale() {
+        let items = vec![item("1", InboxBundle::reviews()), item("2", InboxBundle::reviews())];
+        let mut changed = items.clone();
+        changed[0].badges.push(crate::Badge::new("approved", "Approved", crate::Tone::Positive));
+        assert!(!Brief::new("s", vec![], now()).written_from(&items).is_fresh(&changed, 30, now()));
+        assert!(!BundleSummary::new("t", &items, now()).is_fresh(&changed, 30, now()));
+        let mut replied = items.clone();
+        replied[1].date += Duration::minutes(1);
+        assert!(!BundleSummary::new("t", &items, now()).is_fresh(&replied, 30, now()));
+    }
+
     #[test]
     fn bundle_summary_needs_the_same_items() {
         let items = vec![item("1", InboxBundle::reviews()), item("2", InboxBundle::reviews())];
@@ -264,7 +279,9 @@ mod tests {
     fn stored_as_the_macos_app_names_them() {
         let summary =
             serde_json::to_value(BundleSummary::new("t", &[item("1", InboxBundle::reviews())], now())).unwrap();
-        assert_eq!(summary["itemIDs"], serde_json::json!(["1"]));
+        // Each item with its fingerprint, under the name the Mac uses.
+        let one = item("1", InboxBundle::reviews());
+        assert_eq!(summary["itemIDs"], serde_json::json!([format!("1#{}", one.fingerprint())]));
         assert!(summary.get("createdAt").is_some());
         let suggestion =
             TriageSuggestion { id: "a".into(), action: TriageAction::Reschedule, until: None, reason: "r".into() };

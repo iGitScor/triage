@@ -25,6 +25,19 @@ struct BriefTests {
         #expect(brief.isFresh(for: items, cacheMinutes: 30, now: now))
     }
 
+    /// An item that changed (approved, a failing check, a new reply) makes a brief or summary stale too.
+    @Test func aChangedItemMakesThemStale() {
+        let items = [makeItem("1"), makeItem("2")]
+        var changed = items
+        changed[0].badges.append(Badge(id: "approved", label: "Approved", tone: .positive))
+        #expect(!brief.writtenFrom(items).isFresh(for: changed, cacheMinutes: 30, now: now))
+        #expect(
+            !BundleSummary(text: "t", items: items, createdAt: now).isFresh(for: changed, cacheMinutes: 30, now: now))
+        var replied = items
+        replied[1].date = replied[1].date.addingTimeInterval(60)
+        #expect(!brief.writtenFrom(items).isFresh(for: replied, cacheMinutes: 30, now: now))
+    }
+
     @Test func bundleSummaryNeedsTheSameItems() {
         let items = [makeItem("1"), makeItem("2")]
         let summary = BundleSummary(text: "t", items: items, createdAt: now)
