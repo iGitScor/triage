@@ -138,14 +138,26 @@ jobs:
   # release builds it again on each system.
   notices:
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            about: cargo-about-0.9.2-x86_64-unknown-linux-musl
+            sha256: 9099a59e820c38a68b9d65f300662a567d56562f9a10f6aa4c7e86c17c2566af
+            exe: cargo-about
+            python: python3
+          # Windows too: Python reads with the code page there, which licence texts don't fit.
+          - os: windows-latest
+            about: cargo-about-0.9.2-x86_64-pc-windows-msvc
+            sha256: 1c03e5890238562497c2d89a3b75b02560af349c1fc3e713d3284f532a5cd748
+            exe: cargo-about.exe
+            python: python
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     defaults:
       run:
         working-directory: desktop
-    env:
-      ABOUT: https://github.com/EmbarkStudios/cargo-about/releases/download/0.9.2/cargo-about-0.9.2-x86_64-unknown-linux-musl.tar.gz
-      ABOUT_SHA256: 9099a59e820c38a68b9d65f300662a567d56562f9a10f6aa4c7e86c17c2566af
+        shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Rust from desktop/rust-toolchain.toml
@@ -158,12 +170,19 @@ jobs:
       - run: npm ci
         working-directory: desktop/app
       - name: Third-party notices
+        env:
+          ABOUT: https://github.com/EmbarkStudios/cargo-about/releases/download/0.9.2/${{ matrix.about }}.tar.gz
+          ABOUT_SHA256: ${{ matrix.sha256 }}
+          EXE: ${{ matrix.exe }}
+          DIR: ${{ matrix.about }}
+          PYTHON: ${{ matrix.python }}
         run: |
           curl -fsSL -o "$RUNNER_TEMP/about.tgz" "$ABOUT"
           echo "$ABOUT_SHA256  $RUNNER_TEMP/about.tgz" | sha256sum -c -
-          tar -xzf "$RUNNER_TEMP/about.tgz" -C "$RUNNER_TEMP"
-          CARGO_ABOUT="$RUNNER_TEMP/cargo-about-0.9.2-x86_64-unknown-linux-musl/cargo-about" python3 ../scripts/make-notices.py
+          # From inside the folder: Git Bash's tar takes "D:\…" for a remote host.
+          (cd "$RUNNER_TEMP" && tar -xzf about.tgz)
+          CARGO_ABOUT="$RUNNER_TEMP/$DIR/$EXE" "$PYTHON" ../scripts/make-notices.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: THIRD-PARTY-NOTICES
+          name: THIRD-PARTY-NOTICES-${{ matrix.os }}
           path: desktop/app/src-tauri/notices/THIRD-PARTY-NOTICES.txt

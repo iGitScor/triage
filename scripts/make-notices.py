@@ -38,7 +38,8 @@ def rust_notices() -> str:
         [about, "generate", "--config", "about.toml", "about.hbs"],
         cwd=ROOT / "desktop",
         capture_output=True,
-        text=True,
+        # Licences hold any character: UTF-8, not Windows' code page (cp1252), which fails on them.
+        encoding="utf-8",
         check=False,
     )
     if result.returncode != 0:
