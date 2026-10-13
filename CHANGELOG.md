@@ -10,6 +10,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Linux on Wayland: Ctrl+Alt+R adds a reminder from anywhere on KDE Plasma and GNOME 48 or later, through the
   desktop's own shortcut dialog (where you can pick another key). Elsewhere, a system shortcut running
   `remora --reminder` still does it.
+- Windows: Settings says when Windows has turned Remora's notifications off (for Remora, for every app, or by
+  the organization), with a button to its notification settings.
 
 ### Fixed
 

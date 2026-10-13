@@ -48,6 +48,7 @@ pub const COMMANDS: &[&str] = &[
     "hide",
     "quit",
     "open_notices",
+    "open_notification_settings",
 ];
 
 /// THIRD-PARTY-NOTICES.txt is written by scripts/make-notices.py in CI and releases; a local build ships a note

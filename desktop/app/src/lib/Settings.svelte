@@ -178,6 +178,14 @@ onMount(() => {
       <label class="toggle"><input type="checkbox" checked={p.focusWhileInProgress} onchange={(e) => save({ focusWhileInProgress: e.currentTarget.checked })} />{t('Only show the task in progress while one runs')}</label>
 
       <h2 class="section-title">{t('Notifications')}</h2>
+      <!-- Notifications Windows won't show are said here, with the way to turn them back on (EASE-09). -->
+      {#if settings.notificationsOff === 'policy'}<p class="notice warn" role="status">{t('Your organization has turned notifications off on this computer.')}</p>
+      {:else if settings.notificationsOff}
+        <p class="notice warn" role="status">
+          {settings.notificationsOff === 'app' ? t('Windows has turned off Remora’s notifications.') : t('Windows notifications are turned off for every app.')}
+          <button type="button" class="link" onclick={() => api.openNotificationSettings()}>{t('Open notification settings')}</button>
+        </p>
+      {/if}
       <label class="toggle"><input type="checkbox" checked={p.notifyArrivals} onchange={(e) => save({ notifyArrivals: e.currentTarget.checked })} />{t('New items that need me (reviews, mentions…)')}</label>
       <label class="toggle"><input type="checkbox" checked={p.notifyStatusChanges} onchange={(e) => save({ notifyStatusChanges: e.currentTarget.checked })} />{t('Status changes (approved, changes requested, checks failed)')}</label>
       <!-- One group per list: the same tool names mean "hidden" here and "sent" below, so each says which. -->

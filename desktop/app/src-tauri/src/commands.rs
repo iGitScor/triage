@@ -165,6 +165,12 @@ pub fn open_setup(app: AppHandle, plugin_id: String, host: Option<String>) -> Re
     app.opener().open_url(url, None::<&str>).map_err(|e| Message::from(e.to_string()))
 }
 
+/// Windows' notification settings, to turn Remora's back on.
+#[tauri::command]
+pub fn open_notification_settings(app: AppHandle) -> Result<()> {
+    app.opener().open_url("ms-settings:notifications", None::<&str>).map_err(|e| Message::from(e.to_string()))
+}
+
 /// Settings → Updates: the licences of what the app bundles (DEP-07), shipped next to it.
 #[tauri::command]
 pub fn open_notices(app: AppHandle) -> Result<()> {
@@ -342,6 +348,8 @@ pub struct SettingsView {
     shortcut_registered: bool,
     /// A Wayland session: only the desktop's portal can bind a shortcut everywhere.
     wayland: bool,
+    /// Windows won't show Remora's notifications: `app` (off for Remora), `all` (off for every app) or `policy`.
+    notifications_off: Option<&'static str>,
 }
 
 #[tauri::command]
@@ -362,6 +370,7 @@ pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<Sett
             .unwrap_or_else(|| REMINDER_SHORTCUT.into()),
         shortcut_registered: crate::SHORTCUT_REGISTERED.load(std::sync::atomic::Ordering::Relaxed),
         wayland: crate::linux::wayland(),
+        notifications_off: crate::notifications_off(&app),
     })
 }
 

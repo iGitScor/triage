@@ -39,6 +39,7 @@
     "allow-hide",
     "allow-quit",
     "allow-open-notices",
+    "allow-open-notification-settings",
     "allow-snooze-advice",
     "allow-dismiss-insight",
     "allow-spread",

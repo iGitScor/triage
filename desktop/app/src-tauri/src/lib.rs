@@ -189,6 +189,7 @@ pub fn run() {
             commands::hide,
             commands::quit,
             commands::open_notices,
+            commands::open_notification_settings,
         ])
         .setup(move |app| {
             let window = main_window(app.handle());
@@ -530,6 +531,43 @@ fn post(app: &AppHandle, notices: &[Notice]) {
 /// notification plugin has no click callback on desktop, so the toast is built directly, with the plugin's
 /// attribution: the app's identifier once installed, PowerShell's while developing (an unregistered id would show
 /// nothing).
+/// The identity toasts are shown under: the app's identifier once installed, PowerShell's while developing (an
+/// unregistered id would show nothing).
+#[cfg(windows)]
+fn toast_app_id(app: &AppHandle) -> String {
+    let developing = tauri::utils::platform::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|dir| dir.ends_with("target/debug") || dir.ends_with("target/release")))
+        .unwrap_or(false);
+    if developing {
+        tauri_winrt_notification::Toast::POWERSHELL_APP_ID.to_string()
+    } else {
+        app.config().identifier.clone()
+    }
+}
+
+/// Why Windows won't show Remora's notifications, if it won't: turned off for Remora, for every app, or by the
+/// organization. Settings says so, with a way to the fix (EASE-09).
+#[cfg(windows)]
+pub fn notifications_off(app: &AppHandle) -> Option<&'static str> {
+    use windows::core::HSTRING;
+    use windows::UI::Notifications::{NotificationSetting, ToastNotificationManager};
+    let setting =
+        ToastNotificationManager::CreateToastNotifierWithId(&HSTRING::from(toast_app_id(app))).ok()?.Setting().ok()?;
+    match setting {
+        NotificationSetting::DisabledForApplication => Some("app"),
+        NotificationSetting::DisabledForUser => Some("all"),
+        NotificationSetting::DisabledByGroupPolicy => Some("policy"),
+        _ => None,
+    }
+}
+
+/// Elsewhere there is no such setting to read: Linux desktops don't say.
+#[cfg(not(windows))]
+pub fn notifications_off(_app: &AppHandle) -> Option<&'static str> {
+    None
+}
+
 #[cfg(windows)]
 fn toast(
     app: &AppHandle,
@@ -540,15 +578,10 @@ fn toast(
     buttons: &[NotificationAction],
 ) -> Result<(), String> {
     use tauri_winrt_notification::Toast;
-    let developing = tauri::utils::platform::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|dir| dir.ends_with("target/debug") || dir.ends_with("target/release")))
-        .unwrap_or(false);
-    let identifier = app.config().identifier.clone();
-    let app_id = if developing { Toast::POWERSHELL_APP_ID } else { identifier.as_str() };
+    let app_id = toast_app_id(app);
     let (handle, id) = (app.clone(), item_id.to_string());
     let translator = i18n::translator();
-    let toast = buttons.iter().fold(Toast::new(app_id).title(title).text1(first).text2(second), |toast, button| {
+    let toast = buttons.iter().fold(Toast::new(&app_id).title(title).text1(first).text2(second), |toast, button| {
         toast.add_button(&translator.t(button.title()), button.id())
     });
     toast

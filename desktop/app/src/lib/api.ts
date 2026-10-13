@@ -270,6 +270,8 @@ export interface Settings {
   shortcutRegistered: boolean
   /** A Wayland session (Linux): no app can listen for a shortcut everywhere. */
   wayland: boolean
+  /** Windows won't show Remora's notifications: off for Remora, for every app, or by the organization. */
+  notificationsOff?: 'app' | 'all' | 'policy' | null
 }
 /** Updates, as `updates.rs` reports them. */
 export type UpdateStatus =
@@ -344,6 +346,7 @@ export const api = {
   openItem: (id: string, inBrowser = false) => call<void>('open_item', { id, inBrowser }),
   openSetup: (pluginId: string, host?: string) => call<void>('open_setup', { pluginId, host: host ?? null }, QUIET),
   openNotices: () => call<void>('open_notices'),
+  openNotificationSettings: () => call<void>('open_notification_settings'),
   sources: () => call<Source[]>('sources'),
   accounts: () => call<Account[]>('accounts'),
   connect: (pluginId: string, name: string, settings: Record<string, string>, secrets: Record<string, string>) =>
