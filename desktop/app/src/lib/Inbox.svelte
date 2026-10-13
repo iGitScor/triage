@@ -133,7 +133,7 @@ const empty: Record<Tab, string> = {
   // t-keys
   inProgress: 'Nothing in progress',
   myTurn: 'Nothing needs you right now.',
-  waiting: 'You’re not waiting on anyone.',
+  waiting: 'What you wait on from others shows up here.',
   snoozed: 'Nothing snoozed.',
   done: 'Nothing done yet.',
 }

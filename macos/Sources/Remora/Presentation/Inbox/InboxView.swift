@@ -207,7 +207,7 @@ struct InboxView: View {
                         if layout.waitingItems.isEmpty {
                             EmptyState(
                                 symbol: "hourglass", title: "Nothing waiting",
-                                message: "Your merge requests waiting on reviewers show up here.")
+                                message: "What you wait on from others shows up here.")
                         }
                         groups(layout.waiting, in: .waiting)
                     case .snoozed:

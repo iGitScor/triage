@@ -76,7 +76,7 @@ demander.
   [Reporter et rappels](./reporter-et-rappels#rappels).
 - Les **onglets** : *À moi* (quelqu’un attend après vous), *En attente* (vous attendez les autres), *Reportés*
   et *Terminés*.
-- Un **élément** ouvre son lien au clic : dans l’appli Slack ou Linear si elle est installée, sinon dans le
+- Un **élément** ouvre son lien au clic : dans l’app Slack ou Linear si elle est installée, sinon dans le
   navigateur. Ses boutons l’épinglent, le reportent ou le marquent terminé.
 
 Ensuite : [la boîte de réception](./boite-de-reception), et comment Remora décide où va chaque chose.

@@ -61,7 +61,7 @@ Certains espaces de travail exigent qu’un administrateur approuve les nouvelle
 **Request to install** : une fois l’app approuvée, reprenez à l’étape 3.
 :::
 
-Les éléments Slack s’ouvrent dans l’appli Slack, sur la conversation. ⌥-clic (Maj-clic sous Windows) ouvre le
+Les éléments Slack s’ouvrent dans l’app Slack, sur la conversation. ⌥-clic (Maj-clic sous Windows) ouvre le
 message exact sur le web.
 
 Une app créée plus tôt peut manquer de certaines de ces permissions : les Réglages l’indiquent à côté du compte.

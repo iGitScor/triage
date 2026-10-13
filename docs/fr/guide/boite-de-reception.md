@@ -130,7 +130,7 @@ La première synchronisation d’un nouveau compte ne notifie jamais : connecter
 | Réglage | Effet |
 |---|---|
 | Vérifier toutes les | La fréquence d’actualisation (5 minutes par défaut) |
-| Ouvrir dans les applications installées | Slack et Linear s’ouvrent dans leur appli ; ⌥-clic (Maj-clic sous Windows) ouvre la page web |
+| Ouvrir dans les apps installées | Slack et Linear s’ouvrent dans leur app ; ⌥-clic (Maj-clic sous Windows) ouvre la page web |
 | Ouvrir à la connexion (Lancer au démarrage de Windows) | Lancer Remora à l’ouverture de session |
 | Compteur | *À moi*, toute ma boîte, ou rien |
 | Un compteur par source (Mac) | Un compteur par outil dans la barre des menus, dans l’ordre du verbe le plus pressant |

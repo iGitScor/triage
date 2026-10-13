@@ -112,7 +112,7 @@
 "Cancel" = "Annuler";
 "Can’t reach the server. Check the address, or your VPN if it needs one." = "Serveur injoignable. Vérifiez l’adresse, ou votre VPN s’il en faut un.";
 "Changes requested" = "Modifications demandées";
-"Check every" = "Vérifier toutes les";
+"Check every" = "Fréquence de vérification";
 "Check for updates automatically" = "Rechercher les mises à jour automatiquement";
 "Check now" = "Vérifier maintenant";
 "Checking…" = "Vérification…";
@@ -367,7 +367,7 @@
 "Open at login" = "Ouvrir à la connexion";
 "Open diff" = "Ouvrir le diff";
 "Open in browser" = "Ouvrir dans le navigateur";
-"Open in desktop apps when installed" = "Ouvrir dans les applications installées";
+"Open in desktop apps when installed" = "Ouvrir dans les apps installées";
 "Open in the browser" = "Ouvrir dans le navigateur";
 "Open notification settings" = "Ouvrir les réglages des notifications";
 "Open tasks assigned to you in the databases you choose." = "Les tâches ouvertes qui vous sont assignées, dans les bases choisies.";
@@ -408,8 +408,8 @@
 "Reminder" = "Rappel";
 "Reminders" = "Rappels";
 "Remora %@ is available." = "Remora %@ est disponible.";
-"Remora can’t read its Keychain item, so it leaves it unchanged. Quit and reopen Remora, or use Erase local data in Settings → Privacy to start again." = "Remora ne peut pas lire son élément du trousseau, donc il n’y touche pas. Quittez et rouvrez Remora, ou utilisez Effacer les données locales dans Réglages → Confidentialité pour repartir de zéro.";
-"Remora can’t replace itself in %@. Move it to Applications, or download the new version from the releases page." = "Remora ne peut pas se remplacer dans %@. Déplacez-le dans Applications, ou téléchargez la nouvelle version sur la page des versions.";
+"Remora can’t read its Keychain item, so it leaves it unchanged. Quit and reopen Remora, or use Erase local data in Settings → Privacy to start again." = "Remora ne peut pas lire son élément du trousseau, donc elle n’y touche pas. Quittez et rouvrez Remora, ou utilisez Effacer les données locales dans Réglages → Confidentialité pour repartir de zéro.";
+"Remora can’t replace itself in %@. Move it to Applications, or download the new version from the releases page." = "Remora ne peut pas se remplacer dans %@. Déplacez-la dans Applications, ou téléchargez la nouvelle version sur la page des versions.";
 "Remora can’t tell which Notion user you are: add your Notion email to this account." = "Remora ne sait pas quel utilisateur Notion vous êtes : ajoutez votre e-mail Notion à ce compte.";
 "Remora couldn’t save %@: %@" = "Remora n’a pas pu enregistrer %@ : %@";
 "Remora is up to date." = "Remora est à jour.";
@@ -451,14 +451,14 @@
 "Show in Finder" = "Afficher dans le Finder";
 "Show less" = "Afficher moins";
 "Skip" = "Passer";
-"Slack and Linear open in their app; Shift-click opens the web page instead." = "Slack et Linear s’ouvrent dans leur appli ; Maj-clic ouvre la page web.";
-"Slack and Linear open in their app; ⌥-click opens the web page instead." = "Slack et Linear s’ouvrent dans leur application ; ⌥-clic ouvre plutôt la page web.";
+"Slack and Linear open in their app; Shift-click opens the web page instead." = "Slack et Linear s’ouvrent dans leur app ; Maj-clic ouvre la page web.";
+"Slack and Linear open in their app; ⌥-click opens the web page instead." = "Slack et Linear s’ouvrent dans leur app ; ⌥-clic ouvre plutôt la page web.";
 "Slack: reactions need the reactions:read permission. Add it to the Remora app in Slack, reinstall it, and paste the new token." = "Slack : les réactions demandent la permission reactions:read. Ajoutez-la à l’app Remora dans Slack, réinstallez-la et collez le nouveau jeton.";
 "Slack: replies in your threads need the channels:history and groups:history permissions. Add them to the Remora app in Slack, reinstall it, and paste the new token." = "Slack : les réponses dans vos fils demandent les permissions channels:history et groups:history. Ajoutez-les à l’app Remora dans Slack, réinstallez-la, puis collez le nouveau jeton.";
 "Snooze" = "Reporter";
 "Snooze %d item until…" = "Reporter %d élément jusqu’à…";
 "Snooze %d items until…" = "Reporter %d éléments jusqu’à…";
-"Snooze 1 hour" = "Reporter d’1 heure";
+"Snooze 1 hour" = "Reporter d’une heure";
 "Snooze all" = "Tout reporter";
 "Snooze all…" = "Tout reporter…";
 "Snooze an item to make it come back later." = "Reportez un élément pour qu’il revienne plus tard.";
@@ -581,6 +581,7 @@
 "Waiting on %@ for a day" = "En attente de %@ depuis un jour";
 "Waiting on others" = "En attente des autres";
 "What to remember?" = "Que faut-il retenir ?";
+"What you wait on from others shows up here." = "Ce que vous attendez des autres apparaît ici.";
 "What’s new" = "Nouveautés";
 "When" = "Quand";
 "While fresh, Remora shows it again instead of asking the assistant." = "Tant qu’il est récent, Remora le réaffiche au lieu de redemander à l’assistant.";
@@ -603,7 +604,6 @@
 "Your brief" = "Votre brief";
 "Your desktop doesn’t let apps listen for a shortcut: in your system’s keyboard settings, add one that runs %@." = "Votre bureau ne laisse pas les apps écouter un raccourci : dans les réglages clavier du système, ajoutez-en un qui lance %@.";
 "Your merge requests" = "Vos merge requests";
-"Your merge requests waiting on reviewers show up here." = "Vos merge requests en attente de relecture apparaissent ici.";
 "Your organization doesn’t allow an AI server on this computer." = "Votre organisation n’autorise pas de serveur d’IA sur cet ordinateur.";
 "Your organization doesn’t allow this AI server." = "Votre organisation n’autorise pas ce serveur d’IA.";
 "Your organization has turned notifications off on this computer." = "Votre organisation a désactivé les notifications sur cet ordinateur.";
@@ -621,7 +621,7 @@
 "in %d h %02d" = "dans %d h %02d";
 "in %d min" = "dans %d min";
 "macOS needs your approval: allow Remora in System Settings → General → Login Items." = "macOS demande votre accord : autorisez Remora dans Réglages Système → Général → Ouverture.";
-"now" = "maint.";
+"now" = "à l’instant";
 "oldest %d d" = "le plus ancien : %d j";
 "tests" = "tests";
 "the request failed." = "la requête a échoué.";
