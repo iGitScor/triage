@@ -102,7 +102,9 @@ mod tests {
         // The Windows and Linux interface draws the slider itself (PERF-14): its table must be this one.
         let interface = include_str!("../../../app/src/lib/clock.ts");
         let table = interface.split("STEPS_MINUTES = [").nth(1).and_then(|rest| rest.split(']').next()).unwrap();
-        let steps: Vec<i64> = table.split(',').map(|n| n.trim().parse().unwrap()).collect();
+        // However the formatter lays the array out: one number per comma, a trailing comma allowed.
+        let steps: Vec<i64> =
+            table.split(',').map(str::trim).filter(|n| !n.is_empty()).map(|n| n.parse().unwrap()).collect();
         assert_eq!(steps, SnoozeClock::STEPS_MINUTES);
     }
 
