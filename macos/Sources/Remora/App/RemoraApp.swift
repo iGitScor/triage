@@ -41,6 +41,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// `remora://` links (IDEA-06): open the inbox (on a tab), the reminder panel filled in, or refresh. Nothing is
+    /// done to an item without the user.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        MainActor.assumeIsolated {
+            for url in urls { follow(url) }
+        }
+    }
+
+    @MainActor private func follow(_ url: URL) {
+        switch RemoraLink(url) {
+        case .open(let tab):
+            InboxModel.shared.requestedTab = tab
+            if let window {
+                window.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+            } else {
+                NSApp.activate(ignoringOtherApps: true)
+                statusItem?.showInbox()
+            }
+        case .remind(let text, let at): statusItem?.newReminder(text: text, at: at)
+        case .refresh: Task { await InboxModel.shared.refresh(manual: true) }
+        case nil: break
+        }
+    }
+
     /// Changes are saved a moment later, off the main thread: what's still pending is written before quitting.
     func applicationWillTerminate(_ notification: Notification) {
         MainActor.assumeIsolated { InboxModel.shared.flushWrites() }

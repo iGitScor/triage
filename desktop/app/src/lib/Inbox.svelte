@@ -29,6 +29,7 @@ let {
   welcome = null,
   onwelcomed = () => {},
   onautostart = () => {},
+  requestedTab = null,
 }: {
   view: InboxView | null
   query: string
@@ -38,6 +39,8 @@ let {
   welcome?: { shortcut: string | null; autostart: boolean } | null
   onwelcomed?: () => void
   onautostart?: (enabled: boolean) => void
+  /** A `remora://open?tab=…` link's tab (IDEA-06). */
+  requestedTab?: { tab: string; at: number } | null
 } = $props()
 
 let tab: Tab = $state('myTurn')
@@ -50,6 +53,13 @@ $effect(() => {
     landed = true
   } else if (running === 0 && tab === 'inProgress') {
     tab = 'myTurn'
+  }
+})
+
+$effect(() => {
+  const asked = requestedTab?.tab
+  if (asked === 'inProgress' || asked === 'myTurn' || asked === 'waiting' || asked === 'snoozed' || asked === 'done') {
+    tab = asked
   }
 })
 

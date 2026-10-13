@@ -19,11 +19,11 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 
 | Partie | Contenu | Tests |
 |---|---|---|
-| `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 117 |
+| `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 120 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365 ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 151 |
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 95 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
-| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 65 |
+| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 67 |
 
 ## Ce que Windows a, et ce qu’il n’a pas encore
 

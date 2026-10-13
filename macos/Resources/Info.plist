@@ -14,6 +14,13 @@
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>LSUIElement</key><true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key><string>fr.igitscor.remora</string>
+            <key>CFBundleURLSchemes</key><array><string>remora</string></array>
+        </dict>
+    </array>
     <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
     <key>NSHumanReadableCopyright</key><string>Remora</string>
 </dict>

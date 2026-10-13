@@ -21,6 +21,8 @@ struct InboxView: View {
     @Environment(InboxModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var tab = Self.launchTab
+    /// The tab a link asked for, by its id (`myTurn`, `waiting`…).
+    private var requested: Tab? { model.requestedTab.flatMap { id in Tab.allCases.first { "\($0)" == id } } }
 
     /// `--demo --tab snoozed` opens on that tab, for screenshots.
     private static var launchTab: Tab {
@@ -138,9 +140,16 @@ struct InboxView: View {
         .onChange(of: model.popoverOpenings) {
             // Each opening starts fresh: no search left from last time.
             model.query = ""
-            tab = layout.inProgress.isEmpty ? .myTurn : .inProgress
+            tab = requested ?? (layout.inProgress.isEmpty ? .myTurn : .inProgress)
+            model.requestedTab = nil
             selection = nil
             focus = .list
+        }
+        // A `remora://open?tab=…` link while the inbox is already open (IDEA-06).
+        .onChange(of: model.requestedTab) { _, asked in
+            guard asked != nil, let requested else { return }
+            tab = requested
+            model.requestedTab = nil
         }
         .onChange(of: tab) { selection = nil }
         .onChange(of: layout.inProgress.isEmpty) { _, empty in

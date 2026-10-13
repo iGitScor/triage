@@ -53,6 +53,11 @@ describe('Inbox tabs', () => {
     expect(document.activeElement?.id).toBe('tab-snoozed')
   })
 
+  it('opens the tab a remora:// link asks for (IDEA-06)', () => {
+    const { container } = render(Inbox, { props: { ...props(view()), requestedTab: { tab: 'done', at: 1 } } })
+    expect(selected(container)).toBe('tab-done')
+  })
+
   it('opens on In progress while a task runs', () => {
     const { container } = render(Inbox, { props: props(view(1)) })
     expect(tabs(container)[0].id).toBe('tab-inProgress')

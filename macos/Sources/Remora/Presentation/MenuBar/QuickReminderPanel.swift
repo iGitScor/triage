@@ -19,9 +19,10 @@ final class QuickReminderPanel {
         }
     }
 
-    func show(at point: NSPoint, date: Date) {
+    /// `text`: what a `remora://remind` link filled in, for the user to save (IDEA-06).
+    func show(at point: NSPoint, date: Date, text: String = "") {
         panel.host(
-            QuickReminderView(date: date) { [weak self] title, rule, until in
+            QuickReminderView(date: date, title: text) { [weak self] title, rule, until in
                 self?.model.addReminder(title, at: date, repeating: rule, until: until)
                 self?.close()
             } cancel: { [weak self] in
@@ -48,6 +49,16 @@ private struct QuickReminderView: View {
     let date: Date
     let save: (String, Recurrence.Rule?, Date?) -> Void
     let cancel: () -> Void
+
+    init(
+        date: Date, title: String = "", save: @escaping (String, Recurrence.Rule?, Date?) -> Void,
+        cancel: @escaping () -> Void
+    ) {
+        self.date = date
+        self.save = save
+        self.cancel = cancel
+        _title = State(initialValue: title)
+    }
 
     @State private var title = ""
     @State private var rule: Recurrence.Rule?

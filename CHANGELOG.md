@@ -3,6 +3,14 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Added
+
+- `remora://` links, on Mac, Windows and Linux: Shortcuts, Raycast, Alfred, a Stream Deck or a script can open the
+  inbox (on a tab), open the reminder panel filled in for you to save, or refresh. Nothing is done to an item without
+  you. See *Links and automation* in the guide.
+
 ## 0.9.0 (2026-10-13)
 
 ### Changed

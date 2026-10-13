@@ -245,11 +245,12 @@ final class StatusItemController: NSObject {
         return item
     }
 
-    /// The quick-add box under the icon, preset to one hour from now.
-    private func newReminder() {
+    /// The quick-add box under the icon, preset to one hour from now, or to what a `remora://remind` link filled in.
+    func newReminder(text: String = "", at date: Date? = nil) {
         guard let window = statusItem.button?.window else { return }
         let point = NSPoint(x: window.frame.midX, y: window.frame.minY - 8)
-        quickAdd.show(at: point, date: .now.addingTimeInterval(3_600))
+        NSApp.activate(ignoringOtherApps: true)
+        quickAdd.show(at: point, date: date ?? .now.addingTimeInterval(3_600), text: text)
     }
 
     /// Opens the inbox if it isn't shown.

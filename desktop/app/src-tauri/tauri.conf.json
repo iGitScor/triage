@@ -28,6 +28,7 @@
     }
   },
   "plugins": {
+    "deep-link": { "desktop": { "schemes": ["remora"] } },
     "updater": {
       "pubkey": "",
       "endpoints": ["https://github.com/iGitScor/triage/releases/latest/download/latest.json"],

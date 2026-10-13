@@ -134,6 +134,8 @@ pub fn run() {
                 show(&main_window(app), false);
             }
         }))
+        // After single-instance, which hands it the links a second launch receives.
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_positioner::init())
@@ -259,6 +261,7 @@ pub fn run() {
             if reminder_at_launch {
                 new_reminder(app.handle());
             }
+            links(app)?;
             tauri::async_runtime::spawn(background(app.handle().clone()));
             tauri::async_runtime::spawn(swim(app.handle().clone()));
             if !demo_mode {
@@ -330,6 +333,47 @@ fn toggle(app: &AppHandle) {
         show(&window, true);
         // The inbox opens on what you're working on, if anything.
         let _ = app.emit("opened", ());
+    }
+}
+
+/// `remora://` links (IDEA-06): the one Remora was launched with, and those that come while it runs. The installer
+/// and the .deb register the scheme; an AppImage (or a development build) registers it at launch.
+fn links(app: &tauri::App) -> tauri::Result<()> {
+    use tauri_plugin_deep_link::DeepLinkExt;
+    #[cfg(any(windows, target_os = "linux"))]
+    if let Err(error) = app.deep_link().register_all() {
+        eprintln!("Remora: remora:// links aren't registered: {error}");
+    }
+    let handle = app.handle().clone();
+    app.deep_link().on_open_url(move |event| {
+        for url in event.urls() {
+            follow(&handle, url.as_str());
+        }
+    });
+    if let Ok(Some(urls)) = app.deep_link().get_current() {
+        for url in urls {
+            follow(app.handle(), url.as_str());
+        }
+    }
+    Ok(())
+}
+
+/// Does what a link asks; anything else is ignored. A reminder is only filled in: the user saves it.
+fn follow(app: &AppHandle, url: &str) {
+    match remora_core::parse_link(url, chrono::Utc::now()) {
+        Some(remora_core::Link::Open { tab }) => {
+            show(&main_window(app), true);
+            let _ = app.emit("show", "inbox");
+            if let Some(tab) = tab {
+                let _ = app.emit("open-tab", tab);
+            }
+        }
+        Some(link @ remora_core::Link::Remind { .. }) => {
+            new_reminder(app);
+            let _ = app.emit("reminder-filled", link);
+        }
+        Some(remora_core::Link::Refresh) => app.state::<AppState>().refresh_now.notify_one(),
+        None => {}
     }
 }
 

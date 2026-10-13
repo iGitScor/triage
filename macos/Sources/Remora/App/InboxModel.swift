@@ -57,6 +57,8 @@ final class InboxModel {
     var query = ""
     /// Bumped each time the menu bar popover opens, so the inbox can pick its starting tab.
     var popoverOpenings = 0
+    /// The tab a `remora://open?tab=…` link asked for (`myTurn`, `waiting`…), until the inbox shows it (IDEA-06).
+    var requestedTab: String?
     var preferences: Preferences {
         didSet {
             persist(preferencesStore, preferences)

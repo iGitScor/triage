@@ -19,7 +19,9 @@ tauri-plugin-notification = "2.5.1"
 tauri-plugin-opener = "2.7.0"
 tauri-plugin-autostart = "2.7.0"
 tauri-plugin-global-shortcut = "2.4.0"
-tauri-plugin-single-instance = "2.5.2"
+# `remora://` links (IDEA-06): registered by the installer and the .deb, and at launch for the AppImage.
+tauri-plugin-deep-link = "2.5.0"
+tauri-plugin-single-instance = { version = "2.5.2", features = ["deep-link"] }
 tauri-plugin-positioner = { version = "2.4.0", features = ["tray-icon"] }
 # Updates, opt-in: signed with the release key in tauri.conf.json.
 tauri-plugin-updater = "2.13.0"

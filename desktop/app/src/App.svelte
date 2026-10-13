@@ -13,6 +13,9 @@ import { reloader } from './lib/reloader'
 type Screen = 'inbox' | 'settings' | 'reminder'
 let screen: Screen = $state('inbox')
 let view: InboxView | null = $state(null)
+/** What a `remora://` link asked: a tab (with when, so asking twice works), a reminder's text and time. */
+let requestedTab: { tab: string; at: number } | null = $state(null)
+let filled: { text: string; at: string | null } | null = $state(null)
 let query = $state('')
 let shortcut = $state('Ctrl+Alt+R')
 let settings = $state<SettingsData | null>(null)
@@ -82,7 +85,16 @@ onMount(() => {
   const stopAnnouncing = onAnnounce(speak)
   const unlisten = [
     listen('inbox-changed', reload),
-    listen<string>('show', (e) => (screen = e.payload === 'settings' ? 'settings' : 'reminder')),
+    listen<string>('show', (e) => {
+      screen = e.payload === 'settings' || e.payload === 'inbox' ? e.payload : 'reminder'
+      if (screen !== 'reminder') filled = null
+    }),
+    // `remora://` links (IDEA-06): a tab to open, a reminder to fill in.
+    listen<string>('open-tab', (e) => (requestedTab = { tab: e.payload, at: Date.now() })),
+    listen<{ text: string; at: string | null }>('reminder-filled', (e) => {
+      filled = e.payload
+      screen = 'reminder'
+    }),
   ]
   const onKey = (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return
@@ -115,9 +127,11 @@ onMount(() => {
 {#if screen === 'settings'}
   <Settings onclose={() => (screen = 'inbox')} onchange={apply} />
 {:else if screen === 'reminder'}
-  <QuickReminder {shortcut} onclose={() => (screen = 'inbox')} />
+  {#key filled}
+    <QuickReminder {shortcut} {filled} onclose={() => { screen = 'inbox'; filled = null }} />
+  {/key}
 {:else}
-  <Inbox {view} bind:query {welcome} onwelcomed={welcomed} onautostart={autostart} onsettings={() => (screen = 'settings')} onreminder={() => (screen = 'reminder')} />
+  <Inbox {view} bind:query {welcome} {requestedTab} onwelcomed={welcomed} onautostart={autostart} onsettings={() => (screen = 'settings')} onreminder={() => (screen = 'reminder')} />
 {/if}
 
 <Toast />

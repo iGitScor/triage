@@ -1,12 +1,22 @@
 <script lang="ts">
+import { untrack } from 'svelte'
 import { api, type RecurrenceRule } from './api'
 import Icon from './Icon.svelte'
 import TimePicker from './TimePicker.svelte'
 import { t } from './i18n'
 import { REPEATS } from './recurrence'
 
-let { onclose, shortcut }: { onclose: () => void; shortcut: string } = $props()
-let title = $state('')
+let {
+  onclose,
+  shortcut,
+  filled = null,
+}: {
+  onclose: () => void
+  shortcut: string
+  /** A `remora://remind` link's text and time: shown for the user to save, never saved for them (IDEA-06). */
+  filled?: { text: string; at: string | null } | null
+} = $props()
+let title = $state(untrack(() => filled?.text ?? ''))
 let error = $state('')
 let date = $state('')
 let repeat: RecurrenceRule | '' = $state('')
@@ -41,7 +51,7 @@ async function add(date: string) {
     <form onsubmit={(e) => { e.preventDefault(); if (title.trim() && date) add(date) }}>
       <input class="field" bind:this={input} bind:value={title} placeholder={t('What to remember?')} aria-label={t('What to remember?')} />
     </form>
-    <TimePicker confirm={t('Remind me')} showMode={false} onpick={add} bind:date>
+    <TimePicker confirm={t('Remind me')} showMode={false} onpick={add} bind:date start={filled?.at ?? null}>
       <div class="repeat">
         <label class="row line">
           {t('Repeat')}
