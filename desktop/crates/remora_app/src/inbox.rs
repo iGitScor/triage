@@ -308,10 +308,11 @@ impl Inbox {
     // MARK: Refreshing
 
     fn secrets(&mut self) -> Result<&Secrets, Message> {
-        if self.secrets.is_none() {
-            self.secrets = Some(self.vault.load()?);
-        }
-        Ok(self.secrets.as_ref().unwrap())
+        let secrets = match self.secrets.take() {
+            Some(secrets) => secrets,
+            None => self.vault.load()?,
+        };
+        Ok(self.secrets.insert(secrets))
     }
 
     // The credential store can be slow: the app reads and writes it without holding the inbox lock (PERF-07), with

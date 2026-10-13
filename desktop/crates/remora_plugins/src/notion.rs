@@ -191,7 +191,7 @@ impl NotionPlugin {
             if let Some(cursor) = cursor.as_deref() {
                 query.push(("start_cursor", cursor));
             }
-            let page: Results<User> = self.send(Request::get(url_with_query(API, "users", &query))).await?;
+            let page: Results<User> = self.send(Request::get(url_with_query(API, "users", &query)?)).await?;
             if let Some(user) = page.results.iter().find(|u| {
                 u.person.as_ref().and_then(|p| p.email.as_deref()).map(str::to_lowercase).as_deref() == Some(email)
             }) {

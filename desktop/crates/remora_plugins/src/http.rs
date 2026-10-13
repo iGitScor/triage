@@ -70,14 +70,14 @@ impl Request {
     }
 }
 
-/// `base` + `path` + encoded query parameters.
-pub fn url_with_query(base: &str, path: &str, query: &[(&str, &str)]) -> String {
+/// `base` + `path` + encoded query parameters. A base that isn't a URL is the setting's fault, not a crash (DEV-08).
+pub fn url_with_query(base: &str, path: &str, query: &[(&str, &str)]) -> Result<String, PluginError> {
     let mut url = reqwest::Url::parse(&format!("{}/{}", base.trim_end_matches('/'), path.trim_start_matches('/')))
-        .expect("valid base URL");
+        .map_err(|_| PluginError::InvalidField(base.into()))?;
     if !query.is_empty() {
         url.query_pairs_mut().extend_pairs(query);
     }
-    url.to_string()
+    Ok(url.to_string())
 }
 
 pub struct Response {
@@ -207,7 +207,9 @@ pub trait HttpClient: Send + Sync {
 
 /// The real network, through the operating system's TLS (it trusts the company's root certificates).
 pub struct ReqwestClient {
-    client: reqwest::Client,
+    /// Why there is none, when the system's TLS couldn't be set up: every request then fails with it, and the app
+    /// still opens (DEV-08).
+    client: Result<reqwest::Client, String>,
 }
 
 impl ReqwestClient {
@@ -224,8 +226,12 @@ impl ReqwestClient {
                 }
             }))
             .build()
-            .expect("HTTP client");
+            .map_err(|e| e.to_string());
         ReqwestClient { client }
+    }
+
+    fn client(&self) -> Result<&reqwest::Client, PluginError> {
+        self.client.as_ref().map_err(|e| PluginError::Network(e.clone()))
     }
 }
 
@@ -233,7 +239,7 @@ impl ReqwestClient {
     /// An avatar for the window: an image, at most `MAX_IMAGE`, sent with no header but the user agent.
     /// The caller checks the URL is allowed first.
     pub async fn get_image(&self, url: &str) -> Result<(String, Vec<u8>), PluginError> {
-        let response = self.client.get(url).send().await.map_err(|e| PluginError::Network(e.to_string()))?;
+        let response = self.client()?.get(url).send().await.map_err(|e| PluginError::Network(e.to_string()))?;
         if !response.status().is_success() {
             return Err(PluginError::Status(response.status().as_u16()));
         }
@@ -262,9 +268,10 @@ impl Default for ReqwestClient {
 #[async_trait]
 impl HttpClient for ReqwestClient {
     async fn send(&self, request: Request) -> Result<Response, PluginError> {
+        let client = self.client()?;
         let mut builder = match request.method {
-            Method::Get => self.client.get(&request.url),
-            Method::Post => self.client.post(&request.url),
+            Method::Get => client.get(&request.url),
+            Method::Post => client.post(&request.url),
         };
         for (name, value) in &request.headers {
             builder = builder.header(name, value);
@@ -502,6 +509,15 @@ pub async fn decode_with_reset<T: DeserializeOwned>(
 mod tests {
     use super::*;
     use crate::stub::StubHttp;
+
+    #[tokio::test]
+    async fn a_bad_address_or_a_missing_tls_is_an_error_not_a_crash() {
+        assert_eq!(url_with_query("not a url", "x", &[]), Err(PluginError::InvalidField("not a url".into())));
+        assert_eq!(url_with_query("https://a.io/", "/v1", &[("q", "a b")]).as_deref(), Ok("https://a.io/v1?q=a+b"));
+        let broken = ReqwestClient { client: Err("no TLS".into()) };
+        assert_eq!(broken.send(Request::get("https://a.io")).await.err(), Some(PluginError::Network("no TLS".into())));
+        assert_eq!(broken.get_image("https://a.io/a.png").await.err(), Some(PluginError::Network("no TLS".into())));
+    }
 
     #[tokio::test]
     async fn guarded_client_only_reaches_declared_hosts() {

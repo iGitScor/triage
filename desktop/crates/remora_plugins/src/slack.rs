@@ -38,7 +38,7 @@ pub fn manifest() -> PluginManifest {
             "Copy the “User OAuth Token” (it starts with xoxp-) and paste it below.".into(),
         ],
         setup_label: "Create the Slack app".into(),
-        setup_url: Some(app_manifest_url()),
+        setup_url: app_manifest_url(),
         egress: Egress {
             hosts: vec!["slack.com".into()],
             description:
@@ -52,9 +52,9 @@ pub fn manifest() -> PluginManifest {
 
 /// Opens Slack's "create app" flow pre-filled with the read-only scopes Remora needs: search, the channels'
 /// history for replies in your threads, and reactions.
-pub fn app_manifest_url() -> String {
+pub fn app_manifest_url() -> Option<String> {
     let manifest = r#"{"display_information":{"name":"Remora","description":"Mentions and DMs in your inbox"},"oauth_config":{"scopes":{"user":["search:read","channels:history","groups:history","reactions:read","emoji:read"]}},"settings":{"org_deploy_enabled":false,"socket_mode_enabled":false,"token_rotation_enabled":false}}"#;
-    url_with_query("https://api.slack.com", "apps", &[("new_app", "1"), ("manifest_json", manifest)])
+    url_with_query("https://api.slack.com", "apps", &[("new_app", "1"), ("manifest_json", manifest)]).ok()
 }
 
 /// Recent mentions and direct messages, found with Slack's search API.
@@ -86,7 +86,7 @@ impl SlackPlugin {
         if method == "search.messages" {
             query.extend([("sort", "timestamp"), ("sort_dir", "desc"), ("count", "40")]);
         }
-        let request = Request::get(url_with_query("https://slack.com/api", method, &query))
+        let request = Request::get(url_with_query("https://slack.com/api", method, &query)?)
             .header("Authorization", format!("Bearer {}", self.token));
         let envelope: serde_json::Value = decode(self.http.as_ref(), request).await?;
         if envelope.get("ok").and_then(|v| v.as_bool()) != Some(true) {
@@ -1162,7 +1162,7 @@ mod tests {
 
     #[test]
     fn app_manifest_link_requests_search_scope() {
-        let url = reqwest::Url::parse(&app_manifest_url()).unwrap();
+        let url = reqwest::Url::parse(&app_manifest_url().unwrap()).unwrap();
         let manifest = url.query_pairs().find(|(k, _)| k == "manifest_json").map(|(_, v)| v.into_owned()).unwrap();
         let json: serde_json::Value = serde_json::from_str(&manifest).unwrap();
         assert_eq!(

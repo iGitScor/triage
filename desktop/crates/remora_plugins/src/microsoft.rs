@@ -97,7 +97,7 @@ impl MicrosoftPlugin {
         path: &str,
         query: &[(&str, &str)],
     ) -> Result<T, PluginError> {
-        let request = Request::get(url_with_query(GRAPH, path, query))
+        let request = Request::get(url_with_query(GRAPH, path, query)?)
             .header("Authorization", format!("Bearer {token}"))
             .header("Accept", "application/json")
             // Times in UTC, whatever the mailbox's time zone.

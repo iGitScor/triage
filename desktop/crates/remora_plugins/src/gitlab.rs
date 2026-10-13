@@ -59,7 +59,7 @@ impl GitLabPlugin {
     }
 
     async fn get<T: DeserializeOwned>(&self, path: &str, query: &[(&str, &str)]) -> Result<T, PluginError> {
-        let url = url_with_query(&self.host, &format!("api/v4/{path}"), query);
+        let url = url_with_query(&self.host, &format!("api/v4/{path}"), query)?;
         decode(self.http.as_ref(), Request::get(url).header("PRIVATE-TOKEN", self.token.clone())).await
     }
 

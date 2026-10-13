@@ -104,7 +104,7 @@ impl JiraPlugin {
 
     async fn get<T: DeserializeOwned>(&self, path: &str, query: &[(&str, &str)]) -> Result<T, PluginError> {
         let version = if self.cloud { 3 } else { 2 };
-        let url = url_with_query(&self.host, &format!("rest/api/{version}/{path}"), query);
+        let url = url_with_query(&self.host, &format!("rest/api/{version}/{path}"), query)?;
         let request =
             Request::get(url).header("Authorization", self.authorization.clone()).header("Accept", "application/json");
         decode(self.http.as_ref(), request).await
