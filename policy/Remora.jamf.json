@@ -4,7 +4,7 @@
   "properties": {
     "AllowedPlugins": {
       "title": "Allowed tools",
-      "description": "The tools that may be connected and refreshed, by plugin ID: github, gitlab, slack, linear, notion, claude-code, claude, openai. Any other is refused.",
+      "description": "The tools that may be connected and refreshed, by plugin ID: github, gitlab, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.",
       "property_order": 5,
       "type": "array",
       "items": {
@@ -16,6 +16,7 @@
           "linear",
           "jira",
           "notion",
+          "microsoft",
           "claude-code",
           "claude",
           "openai"
@@ -48,6 +49,7 @@
           "linear",
           "jira",
           "notion",
+          "microsoft",
           "reminders"
         ]
       }
@@ -96,6 +98,7 @@
           "linear",
           "jira",
           "notion",
+          "microsoft",
           "reminders"
         ]
       }

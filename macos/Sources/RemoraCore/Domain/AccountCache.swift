@@ -10,6 +10,11 @@ public protocol AccountCache: Sendable {
         _ key: String, lifetime: TimeInterval, load: @Sendable () async throws -> T
     ) async throws -> T
 
+    /// What was kept under `key` with `keep`, however old: for a value that knows when it expires (an access token).
+    func kept<T: Sendable>(_ key: String) async -> T?
+
+    func keep<T: Sendable>(_ key: String, _ value: T) async
+
     /// A secret the plugin renewed during a fetch (an OAuth refresh token the server rotated), for the app to save in
     /// the account's Keychain entry. Only keys in `renewedSecrets`.
     func renew(_ key: String, _ value: String) async
@@ -37,6 +42,8 @@ public struct NoAccountCache: AccountCache {
         try await load()
     }
 
+    public func kept<T: Sendable>(_ key: String) async -> T? { nil }
+    public func keep<T: Sendable>(_ key: String, _ value: T) async {}
     public func renew(_ key: String, _ value: String) async {}
     public func takeRenewed() async -> [String: String] { [:] }
 }

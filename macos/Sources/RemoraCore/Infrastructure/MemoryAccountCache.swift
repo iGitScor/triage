@@ -21,6 +21,14 @@ public actor MemoryAccountCache: AccountCache {
         return value
     }
 
+    public func kept<T: Sendable>(_ key: String) -> T? {
+        entries[key]?.value as? T
+    }
+
+    public func keep<T: Sendable>(_ key: String, _ value: T) {
+        entries[key] = (value, now())
+    }
+
     public func renew(_ key: String, _ value: String) {
         renewed[key] = value
     }

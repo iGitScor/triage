@@ -57,6 +57,15 @@ impl AccountCache {
         Ok(value)
     }
 
+    /// What was kept under `key` with `keep`, however old: for a value that knows when it expires (an access token).
+    pub fn kept<T: Clone + Send + Sync + 'static>(&self, key: &str) -> Option<T> {
+        self.entries.lock().unwrap().get(key).and_then(|(_, value)| value.downcast_ref::<T>().cloned())
+    }
+
+    pub fn keep<T: Send + Sync + 'static>(&self, key: &str, value: T) {
+        self.entries.lock().unwrap().insert(key.to_string(), (Instant::now(), Arc::new(value)));
+    }
+
     /// A secret the plugin renewed (`RENEWED_SECRETS`): the app saves it after the fetch, in the account's vault entry.
     pub fn renew(&self, key: &str, value: String) {
         self.renewed.lock().unwrap().insert(key.to_string(), value);

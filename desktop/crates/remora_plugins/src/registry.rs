@@ -1,5 +1,6 @@
 use crate::{
-    github, gitlab, jira, linear, notion, slack, AccountCache, HttpClient, PluginConfig, PluginError, SourcePlugin,
+    github, gitlab, jira, linear, microsoft, notion, slack, AccountCache, HttpClient, PluginConfig, PluginError,
+    SourcePlugin,
 };
 use remora_core::{Account, PluginManifest};
 use std::collections::HashMap;
@@ -14,6 +15,7 @@ pub fn manifests() -> Vec<PluginManifest> {
         linear::manifest(),
         jira::manifest(),
         notion::manifest(),
+        microsoft::manifest(),
     ]
 }
 
@@ -51,6 +53,7 @@ pub fn make(
         "linear" => Box::new(linear::LinearPlugin::new(&config, http)?),
         "jira" => Box::new(jira::JiraPlugin::new(&config, http)?),
         "notion" => Box::new(notion::NotionPlugin::new(&config, http)?),
+        "microsoft" => Box::new(microsoft::MicrosoftPlugin::new(&config, http)?),
         other => return Err(PluginError::UnknownPlugin(other.into())),
     })
 }

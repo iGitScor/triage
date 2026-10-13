@@ -136,6 +136,34 @@ public enum OAuth {
         }
     }
 
+    /// An access token for the account: the one kept until a few minutes before it expires, else a new one from the
+    /// refresh token. A refresh token the server rotated is used from then on, and handed to the app to save
+    /// (`AccountCache.renew`). Call it once per fetch, before requests run in parallel.
+    public static func accessToken(
+        _ signIn: SignIn, config: PluginConfig, http: HTTPClient, now: @Sendable () -> Date = { .now }
+    ) async throws -> String {
+        let cache = config.cache
+        let kept: KeptToken? = await cache.kept("oauth.access")
+        if let kept, now() < kept.until { return kept.token }
+        let renewed: String? = await cache.kept("oauth.refresh")
+        let current = try renewed ?? config.required("refreshToken")
+        let tokens = try await refresh(signIn, values: config.values, refreshToken: current, http: http)
+        if let rotated = tokens.refreshToken, rotated != current {
+            await cache.keep("oauth.refresh", rotated)
+            await cache.renew("refreshToken", rotated)
+        }
+        let lifetime = max(60, (tokens.expiresIn ?? 3600) - 300)
+        await cache.keep(
+            "oauth.access",
+            KeptToken(token: tokens.accessToken, until: now().addingTimeInterval(TimeInterval(lifetime))))
+        return tokens.accessToken
+    }
+
+    struct KeptToken: Sendable {
+        var token: String
+        var until: Date
+    }
+
     /// What a request to the loopback port says.
     public enum Callback: Equatable {
         case code(String)

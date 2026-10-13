@@ -9,6 +9,7 @@ public enum PluginRegistry {
         LinearPlugin.self,
         JiraPlugin.self,
         NotionPlugin.self,
+        MicrosoftPlugin.self,
     ]
 
     public static let assistants: [any AssistantPlugin.Type] = [

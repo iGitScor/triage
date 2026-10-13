@@ -1,11 +1,12 @@
 //! Signing in through the browser (`SignIn`): OAuth 2's authorization code with PKCE (RFC 7636), for an app that
 //! keeps no secret. The browser comes back to a port on this computer (RFC 8252), open only while it waits.
 
-use crate::{HttpClient, PluginError, Request};
+use crate::{HttpClient, PluginConfig, PluginError, Request};
 use remora_core::SignIn;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
@@ -175,6 +176,33 @@ async fn tokens(http: &dyn HttpClient, url: &str, fields: &[(&str, &str)]) -> Re
         Err(_) if response.status == 401 => Err(PluginError::Unauthorized),
         Err(_) => Err(PluginError::Status(response.status)),
     }
+}
+
+/// An access token for the account: the one kept until a few minutes before it expires, else a new one from the
+/// refresh token. A refresh token the server rotated is used from then on, and handed to the app to save
+/// (`AccountCache::renew`). Call it once per fetch, before requests run in parallel.
+pub async fn access_token(
+    config: &PluginConfig,
+    http: &dyn HttpClient,
+    sign_in: &SignIn,
+) -> Result<String, PluginError> {
+    if let Some((token, until)) = config.cache.kept::<(String, Instant)>("oauth.access") {
+        if Instant::now() < until {
+            return Ok(token);
+        }
+    }
+    let current = match config.cache.kept::<String>("oauth.refresh") {
+        Some(renewed) => renewed,
+        None => config.required("refreshToken")?,
+    };
+    let tokens = refresh(http, sign_in, &config.values, &current).await?;
+    if let Some(renewed) = tokens.refresh_token.filter(|t| *t != current) {
+        config.cache.keep("oauth.refresh", renewed.clone());
+        config.cache.renew("refreshToken", renewed);
+    }
+    let lifetime = tokens.expires_in.unwrap_or(3600).saturating_sub(300).max(60);
+    config.cache.keep("oauth.access", (tokens.access_token.clone(), Instant::now() + Duration::from_secs(lifetime)));
+    Ok(tokens.access_token)
 }
 
 /// A port on this computer that waits for the browser to come back.
@@ -398,6 +426,24 @@ mod tests {
         assert_eq!(form["code_verifier"], "v1");
         assert_eq!(form["redirect_uri"], "http://localhost:5050");
         assert_eq!(form["scope"], "offline_access Mail.Read");
+    }
+
+    #[tokio::test]
+    async fn the_access_token_is_kept_and_a_rotated_refresh_token_saved() {
+        let http = server(200, r#"{"access_token": "a1", "refresh_token": "r2", "expires_in": 3600}"#);
+        let mut values = values("acme.com");
+        values.insert("refreshToken".into(), "r1".into());
+        let config = PluginConfig { account_id: "acc".into(), values, cache: Default::default() };
+        assert_eq!(access_token(&config, &http, &microsoft()).await, Ok("a1".into()));
+        let sent = http.sent.lock().unwrap().take().unwrap();
+        assert!(sent.body.unwrap().contains("refresh_token=r1"));
+        assert_eq!(config.cache.take_renewed(), HashMap::from([("refreshToken".into(), "r2".into())]));
+        assert_eq!(access_token(&config, &http, &microsoft()).await, Ok("a1".into()));
+        assert!(http.sent.lock().unwrap().is_none(), "kept until it expires");
+        config.cache.keep("oauth.access", ("a0".to_string(), Instant::now()));
+        access_token(&config, &http, &microsoft()).await.unwrap();
+        let sent = http.sent.lock().unwrap().take().unwrap();
+        assert!(sent.body.unwrap().contains("refresh_token=r2"), "the rotated one from then on");
     }
 
     #[tokio::test]

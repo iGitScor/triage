@@ -2047,6 +2047,30 @@ mod tests {
         assert!(gone.is_err());
     }
 
+    #[test]
+    fn the_organizations_tenant_and_app_replace_what_was_typed() {
+        let mut inbox = inbox();
+        let typed = HashMap::from([("tenant".to_string(), "evil.com".to_string()), ("clientId".into(), "x".into())]);
+        let plan = inbox.prepare_sign_in("microsoft", None, typed.clone(), Arc::new(NoNetwork)).unwrap();
+        assert_eq!(plan.settings["tenant"], "evil.com", "nothing managed: the user's");
+        inbox.managed.settings = std::collections::BTreeMap::from([
+            ("MicrosoftTenant".to_string(), "acme.onmicrosoft.com".to_string()),
+            ("MicrosoftClientID".to_string(), "app-1".to_string()),
+        ]);
+        let plan = inbox.prepare_sign_in("microsoft", None, typed, Arc::new(NoNetwork)).unwrap();
+        assert_eq!(
+            (plan.settings["tenant"].as_str(), plan.settings["clientId"].as_str()),
+            ("acme.onmicrosoft.com", "app-1")
+        );
+        let blocked = inbox.prepare_sign_in(
+            "microsoft",
+            None,
+            HashMap::from([("tenant".to_string(), "a/b".to_string())]),
+            Arc::new(NoNetwork),
+        );
+        assert!(blocked.is_ok(), "the organization's tenant, not the typed one");
+    }
+
     #[tokio::test]
     async fn connecting_saves_the_account_and_its_secrets_and_disconnecting_forgets_them() {
         let vault = Arc::new(MemoryVault::default());

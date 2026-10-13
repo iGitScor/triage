@@ -11,6 +11,7 @@ pub mod http;
 pub mod jira;
 pub mod linear;
 pub mod links;
+pub mod microsoft;
 pub mod notion;
 pub mod oauth;
 pub mod openai;
