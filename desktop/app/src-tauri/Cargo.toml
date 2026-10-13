@@ -39,6 +39,9 @@ tauri-winrt-notification = "0.8.1"
 [target.'cfg(target_os = "linux")'.dependencies]
 # Notifications with a click action (the notification plugin has none on desktop); the version the plugin already uses.
 notify-rust = "4.18.2"
+# Ctrl+Alt+R from anywhere on Wayland, through the desktop's GlobalShortcuts portal (KDE Plasma, GNOME 48+).
+ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "global_shortcuts"] }
+futures-util = "0.3.32"
 
 [build-dependencies]
 tauri-build = { version = "2.7.1", features = [] }

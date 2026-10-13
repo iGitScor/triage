@@ -39,6 +39,8 @@ pub struct AppState {
 pub const REMINDER_SHORTCUT: &str = "CommandOrControl+Alt+R";
 /// False when another app holds the shortcut: Settings says so.
 pub static SHORTCUT_REGISTERED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+/// The key a Wayland desktop bound through its portal, as it describes it; else `REMINDER_SHORTCUT`.
+pub static PORTAL_SHORTCUT: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
 const TRAY_QUIET: &[u8] = include_bytes!("../icons/tray-quiet.png");
 const TRAY_ATTENTION: &[u8] = include_bytes!("../icons/tray-attention.png");
@@ -215,9 +217,26 @@ pub fn run() {
                 });
             }
             build_tray(app.handle())?;
-            // Wayland lets no app listen for a key everywhere: Settings says how to add a system shortcut instead.
+            // Wayland lets no app grab a key everywhere: the desktop's GlobalShortcuts portal binds it where there is
+            // one; elsewhere Settings says how to add a system shortcut instead.
             if linux::wayland() {
                 SHORTCUT_REGISTERED.store(false, std::sync::atomic::Ordering::Relaxed);
+                #[cfg(target_os = "linux")]
+                {
+                    let handle = app.handle().clone();
+                    tauri::async_runtime::spawn(async move {
+                        let pressed = handle.clone();
+                        let description = i18n::translator().t("New reminder");
+                        let bound = linux::portal_shortcut(description, move || new_reminder(&pressed)).await;
+                        if let Some(trigger) = bound {
+                            if let Ok(mut shown) = PORTAL_SHORTCUT.lock() {
+                                *shown = Some(trigger);
+                            }
+                            SHORTCUT_REGISTERED.store(true, std::sync::atomic::Ordering::Relaxed);
+                            changed(&handle).await;
+                        }
+                    });
+                }
             } else if let Err(error) = app.global_shortcut().register(REMINDER_SHORTCUT) {
                 SHORTCUT_REGISTERED.store(false, std::sync::atomic::Ordering::Relaxed);
                 eprintln!("Remora: {REMINDER_SHORTCUT} is taken by another app: {error}");
@@ -294,7 +313,10 @@ fn tray_menu(app: &AppHandle, task: Option<&str>, update: Option<&str>) -> tauri
     }
     menu.append(&MenuItem::with_id(app, "open", t("Open Remora"), true, None::<&str>)?)?;
     menu.append(&MenuItem::with_id(app, "refresh", t("Refresh"), true, None::<&str>)?)?;
-    let shortcut = SHORTCUT_REGISTERED.load(std::sync::atomic::Ordering::Relaxed).then_some(REMINDER_SHORTCUT);
+    // A key the portal bound is the desktop's to show: the menu only shows the one Remora registered itself.
+    let by_portal = PORTAL_SHORTCUT.lock().ok().is_some_and(|bound| bound.is_some());
+    let shortcut =
+        (SHORTCUT_REGISTERED.load(std::sync::atomic::Ordering::Relaxed) && !by_portal).then_some(REMINDER_SHORTCUT);
     menu.append(&MenuItem::with_id(app, "reminder", t("New reminder"), true, shortcut)?)?;
     if let Some(version) = update {
         let label = t("Update to Remora %@…").replace("%@", version);

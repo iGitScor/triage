@@ -14,7 +14,8 @@ utilisateur, sans droits d’administrateur), `Remora-x86_64.AppImage` (qui se m
 Sous Linux : les jetons dans le Secret Service (GNOME Keyring, KWallet, KeePassXC), les données dans
 `~/.local/share/fr.igitscor.remora` lisibles par vous seul, la politique dans `/etc/remora/policy.json`, une fenêtre
 ouverte depuis le menu de la zone de notification (ou d’elle-même là où le bureau n’en a pas), des notifications qui
-ouvrent leur élément, et sous Wayland un raccourci du système qui lance `remora --reminder` au lieu de Ctrl+Alt+R.
+ouvrent leur élément, et sous Wayland Ctrl+Alt+R par le portail GlobalShortcuts du bureau (KDE Plasma, GNOME 48+),
+ou sinon un raccourci du système qui lance `remora --reminder`.
 
 | Partie | Contenu | Tests |
 |---|---|---|

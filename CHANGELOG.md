@@ -5,6 +5,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Added
+
+- Linux on Wayland: Ctrl+Alt+R adds a reminder from anywhere on KDE Plasma and GNOME 48 or later, through the
+  desktop's own shortcut dialog (where you can pick another key). Elsewhere, a system shortcut running
+  `remora --reminder` still does it.
+
 ### Fixed
 
 - Notion: finished tasks no longer use up the 50 places, so older open tasks show. Notion leaves them out itself,

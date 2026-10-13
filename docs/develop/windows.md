@@ -12,8 +12,8 @@ install, no admin rights needed), `Remora-x86_64.AppImage` (updates itself) and 
 
 On Linux: tokens in the Secret Service (GNOME Keyring, KWallet, KeePassXC), data in `~/.local/share/fr.igitscor.remora`
 readable by you only, the policy in `/etc/remora/policy.json`, a window opened from the tray menu (or on its own where
-the desktop has no tray), notifications that open their item, and on Wayland a system shortcut running
-`remora --reminder` instead of Ctrl+Alt+R.
+the desktop has no tray), notifications that open their item, and on Wayland Ctrl+Alt+R through the desktop's
+GlobalShortcuts portal (KDE Plasma, GNOME 48+), or else a system shortcut running `remora --reminder`.
 
 | Part | What | Tests |
 |---|---|---|

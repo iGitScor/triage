@@ -58,7 +58,9 @@ which updates itself, or [Remora-amd64.deb](https://github.com/iGitScor/triage/r
 for Ubuntu and Debian (install the new one to update). It's the Windows app: same rules, tools and assistant, sorting
 with keywords only. It needs WebKitGTK 4.1, a keyring for the tokens (GNOME Keyring, KWallet or KeePassXC) and a
 tray: KDE, Cinnamon and XFCE have one; on GNOME add the AppIndicator extension, or Remora opens as a window. Open it
-from the fish's menu. On Wayland, add a shortcut in your system's keyboard settings that runs `remora --reminder`.
+from the fish's menu. On Wayland, KDE Plasma and GNOME 48 or later offer Ctrl+Alt+R in their own dialog the first
+time (you can pick another key there); on other desktops, add a shortcut in your system's keyboard settings that runs
+`remora --reminder`.
 Tested on Ubuntu 24.04 and Fedora KDE; x86_64 only for now.
 
 ## How do I erase everything?

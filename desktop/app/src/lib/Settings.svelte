@@ -7,7 +7,7 @@ import Icon from './Icon.svelte'
 import Logo from './Logo.svelte'
 import { linux, say, t, translateMessage } from './i18n'
 
-/** What a system shortcut runs on Wayland, where Remora can't listen for one itself. */
+/** What a system shortcut runs on a Wayland desktop with no GlobalShortcuts portal, where Remora can't bind one. */
 const REMINDER_COMMAND = 'remora --reminder'
 import { tablist } from './tablist'
 
@@ -161,7 +161,8 @@ onMount(() => {
       <label class="toggle"><input type="checkbox" checked={settings.autostart} onchange={async (e) => { await api.setAutostart(e.currentTarget.checked); await load() }} />{linux ? t('Start at login') : t('Start with Windows')}</label>
       <label class="toggle"><input type="checkbox" checked={settings.managed.openInApps ?? p.openInApps} disabled={settings.managed.openInApps != null} onchange={(e) => save({ openInApps: e.currentTarget.checked })} />{t('Open in desktop apps when installed')}</label>
       <p class="help">{t('Slack and Linear open in their app; Shift-click opens the web page instead.')}</p>
-      {#if settings.wayland}<p class="notice">{t('Your desktop doesn’t let apps listen for a shortcut: in your system’s keyboard settings, add one that runs %@.', REMINDER_COMMAND)}</p>
+      <!-- On Wayland the desktop's portal binds the key where it can; else a system shortcut does the same. -->
+      {#if settings.wayland && !settings.shortcutRegistered}<p class="notice">{t('Your desktop doesn’t let apps listen for a shortcut: in your system’s keyboard settings, add one that runs %@.', REMINDER_COMMAND)}</p>
       {:else if !settings.shortcutRegistered}<p class="notice warn">{t('Ctrl+Alt+R is used by another app: use + Reminder in the inbox instead.')}</p>{/if}
 
       <h2 class="section-title">{t('Tray icon')}</h2>

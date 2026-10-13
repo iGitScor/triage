@@ -337,9 +337,10 @@ pub struct SettingsView {
     autostart: bool,
     version: &'static str,
     data_dir: String,
-    shortcut: &'static str,
+    /// The new-reminder key: Ctrl+Alt+R, or what a Wayland desktop bound through its portal.
+    shortcut: String,
     shortcut_registered: bool,
-    /// A Wayland session: no app can listen for a shortcut everywhere.
+    /// A Wayland session: only the desktop's portal can bind a shortcut everywhere.
     wayland: bool,
 }
 
@@ -354,7 +355,11 @@ pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<Sett
         autostart: app.autolaunch().is_enabled().unwrap_or(false),
         version: env!("CARGO_PKG_VERSION"),
         data_dir: paths::data_dir().display().to_string(),
-        shortcut: REMINDER_SHORTCUT,
+        shortcut: crate::PORTAL_SHORTCUT
+            .lock()
+            .ok()
+            .and_then(|bound| bound.clone())
+            .unwrap_or_else(|| REMINDER_SHORTCUT.into()),
         shortcut_registered: crate::SHORTCUT_REGISTERED.load(std::sync::atomic::Ordering::Relaxed),
         wayland: crate::linux::wayland(),
     })

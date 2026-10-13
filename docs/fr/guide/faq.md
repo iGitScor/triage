@@ -61,8 +61,10 @@ qui se met à jour seule, ou [Remora-amd64.deb](https://github.com/iGitScor/tria
 pour Ubuntu et Debian (installez la nouvelle pour mettre à jour). C’est l’app Windows : mêmes règles, outils et
 assistant, tri par mots-clés seulement. Il lui faut WebKitGTK 4.1, un trousseau pour les jetons (GNOME Keyring,
 KWallet ou KeePassXC) et une zone de notification : KDE, Cinnamon et XFCE en ont une ; sur GNOME, ajoutez
-l’extension AppIndicator, sinon Remora s’ouvre en fenêtre. Ouvrez-la depuis le menu du poisson. Sous Wayland, ajoutez
-dans les réglages clavier du système un raccourci qui lance `remora --reminder`. Testée sur Ubuntu 24.04 et Fedora
+l’extension AppIndicator, sinon Remora s’ouvre en fenêtre. Ouvrez-la depuis le menu du poisson. Sous Wayland, KDE Plasma et
+GNOME 48 ou plus récent proposent Ctrl+Alt+R dans leur propre fenêtre la première fois (vous pouvez y choisir une autre
+touche) ; sur les autres bureaux, ajoutez dans les réglages clavier du système un raccourci qui lance
+`remora --reminder`. Testée sur Ubuntu 24.04 et Fedora
 KDE ; x86_64 seulement pour l’instant.
 
 ## Comment tout effacer ?
