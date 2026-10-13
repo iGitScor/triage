@@ -69,7 +69,8 @@ flowchart TB
 
 **Infrastructure** : `HTTPClient` (un protocole, pour tester les extensions avec un stub), `GuardedHTTPClient`
 (refuse les adresses qu’une extension ne déclare pas), `ConditionalHTTPClient` (envoie `If-None-Match` et répond à
-un 304 avec la dernière réponse), `MemoryAccountCache` (l’`AccountCache` qu’une actualisation donne à son extension),
+un 304 avec la dernière réponse ; GET seulement, donc utile à GitLab et Notion, pas aux POST GraphQL de GitHub et
+Linear), `MemoryAccountCache` (l’`AccountCache` qu’une actualisation donne à son extension),
 et des utilitaires JSON. Les deux gardent leurs réponses en mémoire, à part pour chaque compte, et les oublient quand
 ses réglages ou son jeton changent, ou quand il est déconnecté ou effacé.
 
