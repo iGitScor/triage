@@ -792,7 +792,3 @@ enum SlackText {
         return formatter.string(from: date)
     }
 }
-
-extension String {
-    var nilIfEmpty: String? { isEmpty ? nil : self }
-}

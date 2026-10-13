@@ -1338,10 +1338,6 @@ extension InboxModel {
     }
 }
 
-extension String {
-    var nilIfEmpty: String? { isEmpty ? nil : self }
-}
-
 extension Account {
     /// The same person on the same tool and server: what connecting twice would duplicate.
     func isSame(as other: Account, identity: String) -> Bool {
