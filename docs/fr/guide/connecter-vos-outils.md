@@ -14,8 +14,9 @@ chaque connexion peut joindre est listé dans [Flux de données](/fr/admin/flux-
 
 ## GitHub
 
-Affiche les pull requests que vous avez ouvertes et les relectures qu’on vous demande. Une demande de relecture
-quitte la boîte une fois que vous avez relu, comme sur GitHub.
+Affiche les pull requests que vous avez ouvertes, les relectures qu’on vous demande, et les tickets ouverts qui
+vous sont assignés (dans *À faire*). Une demande de relecture quitte la boîte une fois que vous avez relu, comme sur
+GitHub.
 
 1. Réglages → Sources → **GitHub**. Gardez `https://github.com`, ou saisissez l’adresse de votre GitHub
    Enterprise.
@@ -30,7 +31,9 @@ GitHub et autorisez-le pour l’organisation, sinon ses dépôts restent invisib
 
 ## GitLab
 
-Affiche vos merge requests, celles que vous relisez, leurs approbations et pipelines.
+Affiche vos merge requests, celles que vous relisez, leurs approbations et pipelines, et vos autres To-Dos : un
+ticket qui vous est assigné va dans *À faire*, une mention dans *Mentions*. Marquez un To-Do terminé dans GitLab et
+il quitte aussi Remora.
 
 1. Réglages → Sources → **GitLab**, avec `https://gitlab.com` ou l’adresse de votre GitLab. Elle doit être en
    https : Remora n’envoie pas de jeton en http simple.

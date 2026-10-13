@@ -2,7 +2,7 @@
   "accounts": [
     {
       "allowed": true,
-      "egress": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
+      "egress": "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host).",
       "error": null,
       "errorKind": null,
       "hosts": ["api.github.com", "github.com", "avatars.githubusercontent.com"],
@@ -17,7 +17,7 @@
     },
     {
       "allowed": true,
-      "egress": "Reads your merge requests, approvals and pipelines from your GitLab host.",
+      "egress": "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host.",
       "error": null,
       "errorKind": null,
       "hosts": ["gitlab.com"],
@@ -130,7 +130,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-13T08:17:51.066672Z",
+            "date": "2026-10-13T08:27:42.523363Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -169,7 +169,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-13T07:57:51.066672Z",
+            "date": "2026-10-13T08:07:42.523363Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -202,7 +202,7 @@
               "title": "To review"
             },
             "context": "acme/search #77",
-            "date": "2026-10-12T21:57:51.066672Z",
+            "date": "2026-10-12T22:07:42.523363Z",
             "due": null,
             "id": "demo/11",
             "needsAction": true,
@@ -228,7 +228,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-15T18:17:51.066672Z",
+            "date": "2026-09-15T18:27:42.523363Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -260,7 +260,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-13T08:17:51.066672Z",
+            "date": "2026-10-13T08:27:42.523363Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -299,7 +299,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-13T07:57:51.066672Z",
+            "date": "2026-10-13T08:07:42.523363Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -331,7 +331,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-15T18:17:51.066672Z",
+            "date": "2026-09-15T18:27:42.523363Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -346,7 +346,7 @@
         "kind": "stale"
       }
     ],
-    "lastRefresh": "2026-10-13T12:57:51.084855Z",
+    "lastRefresh": "2026-10-13T13:07:42.541681Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -373,7 +373,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-13T12:27:51.066672Z",
+              "date": "2026-10-13T12:37:42.523363Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -407,7 +407,7 @@
                 "title": "To reply"
               },
               "context": "Direct message",
-              "date": "2026-10-13T10:37:51.066672Z",
+              "date": "2026-10-13T10:47:42.523363Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -463,7 +463,7 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-13T12:45:51.066672Z",
+              "date": "2026-10-13T12:55:42.523363Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
@@ -513,7 +513,7 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-13T11:22:51.066672Z",
+              "date": "2026-10-13T11:32:42.523363Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
@@ -567,7 +567,7 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-13T06:17:51.066672Z",
+              "date": "2026-10-13T06:27:42.523363Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
@@ -627,7 +627,7 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-13T12:49:51.066672Z",
+              "date": "2026-10-13T12:59:42.523363Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
@@ -680,7 +680,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-12T03:37:51.066672Z",
+              "date": "2026-10-12T03:47:42.523363Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -711,7 +711,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-13T08:17:51.066672Z",
+          "date": "2026-10-13T08:27:42.523363Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -750,7 +750,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-13T07:57:51.066672Z",
+          "date": "2026-10-13T08:07:42.523363Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -783,7 +783,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-12T21:57:51.066672Z",
+          "date": "2026-10-12T22:07:42.523363Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -809,7 +809,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-15T18:17:51.066672Z",
+          "date": "2026-09-15T18:27:42.523363Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -844,7 +844,7 @@
                 "title": "Waiting on others"
               },
               "context": "Thread in #design",
-              "date": "2026-10-13T12:02:51.066672Z",
+              "date": "2026-10-13T12:12:42.523363Z",
               "due": null,
               "id": "demo/15",
               "needsAction": false,
@@ -885,7 +885,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-12T11:57:51.066672Z",
+              "date": "2026-10-12T12:07:42.523363Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -924,7 +924,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-11T10:57:51.066672Z",
+              "date": "2026-10-11T11:07:42.523363Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
@@ -959,7 +959,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791879471|",
+          "fingerprint": "1791880062|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -972,7 +972,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791842271|diff",
+          "fingerprint": "1791842862|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
@@ -985,7 +985,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789496271|",
+          "fingerprint": "1789496862|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -998,7 +998,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791878271|checks.passing,diff",
+          "fingerprint": "1791878862|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -1057,7 +1057,7 @@
   "snoozeReturns": {
     "focus": "2026-10-14T07:00:00Z",
     "motivation": "2026-10-14T07:00:00Z",
-    "noTime": "2026-10-13T16:00:00Z",
+    "noTime": "2026-10-13T16:15:00Z",
     "notUrgent": "2026-10-19T07:00:00Z",
     "waiting": "2026-10-16T07:00:00Z"
   },
@@ -1066,7 +1066,7 @@
       "assistant": false,
       "manifest": {
         "egress": {
-          "description": "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host).",
+          "description": "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host).",
           "externalAi": false,
           "hosts": ["api.github.com", "github.com", "avatars.githubusercontent.com"]
         },
@@ -1102,7 +1102,7 @@
         ],
         "setupUrl": "{host}/settings/tokens/new?scopes=repo,read:org&description=Remora",
         "signIn": null,
-        "summary": "Pull requests you opened and review requests. Works with GitHub Enterprise."
+        "summary": "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise."
       },
       "refusal": null
     },
@@ -1110,7 +1110,7 @@
       "assistant": false,
       "manifest": {
         "egress": {
-          "description": "Reads your merge requests, approvals and pipelines from your GitLab host.",
+          "description": "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host.",
           "externalAi": false,
           "hosts": ["gitlab.com"]
         },
@@ -1147,7 +1147,7 @@
         ],
         "setupUrl": "{host}/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api",
         "signIn": null,
-        "summary": "Merge requests you opened and those you review. Works with self-hosted GitLab."
+        "summary": "Merge requests you opened and those you review, and your To-Dos. Works with self-hosted GitLab."
       },
       "refusal": null
     },

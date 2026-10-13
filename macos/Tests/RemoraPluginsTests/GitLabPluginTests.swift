@@ -53,7 +53,9 @@ struct GitLabPluginTests {
                 return try await base.send(request)
             }
         }
-        let routes = ["/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[\(mr)]"]
+        let routes = [
+            "/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[\(mr)]", "/api/v4/todos": "[]",
+        ]
         // No approvals, pipeline or diffs routes: each answers 404.
         let plugin = try GitLabPlugin(
             config: config(["host": "gitlab.acme.io", "token": "t"]), http: StubHTTP(routes: routes))
@@ -83,18 +85,47 @@ struct GitLabPluginTests {
                 "/api/v4/user": #"{"username": "alice"}"#,
                 "/api/v4/merge_requests": "[\(mr)]",
                 "/api/graphql": graphQL,
+                "/api/v4/todos": "[]",
             ]))
         let snapshot = try await GitLabPlugin(config: config(["host": "gitlab.acme.io", "token": "t"]), http: http)
             .fetch()
 
         let paths = await http.paths
         #expect(paths.filter { $0.contains("/projects/") }.isEmpty, "no per-merge-request call")
-        #expect(paths.count == 4, "user, the two lists, and one GraphQL request")
+        #expect(paths.count == 5, "user, the two lists, the To-Dos, and one GraphQL request")
         let authored = snapshot.items[0]
         #expect(authored.hasBadge("approved") && authored.hasBadge("checks.failing"))
         #expect(authored.changes == nil)
         let review = snapshot.items[1]
         #expect(review.changes?.files == [ChangedFile(path: "app/models/user.rb", additions: 12, deletions: 3)])
+    }
+
+    /// MISS-06: To-Dos other than merge requests, already listed: assigned issues to do, mentions to answer. Same
+    /// case as Windows.
+    @Test func toDosBringIssuesAndMentionsButNotMergeRequestsAgain() async throws {
+        let todos = """
+            [{"id": 1, "action_name": "assigned", "target_type": "Issue",
+              "target": {"title": "Export *CSV*", "iid": 42}, "target_url": "https://gitlab.acme.io/acme/app/-/issues/42",
+              "author": {"name": "Erin", "username": "erin", "avatar_url": null}, "project": {"path_with_namespace": "acme/app"},
+              "updated_at": "2026-10-12T09:00:00Z"},
+             {"id": 2, "action_name": "mentioned", "target_type": "Issue", "target": {"title": "Login loop", "iid": 7},
+              "body": "@alice can you look?", "target_url": "https://gitlab.acme.io/acme/app/-/issues/7#note_1",
+              "author": {"username": "frank"}, "project": {"path_with_namespace": "acme/app"}, "created_at": "2026-10-12T10:00:00Z"},
+             {"id": 3, "action_name": "review_requested", "target_type": "MergeRequest", "target": {"title": "Fix", "iid": 3}}]
+            """
+        let snapshot = try await GitLabPlugin(
+            config: config(["host": "gitlab.acme.io", "token": "t"]),
+            http: StubHTTP(routes: [
+                "/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[]", "/api/v4/todos": todos,
+            ])
+        ).fetch()
+        #expect(snapshot.items.count == 2, "the merge request is already listed as such")
+        let issue = try #require(snapshot.items.first)
+        #expect(issue.bundle == .tasks && issue.title == "Export CSV" && issue.context == "acme/app #42")
+        let mention = try #require(snapshot.items.last)
+        #expect(mention.bundle == .mentions && mention.preview == "@alice can you look?")
+        #expect(mention.author?.name == "frank")
+        #expect(snapshot.remarks.isEmpty)
     }
 
     /// PERF-09: who the token belongs to is asked once, not at every refresh.

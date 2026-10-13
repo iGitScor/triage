@@ -16,7 +16,8 @@ pub fn manifest() -> PluginManifest {
     PluginManifest {
         id: "gitlab".into(),
         name: "GitLab".into(),
-        summary: "Merge requests you opened and those you review. Works with self-hosted GitLab.".into(),
+        summary: "Merge requests you opened and those you review, and your To-Dos. Works with self-hosted GitLab."
+            .into(),
         fields: vec![
             ConfigField::host("https://gitlab.com"),
             ConfigField::token("Personal access token", "Token with the read_api scope."),
@@ -30,7 +31,7 @@ pub fn manifest() -> PluginManifest {
         setup_url: Some("{host}/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api".into()),
         egress: Egress {
             hosts: vec!["gitlab.com".into()],
-            description: "Reads your merge requests, approvals and pipelines from your GitLab host.".into(),
+            description: "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host.".into(),
             external_ai: false,
         },
         logo: Some("gitlab".into()),
@@ -216,9 +217,11 @@ impl SourcePlugin for GitLabPlugin {
         let authored_query = [("scope", "created_by_me"), ("state", "opened"), ("per_page", "50")];
         let reviewing_query =
             [("scope", "all"), ("state", "opened"), ("per_page", "50"), ("reviewer_username", user.username.as_str())];
-        let (authored, reviewing) = futures::join!(
+        let todos_query = [("state", "pending"), ("per_page", "50")];
+        let (authored, reviewing, todos) = futures::join!(
             self.get::<Vec<MergeRequest>>("merge_requests", &authored_query),
-            self.get::<Vec<MergeRequest>>("merge_requests", &reviewing_query)
+            self.get::<Vec<MergeRequest>>("merge_requests", &reviewing_query),
+            self.get::<Vec<Todo>>("todos", &todos_query)
         );
         let (authored, reviewing) = (authored?, reviewing?);
         // A full page means there may be more: GitLab's count header isn't always sent.
@@ -237,6 +240,14 @@ impl SourcePlugin for GitLabPlugin {
             }
         };
         let mut items = Vec::with_capacity(all.len());
+        // To-Dos are a bonus, as on the Mac: their failure is a remark, and merge requests still come through.
+        match todos {
+            Ok(todos) => items.extend(todos.iter().filter_map(|t| t.item(&self.account_id))),
+            Err(error) => match crate::rate_limit_of(&error) {
+                Some(limit) => return Err(limit),
+                None => remarks.push(crate::partial("To-Dos", &error)),
+            },
+        }
         let mut rest = vec![];
         for (mr, authored) in all {
             match details.get(&mr.id).cloned() {
@@ -272,6 +283,83 @@ impl SourcePlugin for GitLabPlugin {
             remarks.push(crate::partial("Approvals, pipelines or changed files", &error));
         }
         Ok(SourceSnapshot { identity: user.username, items, remarks })
+    }
+}
+
+/// A GitLab To-Do: an issue assigned to you, a mention, something you marked. Merge requests are left out, already
+/// shown with their approvals and pipelines (MISS-06).
+#[derive(Deserialize)]
+struct Todo {
+    id: u64,
+    action_name: String,
+    target_type: String,
+    target: Option<TodoTarget>,
+    target_url: Option<String>,
+    body: Option<String>,
+    author: Option<TodoAuthor>,
+    project: Option<TodoProject>,
+    updated_at: Option<DateTime<Utc>>,
+    created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Deserialize)]
+struct TodoTarget {
+    title: Option<String>,
+    iid: Option<u64>,
+}
+
+#[derive(Deserialize)]
+struct TodoAuthor {
+    name: Option<String>,
+    username: Option<String>,
+    avatar_url: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct TodoProject {
+    path_with_namespace: Option<String>,
+}
+
+impl Todo {
+    fn item(&self, account_id: &str) -> Option<InboxItem> {
+        if self.target_type == "MergeRequest" {
+            return None;
+        }
+        let mention = matches!(self.action_name.as_str(), "mentioned" | "directly_addressed");
+        let target = self.target.as_ref();
+        let title = target.and_then(|t| t.title.clone()).or_else(|| self.body.clone()).unwrap_or_default();
+        let project = self.project.as_ref().and_then(|p| p.path_with_namespace.clone()).unwrap_or_default();
+        let context = match target.and_then(|t| t.iid) {
+            Some(iid) if self.target_type == "Issue" => format!("{project} #{iid}"),
+            _ => project,
+        };
+        let preview = if mention { self.body.as_deref().map(remora_core::text::readable) } else { None };
+        Some(InboxItem {
+            id: format!("{account_id}/todo/{}", self.id),
+            account_id: account_id.into(),
+            plugin_id: "gitlab".into(),
+            bundle: if mention { InboxBundle::mentions() } else { InboxBundle::tasks() },
+            title: remora_core::text::readable(&title),
+            context,
+            preview: preview.filter(|p| !p.is_empty() && *p != title),
+            url: self.target_url.clone(),
+            app_url: None,
+            author: self.author.as_ref().and_then(|a| {
+                let name = a.username.clone().or_else(|| a.name.clone())?;
+                Some(Person { name, avatar_url: a.avatar_url.clone(), tone: None })
+            }),
+            participants: vec![],
+            badges: vec![],
+            date: self.updated_at.or(self.created_at).unwrap_or_else(Utc::now),
+            needs_action: true,
+            priority: None,
+            due: None,
+            expires: None,
+            changes: None,
+            suggested_people: None,
+            recurrence: None,
+            reactions: None,
+        })
     }
 }
 
@@ -510,7 +598,8 @@ mod tests {
             }
         }
         let list = format!("[{MR}]");
-        let routes = [("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", list.as_str())];
+        let routes =
+            [("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", list.as_str()), ("/todos", "[]")];
         let plugin = |http: Arc<dyn crate::HttpClient>| {
             GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), http).unwrap()
         };
@@ -551,6 +640,7 @@ mod tests {
             ("/api/v4/user", r#"{"username": "alice"}"#),
             ("/api/v4/merge_requests", &list),
             ("/api/graphql", graphql),
+            ("/api/v4/todos", "[]"),
         ]);
         let http = Arc::new(Recording::new(stub));
         let plugin = GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), http.clone()).unwrap();
@@ -558,7 +648,7 @@ mod tests {
 
         let paths = http.paths();
         assert!(paths.iter().all(|p| !p.contains("/projects/")), "no per-merge-request call: {paths:?}");
-        assert_eq!(paths.len(), 4, "user, the two lists, one GraphQL request");
+        assert_eq!(paths.len(), 5, "user, the two lists, the To-Dos, one GraphQL request");
         let item = &snapshot.items[0];
         assert!(item.has_badge("approved") && item.has_badge("checks.failing"));
         assert_eq!(item.participants.iter().find(|p| p.name == "erin").and_then(|p| p.tone), Some(Tone::Accent));
@@ -569,5 +659,41 @@ mod tests {
             review.changes.as_ref().map(|c| c.files.clone()),
             Some(vec![ChangedFile { path: "app/models/user.rb".into(), additions: Some(12), deletions: Some(3) }])
         );
+    }
+
+    /// MISS-06: To-Dos other than merge requests, already listed: assigned issues to do, mentions to answer.
+    #[tokio::test]
+    async fn to_dos_bring_issues_and_mentions_but_not_merge_requests_again() {
+        let todos = r#"[
+          {"id": 1, "action_name": "assigned", "target_type": "Issue",
+           "target": {"title": "Export *CSV*", "iid": 42}, "target_url": "https://gitlab.acme.io/acme/app/-/issues/42",
+           "author": {"name": "Erin", "username": "erin", "avatar_url": null}, "project": {"path_with_namespace": "acme/app"},
+           "updated_at": "2026-10-12T09:00:00Z"},
+          {"id": 2, "action_name": "mentioned", "target_type": "Issue", "target": {"title": "Login loop", "iid": 7},
+           "body": "@alice can you look?", "target_url": "https://gitlab.acme.io/acme/app/-/issues/7#note_1",
+           "author": {"username": "frank"}, "project": {"path_with_namespace": "acme/app"}, "created_at": "2026-10-12T10:00:00Z"},
+          {"id": 3, "action_name": "review_requested", "target_type": "MergeRequest", "target": {"title": "Fix", "iid": 3}}
+        ]"#;
+        let stub = StubHttp::paths(&[
+            ("/api/v4/user", r#"{"username": "alice"}"#),
+            ("/api/v4/merge_requests", "[]"),
+            ("/api/v4/todos", todos),
+        ]);
+        let snapshot = GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), Arc::new(stub))
+            .unwrap()
+            .fetch()
+            .await
+            .unwrap();
+        assert_eq!(snapshot.items.len(), 2, "the merge request is already listed as such");
+        let issue = &snapshot.items[0];
+        assert_eq!(
+            (issue.bundle.clone(), issue.title.as_str(), issue.context.as_str()),
+            (InboxBundle::tasks(), "Export CSV", "acme/app #42")
+        );
+        let mention = &snapshot.items[1];
+        assert_eq!(mention.bundle, InboxBundle::mentions());
+        assert_eq!(mention.preview.as_deref(), Some("@alice can you look?"));
+        assert_eq!(mention.author.as_ref().map(|a| a.name.as_str()), Some("frank"));
+        assert!(snapshot.remarks.is_empty());
     }
 }

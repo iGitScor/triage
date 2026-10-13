@@ -7,7 +7,7 @@ public struct GitLabPlugin: SourcePlugin {
         id: "gitlab",
         name: "GitLab",
         symbol: "arrow.triangle.merge",
-        summary: "Merge requests you opened and those you review. Works with self-hosted GitLab.",
+        summary: "Merge requests you opened and those you review, and your To-Dos. Works with self-hosted GitLab.",
         fields: [
             .host("https://gitlab.com"),
             .token("Personal access token", help: "Token with the read_api scope."),
@@ -27,7 +27,7 @@ public struct GitLabPlugin: SourcePlugin {
         },
         egress: Egress(
             hosts: ["gitlab.com"],
-            description: "Reads your merge requests, approvals and pipelines from your GitLab host."),
+            description: "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host."),
         logo: "gitlab"
     )
 
@@ -57,6 +57,9 @@ public struct GitLabPlugin: SourcePlugin {
             [
                 "scope": "all", "state": "opened", "per_page": "50", "reviewer_username": user.username,
             ])
+        async let todos = BestEffort.attempt {
+            try await get("todos", ["state": "pending", "per_page": "50"]) as [Todo]
+        }
         let all = try await [(authored, true), (reviewing, false)].flatMap { list, isAuthored in
             list.map { ($0, isAuthored) }
         }
@@ -88,7 +91,11 @@ public struct GitLabPlugin: SourcePlugin {
         if let failed = results.lazy.compactMap(\.1).first {
             try BestEffort.note("Approvals, pipelines or changed files", failed, remarks: &remarks)
         }
-        return SourceSnapshot(identity: user.username, items: results.map(\.0), remarks: remarks)
+        // To-Dos are a bonus: their failure is a remark, and merge requests still come through.
+        let toDo = try BestEffort.unwrap(await todos, "To-Dos", remarks: &remarks) ?? []
+        return SourceSnapshot(
+            identity: user.username, items: results.map(\.0) + toDo.compactMap { $0.item(accountID: accountID) },
+            remarks: remarks)
     }
 
     /// The REST way, one merge request at a time. Best-effort: a call that fails leaves that part out instead of
@@ -210,6 +217,56 @@ extension GitLabPlugin {
     struct User: Decodable {
         var username: String
         var avatarUrl: String?
+    }
+
+    /// A GitLab To-Do: an issue assigned to you, a mention, something you marked. Merge requests are left out,
+    /// already shown with their approvals and pipelines (MISS-06). Same as Windows (`gitlab.rs`).
+    struct Todo: Decodable, Sendable {
+        struct Target: Decodable, Sendable {
+            var title: String?
+            var iid: Int?
+        }
+        struct Author: Decodable, Sendable {
+            var name: String?
+            var username: String?
+            var avatarUrl: String?
+        }
+        struct Project: Decodable, Sendable { var pathWithNamespace: String? }
+
+        var id: Int
+        var actionName: String
+        var targetType: String
+        var target: Target?
+        var targetUrl: String?
+        var body: String?
+        var author: Author?
+        var project: Project?
+        var updatedAt: Date?
+        var createdAt: Date?
+
+        func item(accountID: UUID) -> InboxItem? {
+            guard targetType != "MergeRequest" else { return nil }
+            let mention = actionName == "mentioned" || actionName == "directly_addressed"
+            let title = Readable.text(target?.title ?? body ?? "")
+            let project = project?.pathWithNamespace ?? ""
+            let context = targetType == "Issue" && target?.iid != nil ? "\(project) #\(target!.iid!)" : project
+            let preview = mention ? body.map(Readable.text).flatMap { $0.isEmpty || $0 == title ? nil : $0 } : nil
+            return InboxItem(
+                id: "\(accountID.uuidString)/todo/\(id)",
+                accountID: accountID,
+                pluginID: GitLabPlugin.manifest.id,
+                bundle: mention ? .mentions : .tasks,
+                title: title,
+                context: context,
+                preview: preview,
+                url: URL(lenient: targetUrl),
+                author: author.flatMap { author in
+                    (author.username ?? author.name).map { Person(name: $0, avatarURL: URL(lenient: author.avatarUrl)) }
+                },
+                date: updatedAt ?? createdAt ?? .now,
+                needsAction: true
+            )
+        }
     }
 
     struct MergeRequest: Decodable {

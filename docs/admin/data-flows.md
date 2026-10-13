@@ -13,8 +13,8 @@ and a policy under `HKLM\SOFTWARE\Policies\Remora` (Group Policy or Intune).
 
 | Flow | Destination | What is sent | Default |
 |---|---|---|---|
-| GitHub | `api.github.com`, `github.com`, `avatars.githubusercontent.com`, or the GitHub Enterprise host | The user’s token; read requests for their pull requests, review requests, and the changed files’ paths and line counts | Allowed |
-| GitLab | The configured GitLab host | The user’s token; read requests for their merge requests, then one GraphQL query for their approvals, pipelines and changed file paths and line counts. The diff text in responses is never decoded or stored | Allowed |
+| GitHub | `api.github.com`, `github.com`, `avatars.githubusercontent.com`, or the GitHub Enterprise host | The user’s token; one read request for their pull requests, review requests and assigned issues, with the changed files’ paths and line counts | Allowed |
+| GitLab | The configured GitLab host | The user’s token; read requests for their merge requests and pending To-Dos, then one GraphQL query for their approvals, pipelines and changed file paths and line counts. The diff text in responses is never decoded or stored | Allowed |
 | Slack | `slack.com` | The user token; search requests for the user’s mentions, direct messages, own thread messages and own recent messages, then the replies of up to 10 of those threads (`conversations.replies`, read-only history scopes); the messages the user reacted to (`reactions.list`), the reactions on up to 15 recent messages (`reactions.get`, each kept 10 minutes) and the workspace’s own emoji (`emoji.list`, once a day) | Allowed |
 | Linear | `api.linear.app`, `public.linear.app` | The API key; read requests for assigned issues and notifications | Allowed |
 | Jira | The configured Jira host (Cloud: `*.atlassian.net`; or a Data Center host) | The API token with the user's e-mail (Cloud), or a personal access token (Data Center); the user's identity, a search for the issues assigned to them, and one for the comments of the last 7 days on the issues they watch, read for mentions of them | Allowed |

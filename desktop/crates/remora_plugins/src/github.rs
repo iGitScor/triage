@@ -11,7 +11,8 @@ pub fn manifest() -> PluginManifest {
     PluginManifest {
         id: "github".into(),
         name: "GitHub".into(),
-        summary: "Pull requests you opened and review requests. Works with GitHub Enterprise.".into(),
+        summary: "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise."
+            .into(),
         fields: vec![
             ConfigField::host("https://github.com"),
             ConfigField::token("Personal access token", "Classic token with the repo and read:org scopes."),
@@ -24,7 +25,8 @@ pub fn manifest() -> PluginManifest {
         setup_url: Some("{host}/settings/tokens/new?scopes=repo,read:org&description=Remora".into()),
         egress: Egress {
             hosts: vec!["api.github.com".into(), "github.com".into(), "avatars.githubusercontent.com".into()],
-            description: "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host)."
+            description: "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub \
+                          Enterprise host)."
                 .into(),
             external_ai: false,
         },
@@ -75,20 +77,32 @@ impl GitHubPlugin {
             return Err(PluginError::Api(message));
         };
         let cut =
-            [&data.authored, &data.reviewing].iter().any(|s| s.issue_count.is_some_and(|n| n as usize > s.nodes.len()));
+            [&data.authored, &data.reviewing].iter().any(|s| s.issue_count.is_some_and(|n| n as usize > s.nodes.len()))
+                || data.assigned.issue_count.is_some_and(|n| n as usize > data.assigned.nodes.len());
+        let assigned = data.assigned.nodes.into_iter().flatten().map(|issue| issue.item(account_id));
         let authored =
             data.authored.nodes.into_iter().flatten().map(|pr| pr.item(account_id, InboxBundle::authored(), true));
         let reviewing =
             data.reviewing.nodes.into_iter().flatten().map(|pr| pr.item(account_id, InboxBundle::reviews(), false));
         let remarks = if cut { vec![crate::truncated("GitHub")] } else { vec![] };
-        Ok(SourceSnapshot { identity: data.viewer.login, items: authored.chain(reviewing).collect(), remarks })
+        Ok(SourceSnapshot {
+            identity: data.viewer.login,
+            items: authored.chain(reviewing).chain(assigned).collect(),
+            remarks,
+        })
     }
 
     const QUERY: &'static str = r#"
-    query($authored: String!, $reviewing: String!) {
+    query($authored: String!, $reviewing: String!, $assigned: String!) {
       viewer { login }
       authored: search(query: $authored, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
       reviewing: search(query: $reviewing, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
+      assigned: search(query: $assigned, type: ISSUE, first: 50) { issueCount nodes { ...Issue } }
+    }
+    fragment Issue on Issue {
+      id number title url updatedAt
+      repository { nameWithOwner }
+      author { login avatarUrl }
     }
     fragment PR on PullRequest {
       id number title url isDraft updatedAt additions deletions mergeable reviewDecision
@@ -113,6 +127,7 @@ impl SourcePlugin for GitHubPlugin {
         let variables = HashMap::from([
             ("authored", "is:pr is:open archived:false author:@me sort:updated-desc"),
             ("reviewing", "is:pr is:open archived:false review-requested:@me sort:updated-desc"),
+            ("assigned", "is:issue is:open archived:false assignee:@me sort:updated-desc"),
         ]);
         let body = serde_json::json!({ "query": Self::QUERY, "variables": variables });
         let request =
@@ -140,6 +155,58 @@ struct Payload {
     viewer: Login,
     authored: Search,
     reviewing: Search,
+    /// Issues assigned to you (MISS-06). Absent from an answer to the older query.
+    #[serde(default)]
+    assigned: IssueSearch,
+}
+
+#[derive(Deserialize, Default)]
+struct IssueSearch {
+    #[serde(rename = "issueCount", default)]
+    issue_count: Option<u32>,
+    #[serde(default = "Vec::new")]
+    nodes: Vec<Option<Issue>>,
+}
+
+/// An issue assigned to you: something to do, like a Linear or Jira issue.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Issue {
+    id: String,
+    number: u64,
+    title: String,
+    url: String,
+    updated_at: DateTime<Utc>,
+    repository: Repository,
+    author: Option<Actor>,
+}
+
+impl Issue {
+    fn item(self, account_id: &str) -> InboxItem {
+        InboxItem {
+            id: format!("{account_id}/{}", self.id),
+            account_id: account_id.into(),
+            plugin_id: "github".into(),
+            bundle: InboxBundle::tasks(),
+            title: remora_core::text::readable(&self.title),
+            context: format!("{} #{}", self.repository.name_with_owner, self.number),
+            preview: None,
+            url: Some(self.url),
+            app_url: None,
+            author: self.author.as_ref().map(Actor::person),
+            participants: vec![],
+            badges: vec![],
+            date: self.updated_at,
+            needs_action: true,
+            priority: None,
+            due: None,
+            expires: None,
+            changes: None,
+            suggested_people: None,
+            recurrence: None,
+            reactions: None,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -487,5 +554,29 @@ mod tests {
             GitHubPlugin::snapshot(response, "a", Some(1_800_000_600)).err(),
             Some(PluginError::RateLimited(Some(1_800_000_600)))
         );
+    }
+
+    /// MISS-06: issues assigned to you are things to do; a list past 50 says so too.
+    #[tokio::test]
+    async fn issues_assigned_to_you_are_things_to_do() {
+        let issue = r#""assigned": {"issueCount": 60, "nodes": [{"id": "I_1", "number": 31, "title": "Crash on *launch*",
+          "url": "https://github.com/acme/app/issues/31", "updatedAt": "2026-10-08T11:00:00Z",
+          "repository": {"nameWithOwner": "acme/app"}, "author": {"login": "grace"}}]},"#;
+        let json = RESPONSE.replacen(
+            r#""viewer": {"login": "alice"},"#,
+            &format!(r#""viewer": {{"login": "alice"}}, {issue}"#),
+            1,
+        );
+        let plugin = GitHubPlugin::new(
+            &config(&[("host", "github.com"), ("token", "t")]),
+            Arc::new(StubHttp::paths(&[("/graphql", &json)])),
+        )
+        .unwrap();
+        let snapshot = plugin.fetch().await.unwrap();
+        let task = snapshot.items.iter().find(|i| i.bundle == InboxBundle::tasks()).unwrap();
+        assert_eq!((task.title.as_str(), task.context.as_str()), ("Crash on launch", "acme/app #31"));
+        assert_eq!(task.author.as_ref().map(|a| a.name.as_str()), Some("grace"));
+        assert!(task.needs_action);
+        assert_eq!(snapshot.remarks, [crate::truncated("GitHub")]);
     }
 }

@@ -567,11 +567,15 @@ def home(lang: str) -> str:
             sources_title='Your tools, <span class="mark">your accounts.</span>',
             sources_lead="Connect as many accounts as you need and name them: “Work GitLab”, “Client Slack”. Each one opens in its own app when it’s installed.",
             sources=[
-                ("github", "GitHub", "Pull requests you opened and review requests. GitHub Enterprise too."),
+                (
+                    "github",
+                    "GitHub",
+                    "Pull requests you opened, review requests and issues assigned to you. Enterprise too.",
+                ),
                 (
                     "gitlab",
                     "GitLab",
-                    "Your merge requests, the ones you review, approvals and pipelines. Self-hosted too.",
+                    "Your merge requests, the ones you review, approvals, pipelines and To-Dos. Self-hosted too.",
                 ),
                 ("slack", "Slack", "Mentions and direct messages, opened in the Slack app."),
                 ("linear", "Linear", "Issues assigned to you with their priority and due date, plus unread mentions."),
@@ -737,12 +741,12 @@ def home(lang: str) -> str:
                 (
                     "github",
                     "GitHub",
-                    "Les pull requests que vous avez ouvertes et les demandes de relecture. GitHub Enterprise aussi.",
+                    "Vos pull requests, les demandes de relecture et les tickets qui vous sont assignés. Enterprise aussi.",
                 ),
                 (
                     "gitlab",
                     "GitLab",
-                    "Vos merge requests, celles que vous relisez, approbations et pipelines. Auto-hébergé aussi.",
+                    "Vos merge requests, celles que vous relisez, approbations, pipelines et To-Dos. Auto-hébergé aussi.",
                 ),
                 ("slack", "Slack", "Mentions et messages directs, ouverts dans l’appli Slack."),
                 (
@@ -1326,13 +1330,13 @@ def privacy(lang: str) -> str:
                 (
                     "GitHub",
                     "<code>api.github.com</code>, <code>github.com</code>, avatars, or your GitHub Enterprise host",
-                    "Your token; read requests for your pull requests, review requests, and changed file paths and line counts",
+                    "Your token; read requests for your pull requests, review requests, assigned issues, and changed file paths and line counts",
                     "Allowed",
                 ),
                 (
                     "GitLab",
                     "Your GitLab host",
-                    "Your token; read requests for your merge requests, approvals, pipelines, and changed file paths and line counts. Diffs are never read",
+                    "Your token; read requests for your merge requests, approvals, pipelines, To-Dos, and changed file paths and line counts. Diffs are never read",
                     "Allowed",
                 ),
                 (
@@ -1492,13 +1496,13 @@ def privacy(lang: str) -> str:
                 (
                     "GitHub",
                     "<code>api.github.com</code>, <code>github.com</code>, avatars, ou votre GitHub Enterprise",
-                    "Votre jeton ; des lectures de vos pull requests, demandes de relecture, et chemins et nombre de lignes des fichiers modifiés",
+                    "Votre jeton ; des lectures de vos pull requests, demandes de relecture, tickets assignés, et chemins et nombre de lignes des fichiers modifiés",
                     "Autorisé",
                 ),
                 (
                     "GitLab",
                     "Votre serveur GitLab",
-                    "Votre jeton ; des lectures de vos merge requests, approbations, pipelines, et chemins et nombre de lignes des fichiers modifiés. Les diffs ne sont jamais lus",
+                    "Votre jeton ; des lectures de vos merge requests, approbations, pipelines, To-Dos, et chemins et nombre de lignes des fichiers modifiés. Les diffs ne sont jamais lus",
                     "Autorisé",
                 ),
                 (

@@ -7,6 +7,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- GitHub: the open issues assigned to you, in *To do*.
+- GitLab: your other To-Dos, an issue assigned to you in *To do* and a mention in *Mentions*; a To-Do you mark done in
+  GitLab leaves Remora too.
 - Windows and Linux: Settings → General → **Text size** (default, large or larger), as on the Mac. The window grows
   with it, and is never taller than the screen above the taskbar.
 

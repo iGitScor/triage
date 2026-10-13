@@ -44,6 +44,24 @@ struct GitHubPluginTests {
         #expect(try await plugin(cut).fetch().remarks == [SourceSnapshot.truncated("GitHub")])
     }
 
+    /// MISS-06: issues assigned to you are things to do; a list past 50 says so too. Same case as Windows.
+    @Test func issuesAssignedToYouAreThingsToDo() async throws {
+        let issue = """
+            "assigned": {"issueCount": 60, "nodes": [{"id": "I_1", "number": 31, "title": "Crash on *launch*",
+              "url": "https://github.com/acme/app/issues/31", "updatedAt": "2026-10-08T11:00:00Z",
+              "repository": {"nameWithOwner": "acme/app"}, "author": {"login": "grace"}}]},
+            """
+        let json = response.replacingOccurrences(
+            of: #""viewer": {"login": "alice"},"#, with: #""viewer": {"login": "alice"}, "# + issue)
+        let snapshot = try await GitHubPlugin(
+            config: config(["host": "github.com", "token": "t"]), http: StubHTTP(routes: ["/graphql": json])
+        ).fetch()
+        let task = try #require(snapshot.items.first { $0.bundle == .tasks })
+        #expect(task.title == "Crash on launch" && task.context == "acme/app #31")
+        #expect(task.author?.name == "grace" && task.needsAction)
+        #expect(snapshot.remarks == [SourceSnapshot.truncated("GitHub")])
+    }
+
     @Test func mapsAuthoredAndReviewRequests() async throws {
         let plugin = try GitHubPlugin(
             config: config(["host": "github.com", "token": "t"]),

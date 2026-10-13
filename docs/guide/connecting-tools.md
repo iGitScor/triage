@@ -14,8 +14,8 @@ can reach is listed in [Data flows](/admin/data-flows).
 
 ## GitHub
 
-Shows the pull requests you opened and the reviews requested from you. A review request leaves the inbox once
-you’ve reviewed it, as on GitHub.
+Shows the pull requests you opened, the reviews requested from you, and the open issues assigned to you (in *To
+do*). A review request leaves the inbox once you’ve reviewed it, as on GitHub.
 
 1. Settings → Sources → **GitHub**. Keep `https://github.com`, or enter your GitHub Enterprise address.
 2. Click **Create a token**: GitHub opens the classic token page with `repo` and `read:org` already ticked.
@@ -29,7 +29,8 @@ it for the organization, or its repositories stay invisible.
 
 ## GitLab
 
-Shows your merge requests, the ones you review, their approvals and pipelines.
+Shows your merge requests, the ones you review, their approvals and pipelines, and your other To-Dos: an issue
+assigned to you goes to *To do*, a mention to *Mentions*. Mark a To-Do done in GitLab and it leaves Remora too.
 
 1. Settings → Sources → **GitLab**, with `https://gitlab.com` or your own GitLab address. It must use https:
    Remora doesn't send a token over plain http.

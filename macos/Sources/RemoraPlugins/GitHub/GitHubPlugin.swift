@@ -7,7 +7,7 @@ public struct GitHubPlugin: SourcePlugin {
         id: "github",
         name: "GitHub",
         symbol: "arrow.triangle.pull",
-        summary: "Pull requests you opened and review requests. Works with GitHub Enterprise.",
+        summary: "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise.",
         fields: [
             .host("https://github.com"),
             .token("Personal access token", help: "Classic token with the repo and read:org scopes."),
@@ -26,7 +26,8 @@ public struct GitHubPlugin: SourcePlugin {
         },
         egress: Egress(
             hosts: ["api.github.com", "github.com", "avatars.githubusercontent.com"],
-            description: "Reads your pull requests and review requests from GitHub (or your GitHub Enterprise host)."
+            description:
+                "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host)."
         ),
         logo: "github"
     )
@@ -53,6 +54,7 @@ public struct GitHubPlugin: SourcePlugin {
             variables: [
                 "authored": "is:pr is:open archived:false author:@me sort:updated-desc",
                 "reviewing": "is:pr is:open archived:false review-requested:@me sort:updated-desc",
+                "assigned": "is:issue is:open archived:false assignee:@me sort:updated-desc",
             ])
         let request = try URLRequest.post(endpoint, json: body, headers: ["Authorization": "bearer \(token)"])
         let (response, answer) = try await http.decodeWithResponse(GraphQLResponse.self, from: request)
@@ -77,18 +79,27 @@ public struct GitHubPlugin: SourcePlugin {
         let reviewing = data.reviewing.nodes.compactMap { $0 }.map {
             $0.item(accountID: accountID, bundle: .reviews, authored: false)
         }
-        let truncated = [data.authored, data.reviewing].contains { ($0.issueCount ?? 0) > $0.nodes.count }
+        let assigned = data.assigned?.nodes.compactMap { $0 }.map { $0.item(accountID: accountID) } ?? []
+        let truncated =
+            [data.authored, data.reviewing].contains { ($0.issueCount ?? 0) > $0.nodes.count }
+            || (data.assigned.map { ($0.issueCount ?? 0) > $0.nodes.count } ?? false)
         return SourceSnapshot(
-            identity: data.viewer.login, items: authored + reviewing,
+            identity: data.viewer.login, items: authored + reviewing + assigned,
             remarks: truncated ? [SourceSnapshot.truncated("GitHub")] : []
         )
     }
 
     static let query = """
-        query($authored: String!, $reviewing: String!) {
+        query($authored: String!, $reviewing: String!, $assigned: String!) {
           viewer { login }
           authored: search(query: $authored, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
           reviewing: search(query: $reviewing, type: ISSUE, first: 50) { issueCount nodes { ...PR } }
+          assigned: search(query: $assigned, type: ISSUE, first: 50) { issueCount nodes { ...Issue } }
+        }
+        fragment Issue on Issue {
+          id number title url updatedAt
+          repository { nameWithOwner }
+          author { login avatarUrl }
         }
         fragment PR on PullRequest {
           id number title url isDraft updatedAt additions deletions mergeable reviewDecision
@@ -119,6 +130,13 @@ struct GraphQLResponse: Decodable {
         var viewer: Login
         var authored: Search
         var reviewing: Search
+        /// Issues assigned to you (MISS-06). Absent from an answer to the older query.
+        var assigned: IssueSearch?
+    }
+
+    struct IssueSearch: Decodable {
+        var issueCount: Int?
+        var nodes: [AssignedIssue?]
     }
 
     struct Login: Decodable { var login: String }
@@ -139,6 +157,32 @@ struct GraphQLResponse: Decodable {
 struct Connection<Node: Decodable>: Decodable {
     var nodes: [Node?]?
     var all: [Node] { (nodes ?? []).compactMap { $0 } }
+}
+
+/// An issue assigned to you: something to do, like a Linear or Jira issue. Same as Windows (`github.rs`).
+struct AssignedIssue: Decodable {
+    var id: String
+    var number: Int
+    var title: String
+    var url: URL
+    var updatedAt: Date
+    var repository: PullRequest.Repository
+    var author: PullRequest.Actor?
+
+    func item(accountID: UUID) -> InboxItem {
+        InboxItem(
+            id: "\(accountID.uuidString)/\(id)",
+            accountID: accountID,
+            pluginID: GitHubPlugin.manifest.id,
+            bundle: .tasks,
+            title: Readable.text(title),
+            context: "\(repository.nameWithOwner) #\(number)",
+            url: url,
+            author: author?.person,
+            date: updatedAt,
+            needsAction: true
+        )
+    }
 }
 
 struct PullRequest: Decodable {
