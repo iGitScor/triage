@@ -65,6 +65,7 @@
  "1 week": "1 semaine",
  "10 more minutes": "Encore 10 minutes",
  "5 min": "5 min",
+ "A Notion database couldn’t be read (%@): %@": "Impossible de lire une base Notion (%@) : %@",
  "A lighter model is enough for two sentences and uses less of your plan.": "Un modèle plus léger suffit pour deux phrases et consomme moins de votre abonnement.",
  "A personal access token, or the secret of an internal connection.": "Un jeton d’accès personnel, ou le secret d’une connexion interne.",
  "A user token (xoxp-…) with search:read, plus channels:history and groups:history for thread replies, and reactions:read and emoji:read for reactions.": "Un jeton utilisateur (xoxp-…) avec search:read, plus channels:history et groups:history pour les réponses dans les fils, et reactions:read et emoji:read pour les réactions.",

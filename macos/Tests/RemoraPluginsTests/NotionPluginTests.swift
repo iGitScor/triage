@@ -77,6 +77,33 @@ struct NotionPluginTests {
         #expect(json?.contains(#"{"checkbox":{"equals":false},"property":"Done"}"#) == true)
     }
 
+    /// A database that moved or lost its access is named in a remark; the others' tasks still show. When none can
+    /// be read, the account fails as before (FEAT-09).
+    @Test func oneDatabaseThatFailsHidesNothingElse() async throws {
+        let gone = "fedcba9876543210fedcba9876543210"
+        let routes = [
+            "/users/me": #"{"id": "u1", "type": "person", "name": "Alice"}"#,
+            "/databases/0123456789abcdef0123456789abcdef":
+                #"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#,
+            "/data_sources/ds1": #"{"properties": {}}"#,
+            "/data_sources/ds1/query": #"""
+            {"results": [{"id": "a", "last_edited_time": "2026-10-08T10:00:00.000Z",
+              "properties": {"Name": {"type": "title", "title": [{"plain_text": "Task a"}]}}}]}
+            """#,
+        ]
+        let both = try NotionPlugin(
+            config: config(["token": "secret", "databases": "0123456789abcdef0123456789abcdef, \(gone)"]),
+            http: StubHTTP(routes: routes))
+        let snapshot = try await both.fetch()
+        #expect(snapshot.items.map(\.title) == ["Task a"])
+        #expect(snapshot.remarks.count == 1)
+        #expect(snapshot.remarks.first?.contains(gone) == true)
+
+        let none = try NotionPlugin(
+            config: config(["token": "secret", "databases": gone]), http: StubHTTP(routes: routes))
+        await #expect(throws: HTTPError.status(404)) { try await none.fetch() }
+    }
+
     /// A priority select isn't the status, and an "Urgent" checkbox doesn't mean done; a "Done" checkbox does.
     @Test func readsTheStatusAndDoneCheckboxByTypeAndName() throws {
         let json = { (extra: String) in

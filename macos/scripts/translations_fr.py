@@ -237,6 +237,7 @@ FR = {
     "Windows notifications are turned off for every app.": "Les notifications de Windows sont désactivées pour toutes les apps.",
     "Open notification settings": "Ouvrir les réglages des notifications",
     "%@ couldn’t be read: %@": "Impossible de lire %@ : %@",
+    "A Notion database couldn’t be read (%@): %@": "Impossible de lire une base Notion (%@) : %@",
     "Approvals, pipelines or changed files": "les approbations, pipelines ou fichiers modifiés",
     "Replies in your threads": "les réponses de vos fils",
     "Your recent messages": "vos messages récents",

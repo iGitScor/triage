@@ -47,6 +47,7 @@ const MESSAGES: Record<string, string> = {
   unknownPlugin: 'Unknown plugin “%@”.',
   truncated: '%@ has more than Remora shows: only the latest 50 of each list are listed.',
   partial: '%@ couldn’t be read: %@',
+  notionDatabase: 'A Notion database couldn’t be read (%@): %@',
 }
 
 /** A message from Rust, in the interface's language: by its code, else as the fixed sentence it is. */

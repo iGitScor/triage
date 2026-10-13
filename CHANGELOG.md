@@ -17,6 +17,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - Windows and Linux: a confirmation in Settings (Disconnect, Erase local data) takes the keyboard focus, and gives
   it back when it closes.
+- Notion: a database that moved or lost its access no longer hides the tasks of the others; the account names it
+  instead.
 - Notion: finished tasks no longer use up the 50 places, so older open tasks show. Notion leaves them out itself,
   and a status in its Complete group counts as done in any language (*Terminé* included).
 

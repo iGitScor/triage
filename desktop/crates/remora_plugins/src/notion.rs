@@ -210,17 +210,42 @@ impl SourcePlugin for NotionPlugin {
             return Err(PluginError::Api(UNKNOWN_USER.into()));
         };
         let mut found = vec![];
+        let mut failed = vec![];
         for chunk in self.databases.chunks(4) {
-            found.extend(try_join_all(chunk.iter().map(|id| self.tasks(id, &me))).await?);
+            let me = me.as_str();
+            let results =
+                futures::future::join_all(chunk.iter().map(|id| async move { (id, self.tasks(id, me).await) }));
+            for (id, result) in results.await {
+                match result {
+                    Ok(tasks) => found.push(tasks),
+                    // The token or the rate limit is every database's problem: the account says it, as before.
+                    Err(error @ (PluginError::Unauthorized | PluginError::RateLimited(_))) => return Err(error),
+                    Err(error) => failed.push((id.clone(), error)),
+                }
+            }
+        }
+        // One database moved or out of reach no longer hides the others' tasks; when none could be read, the
+        // account fails with the first reason (FEAT-09).
+        if found.is_empty() {
+            if let Some((_, error)) = failed.first() {
+                return Err(error.clone());
+            }
         }
         let cut = found.iter().any(|(_, more)| *more);
         let items = found.into_iter().flat_map(|(items, _)| items).collect();
-        Ok(SourceSnapshot {
-            identity: label,
-            items,
-            remarks: if cut { vec![crate::truncated("Notion")] } else { vec![] },
-        })
+        let mut remarks: Vec<remora_core::Message> = if cut { vec![crate::truncated("Notion")] } else { vec![] };
+        remarks.extend(failed.iter().map(|(id, error)| database_failed(id, error)));
+        Ok(SourceSnapshot { identity: label, items, remarks })
     }
+}
+
+/// Which database couldn't be read, and why: its id, as in the link the user pasted.
+pub(crate) fn database_failed(id: &str, error: &PluginError) -> remora_core::Message {
+    remora_core::Message::new(
+        "notionDatabase",
+        vec![id.to_string(), error.message().text],
+        format!("A Notion database couldn’t be read ({id}): {error}"),
+    )
 }
 
 #[derive(Serialize)]
@@ -545,6 +570,38 @@ mod tests {
         assert!(item.has_badge("overdue") && item.has_badge("status"));
         assert_eq!((item.bundle.clone(), item.needs_action), (InboxBundle::tasks(), true));
         assert!(snapshot.remarks.is_empty());
+    }
+
+    /// A database that moved or lost its access is named in a remark; the others' tasks still show. When none can
+    /// be read, the account fails as before (FEAT-09).
+    #[tokio::test]
+    async fn one_database_that_fails_hides_nothing_else() {
+        const GONE: &str = "fedcba9876543210fedcba9876543210";
+        let query = format!(r#"{{"results": [{}]}}"#, page("a", "In progress"));
+        let routes = [
+            ("/users/me", r#"{"id": "u1", "type": "person", "name": "Alice"}"#),
+            (
+                "/databases/0123456789abcdef0123456789abcdef",
+                r#"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#,
+            ),
+            ("/data_sources/ds1", r#"{"properties": {}}"#),
+            ("/data_sources/ds1/query", query.as_str()),
+        ];
+        let both = format!("{ID}, {GONE}");
+        let plugin = NotionPlugin::new(
+            &config(&[("token", "secret"), ("databases", &both)]),
+            Arc::new(StubHttp::paths(&routes)),
+        )
+        .unwrap();
+        let snapshot = plugin.fetch().await.unwrap();
+        assert_eq!(snapshot.items.iter().map(|i| i.title.as_str()).collect::<Vec<_>>(), ["Task a"]);
+        assert_eq!(snapshot.remarks.len(), 1);
+        assert_eq!((snapshot.remarks[0].code.as_str(), snapshot.remarks[0].args[0].as_str()), ("notionDatabase", GONE));
+
+        let none =
+            NotionPlugin::new(&config(&[("token", "secret"), ("databases", GONE)]), Arc::new(StubHttp::paths(&routes)))
+                .unwrap();
+        assert_eq!(none.fetch().await.err(), Some(PluginError::Status(404)), "nothing read: the account fails");
     }
 
     /// The query asks for 50 of your tasks, newest first, through the assignee property.

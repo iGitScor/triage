@@ -637,7 +637,11 @@ mod tests {
         let codes = errors
             .iter()
             .map(PluginError::message)
-            .chain([crate::truncated("Jira"), crate::partial("Replies in your threads", &PluginError::TimedOut)])
+            .chain([
+                crate::truncated("Jira"),
+                crate::partial("Replies in your threads", &PluginError::TimedOut),
+                crate::notion::database_failed("abc", &PluginError::Status(404)),
+            ])
             .map(|m| m.code);
         for code in codes {
             let key = if code.contains('.') { format!("'{code}':") } else { format!("  {code}:") };

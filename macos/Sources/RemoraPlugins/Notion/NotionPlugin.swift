@@ -65,13 +65,28 @@ public struct NotionPlugin: SourcePlugin {
             throw HTTPError.api(
                 L("Remora can’t tell which Notion user you are: add your Notion email to this account."))
         }
-        let found = try await databases.concurrentMap(limit: 4) { id in try await self.tasks(in: id, assignedTo: me.id)
+        let results = try await databases.concurrentMap(limit: 4) { id in
+            (id, await BestEffort.attempt { try await self.tasks(in: id, assignedTo: me.id) })
         }
-        let truncated = found.contains(where: \.more)
-        return SourceSnapshot(
-            identity: me.label, items: found.flatMap(\.items),
-            remarks: truncated ? [SourceSnapshot.truncated("Notion")] : []
-        )
+        var found: [(items: [InboxItem], more: Bool)] = []
+        var remarks: [String] = []
+        var firstError: Error?
+        for (id, result) in results {
+            switch result {
+            case .success(let tasks): found.append(tasks)
+            case .failure(let error):
+                // The token or the rate limit is every database's problem: the account says it, as before.
+                if case HTTPError.unauthorized = error { throw error }
+                if case HTTPError.rateLimited = error { throw error }
+                firstError = firstError ?? error
+                remarks.append(L("A Notion database couldn’t be read (%@): %@", id, error.localizedDescription))
+            }
+        }
+        // One database moved or out of reach no longer hides the others' tasks; when none could be read, the
+        // account fails with the first reason (FEAT-09).
+        if found.isEmpty, let firstError { throw firstError }
+        if found.contains(where: \.more) { remarks.insert(SourceSnapshot.truncated("Notion"), at: 0) }
+        return SourceSnapshot(identity: me.label, items: found.flatMap(\.items), remarks: remarks)
     }
 
     /// The database's tasks for you, and whether it has more than one page of them.
