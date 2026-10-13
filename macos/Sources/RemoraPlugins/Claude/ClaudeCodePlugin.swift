@@ -15,7 +15,7 @@ public struct ClaudeCodePlugin: AssistantPlugin {
             ConfigField(
                 key: "model", label: "Model for the brief", placeholder: "Claude Code’s default", isOptional: true),
             ConfigField(
-                key: "digestModel", label: "Model for bundle summaries", defaultValue: "claude-haiku-5-5",
+                key: "digestModel", label: "Model for bundle summaries", defaultValue: ClaudePlugin.defaultDigestModel,
                 help: "A lighter model is enough for two sentences and uses less of your plan."),
         ],
         setupSteps: [
@@ -132,7 +132,7 @@ public struct ClaudeCodePlugin: AssistantPlugin {
     init(config: PluginConfig, runner: CommandRunner) throws {
         path = config["path"]
         model = config["model"]
-        digestModel = config["digestModel"].nilIfEmpty ?? "claude-haiku-5-5"
+        digestModel = config["digestModel"].nilIfEmpty ?? ClaudePlugin.defaultDigestModel
         self.runner = runner
     }
 

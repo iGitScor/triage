@@ -16,7 +16,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 pub const ID: &str = "claude";
-pub const DEFAULT_MODEL: &str = "claude-opus-5-5";
+/// Sonnet: a brief or a triage is a short answer at low effort, which Opus writes no better for far more (AI-02).
+pub const DEFAULT_MODEL: &str = "claude-sonnet-5-5";
 pub const DEFAULT_DIGEST_MODEL: &str = "claude-haiku-5-5";
 const ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
 
@@ -177,6 +178,16 @@ impl ClaudePlugin {
         )
     }
 
+    /// A model Anthropic doesn't offer answers 404: the field to fix, not "the server couldn't find" (AI-02). The
+    /// connection test sends the model, so a typo shows when connecting.
+    fn unknown_model(&self, error: PluginError, model: &str) -> PluginError {
+        if error != PluginError::Status(404) {
+            return error;
+        }
+        let summaries = model == self.digest_model && model != self.model;
+        PluginError::InvalidField(if summaries { "Model for bundle summaries" } else { "Model for the brief" }.into())
+    }
+
     async fn send(&self, body: &ApiRequest) -> Result<ApiResponse, PluginError> {
         let mut request = Request::post_json(ENDPOINT, body)?
             .header("x-api-key", self.api_key.clone())
@@ -194,7 +205,7 @@ impl ClaudePlugin {
                         attempt += 1;
                         tokio::time::sleep(delay).await;
                     }
-                    None => return Err(error),
+                    None => return Err(self.unknown_model(error, &body.model)),
                 },
                 ok => return ok,
             }
@@ -406,7 +417,7 @@ mod tests {
         let suggestions = plugin(ArcClient(recorder.clone())).triage(&[snoozed(item("a"), 1)], now()).await.unwrap();
         assert_eq!(suggestions.iter().map(|s| s.id.as_str()).collect::<Vec<_>>(), ["a"]);
         let body: serde_json::Value = serde_json::from_str(recorder.request().body.as_deref().unwrap()).unwrap();
-        assert_eq!((body["model"].as_str(), body["max_tokens"].as_u64()), (Some("claude-opus-5-5"), Some(8000)));
+        assert_eq!((body["model"].as_str(), body["max_tokens"].as_u64()), (Some("claude-sonnet-5-5"), Some(8000)));
         assert!(body["messages"][0]["content"].as_str().unwrap().contains("<snoozed_items>"));
     }
 
@@ -444,6 +455,28 @@ mod tests {
         assert_eq!(plugin(ArcClient(rejected)).brief(&[item("a")], now()).await.err(), Some(PluginError::Unauthorized));
     }
 
+    /// AI-02: a model Anthropic doesn't offer names the field to fix.
+    #[tokio::test]
+    async fn an_unknown_model_names_the_field_to_fix() {
+        let unknown = || Recorder::new(404, Ok(r#"{"type": "error", "error": {"type": "not_found_error"}}"#));
+        let plugin = |recorder| {
+            ClaudePlugin::new(
+                &config(&[("token", "k"), ("model", "claude-opus-9")]),
+                Arc::new(ArcClient(recorder)),
+                "en",
+            )
+            .unwrap()
+        };
+        assert_eq!(
+            plugin(unknown()).brief(&[item("a")], now()).await.err(),
+            Some(PluginError::InvalidField("Model for the brief".into()))
+        );
+        assert_eq!(
+            plugin(unknown()).digest(&[item("a")], "x", now()).await.err(),
+            Some(PluginError::InvalidField("Model for bundle summaries".into()))
+        );
+    }
+
     #[test]
     fn a_key_is_required_and_models_have_defaults() {
         assert_eq!(
@@ -456,7 +489,7 @@ mod tests {
         assert!(manifest.egress.external_ai);
         assert_eq!(
             manifest.fields.iter().map(|f| (f.key.as_str(), f.default_value.as_str())).collect::<Vec<_>>(),
-            [("token", ""), ("model", "claude-opus-5-5"), ("digestModel", "claude-haiku-5-5"),]
+            [("token", ""), ("model", "claude-sonnet-5-5"), ("digestModel", "claude-haiku-5-5"),]
         );
     }
 

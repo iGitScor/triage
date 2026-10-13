@@ -30,6 +30,20 @@ struct ClaudePluginTests {
         #expect(!json.contains("fallbacks"), "a Haiku brief")
     }
 
+    /// AI-02: Sonnet by default for the brief, and a model Anthropic doesn't offer names the field to fix.
+    @Test func anUnknownModelNamesTheFieldToFix() async throws {
+        #expect(ClaudePlugin.manifest.fields.map(\.defaultValue) == ["", "claude-sonnet-5-5", "claude-haiku-5-5"])
+        // No route: every request answers 404, as Anthropic does for a model it doesn't offer.
+        let plugin = try ClaudePlugin(
+            config: config(["token": "k", "model": "claude-opus-9"]), http: StubHTTP(routes: [:]))
+        await #expect(throws: PluginError.invalidField(L("Model for the brief"))) {
+            try await plugin.brief([item], now: .now)
+        }
+        await #expect(throws: PluginError.invalidField(L("Model for bundle summaries"))) {
+            try await plugin.digest([item], topic: "x", now: .now)
+        }
+    }
+
     @Test func parsesBriefAndDropsUnknownItems() async throws {
         let text =
             #"{\"summary\": \"One review waits.\", \"focus\": [{\"id\": \"a\", \"reason\": \"Blocks Frank\"}, {\"id\": \"ghost\", \"reason\": \"?\"}]}"#

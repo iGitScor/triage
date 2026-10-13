@@ -24,7 +24,9 @@ Briefs and summaries come back in your system’s language.
    - **Claude Code** (recommended): uses the Claude Code installed and signed in on your computer, on your Claude
      plan. No API key. If Remora doesn’t find `claude`, set *Path to claude*. Remora only runs a program named
      `claude` (on a Mac, one that only you can change), and checks it is Claude Code before sending it anything.
-   - **Claude API**: an API key from the Claude Console, billed to that account.
+   - **Claude API**: an API key from the Claude Console, billed to that account. The brief uses
+     `claude-sonnet-5-5` and summaries `claude-haiku-5-5` unless you choose others; a model Anthropic doesn’t offer
+     is said when you connect.
    - **OpenAI-compatible**: OpenAI, Azure OpenAI, Mistral, or a server on your computer (Ollama, LM Studio). Give
      the server address up to `/v1`, the API key and the model id; the summaries model is optional. OpenAI and
      Azure are supported; a small local model may not follow the expected answer format, and then says it returned

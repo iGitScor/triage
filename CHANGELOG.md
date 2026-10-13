@@ -5,6 +5,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Changed
+
+- Claude API: a new account writes the brief and triage with Sonnet instead of Opus, enough for a short answer
+  at low effort and far cheaper; accounts already connected keep their model. A model name Anthropic doesn't offer
+  is said when you connect, naming the field to fix.
+
 ### Added
 
 - GitHub: the open issues assigned to you, in *To do*.

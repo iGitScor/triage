@@ -26,7 +26,9 @@ Briefs et résumés sont rédigés dans la langue de votre système.
      abonnement Claude. Pas de clé d’API. Si Remora ne trouve pas `claude`, renseignez *Chemin de claude*. Remora
      n’exécute qu’un programme nommé `claude` (sur Mac, que vous seul pouvez modifier), et vérifie que c’est Claude
      Code avant de lui envoyer quoi que ce soit.
-   - **API Claude** : une clé d’API de la Claude Console, facturée sur ce compte.
+   - **API Claude** : une clé d’API de la Claude Console, facturée sur ce compte. Le brief utilise
+     `claude-sonnet-5-5` et les résumés `claude-haiku-5-5`, sauf si vous en choisissez d’autres ; un modèle
+     qu’Anthropic ne propose pas est signalé à la connexion.
    - **OpenAI-compatible** : OpenAI, Azure OpenAI, Mistral, ou un serveur sur votre ordinateur (Ollama, LM Studio).
      Indiquez l’adresse du serveur jusqu’à `/v1`, la clé d’API et l’identifiant du modèle ; le modèle des résumés est
      facultatif. OpenAI et Azure sont pris en charge ; un petit modèle local peut ne pas suivre le format de réponse

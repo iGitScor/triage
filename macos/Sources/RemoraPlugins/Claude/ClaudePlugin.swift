@@ -10,8 +10,8 @@ public struct ClaudePlugin: AssistantPlugin {
         summary: "The brief through an Anthropic API key. Item titles and context are sent to Anthropic.",
         fields: [
             .token("API key", help: "An Anthropic API key from the Claude Console."),
-            ConfigField(key: "model", label: "Model for the brief", defaultValue: "claude-opus-5-5"),
-            ConfigField(key: "digestModel", label: "Model for bundle summaries", defaultValue: "claude-haiku-5-5"),
+            ConfigField(key: "model", label: "Model for the brief", defaultValue: defaultModel),
+            ConfigField(key: "digestModel", label: "Model for bundle summaries", defaultValue: defaultDigestModel),
         ],
         setupSteps: [
             "Click “Create an API key” and sign in to the Claude Console.",
@@ -26,6 +26,11 @@ public struct ClaudePlugin: AssistantPlugin {
         )
     )
 
+    /// Sonnet: a brief or a triage is a short answer at low effort, which Opus writes no better for far more (AI-02).
+    /// One constant per role, used by the form and the plugin (and by Claude Code for summaries). Same on Windows.
+    static let defaultModel = "claude-sonnet-5-5"
+    static let defaultDigestModel = "claude-haiku-5-5"
+
     private let apiKey: String
     private let model: String
     private let digestModel: String
@@ -38,8 +43,8 @@ public struct ClaudePlugin: AssistantPlugin {
 
     public init(config: PluginConfig, http: HTTPClient) throws {
         apiKey = try config.required("token")
-        model = config["model"].nilIfEmpty ?? "claude-opus-5-5"
-        digestModel = config["digestModel"].nilIfEmpty ?? "claude-haiku-5-5"
+        model = config["model"].nilIfEmpty ?? Self.defaultModel
+        digestModel = config["digestModel"].nilIfEmpty ?? Self.defaultDigestModel
         modelsManaged = config[AssistantPolicy.modelsManagedKey] == "true"
         self.http = http
     }
@@ -82,9 +87,16 @@ public struct ClaudePlugin: AssistantPlugin {
         var headers = ["x-api-key": apiKey, "anthropic-version": "2023-06-01"]
         if body.fallbacks != nil { headers["anthropic-beta"] = "server-side-fallback-2026-07-01" }
         let request = try URLRequest.post(endpoint, json: body, headers: headers, timeout: Self.timeout)
-        return try await AssistantRetry.decode(
-            Response.self, from: request, http: http,
-            tooSlow: L("Claude took too long to answer. Try again later."), sleep: sleep)
+        do {
+            return try await AssistantRetry.decode(
+                Response.self, from: request, http: http,
+                tooSlow: L("Claude took too long to answer. Try again later."), sleep: sleep)
+        } catch HTTPError.status(404) {
+            // A model Anthropic doesn't offer: the field to fix, not "the server couldn't find" (AI-02). The connection
+            // test sends the model, so a typo shows when connecting.
+            let summaries = body.model == digestModel && body.model != model
+            throw PluginError.invalidField(L(summaries ? "Model for bundle summaries" : "Model for the brief"))
+        }
     }
 
     /// Claude's server-side fallback on a refusal, for the models that have it (not Haiku, nor older ones), and never

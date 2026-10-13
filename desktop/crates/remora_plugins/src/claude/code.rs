@@ -17,7 +17,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use std::time::SystemTime;
 
 pub const ID: &str = "claude-code";
-pub const DEFAULT_DIGEST_MODEL: &str = "claude-haiku-5-5";
+/// The same as the API's (one constant per role, AI-02).
+pub const DEFAULT_DIGEST_MODEL: &str = super::api::DEFAULT_DIGEST_MODEL;
 
 /// The same words as the macOS app, which the shared French dictionary translates.
 pub fn manifest() -> PluginManifest {
