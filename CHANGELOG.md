@@ -19,6 +19,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Mac: the snooze time slider's keyboard focus ring and the chosen preset are visible on the light theme (the
+  preset also gets a border and a check mark).
 - Claude Code: the brief, summaries and triage run at low effort, as with the API, instead of your own setting:
   quicker, lighter on your plan, and no longer past the time limit on a large inbox.
 - Claude API: a brief with Haiku no longer asks for a fallback model Haiku doesn't have, and when the organization

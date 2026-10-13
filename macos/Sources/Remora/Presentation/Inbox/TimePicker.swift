@@ -265,10 +265,18 @@ private struct PresetButton: View {
                         .opacity(0.7)
                 }
                 Spacer(minLength: 0)
+                // Not the fill alone: lime on beige barely differs from the others (A11Y-30).
+                if selected {
+                    Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).accessibilityHidden(true)
+                }
             }
             .foregroundStyle(selected ? Myna.onAccent : Myna.ink)
             .padding(10)
             .background(selected ? Myna.accent : Myna.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Myna.accentText, lineWidth: selected ? 1.5 : 0)
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -322,7 +330,8 @@ private struct Scrubber: View {
             .focusable()
             .focused($focused)
             .overlay(
-                RoundedRectangle(cornerRadius: 12).strokeBorder(Myna.accent, lineWidth: focused ? 2 : 0).padding(-3)
+                // accentText, not the lime accent: lime on the light surface is about 1.1:1 (A11Y-30).
+                RoundedRectangle(cornerRadius: 12).strokeBorder(Myna.accentText, lineWidth: focused ? 2 : 0).padding(-3)
             )
             .onKeyPress(.rightArrow) {
                 step(1)
