@@ -555,6 +555,14 @@ private struct GeneralPane: View {
                     ForEach(Preferences.TextSize.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                // MISS-04: opens the inbox from any app.
+                Picker("Open Remora from anywhere", selection: $model.preferences.openShortcut) {
+                    ForEach(Preferences.OpenShortcut.allCases) { Text($0.label).tag($0) }
+                }
+                if model.openShortcutTaken {
+                    Text(L("Another app already uses this shortcut: pick another one."))
+                        .font(Myna.font(11)).foregroundStyle(Myna.danger)
+                }
             }
             UpdatesSection(version: Self.version)
         }

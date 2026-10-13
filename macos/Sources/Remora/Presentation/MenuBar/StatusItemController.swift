@@ -54,6 +54,7 @@ final class StatusItemController: NSObject {
             ])
         }
         updateLabel()
+        updateShortcut()
         SettingsOpener.install()
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main
@@ -64,6 +65,21 @@ final class StatusItemController: NSObject {
                 self?.render()
             }
         }
+    }
+
+    /// The shortcut that opens the inbox from any app, registered again when the preference changes (MISS-04).
+    private func updateShortcut() {
+        let shortcut = withObservationTracking {
+            model.preferences.openShortcut
+        } onChange: {
+            Task { @MainActor [weak self] in self?.updateShortcut() }
+        }
+        model.openShortcutTaken = !hotKey.register(shortcut)
+    }
+
+    private lazy var hotKey = GlobalHotKey { [weak self] in
+        NSApp.activate(ignoringOtherApps: true)
+        self?.togglePopover()
     }
 
     private func updateLabel() {

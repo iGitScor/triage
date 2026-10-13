@@ -99,6 +99,8 @@ jamais plus que ce qu’on peut saisir d’un coup d’œil.
   recherche, ⌘R pour actualiser, ⌘Z pour annuler. Le bouton clavier en bas les rappelle. Sous Windows et Linux : de
   même avec Entrée (Maj+Entrée dans le navigateur) et Ctrl, plus → et ← vers les autres boutons d’un élément ; Tab
   s’arrête sur un élément, pas sur chaque bouton.
+- **Depuis n’importe quelle app** (Mac) : ⌃⌥R ouvre ou ferme la boîte ; Réglages → Général → **Ouvrir Remora depuis
+  n’importe où** choisit un autre raccourci (⌃⌥Espace, ⌥⌘I) ou le désactive, et dit quand une autre app l’utilise déjà.
 - **VoiceOver** lit chaque élément comme un seul bouton ; le rotor des actions propose Marquer comme terminé,
   Reporter, Épingler, Commencer et les éléments liés. L’icône de la barre des menus dit combien d’éléments vous
   attendent, ou la tâche en cours.

@@ -7,6 +7,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- Mac: ⌃⌥R opens the inbox from any app (Settings → General → **Open Remora from anywhere**: another shortcut, or
+  off).
 - `remora://` links, on Mac, Windows and Linux: Shortcuts, Raycast, Alfred, a Stream Deck or a script can open the
   inbox (on a tab), open the reminder panel filled in for you to save, or refresh. Nothing is done to an item without
   you. See *Links and automation* in the guide.

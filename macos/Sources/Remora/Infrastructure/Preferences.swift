@@ -28,6 +28,21 @@ struct Preferences: Codable, Equatable {
         }
     }
 
+    /// The shortcut that opens the inbox from any app (MISS-04). ⌃⌥R by default, as Windows and Linux have
+    /// Ctrl+Alt+R.
+    enum OpenShortcut: String, Codable, CaseIterable, Identifiable {
+        case off, controlOptionR, controlOptionSpace, optionCommandI
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .off: L("Off")
+            case .controlOptionR: "⌃⌥R"
+            case .controlOptionSpace: "⌃⌥Space"
+            case .optionCommandI: "⌥⌘I"
+            }
+        }
+    }
+
     enum MenuBarCount: String, Codable, CaseIterable, Identifiable {
         case waitingOnMe, everything, hidden
         var id: String { rawValue }
@@ -59,6 +74,7 @@ struct Preferences: Codable, Equatable {
     var wakeOnActivity = true
     var appearance = Appearance.system
     var textSize = TextSize.standard
+    var openShortcut = OpenShortcut.controlOptionR
     var briefCacheMinutes = 30
     var wholeInboxBrief = true
     /// Privacy: plugins allowed to connect (nil = all), external AI (off by default), avatars.
@@ -97,6 +113,8 @@ struct Preferences: Codable, Equatable {
         wakeOnActivity = try container.decodeIfPresent(Bool.self, forKey: .wakeOnActivity) ?? defaults.wakeOnActivity
         appearance = try container.decodeIfPresent(Appearance.self, forKey: .appearance) ?? defaults.appearance
         textSize = try container.decodeIfPresent(TextSize.self, forKey: .textSize) ?? defaults.textSize
+        openShortcut =
+            try container.decodeIfPresent(OpenShortcut.self, forKey: .openShortcut) ?? defaults.openShortcut
         briefCacheMinutes =
             try container.decodeIfPresent(Int.self, forKey: .briefCacheMinutes) ?? defaults.briefCacheMinutes
         wholeInboxBrief = try container.decodeIfPresent(Bool.self, forKey: .wholeInboxBrief) ?? defaults.wholeInboxBrief

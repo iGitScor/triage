@@ -42,6 +42,10 @@ FR = {
     "At": "À",
     "Reminders and snoozes coming back don’t wait.": "Les rappels et les reports qui reviennent n’attendent pas.",
     "%d new in Remora": "%d nouveautés dans Remora",
+    # Global shortcut (Mac)
+    "Open Remora from anywhere": "Ouvrir Remora depuis n’importe où",
+    "Off": "Désactivé",
+    "Another app already uses this shortcut: pick another one.": "Une autre app utilise déjà ce raccourci : choisissez-en un autre.",
     # Tabs and bundles
     "My turn": "À moi",
     "Waiting": "En attente",

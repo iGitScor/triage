@@ -67,11 +67,21 @@ struct PreferencesTests {
         #expect(preferences == expected, "a new preference never resets the others")
     }
 
+    /// MISS-04: ⌃⌥R opens the inbox by default; each choice is a key with modifiers, Off none.
+    @Test func theOpenShortcutDefaultsToControlOptionR() throws {
+        #expect(Preferences().openShortcut == .controlOptionR)
+        let old = try JSONDecoder().decode(Preferences.self, from: Data(#"{"refreshMinutes": 5}"#.utf8))
+        #expect(old.openShortcut == .controlOptionR, "a file from before gets it too")
+        #expect(Preferences.OpenShortcut.off.carbon == nil)
+        #expect(Preferences.OpenShortcut.allCases.filter { $0 != .off }.allSatisfy { $0.carbon != nil })
+    }
+
     @Test func roundTrips() throws {
         var preferences = Preferences()
         preferences.hiddenContentPlugins = ["slack"]
         preferences.assistantExcludedSources = ["reminders"]
         preferences.menuBarCount = .everything
+        preferences.openShortcut = .optionCommandI
         let data = try JSONEncoder().encode(preferences)
         #expect(try JSONDecoder().decode(Preferences.self, from: data) == preferences)
     }

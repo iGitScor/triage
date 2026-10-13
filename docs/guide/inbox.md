@@ -92,6 +92,8 @@ take in at a glance.
   searches (or just start typing), Esc leaves the search, ⌘R refreshes, ⌘Z undoes. The keyboard button at the bottom
   lists them. On Windows and Linux: the same with Enter (Shift+Enter in the browser) and Ctrl, plus → and ← to an
   item's other buttons; Tab stops on one item, not on each button.
+- **From any app** (Mac): ⌃⌥R opens or closes the inbox; Settings → General → **Open Remora from anywhere** picks
+  another shortcut (⌃⌥Space, ⌥⌘I) or turns it off, and says when another app already uses it.
 - **VoiceOver** reads each item as one button; the actions rotor has Mark as done, Snooze, Pin, Start and the
   linked items. The menu bar item says how many items need you, or the task in progress.
 - **Less motion**: with Reduce Motion (macOS) or Animation effects off (Windows), nothing slides, springs or
