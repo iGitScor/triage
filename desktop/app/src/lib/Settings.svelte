@@ -10,6 +10,7 @@ import { linux, say, t, translateMessage } from './i18n'
 /** What a system shortcut runs on a Wayland desktop with no GlobalShortcuts portal, where Remora can't bind one. */
 const REMINDER_COMMAND = 'remora --reminder'
 import { tablist } from './tablist'
+import { confirmFocus } from './confirm'
 
 let { onclose, onchange }: { onclose: () => void; onchange: (s: Settings) => void } = $props()
 
@@ -129,11 +130,11 @@ onMount(() => {
                   {#each account.remarks as remark (remark.text)}<span class="remark muted">{say(remark)}</span>{/each}
                 </span>
                 <button type="button" class="icon-button" onclick={() => { renaming = account.id; newName = account.name ?? '' }} aria-label={t('Rename')} title={t('Rename')}><Icon name="pencil" size={15} /></button>
-                <button type="button" class="link danger-link" onclick={() => (confirming = account.id)}>{t('Disconnect')}</button>
+                <button type="button" class="link danger-link" data-confirms="disconnect-{account.id}" onclick={() => (confirming = account.id)}>{t('Disconnect')}</button>
               {/if}
             </div>
             {#if confirming === account.id}
-              <div class="row confirm" role="group" aria-label={t('Disconnect')}>
+              <div class="row confirm" role="group" aria-label={t('Disconnect')} use:confirmFocus={`disconnect-${account.id}`}>
                 <span class="grow">{t('Disconnect this account? Its token is deleted and its items leave the inbox.')}</span>
                 <button type="button" class="link" onclick={() => (confirming = null)}>{t('Cancel')}</button>
                 <button type="button" class="link danger-link" onclick={async () => { confirming = null; await api.disconnect(account.id); await load() }}>{t('Disconnect')}</button>
@@ -304,7 +305,7 @@ onMount(() => {
       <h2 class="section-title">{t('Data on this PC')}</h2>
       <p class="help">{linux ? t('Inbox cache, settings and snooze history in %@. Tokens are in the system keyring.', settings.dataDir) : t('Inbox cache, settings and snooze history in %@. Tokens are in the Windows Credential Manager.', settings.dataDir)}</p>
       {#if erasing}
-        <div class="card erase">
+        <div class="card erase" role="group" aria-label={t('Erase local data…')} use:confirmFocus={'erase'}>
           <p>{t('Erase all of Remora’s local data?')}</p>
           <div class="row">
             <span class="spacer"></span>
@@ -313,7 +314,7 @@ onMount(() => {
           </div>
         </div>
       {:else}
-        <button type="button" class="pill danger" onclick={() => (erasing = true)}>{t('Erase local data…')}</button>
+        <button type="button" class="pill danger" data-confirms="erase" onclick={() => (erasing = true)}>{t('Erase local data…')}</button>
       {/if}
     {/if}
   </div>

@@ -33,8 +33,7 @@ statement is reviewed with each release.
 
 ## Known gaps
 
-- **Windows**: the focus can be lost when a confirmation replaces its button; the window can't grow and text can't
-  be made bigger than Windows scaling.
+- **Windows**: the window can't grow and text can't be made bigger than Windows scaling.
 - **macOS**: the brief's focus items open only with a click.
 
 Each gap is tracked, with its fix, in the project's roadmap.
