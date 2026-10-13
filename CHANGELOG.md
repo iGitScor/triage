@@ -7,6 +7,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- Microsoft 365, on Mac, Windows and Linux: the Outlook mail you flagged (in *To do*, with its due date), unread
+  mail sent to you, invitations you haven't answered (until the meeting starts) and unread Teams chats. You sign in
+  through your browser, with the app your organization registered in Microsoft Entra; IT can set the tenant and the
+  app with `MicrosoftTenant` and `MicrosoftClientID`.
 - Linux on Wayland: Ctrl+Alt+R adds a reminder from anywhere on KDE Plasma and GNOME 48 or later, through the
   desktop's own shortcut dialog (where you can pick another key). Elsewhere, a system shortcut running
   `remora --reminder` still does it.

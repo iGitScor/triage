@@ -1,6 +1,6 @@
 ---
 title: Connecting your tools
-description: Step by step, connect GitHub (and Enterprise), GitLab (and self-hosted), Slack, Linear, Jira and Notion to Remora, and optionally the assistant. Which token, which permission, and what Remora reads.
+description: Step by step, connect GitHub (and Enterprise), GitLab (and self-hosted), Slack, Linear, Jira, Notion and Microsoft 365 to Remora, and optionally the assistant. Which token, which permission, and what Remora reads.
 ---
 
 # Connecting your tools
@@ -92,6 +92,25 @@ comment on). Works with Jira Cloud and Jira Data Center.
 
 Highest (or Blocker, Critical) issues are urgent and High (or Major) are high; Low and Lowest are shown but not
 counted. Overdue and due-today issues get a notification. A mention on an issue you don't watch doesn't show up.
+
+## Microsoft 365
+
+Shows the Outlook mail you flagged (in *To do*, with its due date), the unread mail of the last week sent to you, not
+only copied (sorted like a direct message), the invitations of the next two weeks you haven’t answered (in *To
+reply*, until the meeting starts) and your unread Teams chats from the last week. Work and school accounts.
+
+Remora signs in through your browser, with an app your organization registers once in Microsoft Entra: there is no
+token to paste. Your IT team gives you the **Tenant** and the **Client ID**, or sets them for you (they then show
+locked). Click **Sign in with Microsoft 365**, sign in in the browser, and come back to Remora. If the sign-in
+expires or is revoked, the account asks you to sign in again.
+
+**For IT: registering the app.** In Microsoft Entra → App registrations → **New registration**: name it Remora, single
+tenant. Under **Authentication**, add the platform **Mobile and desktop applications** with the redirect URI
+`http://localhost`, and allow public client flows: Remora keeps no secret and receives the answer on a local port
+(authorization code with PKCE). Under **API permissions**, add the delegated Microsoft Graph permissions `User.Read`,
+`Mail.Read`, `Calendars.Read`, `Chat.Read` and `offline_access`, and grant admin consent if users can't consent
+themselves. Then share the tenant and the application (client) ID, or set them with `MicrosoftTenant` and
+`MicrosoftClientID` ([MDM](/admin/mdm)).
 
 ## Notion
 

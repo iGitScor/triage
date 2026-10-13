@@ -61,8 +61,8 @@ Then connect a first tool: [getting started](https://triage.iscor.me/docs/guide/
 ---
 
 Remora is one inbox in your Mac’s menu bar, or the system tray on Windows and Linux, for everything that needs you:
-code reviews, your own merge requests, Slack mentions and DMs, Linear and Jira issues, Notion tasks and your own
-reminders. It sorts them by **what you have to do** (*To reply*, *To review*, *To fix*, *Ready to merge*…), not by
+code reviews, your own merge requests, Slack mentions and DMs, Linear and Jira issues, Notion tasks, Outlook mail,
+invitations and Teams chats, and your own reminders. It sorts them by **what you have to do** (*To reply*, *To review*, *To fix*, *Ready to merge*…), not by
 where they came from, and shows no more than you can take in.
 
 It is built for teams with strict data rules: **nothing leaves the computer except to the tools you allow**. There is
@@ -125,6 +125,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | Slack | Mentions, DMs and replies in your threads from the last N days; your questions still waiting; reactions (✅ moves an item to Done) | User token `xoxp-…`: `search:read`, `channels:history`, `groups:history`, `reactions:read`, `emoji:read` |
 | Linear | Issues assigned to you (priority, due date), unread mentions and comments | Personal API key |
 | Jira (Cloud or Data Center) | Issues assigned to you (priority, due date, status), and recent comments that mention you | Cloud: API token and e-mail; Data Center: personal access token |
+| Microsoft 365 | Flagged mail and unread mail sent to you, invitations you haven’t answered, unread Teams chats | Sign in through the browser, with the app your organization registered in Microsoft Entra |
 | Notion | Open tasks assigned to you in chosen databases | Personal access token, or an internal connection's secret |
 | Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this computer |
 | Claude API | Brief, summaries, triage | Anthropic API key |

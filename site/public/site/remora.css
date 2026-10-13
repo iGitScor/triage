@@ -81,6 +81,10 @@
 .logo-notion {
   --logo: url("/site/logos/notion.svg");
 }
+/* No brand logo for Microsoft in Simple Icons: a plain envelope. */
+.logo-microsoft {
+  --logo: url("/site/logos/mail.svg");
+}
 .logo-claude {
   --logo: url("/site/logos/claude.svg");
 }

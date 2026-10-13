@@ -21,10 +21,13 @@ REPO = "https://github.com/iGitScor/triage"
 DMG = REPO + "/releases/latest/download/Remora.dmg"
 # What Remora gathers and where it lives, said once per language: titles, descriptions, the hero, llms.txt.
 WHAT = {
-    "en": "code reviews, merge requests, Slack mentions, Linear and Jira issues and Notion tasks",
-    "fr": "relectures de code, merge requests, mentions Slack, tickets Linear et Jira et tâches Notion",
+    "en": "code reviews, merge requests, Slack mentions, Linear and Jira issues, Notion tasks, and Outlook and Teams",
+    "fr": "relectures de code, merge requests, mentions Slack, tickets Linear et Jira, tâches Notion, et Outlook et Teams",
 }
-TOOLS = {"en": "GitHub, GitLab, Slack, Linear, Jira and Notion", "fr": "GitHub, GitLab, Slack, Linear, Jira et Notion"}
+TOOLS = {
+    "en": "GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365",
+    "fr": "GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365",
+}
 EXE = REPO + "/releases/latest/download/Remora-Setup.exe"
 # The released version, from the source `make version` sets, so the page's structured data never goes stale.
 VERSION = plistlib.loads((pathlib.Path(__file__).parent.parent / "macos/Resources/Info.plist").read_bytes())[
@@ -145,7 +148,7 @@ T = {
             "Tool logos: Simple Icons (CC0) · Outfit font (OFL)",
         ),
         "clock": "Thu 9:41",
-        "og_alt": "Remora: everything that needs you, in your menu bar or tray. One inbox for code reviews, merge requests, Slack, Linear, Jira and Notion, on your computer.",
+        "og_alt": "Remora: everything that needs you, in your menu bar or tray. One inbox for code reviews, merge requests, Slack, Linear, Jira, Notion and Microsoft 365, on your computer.",
         "seo": {
             "home": (
                 f"Remora — One inbox for {TOOLS['en']}",
@@ -217,7 +220,7 @@ T = {
             "Logos des outils : Simple Icons (CC0) · police Outfit (OFL)",
         ),
         "clock": "jeu. 9:41",
-        "og_alt": "Remora : tout ce qui a besoin de vous, dans la barre des menus ou la zone de notification. Une seule boîte pour relectures, merge requests, Slack, Linear, Jira et Notion, sur votre ordinateur.",
+        "og_alt": "Remora : tout ce qui a besoin de vous, dans la barre des menus ou la zone de notification. Une seule boîte pour relectures, merge requests, Slack, Linear, Jira, Notion et Microsoft 365, sur votre ordinateur.",
         "seo": {
             "home": (
                 f"Remora — Une seule boîte pour {TOOLS['fr']}",
@@ -484,7 +487,7 @@ def home(lang: str) -> str:
         c = dict(
             eyebrow="Menu bar inbox · macOS · Windows",
             h1='Everything that<br /><span class="mark">needs you.</span>',
-            lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions, Linear and Jira issues and Notion tasks, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
+            lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions, Linear and Jira issues, Notion tasks, Outlook and Teams, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
             secondary="Privacy & compliance",
             note="Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway. Linux, in preview: AppImage or .deb on the releases page.",
             notice="Remora speaks English and French, and so does on-device sorting.",
@@ -572,6 +575,11 @@ def home(lang: str) -> str:
                 ("linear", "Linear", "Issues assigned to you with their priority and due date, plus unread mentions."),
                 ("jira", "Jira", "Issues assigned to you and comments that mention you. Cloud or Data Center."),
                 (
+                    "microsoft",
+                    "Microsoft 365",
+                    "Flagged and unread Outlook mail, invitations to answer and unread Teams chats. Signed in through your browser.",
+                ),
+                (
                     "claude",
                     "Claude or OpenAI (optional)",
                     "A short brief on what to handle first, with Claude or an OpenAI-compatible model. Off by default, and only if your organization allows it.",
@@ -638,7 +646,7 @@ def home(lang: str) -> str:
         c = dict(
             eyebrow="Barre des menus · macOS · Windows",
             h1='Tout ce qui a<br /><span class="mark">besoin de vous.</span>',
-            lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack, tickets Linear et Jira et tâches Notion, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
+            lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack, tickets Linear et Jira, tâches Notion, Outlook et Teams, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
             secondary="Confidentialité et conformité",
             note="Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même. Linux, en aperçu : AppImage ou .deb sur la page des versions.",
             notice="Remora parle français et anglais, tout comme le tri sur l’appareil.",
@@ -744,6 +752,11 @@ def home(lang: str) -> str:
                     "jira",
                     "Jira",
                     "Les tickets qui vous sont assignés et les commentaires qui vous mentionnent. Cloud ou Data Center.",
+                ),
+                (
+                    "microsoft",
+                    "Microsoft 365",
+                    "Les courriels Outlook signalés et non lus, les invitations à traiter et les conversations Teams non lues. Connexion par votre navigateur.",
                 ),
                 (
                     "claude",
@@ -1339,6 +1352,12 @@ def privacy(lang: str) -> str:
                     "Allowed",
                 ),
                 (
+                    "Microsoft 365",
+                    "<code>login.microsoftonline.com</code>, <code>graph.microsoft.com</code>",
+                    "A sign-in in your browser, then read requests for your flagged and unread mail, unanswered invitations and unread Teams chats",
+                    "Allowed",
+                ),
+                (
                     "Notion",
                     "<code>api.notion.com</code>",
                     "Your token; who you are, the properties of the databases you chose (to leave finished tasks out), then your open tasks there",
@@ -1496,6 +1515,12 @@ def privacy(lang: str) -> str:
                     "Jira",
                     "Votre hôte Jira : <code>*.atlassian.net</code>, ou votre Data Center",
                     "Votre jeton (et l’e-mail sur Cloud) ; des recherches des tickets qui vous sont assignés, et des commentaires de la dernière semaine sur les tickets que vous suivez",
+                    "Autorisé",
+                ),
+                (
+                    "Microsoft 365",
+                    "<code>login.microsoftonline.com</code>, <code>graph.microsoft.com</code>",
+                    "Une connexion dans votre navigateur, puis des lectures de vos courriels signalés et non lus, des invitations sans réponse et des conversations Teams non lues",
                     "Autorisé",
                 ),
                 (

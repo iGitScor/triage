@@ -24,11 +24,11 @@ Dans *À moi*, les éléments sont rangés par ce que vous avez à faire, quel q
 | Verbe | Par exemple |
 |---|---|
 | **Rappels** | Un rappel que vous avez créé, arrivé à échéance |
-| **À répondre** | Une question sur Slack, une mention dans un commentaire Linear ou Jira |
+| **À répondre** | Une question sur Slack, une mention dans un commentaire Linear ou Jira, une invitation Outlook sans réponse |
 | **À relire** | Une demande de relecture sur GitHub ou GitLab |
 | **À corriger** | Votre merge request avec des modifications demandées ou des tests en échec |
 | **Prêtes à fusionner** | Votre merge request, approuvée et au vert |
-| **À faire** | Un ticket Linear ou Jira qui vous est assigné |
+| **À faire** | Un ticket Linear ou Jira qui vous est assigné, un courriel Outlook que vous avez signalé |
 | **À lire** | Une info, une annonce. Affiché en dernier, jamais compté |
 | **En attente des autres** | Dans l’onglet *En attente* |
 

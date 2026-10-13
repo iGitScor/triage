@@ -539,7 +539,7 @@ FR = {
     "Demo": "Démo",
     "Disconnect": "Déconnecter",
     "From anywhere: %@": "Depuis n’importe où : %@",
-    "GitHub, GitLab, Slack, Linear, Jira or Notion. Remora only reads, and only talks to the tools you allow.": "GitHub, GitLab, Slack, Linear, Jira ou Notion. Remora ne fait que lire, et ne parle qu’aux outils autorisés.",
+    "GitHub, GitLab, Slack, Linear, Jira, Notion or Microsoft 365. Remora only reads, and only talks to the tools you allow.": "GitHub, GitLab, Slack, Linear, Jira, Notion ou Microsoft 365. Remora ne fait que lire, et ne parle qu’aux outils autorisés.",
     "How": "Comment",
     "Inbox cache, settings and snooze history in %@. Tokens are in the Windows Credential Manager.": "Cache, réglages et historique des reports dans %@. Les jetons sont dans le Gestionnaire d’identification Windows.",
     "New reminder from anywhere: %@": "Nouveau rappel depuis n’importe où : %@",

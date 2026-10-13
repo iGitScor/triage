@@ -1,6 +1,6 @@
 ---
 title: Connecter vos outils
-description: Pas à pas, connecter GitHub (et Enterprise), GitLab (et auto-hébergé), Slack, Linear, Jira et Notion à Remora, et l’assistant en option. Quel jeton, quelle permission, et ce que Remora lit.
+description: Pas à pas, connecter GitHub (et Enterprise), GitLab (et auto-hébergé), Slack, Linear, Jira, Notion et Microsoft 365 à Remora, et l’assistant en option. Quel jeton, quelle permission, et ce que Remora lit.
 ---
 
 # Connecter vos outils
@@ -97,6 +97,28 @@ Data Center.
 Les tickets *Highest* (ou *Blocker*, *Critical*) sont urgents et *High* (ou *Major*) importants ; *Low* et *Lowest*
 sont affichés mais pas comptés. Les tickets en retard ou à rendre aujourd’hui déclenchent une notification. Une
 mention sur un ticket que vous ne suivez pas n’apparaît pas.
+
+## Microsoft 365
+
+Affiche les courriels Outlook que vous avez signalés (dans *À faire*, avec leur échéance), les courriels non lus de
+la dernière semaine qui vous sont adressés, pas seulement en copie (rangés comme un message direct), les invitations
+des deux prochaines semaines sans réponse (dans *À répondre*, jusqu’au début de la réunion) et vos conversations
+Teams non lues de la dernière semaine. Comptes professionnels et scolaires.
+
+Remora se connecte par votre navigateur, avec une app que votre organisation inscrit une fois dans Microsoft Entra :
+il n’y a pas de jeton à coller. Votre service informatique vous donne le **Tenant** et l’**Identifiant client**, ou les
+règle pour vous (ils s’affichent alors verrouillés). Cliquez sur **Se connecter avec Microsoft 365**, connectez-vous
+dans le navigateur, et revenez dans Remora. Si la connexion expire ou est révoquée, le compte vous demande de vous
+reconnecter.
+
+**Pour la DSI : inscrire l’app.** Dans Microsoft Entra → Inscriptions d’applications → **Nouvelle inscription** :
+nommez-la Remora, locataire unique. Sous **Authentification**, ajoutez la plateforme **Applications mobiles et de
+bureau** avec l’URI de redirection `http://localhost`, et autorisez les flux de clients publics : Remora ne garde aucun
+secret et reçoit la réponse sur un port local (code d’autorisation avec PKCE). Sous **Autorisations d’API**, ajoutez
+les autorisations déléguées Microsoft Graph `User.Read`, `Mail.Read`, `Calendars.Read`, `Chat.Read` et
+`offline_access`, et accordez le consentement administrateur si les utilisateurs ne peuvent pas consentir eux-mêmes.
+Communiquez ensuite le tenant et l’identifiant d’application (client), ou réglez-les avec `MicrosoftTenant` et
+`MicrosoftClientID` ([MDM](/fr/admin/mdm)).
 
 ## Notion
 
