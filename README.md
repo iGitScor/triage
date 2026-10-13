@@ -120,7 +120,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 
 | Plugin | What it shows | Credentials |
 |---|---|---|
-| GitHub (+ Enterprise) | Pull requests you opened, review requests, issues assigned to you | Classic token: `repo`, `read:org` |
+| GitHub (+ Enterprise) | Pull requests you opened, review requests, issues assigned to you | Fine-grained token, read-only Pull requests and Issues (or a classic token: `repo`, `read:org`) |
 | GitLab (+ self-hosted) | Merge requests you opened or review, approvals, pipelines; other To-Dos (issues, mentions) | Token: `read_api` |
 | Slack | Mentions, DMs and replies in your threads from the last N days; your questions still waiting; reactions (✅ moves an item to Done) | User token `xoxp-…`: `search:read`, `channels:history`, `groups:history`, `reactions:read`, `emoji:read` |
 | Linear | Issues assigned to you (priority, due date), unread mentions and comments | Personal API key |

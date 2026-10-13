@@ -5,6 +5,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Changed
+
+- GitHub: *Create a token* opens a fine-grained token, read-only for pull requests and issues, instead of a classic
+  token with the whole `repo` scope (still accepted).
+
 ### Added
 
 - Mac: ⌃⌥R opens the inbox from any app (Settings → General → **Open Remora from anywhere**: another shortcut, or

@@ -15,14 +15,19 @@ pub fn manifest() -> PluginManifest {
             .into(),
         fields: vec![
             ConfigField::host("https://github.com"),
-            ConfigField::token("Personal access token", "Classic token with the repo and read:org scopes."),
+            ConfigField::token(
+                "Personal access token",
+                "A fine-grained token with read-only Pull requests and Issues, or a classic token with repo and read:org.",
+            ),
         ],
         setup_steps: vec![
-            "Click “Create a token”: GitHub opens with the repo and read:org scopes selected.".into(),
-            "Set an expiration, click “Generate token” and paste it below.".into(),
+            // EASE-07: read-only and limited to what Remora reads, rather than the whole `repo` scope.
+            "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues.".into(),
+            "Pick the owner (you, or your organization) and All repositories, set an expiration, generate it and paste it below.".into(),
+            "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org.".into(),
         ],
         setup_label: "Create a token".into(),
-        setup_url: Some("{host}/settings/tokens/new?scopes=repo,read:org&description=Remora".into()),
+        setup_url: Some("{host}/settings/personal-access-tokens/new?name=Remora&description=Remora%20reads%20your%20pull%20requests%2C%20reviews%20and%20issues&pull_requests=read&issues=read&metadata=read".into()),
         egress: Egress {
             hosts: vec!["api.github.com".into(), "github.com".into(), "avatars.githubusercontent.com".into()],
             description: "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub \

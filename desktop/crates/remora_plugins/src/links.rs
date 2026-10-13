@@ -97,7 +97,10 @@ mod tests {
     fn setup_links_use_the_typed_host() {
         assert_eq!(
             setup_url(&github::manifest(), None).as_deref(),
-            Some("https://github.com/settings/tokens/new?scopes=repo,read:org&description=Remora")
+            Some(
+                "https://github.com/settings/personal-access-tokens/new?name=Remora&description=Remora%20reads%20your%20\
+                 pull%20requests%2C%20reviews%20and%20issues&pull_requests=read&issues=read&metadata=read"
+            )
         );
         assert_eq!(
             setup_url(&gitlab::manifest(), Some("gitlab.acme.io/")).as_deref(),

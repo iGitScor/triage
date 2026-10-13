@@ -10,18 +10,25 @@ public struct GitHubPlugin: SourcePlugin {
         summary: "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise.",
         fields: [
             .host("https://github.com"),
-            .token("Personal access token", help: "Classic token with the repo and read:org scopes."),
+            .token(
+                "Personal access token",
+                help:
+                    "A fine-grained token with read-only Pull requests and Issues, or a classic token with repo and read:org."
+            ),
         ],
         setupSteps: [
-            "Click “Create a token”: GitHub opens with the repo and read:org scopes selected.",
-            "Set an expiration, click “Generate token” and paste it below.",
+            // EASE-07: read-only and limited to what Remora reads, rather than the whole `repo` scope.
+            "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues.",
+            "Pick the owner (you, or your organization) and All repositories, set an expiration, generate it and paste it below.",
+            "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org.",
         ],
         setupURL: { config in
             let host = (try? config.url("host")) ?? URL(string: "https://github.com")!
             return host.appending(
-                path: "settings/tokens/new",
+                path: "settings/personal-access-tokens/new",
                 query: [
-                    "scopes": "repo,read:org", "description": "Remora",
+                    "name": "Remora", "description": "Remora reads your pull requests, reviews and issues",
+                    "pull_requests": "read", "issues": "read", "metadata": "read",
                 ])
         },
         egress: Egress(

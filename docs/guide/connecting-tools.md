@@ -18,9 +18,14 @@ Shows the pull requests you opened, the reviews requested from you, and the open
 do*). A review request leaves the inbox once you’ve reviewed it, as on GitHub.
 
 1. Settings → Sources → **GitHub**. Keep `https://github.com`, or enter your GitHub Enterprise address.
-2. Click **Create a token**: GitHub opens the classic token page with `repo` and `read:org` already ticked.
-   Pick an expiration, generate, copy.
+2. Click **Create a token**: GitHub opens a **fine-grained token** named Remora. Choose its owner (you, or your
+   organization) and **All repositories**, and give it read-only access to **Pull requests** and **Issues** (GitHub
+   adds *Metadata*); Remora asks for nothing else and writes nothing. Pick an expiration, generate, copy.
 3. Paste the token in Remora and click **Connect**.
+
+A fine-grained token sees one owner's repositories: for those of several organizations, connect GitHub once per
+organization, or use a **classic token** with `repo` and `read:org` instead (broader, and it can write). An
+organization may have to approve a fine-grained token before it works.
 
 ::: info Organizations with SSO
 If your organization uses SAML single sign-on, click **Configure SSO** next to the token on GitHub and authorize

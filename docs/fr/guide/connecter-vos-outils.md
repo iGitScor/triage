@@ -20,9 +20,15 @@ GitHub.
 
 1. Réglages → Sources → **GitHub**. Gardez `https://github.com`, ou saisissez l’adresse de votre GitHub
    Enterprise.
-2. Cliquez sur **Créer un jeton** : GitHub ouvre la page des jetons classiques avec `repo` et `read:org` déjà
-   cochés. Choisissez une expiration, générez, copiez.
+2. Cliquez sur **Créer un jeton** : GitHub ouvre un **jeton à granularité fine** nommé Remora. Choisissez son
+   propriétaire (vous, ou votre organisation) et **All repositories**, et donnez-lui **Pull requests** et **Issues** en
+   lecture seule (GitHub ajoute *Metadata*) ; Remora ne demande rien d’autre et n’écrit rien. Choisissez une
+   expiration, générez, copiez.
 3. Collez le jeton dans Remora et cliquez sur **Connecter**.
+
+Un jeton à granularité fine voit les dépôts d’un seul propriétaire : pour ceux de plusieurs organisations, connectez
+GitHub une fois par organisation, ou utilisez plutôt un **jeton classique** avec `repo` et `read:org` (plus large, et il
+peut écrire). Une organisation peut devoir approuver un jeton à granularité fine avant qu’il fonctionne.
 
 ::: info Organisations avec SSO
 Si votre organisation utilise l’authentification unique SAML, cliquez sur **Configure SSO** à côté du jeton sur
