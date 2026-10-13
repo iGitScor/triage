@@ -156,7 +156,8 @@ onMount(() => {
         {t('Check every')}
         <span class="spacer"></span>
         <select class="field small" value={settings.managed.refreshMinutes ?? p.refreshMinutes} disabled={settings.managed.refreshMinutes != null} title={settings.managed.refreshMinutes != null ? t('Managed by your organization') : undefined} onchange={(e) => save({ refreshMinutes: Number(e.currentTarget.value) })}>
-          {#each [1, 5, 10, 15, 30, 60] as m}<option value={m}>{t('%d min', m)}</option>{/each}
+          <!-- The same choices as on the Mac (CONS-03). -->
+          {#each [1, 2, 5, 10, 15, 30, 60] as m}<option value={m}>{m < 60 ? t('%d min', m) : t('%d h', m / 60)}</option>{/each}
         </select>
       </label>
       <label class="toggle"><input type="checkbox" checked={settings.autostart} onchange={async (e) => { await api.setAutostart(e.currentTarget.checked); await load() }} />{linux ? t('Start at login') : t('Start with Windows')}</label>

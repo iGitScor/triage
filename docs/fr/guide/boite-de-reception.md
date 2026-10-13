@@ -129,7 +129,7 @@ La première synchronisation d’un nouveau compte ne notifie jamais : connecter
 
 | Réglage | Effet |
 |---|---|
-| Vérifier toutes les | La fréquence d’actualisation (5 minutes par défaut) |
+| Vérifier toutes les | La fréquence d’actualisation : de 1 minute à 1 heure, toutes les 5 minutes par défaut |
 | Ouvrir dans les apps installées | Slack et Linear s’ouvrent dans leur app ; ⌥-clic (Maj-clic sous Windows) ouvre la page web |
 | Ouvrir à la connexion (Lancer au démarrage de Windows) | Lancer Remora à l’ouverture de session |
 | Compteur | *À moi*, toute ma boîte, ou rien |

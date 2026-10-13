@@ -7,6 +7,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- *Check every* offers the same choices on Mac, Windows and Linux: 1, 2, 5, 10, 15 and 30 minutes, and 1 hour.
 - Mac: snoozing from a review session no longer starts it over. The time picker opens over the session, which
   keeps its place, the reviews you skipped and its time.
 - Mac: the items the brief puts first are buttons: reachable with the keyboard, and VoiceOver reads their rank,

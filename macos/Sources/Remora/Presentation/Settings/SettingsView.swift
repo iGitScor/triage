@@ -431,7 +431,10 @@ private struct GeneralPane: View {
                         .help(L("Managed by your organization"))
                 } else {
                     Picker("Check every", selection: $model.preferences.refreshMinutes) {
-                        ForEach([1, 2, 5, 10, 15, 30], id: \.self) { Text("\($0) min").tag($0) }
+                        // The same choices as on Windows (CONS-03); the managed key allows any value from 1 to 60.
+                        ForEach([1, 2, 5, 10, 15, 30, 60], id: \.self) { minutes in
+                            Text(minutes < 60 ? L("%d min", minutes) : L("%d h", minutes / 60)).tag(minutes)
+                        }
                     }
                 }
                 Toggle(

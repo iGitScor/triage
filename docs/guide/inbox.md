@@ -119,7 +119,7 @@ The first sync of a new account never notifies: connecting a tool doesn’t floo
 
 | Setting | What it does |
 |---|---|
-| Check every | How often Remora refreshes (every 5 minutes by default) |
+| Check every | How often Remora refreshes: 1 minute to 1 hour, every 5 minutes by default |
 | Open in desktop apps when installed | Slack and Linear open in their app; ⌥-click (Shift-click on Windows) opens the web page instead |
 | Open at login (Start with Windows) | Start Remora when you sign in |
 | Show count of | *My turn*, everything, or nothing |
