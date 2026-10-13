@@ -7,6 +7,8 @@ const REPO = 'https://github.com/iGitScor/triage'
 const SITE = 'https://triage.iscor.me'
 const DMG = `${REPO}/releases/latest/download/Remora.dmg`
 const EXE = `${REPO}/releases/latest/download/Remora-Setup.exe`
+const APPIMAGE = `${REPO}/releases/latest/download/Remora-x86_64.AppImage`
+const DEB = `${REPO}/releases/latest/download/Remora-amd64.deb`
 
 const guideEn: DefaultTheme.SidebarItem[] = [
   {
@@ -133,8 +135,8 @@ const twinOf = (path: string) =>
 const urlOf = (path: string) => `${SITE}/docs/${path.replace(/(^|\/)index$/, '$1')}`
 
 const DESCRIPTIONS = {
-  en: 'Remora documentation: connecting GitHub, GitLab, Slack, Linear, Jira and Notion, the inbox in the menu bar or tray, snooze and reminders, compliance and MDM, and writing a plugin.',
-  fr: 'Documentation de Remora : connecter GitHub, GitLab, Slack, Linear, Jira et Notion, la boîte de réception, reporter et rappels, conformité et MDM.',
+  en: 'Remora documentation: connecting your tools, the inbox on Mac, Windows and Linux, snooze and reminders, compliance and MDM, and writing a plugin.',
+  fr: 'Documentation de Remora : connecter vos outils, la boîte sur Mac, Windows et Linux, reporter et rappels, conformité et MDM.',
 }
 
 export default withMermaid(
@@ -221,6 +223,8 @@ export default withMermaid(
               items: [
                 { text: 'Mac (macOS 14+)', link: DMG },
                 { text: 'Windows 10 or 11 (preview)', link: EXE },
+                { text: 'Linux AppImage (preview)', link: APPIMAGE },
+                { text: 'Linux .deb, Ubuntu and Debian (preview)', link: DEB },
               ],
             },
           ],
@@ -247,6 +251,8 @@ export default withMermaid(
               items: [
                 { text: 'Mac (macOS 14+)', link: DMG },
                 { text: 'Windows 10 ou 11 (aperçu)', link: EXE },
+                { text: 'Linux AppImage (aperçu)', link: APPIMAGE },
+                { text: 'Linux .deb, Ubuntu et Debian (aperçu)', link: DEB },
               ],
             },
           ],
