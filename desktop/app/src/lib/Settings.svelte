@@ -213,6 +213,15 @@ onMount(() => {
       {/if}
       <label class="toggle"><input type="checkbox" checked={p.notifyArrivals} onchange={(e) => save({ notifyArrivals: e.currentTarget.checked })} />{t('New items that need me (reviews, mentions…)')}</label>
       <label class="toggle"><input type="checkbox" checked={p.notifyStatusChanges} onchange={(e) => save({ notifyStatusChanges: e.currentTarget.checked })} />{t('Status changes (approved, changes requested, checks failed)')}</label>
+      <label class="toggle"><input type="checkbox" checked={p.batchNotifications} onchange={(e) => save({ batchNotifications: e.currentTarget.checked })} />{t('Group them at set times')}</label>
+      {#if p.batchNotifications}
+        <label class="row line">
+          {t('At')}
+          <span class="spacer"></span>
+          <input class="field small" value={p.notificationTimes} aria-describedby="batch-help" onchange={(e) => save({ notificationTimes: e.currentTarget.value })} />
+        </label>
+        <p class="muted" id="batch-help">{t('Reminders and snoozes coming back don’t wait.')}</p>
+      {/if}
       <!-- One group per list: the same tool names mean "hidden" here and "sent" below, so each says which. -->
       <h3 class="subsection" id="hide-content-title">{t('Hide message content')}</h3>
       <div role="group" aria-labelledby="hide-content-title" aria-describedby="hide-content-help">

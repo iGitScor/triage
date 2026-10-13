@@ -4,6 +4,7 @@
 pub mod assembler;
 pub mod assistant;
 pub mod backoff;
+pub mod batch;
 pub mod classifier;
 pub mod clock;
 pub mod detector;
@@ -25,6 +26,7 @@ pub mod waiting;
 pub use assembler::*;
 pub use assistant::*;
 pub use backoff::*;
+pub use batch::*;
 pub use classifier::*;
 pub use clock::*;
 pub use detector::*;

@@ -319,6 +319,33 @@ struct InboxModelTests {
         #expect(harness.notifier.posted.count == 1, "later syncs compare with the last one")
     }
 
+    /// IDEA-26: grouped at set times, an arrival waits for the next one, then is posted. Same case as Windows.
+    @Test func notificationsGroupedAtSetTimesWaitForTheNextOne() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let account = try #require(model.accounts.first)
+        let arrived = try #require(model.allItems.last { $0.needsAction })
+        let next = Date.now.addingTimeInterval(60)
+        model.preferences.batchNotifications = true
+        model.preferences.notificationTimes = next.formatted(
+            .dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
+        _ = harness.model()
+        let cache = JSONStore<[UUID: [InboxItem]]>("cache", in: harness.folder, backedUp: false)
+        var items = try #require(cache.load())
+        items[account.id]?.removeAll { $0.id == arrived.id }
+        try cache.save(items)
+
+        let relaunched = harness.model()
+        await relaunched.refresh(manual: true)
+        #expect(harness.notifier.posted.isEmpty, "held until the set time")
+        relaunched.tick(at: .now)
+        #expect(harness.notifier.posted.isEmpty, "not yet")
+        relaunched.tick(at: next.addingTimeInterval(61))
+        #expect(harness.notifier.posted.map(\.itemID) == [arrived.id])
+        relaunched.tick(at: next.addingTimeInterval(120))
+        #expect(harness.notifier.posted.count == 1, "sent once")
+    }
+
     /// Without a cache (a new account, or none saved), the first sync stays silent.
     @Test func aFirstSyncWithoutCacheIsSilent() async throws {
         let harness = Harness()

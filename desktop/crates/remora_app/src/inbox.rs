@@ -2,12 +2,12 @@ use crate::session::AccountSession;
 use crate::{JsonStore, Managed, Preferences, Secrets, Vault};
 use chrono::{DateTime, Utc};
 use remora_core::{
-    host_matches, notices, while_closed, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief,
-    BundleSummary, CompliancePolicy, Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout,
-    ItemState, LinkFinder, Mark, Message, Notice, NoticeKind, PersonalRanker, PluginManifest, Recurrence,
-    RecurrenceRule, ReviewPace, ReviewPrep, ReviewTiming, SignIn, Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode,
-    SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion, VerbClassifier,
-    WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
+    grouped, host_matches, is_due, notices, parse_times, waits, while_closed, Account, ActionOutcome, ActionRecord,
+    AssistantPolicy, Backoff, Brief, BundleSummary, CompliancePolicy, Failure, FailureKind, InboxAssembler,
+    InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder, Mark, Message, Notice, NoticeKind, PersonalRanker,
+    PluginManifest, Recurrence, RecurrenceRule, ReviewPace, ReviewPrep, ReviewTiming, SignIn, Snooze, SnoozeAdvisor,
+    SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion,
+    VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
 };
 use remora_plugins::{
     claude, links, oauth, registry, AssistantPlugin, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError,
@@ -132,6 +132,9 @@ pub struct Inbox {
     /// Accounts that failed lately, and when to ask them again.
     backoff: HashMap<String, Backoff>,
     synced: HashSet<String>,
+    /// Notifications waiting for the next set time (IDEA-26), and when the last batch went out.
+    waiting: Vec<Notice>,
+    batched_at: DateTime<Utc>,
     secrets: Option<Secrets>,
     pub last_refresh: Option<DateTime<Utc>>,
     /// The states and reminders before the last Done or Clear all, until the next one.
@@ -169,6 +172,8 @@ impl Inbox {
             remarks: HashMap::new(),
             backoff: HashMap::new(),
             synced: HashSet::new(),
+            waiting: vec![],
+            batched_at: Utc::now(),
             secrets: None,
             last_refresh: None,
             undo_point: None,
@@ -202,6 +207,8 @@ impl Inbox {
             remarks: HashMap::new(),
             backoff: HashMap::new(),
             synced: HashSet::new(),
+            waiting: vec![],
+            batched_at: Utc::now(),
             secrets: None,
             last_refresh: None,
             undo_point: None,
@@ -484,7 +491,29 @@ impl Inbox {
         self.persist(ACCOUNTS, &self.accounts);
         self.persist(CACHE, &self.items);
         self.persist(STATES, &self.states);
-        out
+        self.held(out)
+    }
+
+    /// With notifications grouped at set times, what arrived or changed waits for `tick`; the rest goes now.
+    fn held(&mut self, notices: Vec<Notice>) -> Vec<Notice> {
+        if !self.effective_preferences().batch_notifications {
+            return notices;
+        }
+        let (waiting, now): (Vec<Notice>, Vec<Notice>) = notices.into_iter().partition(waits);
+        self.waiting.extend(waiting);
+        now
+    }
+
+    /// What waited, at the first set time since the last batch, or at once when grouping was turned off.
+    fn batch(&mut self, now: DateTime<Utc>) -> Vec<Notice> {
+        let preferences = self.effective_preferences();
+        let due = !preferences.batch_notifications
+            || is_due(&parse_times(&preferences.notification_times), self.batched_at, now);
+        if !due {
+            return vec![];
+        }
+        self.batched_at = now;
+        grouped(std::mem::take(&mut self.waiting))
     }
 
     /// Hidden snoozes end early on new activity, when that preference is on.
@@ -535,6 +564,7 @@ impl Inbox {
         if !out.is_empty() {
             self.persist(STATES, &self.states);
         }
+        out.extend(self.batch(now));
         out
     }
 
@@ -1888,6 +1918,30 @@ mod tests {
         assert_eq!(layout.action_count(), 0);
         inbox.toggle_done("1", now());
         assert!(inbox.layout(now(), "").in_progress.is_empty());
+    }
+
+    /// IDEA-26: grouped at set times, arrivals wait for the next one, then come as they are or as one; reminders
+    /// don't wait, and turning grouping off sends what waited.
+    #[test]
+    fn notifications_grouped_at_set_times_wait_for_the_next_one() {
+        let mut inbox = inbox();
+        inbox.preferences.batch_notifications = true;
+        let at = |minutes: i64| now() + Duration::minutes(minutes);
+        let next_time = (now() + Duration::hours(1)).with_timezone(&chrono::Local).format("%H:%M").to_string();
+        inbox.preferences.notification_times = next_time;
+        inbox.batched_at = now();
+        inbox.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
+        let arrived: Vec<InboxItem> = (1..=5).map(|i| item(&i.to_string(), InboxBundle::reviews())).collect();
+        assert!(inbox.apply(snapshot(arrived), at(1)).is_empty(), "held until the set time");
+        assert!(inbox.tick(at(30)).is_empty(), "not yet");
+        let batch = inbox.tick(at(61));
+        assert_eq!((batch.len(), batch[0].count), (1, Some(4)), "four arrivals, as one");
+        assert!(inbox.tick(at(62)).is_empty(), "sent once");
+
+        let more = (1..=6).map(|i| item(&i.to_string(), InboxBundle::reviews())).collect();
+        assert!(inbox.apply(snapshot(more), at(63)).is_empty());
+        inbox.preferences.batch_notifications = false;
+        assert_eq!(inbox.tick(at(64)).len(), 1, "turned off: what waited goes at once");
     }
 
     #[test]

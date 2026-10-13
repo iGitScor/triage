@@ -488,6 +488,16 @@ private struct GeneralPane: View {
                 Toggle(
                     "Status changes (approved, changes requested, checks failed)",
                     isOn: $model.preferences.notifyStatusChanges)
+                // IDEA-26: they wait for the next set time, then come grouped.
+                Toggle("Group them at set times", isOn: $model.preferences.batchNotifications)
+                if model.preferences.batchNotifications {
+                    TextField(
+                        "At", text: $model.preferences.notificationTimes, prompt: Text(NotificationBatch.defaultTimes)
+                    )
+                    .help(L("Reminders and snoozes coming back don’t wait."))
+                    Text(L("Reminders and snoozes coming back don’t wait."))
+                        .font(Myna.font(11)).foregroundStyle(Myna.muted)
+                }
             }
             Section {
                 ForEach(notifyingSources, id: \.id) { source in

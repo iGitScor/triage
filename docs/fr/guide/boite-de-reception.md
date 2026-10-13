@@ -117,7 +117,9 @@ votre merge request change de statut (approuvée, modifications demandées, test
 des boutons : **Terminé**, **Reporter d’1 heure** ou **Demain 9:00**, sans ouvrir Remora (un rappel a aussi **Commencer**) ; un clic ouvre l’élément.
 Sous Linux, les boutons s’affichent là où le bureau les prend en charge. Si le système a désactivé les notifications
 de Remora, Réglages → Général le dit, avec le moyen de les réactiver. Réglages → Général → **Notifications** active ou
-coupe chaque type.
+coupe chaque type. **Les regrouper à heures fixes** les garde jusqu’à la prochaine des heures que vous indiquez (10:00,
+14:00 et 17:00 au départ), puis les affiche, en une seule notification au-delà de trois ; les rappels et les reports
+qui reviennent n’attendent pas.
 
 **Masquer le contenu des messages** liste vos outils connectés (et vos rappels) : pour ceux que vous cochez, les
 notifications disent toujours ce qui s’est passé et où (*Mentions · #general*), mais pas ce qui a été écrit.

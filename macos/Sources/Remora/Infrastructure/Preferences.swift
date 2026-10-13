@@ -48,6 +48,10 @@ struct Preferences: Codable, Equatable {
     var focusWhileInProgress = true
     var notifyArrivals = true
     var notifyStatusChanges = true
+    /// What arrives and changes waits for the next of `notificationTimes`, then comes grouped (IDEA-26).
+    var batchNotifications = false
+    /// "10:00, 14:00, 17:00", as typed: `NotificationBatch.times` reads it.
+    var notificationTimes = NotificationBatch.defaultTimes
     /// Integrations whose notifications only say where something happened, not what was written.
     var hiddenContentPlugins: Set<String> = []
     /// Sources whose items are never sent to the assistant (plugin IDs, or "reminders").
@@ -80,6 +84,10 @@ struct Preferences: Codable, Equatable {
         notifyArrivals = try container.decodeIfPresent(Bool.self, forKey: .notifyArrivals) ?? defaults.notifyArrivals
         notifyStatusChanges =
             try container.decodeIfPresent(Bool.self, forKey: .notifyStatusChanges) ?? defaults.notifyStatusChanges
+        batchNotifications =
+            try container.decodeIfPresent(Bool.self, forKey: .batchNotifications) ?? defaults.batchNotifications
+        notificationTimes =
+            try container.decodeIfPresent(String.self, forKey: .notificationTimes) ?? defaults.notificationTimes
         hiddenContentPlugins =
             try container.decodeIfPresent(Set<String>.self, forKey: .hiddenContentPlugins)
             ?? defaults.hiddenContentPlugins

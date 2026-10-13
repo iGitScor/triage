@@ -35,6 +35,7 @@
 "%d min" = "%d min";
 "%d need you" = "%d vous attendent";
 "%d needs you" = "%d vous attend";
+"%d new in Remora" = "%d nouveautés dans Remora";
 "%d new while Remora was closed" = "%d nouveaux éléments pendant que Remora était fermée";
 "%d of %d · ~%d min left" = "%d sur %d · ~%d min restantes";
 "%d overdue or due today" = "%d en retard ou pour aujourd’hui";
@@ -102,6 +103,7 @@
 "Assignee" = "Assignee";
 "Assignee property" = "Propriété « assigné à »";
 "Assistant" = "Assistant";
+"At" = "À";
 "Auth" = "Authentification";
 "Back" = "Retour";
 "Back in your inbox" = "De retour dans votre boîte";
@@ -233,6 +235,7 @@
 "GitHub, GitLab, Slack, Linear, Jira, Notion or Microsoft 365. Remora only reads, and only talks to the tools you allow." = "GitHub, GitLab, Slack, Linear, Jira, Notion ou Microsoft 365. Remora ne fait que lire, et ne parle qu’aux outils autorisés.";
 "Got it" = "Compris";
 "Group message" = "Message de groupe";
+"Group them at set times" = "Les regrouper à heures fixes";
 "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %@. %@\n%@\nThanks!" = "Salut %@, petite relance sur « %@ » : en attente de relecture depuis %@. %@\n%@\nMerci !";
 "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %d day(s). %@\n%@\nThanks!" = "Salut %@, petite relance sur « %@ » : en attente de relecture depuis %d jour(s). %@\n%@\nMerci !";
 "Hi %@, could you review “%@”? %@\n%@\nThanks!" = "Salut %@, pourrais-tu relire « %@ » ? %@\n%@\nMerci !";
@@ -415,6 +418,7 @@
 "Remind me to…" = "Me rappeler de…";
 "Reminder" = "Rappel";
 "Reminders" = "Rappels";
+"Reminders and snoozes coming back don’t wait." = "Les rappels et les reports qui reviennent n’attendent pas.";
 "Remora %@ is available." = "Remora %@ est disponible.";
 "Remora can’t read its Keychain item, so it leaves it unchanged. Quit and reopen Remora, or use Erase local data in Settings → Privacy to start again." = "Remora ne peut pas lire son élément du trousseau, donc elle n’y touche pas. Quittez et rouvrez Remora, ou utilisez Effacer les données locales dans Réglages → Confidentialité pour repartir de zéro.";
 "Remora can’t replace itself in %@. Move it to Applications, or download the new version from the releases page." = "Remora ne peut pas se remplacer dans %@. Déplacez-la dans Applications, ou téléchargez la nouvelle version sur la page des versions.";

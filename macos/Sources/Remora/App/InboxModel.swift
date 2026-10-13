@@ -104,6 +104,9 @@ final class InboxModel {
     @ObservationIgnored private var polling: Task<Void, Never>?
     @ObservationIgnored private var ticking: Task<Void, Never>?
     @ObservationIgnored private var syncedAccounts: Set<UUID> = []
+    /// Notifications waiting for the next set time (IDEA-26), and when the last batch went out.
+    @ObservationIgnored private var waitingNotices: [Notice] = []
+    @ObservationIgnored private var batchedAt = Date.now
     @ObservationIgnored private let isDemo: Bool
     /// Saves the files off the main thread, each once per burst of changes.
     @ObservationIgnored let writer = DiskWriter()
@@ -674,9 +677,11 @@ final class InboxModel {
                 notices, accountID: accountID.uuidString,
                 accountName: account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID)
         }
-        for notice in notices {
-            environment.notifications.post(notice.isSummary ? notice : respectingPrivacy(notice, from: pluginID))
-        }
+        let shown = notices.map { notice in notice.isSummary ? notice : respectingPrivacy(notice, from: pluginID) }
+        // Grouped at set times: what arrived or changed waits for `tick` (IDEA-26).
+        let held = effectivePreferences.batchNotifications ? shown.filter(NotificationBatch.waits) : []
+        waitingNotices += held
+        for notice in shown where !held.contains(notice) { environment.notifications.post(notice) }
         wakeSnoozedItems(touchedIn: snapshot.items)
     }
 
@@ -706,6 +711,20 @@ final class InboxModel {
             persist(statesStore, states)
             refreshInsights()
         }
+        releaseWaitingNotices(at: clock)
+    }
+
+    /// What waited, at the first set time since the last batch, or at once when grouping was turned off.
+    private func releaseWaitingNotices(at clock: Date) {
+        let preferences = effectivePreferences
+        let due =
+            !preferences.batchNotifications
+            || NotificationBatch.isDue(
+                NotificationBatch.times(preferences.notificationTimes), since: batchedAt, now: clock)
+        guard due else { return }
+        batchedAt = clock
+        for notice in NotificationBatch.grouped(waitingNotices) { environment.notifications.post(notice) }
+        waitingNotices = []
     }
 
     /// Whether moving the layout's time from `old` to `new` changes the layout: an item expired in between (a Slack

@@ -37,6 +37,11 @@ FR = {
     "(no subject)": "(sans objet)",
     "Calendar invitations": "les invitations du calendrier",
     "Teams chats": "les conversations Teams",
+    # Notifications grouped at set times
+    "Group them at set times": "Les regrouper à heures fixes",
+    "At": "À",
+    "Reminders and snoozes coming back don’t wait.": "Les rappels et les reports qui reviennent n’attendent pas.",
+    "%d new in Remora": "%d nouveautés dans Remora",
     # Tabs and bundles
     "My turn": "À moi",
     "Waiting": "En attente",

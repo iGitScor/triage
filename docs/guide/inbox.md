@@ -107,7 +107,9 @@ Remora notifies you when something new needs you (a review request, a mention, a
 changes status (approved, changes requested, checks failed). Each notification has buttons: **Done**, **Snooze 1
 hour** or **Tomorrow 9:00**, without opening Remora (a reminder has **Start** too); clicking it opens the item. On Linux, the buttons show where
 the desktop supports them. Settings → General → **Notifications** turns each kind on or off, and says when the
-system has turned Remora's notifications off, with the way to turn them back on.
+system has turned Remora's notifications off, with the way to turn them back on. **Group them at set times** holds
+them until the next of the times you list (10:00, 14:00 and 17:00 at first), then shows them, as one notification
+when there are more than three; reminders and snoozes coming back don’t wait.
 
 **Hide message content** lists your connected tools (and your reminders): for the ones you tick, notifications
 still say what happened and where (*Mentions · #general*) but not what was written. Handy for Slack during a

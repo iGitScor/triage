@@ -48,6 +48,10 @@ pub struct Preferences {
     pub focus_while_in_progress: bool,
     pub notify_arrivals: bool,
     pub notify_status_changes: bool,
+    /// What arrives and changes waits for the next of `notification_times`, then comes grouped (IDEA-26).
+    pub batch_notifications: bool,
+    /// "10:00, 14:00, 17:00", as typed: `remora_core::parse_times` reads it.
+    pub notification_times: String,
     /// Plugins whose notifications only say where something happened, not what was written.
     pub hidden_content_plugins: Vec<String>,
     /// Bring snoozed items back early on new activity.
@@ -86,6 +90,8 @@ impl Default for Preferences {
             focus_while_in_progress: true,
             notify_arrivals: true,
             notify_status_changes: true,
+            batch_notifications: false,
+            notification_times: remora_core::DEFAULT_NOTIFICATION_TIMES.into(),
             hidden_content_plugins: vec![],
             wake_on_activity: true,
             appearance: Appearance::System,

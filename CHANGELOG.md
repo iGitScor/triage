@@ -13,6 +13,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- Notifications can be grouped at set times (Settings → General → Notifications → **Group them at set times**, 10:00,
+  14:00 and 17:00 at first): what arrives waits for the next one, then comes as it is, or as one notification when
+  there is more. Reminders and snoozes coming back don't wait.
 - GitHub: the open issues assigned to you, in *To do*.
 - GitLab: your other To-Dos, an issue assigned to you in *To do* and a mention in *Mentions*; a To-Do you mark done in
   GitLab leaves Remora too.

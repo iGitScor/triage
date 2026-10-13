@@ -224,6 +224,9 @@ export interface Preferences {
   focusWhileInProgress: boolean
   notifyArrivals: boolean
   notifyStatusChanges: boolean
+  /** IDEA-26: they wait for the next of `notificationTimes`, then come grouped. */
+  batchNotifications: boolean
+  notificationTimes: string
   hiddenContentPlugins: string[]
   wakeOnActivity: boolean
   appearance: Appearance
