@@ -3480,7 +3480,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "remora"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "ashpd",
  "chrono",
@@ -3510,7 +3510,7 @@ dependencies = [
 
 [[package]]
 name = "remora_app"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -3529,7 +3529,7 @@ dependencies = [
 
 [[package]]
 name = "remora_core"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -3540,7 +3540,7 @@ dependencies = [
 
 [[package]]
 name = "remora_plugins"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "chrono",
