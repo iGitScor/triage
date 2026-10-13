@@ -323,6 +323,20 @@ impl Inbox {
         self.secrets.get_or_insert(secrets);
     }
 
+    /// Secrets the plugins renewed during the last fetches (an OAuth refresh token rotated), for accounts still
+    /// here: the app saves them with `secrets_after` and `renewed_saved`, outside the lock.
+    pub fn take_renewed_secrets(&mut self) -> Vec<(String, HashMap<String, String>)> {
+        AccountSession::take_renewed(&self.sessions)
+            .into_iter()
+            .filter(|(id, _)| self.accounts.iter().any(|a| &a.id == id))
+            .collect()
+    }
+
+    /// Every account's tokens with the renewed ones in, once saved.
+    pub fn renewed_saved(&mut self, saved: Secrets) {
+        self.secrets = Some(saved);
+    }
+
     /// Every account's tokens after `change`, to save with `Vault::save`, then pass to a `…_saved` method.
     pub fn secrets_after(&mut self, change: impl FnOnce(&mut Secrets)) -> Result<Secrets, Message> {
         let mut all = self.secrets()?.clone();
@@ -1992,6 +2006,43 @@ mod tests {
 
         inbox.disconnect(&id).unwrap();
         assert!(inbox.accounts.is_empty() && vault.load().unwrap().is_empty());
+    }
+
+    /// What a plugin renewed reaches the vault through the app, and only for accounts still here.
+    #[test]
+    fn renewed_secrets_are_saved_for_accounts_still_here() {
+        let vault = Arc::new(MemoryVault::default());
+        let mut inbox = Inbox::in_memory(vault.clone(), Managed::default());
+        let secrets = HashMap::from([("token".to_string(), "lin_k".to_string())]);
+        let (account, _) =
+            inbox.prepare_connect("linear", None, HashMap::new(), &secrets, Arc::new(NoNetwork)).unwrap();
+        let id = account.id.clone();
+        inbox
+            .finish_connect(
+                account,
+                secrets.clone(),
+                SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] },
+                now(),
+            )
+            .unwrap();
+        let settings = HashMap::new();
+        let (cache, _) = AccountSession::current(&mut inbox.sessions, &id, &settings, &secrets);
+        cache.renew("refreshToken", "r2".into());
+        let (gone, _) = AccountSession::current(&mut inbox.sessions, "gone", &settings, &secrets);
+        gone.renew("refreshToken", "x".into());
+        let renewed = inbox.take_renewed_secrets();
+        assert_eq!(renewed.iter().map(|(a, _)| a.as_str()).collect::<Vec<_>>(), [id.as_str()]);
+        let all = inbox
+            .secrets_after(|all| {
+                for (account, secrets) in renewed {
+                    all.entry(account).or_default().extend(secrets);
+                }
+            })
+            .unwrap();
+        vault.save(&all).unwrap();
+        inbox.renewed_saved(all);
+        let saved = vault.load().unwrap();
+        assert_eq!((saved[&id]["token"].as_str(), saved[&id]["refreshToken"].as_str()), ("lin_k", "r2"));
     }
 
     /// Connecting the same account again (same person, tool and server) updates it: no second account, no

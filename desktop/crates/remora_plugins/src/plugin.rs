@@ -26,7 +26,13 @@ pub const IDENTITY_LIFETIME: Duration = Duration::from_secs(3600);
 #[derive(Default)]
 pub struct AccountCache {
     entries: Mutex<HashMap<String, Kept>>,
+    /// Secrets the plugin renewed during a fetch (an OAuth refresh token the server rotated), for the app to save.
+    renewed: Mutex<HashMap<String, String>>,
 }
+
+/// The secrets a plugin renews on its own, left out of the session's fingerprint so a renewal doesn't start the
+/// account over: a new sign-in changes `signIn` instead.
+pub const RENEWED_SECRETS: [&str; 1] = ["refreshToken"];
 
 /// A value and when it was loaded.
 type Kept = (Instant, Arc<dyn Any + Send + Sync>);
@@ -49,6 +55,16 @@ impl AccountCache {
         let value = load().await?;
         self.entries.lock().unwrap().insert(key.to_string(), (Instant::now(), Arc::new(value.clone())));
         Ok(value)
+    }
+
+    /// A secret the plugin renewed (`RENEWED_SECRETS`): the app saves it after the fetch, in the account's vault entry.
+    pub fn renew(&self, key: &str, value: String) {
+        self.renewed.lock().unwrap().insert(key.to_string(), value);
+    }
+
+    /// What was renewed since the last call, for the app to save.
+    pub fn take_renewed(&self) -> HashMap<String, String> {
+        std::mem::take(&mut *self.renewed.lock().unwrap())
     }
 }
 

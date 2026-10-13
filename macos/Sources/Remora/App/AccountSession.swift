@@ -12,6 +12,8 @@ struct AccountSession {
     /// Settings and secrets, hashed for this run only (Swift seeds `Hasher` per process): never stored.
     static func fingerprint(settings: [String: String], secrets: [String: String]) -> Int {
         var hasher = Hasher()
+        // A secret the plugin renews on its own is left out, or every renewal would start the account over.
+        let secrets = secrets.filter { !renewedSecrets.contains($0.key) }
         for (key, value) in settings.merging(secrets, uniquingKeysWith: { _, secret in secret }).sorted(by: {
             $0.key < $1.key
         }) {

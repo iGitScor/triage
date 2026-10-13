@@ -9,7 +9,18 @@ public protocol AccountCache: Sendable {
     func value<T: Sendable>(
         _ key: String, lifetime: TimeInterval, load: @Sendable () async throws -> T
     ) async throws -> T
+
+    /// A secret the plugin renewed during a fetch (an OAuth refresh token the server rotated), for the app to save in
+    /// the account's Keychain entry. Only keys in `renewedSecrets`.
+    func renew(_ key: String, _ value: String) async
+
+    /// What was renewed since the last call, for the app to save.
+    func takeRenewed() async -> [String: String]
 }
+
+/// The secrets a plugin renews on its own, left out of the session's fingerprint so a renewal doesn't start the
+/// account over: a new sign-in changes `signIn` instead. Same list on Windows (`RENEWED_SECRETS`).
+public let renewedSecrets: Set<String> = ["refreshToken"]
 
 public enum CacheLifetime {
     /// Who the token belongs to changes rarely; an hour keeps a renamed user from going unnoticed for long.
@@ -25,4 +36,7 @@ public struct NoAccountCache: AccountCache {
     ) async throws -> T {
         try await load()
     }
+
+    public func renew(_ key: String, _ value: String) async {}
+    public func takeRenewed() async -> [String: String] { [:] }
 }

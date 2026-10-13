@@ -556,4 +556,15 @@ struct InboxModelTests {
         let relaunched = harness.model()
         #expect(relaunched.accounts.isEmpty && relaunched.allItems.isEmpty)
     }
+
+    @Test func aRenewedRefreshTokenKeepsTheSession() {
+        let before = AccountSession.fingerprint(
+            settings: ["tenant": "t"], secrets: ["signIn": "a", "refreshToken": "r1"])
+        let after = AccountSession.fingerprint(
+            settings: ["tenant": "t"], secrets: ["signIn": "a", "refreshToken": "r2"])
+        let again = AccountSession.fingerprint(
+            settings: ["tenant": "t"], secrets: ["signIn": "b", "refreshToken": "r2"])
+        #expect(before == after)
+        #expect(after != again)
+    }
 }

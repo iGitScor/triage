@@ -336,6 +336,17 @@ final class InboxModel {
             cache: session.cache)
     }
 
+    /// Secrets the account's plugin renewed during the fetch (a Microsoft sign-in's refresh token) go to the
+    /// Keychain, as a connection's do. A failed save keeps the old one, still valid.
+    private func saveRenewed(for account: Account) async {
+        guard let session = sessions[account.id] else { return }
+        let renewed = await session.cache.takeRenewed()
+        guard !renewed.isEmpty, self.account(account.id) != nil else { return }
+        // The old one stays valid for a while, and a Keychain that refuses shows at the next connection.
+        guard let current = try? environment.secrets.secrets(for: account.id) else { return }
+        try? environment.secrets.save(current.merging(renewed) { _, new in new }, for: account.id)
+    }
+
     private func session(for account: Account, secrets: [String: String]) -> AccountSession {
         let fingerprint = AccountSession.fingerprint(settings: account.settings, secrets: secrets)
         if let session = sessions[account.id], session.fingerprint == fingerprint { return session }
@@ -595,6 +606,7 @@ final class InboxModel {
                 case .success(let snapshot):
                     backoff[id] = nil
                     apply(snapshot, to: id)
+                    await saveRenewed(for: account)
                 case .failure(let error):
                     let failure = SourceFailure(error)
                     errors[id] = failure

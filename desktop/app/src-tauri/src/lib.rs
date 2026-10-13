@@ -433,8 +433,34 @@ pub async fn refresh(app: &AppHandle, manual: bool) {
         let results = remora_app::run(jobs).await;
         let notices = state.inbox.lock().await.apply(results, chrono::Utc::now());
         post(app, &notices);
+        save_renewed(app).await;
     }
     changed(app).await;
+}
+
+/// Secrets a plugin renewed during the refresh (a Microsoft sign-in's refresh token) go to the vault, as a
+/// connection's do: off the inbox lock, one write at a time. A failed save keeps the old one, still valid.
+async fn save_renewed(app: &AppHandle) {
+    let state = app.state::<AppState>();
+    let renewed = state.inbox.lock().await.take_renewed_secrets();
+    if renewed.is_empty() {
+        return;
+    }
+    let _writes = state.vault_writes.lock().await;
+    let (vault, all) = {
+        let mut inbox = state.inbox.lock().await;
+        let all = inbox.secrets_after(|all| {
+            for (account_id, secrets) in renewed {
+                all.entry(account_id).or_default().extend(secrets);
+            }
+        });
+        (inbox.vault(), all)
+    };
+    let Ok(all) = all else { return };
+    match save_secrets(vault, all.clone()).await {
+        Ok(()) => state.inbox.lock().await.renewed_saved(all),
+        Err(error) => eprintln!("Remora: a renewed sign-in couldn't be saved: {error}"),
+    }
 }
 
 /// Saves every account's tokens off the async runtime and without the inbox lock: the Credential Manager can be slow.

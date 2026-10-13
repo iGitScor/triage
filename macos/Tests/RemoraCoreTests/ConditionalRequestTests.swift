@@ -93,4 +93,11 @@ struct ConditionalRequestTests {
         }
         #expect(try await cache.value("user", lifetime: 3600) { "alice" } == "alice")
     }
+
+    @Test func aRenewedSecretIsTakenOnce() async {
+        let cache = MemoryAccountCache()
+        await cache.renew("refreshToken", "r2")
+        #expect(await cache.takeRenewed() == ["refreshToken": "r2"])
+        #expect(await cache.takeRenewed().isEmpty)
+    }
 }
