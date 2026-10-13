@@ -73,6 +73,8 @@ struct ReviewPrepLine: View {
 struct ReviewSession: View {
     @Environment(InboxModel.self) private var model
     let snooze: (InboxItem) -> Void
+    /// The time picker is open over the session: the keys come back to it when the picker closes.
+    var covered = false
     let dismiss: () -> Void
 
     @State private var queue: [InboxItem] = []
@@ -159,6 +161,9 @@ struct ReviewSession: View {
         .onKeyPress(.escape) {
             dismiss()
             return .handled
+        }
+        .onChange(of: covered) { _, covered in
+            if !covered { focused = true }
         }
         .onAppear {
             let reviews = model.layout.myTurn.first { $0.bundle == .reviews }?.items ?? []

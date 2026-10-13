@@ -97,30 +97,36 @@ struct InboxView: View {
         // shortcut, isn't read either.
         .accessibilityHidden(isOverlaid)
         .overlay {
-            if let picker {
-                Color.black.opacity(0.25)
-                    .ignoresSafeArea()
-                    .onTapGesture { self.picker = nil }
-                    .accessibilityHidden(true)
-                TimePicker(subject: picker) { self.picker = nil }
-                    .accessibilityAddTraits(.isModal)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
-            } else if reviewing {
-                Color.black.opacity(0.25)
-                    .ignoresSafeArea()
-                    .onTapGesture { reviewing = false }
-                    .accessibilityHidden(true)
-                ReviewSession(snooze: { picker = .snooze($0) }) { reviewing = false }
-                    .accessibilityAddTraits(.isModal)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
-            } else if let draft {
-                Color.black.opacity(0.25)
-                    .ignoresSafeArea()
-                    .onTapGesture { self.draft = nil }
-                    .accessibilityHidden(true)
-                DraftPanel(subject: draft, link: model.webLink(for: draft.item)) { self.draft = nil }
-                    .accessibilityAddTraits(.isModal)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+            // The time picker goes over the review session, which stays as it is: closing the picker returns to the
+            // same review, with its skipped items and its time (UX-23).
+            ZStack {
+                if reviewing {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+                        .onTapGesture { reviewing = false }
+                        .accessibilityHidden(true)
+                    ReviewSession(snooze: { picker = .snooze($0) }, covered: picker != nil) { reviewing = false }
+                        .accessibilityAddTraits(.isModal)
+                        .accessibilityHidden(picker != nil)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                } else if let draft, picker == nil {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+                        .onTapGesture { self.draft = nil }
+                        .accessibilityHidden(true)
+                    DraftPanel(subject: draft, link: model.webLink(for: draft.item)) { self.draft = nil }
+                        .accessibilityAddTraits(.isModal)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
+                if let picker {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+                        .onTapGesture { self.picker = nil }
+                        .accessibilityHidden(true)
+                    TimePicker(subject: picker) { self.picker = nil }
+                        .accessibilityAddTraits(.isModal)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
             }
         }
         .animation(.snappy(duration: 0.2), value: picker?.id)
