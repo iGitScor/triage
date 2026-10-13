@@ -1341,7 +1341,7 @@ def privacy(lang: str) -> str:
                 (
                     "Notion",
                     "<code>api.notion.com</code>",
-                    "Your token; who you are, then the tasks assigned to you in the databases you chose",
+                    "Your token; who you are, the properties of the databases you chose (to leave finished tasks out), then your open tasks there",
                     "Allowed",
                 ),
                 (
@@ -1501,7 +1501,7 @@ def privacy(lang: str) -> str:
                 (
                     "Notion",
                     "<code>api.notion.com</code>",
-                    "Votre jeton ; qui vous êtes, puis les tâches qui vous sont assignées dans les bases choisies",
+                    "Votre jeton ; qui vous êtes, les propriétés des bases choisies (pour écarter les tâches terminées), puis vos tâches ouvertes",
                     "Autorisé",
                 ),
                 (

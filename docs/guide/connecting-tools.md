@@ -102,8 +102,9 @@ Open tasks assigned to you, from the Notion databases you choose.
 2. Paste the links of your task databases, comma separated (open the database as a full page, then ••• → Copy
    link). The token sees what you see: nothing to share.
 3. If your tasks use other names, set the **Assignee property** (the people property saying who a task is for) and
-   the **Done statuses**. A task is done when its *Status* is one of those, or when a checkbox named *Done* or
-   *Complete* is ticked.
+   the **Done statuses**. A task is done when its *Status* is one of those or in Notion's *Complete* group (so
+   *Terminé* counts too), or when a checkbox named *Done* or *Complete* is ticked. Finished tasks are left out by
+   Notion itself, so they never take the places of open ones.
 
 No **New token** button? Your workspace lets only owners create tokens: ask one, or paste the secret of an
 internal connection an owner made, and add **Your Notion email** so Remora finds your tasks.

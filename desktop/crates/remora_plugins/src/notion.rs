@@ -123,14 +123,24 @@ impl NotionPlugin {
     /// The database's tasks for you, and whether it has more than one page of them.
     async fn tasks(&self, database_id: &str, user: &str) -> Result<(Vec<InboxItem>, bool), PluginError> {
         let database: Database = self.send(Request::get(format!("{API}/databases/{database_id}"))).await?;
-        let query = Query {
-            filter: Some(Filter { property: self.assignee.clone(), people: Contains { contains: user.into() } }),
-            sorts: vec![Sort { timestamp: "last_edited_time".into(), direction: "descending".into() }],
-            page_size: 50,
-        };
         let mut pages: Vec<Results<Page>> = vec![];
         for chunk in database.data_sources.chunks(2) {
             let requests = chunk.iter().map(|source| async {
+                // Finished tasks are left out by Notion itself, or they would use up the 50 places (FEAT-08).
+                let schema: Schema = self
+                    .cache
+                    .value(&format!("schema {}", source.id), IDENTITY_LIFETIME, || {
+                        self.send(Request::get(format!("{API}/data_sources/{}", source.id)))
+                    })
+                    .await?;
+                let mut filters =
+                    vec![serde_json::json!({ "property": self.assignee, "people": { "contains": user } })];
+                filters.extend(schema.not_done(&self.done_values));
+                let query = Query {
+                    filter: Some(serde_json::json!({ "and": filters })),
+                    sorts: vec![Sort { timestamp: "last_edited_time".into(), direction: "descending".into() }],
+                    page_size: 50,
+                };
                 self.send::<Results<Page>>(Request::post_json(
                     format!("{API}/data_sources/{}/query", source.id),
                     &query,
@@ -215,7 +225,7 @@ impl SourcePlugin for NotionPlugin {
 
 #[derive(Serialize)]
 struct Query {
-    filter: Option<Filter>,
+    filter: Option<serde_json::Value>,
     sorts: Vec<Sort>,
     page_size: u32,
 }
@@ -226,15 +236,90 @@ struct Sort {
     direction: String,
 }
 
-#[derive(Serialize)]
-struct Filter {
-    property: String,
-    people: Contains,
+/// A data source's properties, to tell Notion which tasks are finished.
+#[derive(Clone, Deserialize)]
+struct Schema {
+    properties: HashMap<String, SchemaProperty>,
 }
 
-#[derive(Serialize)]
-struct Contains {
-    contains: String,
+#[derive(Clone, Deserialize)]
+struct SchemaProperty {
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    status: Option<Options>,
+    select: Option<Options>,
+}
+
+#[derive(Clone, Default, Deserialize)]
+struct Options {
+    #[serde(default)]
+    options: Vec<OptionValue>,
+    #[serde(default)]
+    groups: Vec<OptionGroup>,
+}
+
+#[derive(Clone, Deserialize)]
+struct OptionValue {
+    id: Option<String>,
+    name: String,
+}
+
+#[derive(Clone, Deserialize)]
+struct OptionGroup {
+    name: String,
+    #[serde(default)]
+    option_ids: Vec<String>,
+}
+
+impl Schema {
+    /// What "not finished" means here: no status in the Complete group (whatever the workspace's language calls
+    /// those, "Terminé" included) or among the done values, no Status select set to a done value, and no Done or
+    /// Complete checkbox ticked. Same rules as macOS.
+    fn not_done(&self, done_values: &HashSet<String>) -> Vec<serde_json::Value> {
+        let mut keys: Vec<&String> = self.properties.keys().collect();
+        keys.sort();
+        let mut filters = vec![];
+        for key in keys {
+            let property = &self.properties[key];
+            match property.kind.as_deref() {
+                Some("status") => {
+                    let status = property.status.clone().unwrap_or_default();
+                    let complete: HashSet<&String> = status
+                        .groups
+                        .iter()
+                        .filter(|g| g.name.eq_ignore_ascii_case("complete"))
+                        .flat_map(|g| &g.option_ids)
+                        .collect();
+                    for option in &status.options {
+                        if option.id.as_ref().is_some_and(|id| complete.contains(id))
+                            || done_values.contains(&option.name.to_lowercase())
+                        {
+                            filters.push(
+                                serde_json::json!({ "property": key, "status": { "does_not_equal": option.name } }),
+                            );
+                        }
+                    }
+                }
+                Some("select") if key.eq_ignore_ascii_case("status") => {
+                    for option in property.select.iter().flat_map(|s| &s.options) {
+                        if done_values.contains(&option.name.to_lowercase()) {
+                            filters.push(
+                                serde_json::json!({ "property": key, "select": { "does_not_equal": option.name } }),
+                            );
+                        }
+                    }
+                }
+                Some("checkbox")
+                    if done_values.contains(&key.to_lowercase())
+                        || ["done", "complete", "completed"].contains(&key.to_lowercase().as_str()) =>
+                {
+                    filters.push(serde_json::json!({ "property": key, "checkbox": { "equals": false } }));
+                }
+                _ => {}
+            }
+        }
+        filters
+    }
 }
 
 #[derive(Deserialize)]
@@ -441,6 +526,10 @@ mod tests {
                 "/databases/0123456789abcdef0123456789abcdef",
                 r#"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#,
             ),
+            (
+                "/data_sources/ds1",
+                r#"{"properties": {"Status": {"type": "status", "status": {"options": [{"id": "o1", "name": "Done"}], "groups": [{"name": "Complete", "option_ids": ["o1"]}]}}}}"#,
+            ),
             ("/data_sources/ds1/query", &query),
         ]);
         let plugin = NotionPlugin::new(
@@ -470,6 +559,8 @@ mod tests {
                     r#"{"id": "u1", "type": "person", "name": "Alice"}"#
                 } else if request.url.contains("/databases/") {
                     r#"{"title": [], "data_sources": [{"id": "ds1", "name": "Sprint"}]}"#
+                } else if request.url.ends_with("/data_sources/ds1") {
+                    r#"{"properties": {"Status": {"type": "status", "status": {"options": [{"id": "o1", "name": "Shipped"}], "groups": [{"name": "Complete", "option_ids": ["o1"]}]}}}}"#
                 } else {
                     r#"{"results": [], "next_cursor": "c2"}"#
                 };
@@ -484,8 +575,41 @@ mod tests {
         assert_eq!(snapshot.remarks, [crate::truncated("Notion")], "a second page means more tasks than shown");
         let sent: serde_json::Value = serde_json::from_str(&http.0.lock().unwrap()[0]).unwrap();
         assert_eq!(sent["page_size"], 50);
-        assert_eq!(sent["filter"], serde_json::json!({"property": "Owner", "people": {"contains": "u1"}}));
+        // Yours, and not finished: Notion leaves out every status in the Complete group, whatever its name (FEAT-08).
+        assert_eq!(
+            sent["filter"],
+            serde_json::json!({"and": [
+                {"property": "Owner", "people": {"contains": "u1"}},
+                {"property": "Status", "status": {"does_not_equal": "Shipped"}}
+            ]})
+        );
         assert_eq!(sent["sorts"][0]["timestamp"], "last_edited_time");
+    }
+
+    /// Every status in the Complete group, in any language, the done values, a Status select set to one, and a
+    /// ticked Done checkbox; not a priority or an Urgent checkbox. Same case as macOS.
+    #[test]
+    fn notion_is_asked_for_open_tasks_only() {
+        let schema: Schema = serde_json::from_str(
+            r#"{"properties": {
+              "État": {"type": "status", "status": {
+                "options": [{"id": "1", "name": "À faire"}, {"id": "2", "name": "Terminé"}, {"id": "3", "name": "Abandonné"}],
+                "groups": [{"name": "To-do", "option_ids": ["1"]}, {"name": "Complete", "option_ids": ["2"]}]}},
+              "Priority": {"type": "select", "select": {"options": [{"name": "Done"}]}},
+              "Done": {"type": "checkbox", "checkbox": {}},
+              "Urgent": {"type": "checkbox", "checkbox": {}}
+            }}"#,
+        )
+        .unwrap();
+        let done = HashSet::from(["abandonné".to_string()]);
+        assert_eq!(
+            schema.not_done(&done),
+            [
+                serde_json::json!({"property": "Done", "checkbox": {"equals": false}}),
+                serde_json::json!({"property": "État", "status": {"does_not_equal": "Terminé"}}),
+                serde_json::json!({"property": "État", "status": {"does_not_equal": "Abandonné"}}),
+            ]
+        );
     }
 
     /// A priority select isn't the status, and an "Urgent" checkbox doesn't mean done; a "Done" checkbox does.

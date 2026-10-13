@@ -3,6 +3,13 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Fixed
+
+- Notion: finished tasks no longer use up the 50 places, so older open tasks show. Notion leaves them out itself,
+  and a status in its Complete group counts as done in any language (*Terminé* included).
+
 ## 0.7.0 (2026-10-12)
 
 ### Added

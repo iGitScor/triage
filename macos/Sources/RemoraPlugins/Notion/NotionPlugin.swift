@@ -78,10 +78,15 @@ public struct NotionPlugin: SourcePlugin {
     private func tasks(in databaseID: String, assignedTo user: String) async throws -> (items: [InboxItem], more: Bool)
     {
         let database: Database = try await send(.get(api.appending(path: "databases/\(databaseID)"), headers: headers))
-        var body = Query(sorts: [.init(timestamp: "last_edited_time", direction: "descending")], pageSize: 50)
-        body.filter = .init(property: assignee, people: .init(contains: user))
-        let query = body
         let pages = try await database.dataSources.concurrentMap(limit: 2) { source -> Results<Page> in
+            // Finished tasks are left out by Notion itself, or they would use up the 50 places (FEAT-08).
+            let schema: Schema = try await self.cache.value("schema \(source.id)", lifetime: CacheLifetime.identity) {
+                try await self.send(.get(self.api.appending(path: "data_sources/\(source.id)"), headers: self.headers))
+            }
+            let filter = Filter.and(
+                [.people(property: self.assignee, contains: user)] + schema.notDone(self.doneValues))
+            let query = Query(
+                filter: filter, sorts: [.init(timestamp: "last_edited_time", direction: "descending")], pageSize: 50)
             let request = try URLRequest.post(
                 self.api.appending(path: "data_sources/\(source.id)/query"), json: query, headers: self.headers)
             return try await self.send(request)
@@ -134,15 +139,99 @@ public struct NotionPlugin: SourcePlugin {
 // MARK: - Wire format
 
 extension NotionPlugin {
+    /// A query filter, as Notion's API takes it.
+    indirect enum Filter: Encodable, Equatable {
+        case and([Filter])
+        case people(property: String, contains: String)
+        case statusIsNot(property: String, String)
+        case selectIsNot(property: String, String)
+        case unticked(property: String)
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: Key.self)
+            switch self {
+            case .and(let filters):
+                try container.encode(filters, forKey: Key("and"))
+            case .people(let property, let user):
+                try container.encode(property, forKey: Key("property"))
+                try container.encode(["contains": user], forKey: Key("people"))
+            case .statusIsNot(let property, let name):
+                try container.encode(property, forKey: Key("property"))
+                try container.encode(["does_not_equal": name], forKey: Key("status"))
+            case .selectIsNot(let property, let name):
+                try container.encode(property, forKey: Key("property"))
+                try container.encode(["does_not_equal": name], forKey: Key("select"))
+            case .unticked(let property):
+                try container.encode(property, forKey: Key("property"))
+                try container.encode(["equals": false], forKey: Key("checkbox"))
+            }
+        }
+
+        struct Key: CodingKey {
+            var stringValue: String
+            var intValue: Int? { nil }
+            init(_ string: String) { stringValue = string }
+            init?(stringValue: String) { self.stringValue = stringValue }
+            init?(intValue: Int) { nil }
+        }
+    }
+
+    /// A data source's properties, to tell Notion which tasks are finished.
+    struct Schema: Decodable, Sendable {
+        struct Options: Decodable, Sendable {
+            struct Option: Decodable, Sendable {
+                var id: String?
+                var name: String
+            }
+            struct Group: Decodable, Sendable {
+                var name: String
+                var optionIds: [String]?
+            }
+            var options: [Option]?
+            var groups: [Group]?
+        }
+        struct Property: Decodable, Sendable {
+            var name: String?
+            var type: String?
+            var status: Options?
+            var select: Options?
+        }
+        var properties: [String: Property]
+
+        /// What "not finished" means here: no status in the Complete group (whatever the workspace's language calls
+        /// those, "Terminé" included) or among the done values, no Status select set to a done value, and no
+        /// Done or Complete checkbox ticked.
+        func notDone(_ doneValues: Set<String>) -> [Filter] {
+            let doneNames = doneValues.union(["done", "complete", "completed"])
+            return properties.sorted { $0.key < $1.key }.flatMap { key, property -> [Filter] in
+                switch property.type {
+                case "status":
+                    let options = property.status?.options ?? []
+                    let complete = Set(
+                        (property.status?.groups ?? []).filter { $0.name.lowercased() == "complete" }
+                            .flatMap { $0.optionIds ?? [] })
+                    return
+                        options
+                        .filter { option in
+                            option.id.map(complete.contains) == true || doneValues.contains(option.name.lowercased())
+                        }
+                        .map { .statusIsNot(property: key, $0.name) }
+                case "select" where key.lowercased() == "status":
+                    return (property.select?.options ?? []).filter { doneValues.contains($0.name.lowercased()) }
+                        .map { .selectIsNot(property: key, $0.name) }
+                case "checkbox" where doneNames.contains(key.lowercased()):
+                    return [.unticked(property: key)]
+                default:
+                    return []
+                }
+            }
+        }
+    }
+
     struct Query: Encodable {
         struct Sort: Encodable {
             var timestamp: String
             var direction: String
-        }
-        struct Filter: Encodable {
-            struct People: Encodable { var contains: String }
-            var property: String
-            var people: People
         }
 
         var filter: Filter?

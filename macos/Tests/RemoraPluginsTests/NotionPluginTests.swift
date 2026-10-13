@@ -26,6 +26,10 @@ struct NotionPluginTests {
             "/users/me": #"{"id": "u1", "type": "person", "name": "Alice", "person": {"email": "alice@acme.example"}}"#,
             "/databases/0123456789abcdef0123456789abcdef":
                 #"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#,
+            "/data_sources/ds1": #"""
+            {"properties": {"Status": {"name": "Status", "type": "status", "status": {
+              "options": [{"id": "o1", "name": "Done"}], "groups": [{"name": "Complete", "option_ids": ["o1"]}]}}}}
+            """#,
             "/data_sources/ds1/query": #"{"results": [\#(page("a", "In progress")), \#(page("b", "Done"))]}"#,
         ])
         let plugin = try NotionPlugin(
@@ -38,6 +42,39 @@ struct NotionPluginTests {
         #expect(items.map(\.title) == ["Task a"])
         #expect(items.first?.context == "Team tasks")
         #expect(items.first?.hasBadge("overdue") == true)
+    }
+
+    /// Notion leaves finished tasks out, so they don't use up the 50 places (FEAT-08): every status in the Complete
+    /// group, in any language, the done values, and a ticked Done checkbox.
+    @Test func asksNotionForOpenTasksOnly() throws {
+        let schema = try JSONDecoder.api(snakeCase: true).decode(
+            NotionPlugin.Schema.self,
+            from: Data(
+                #"""
+                {"properties": {
+                  "État": {"name": "État", "type": "status", "status": {
+                    "options": [{"id": "1", "name": "À faire"}, {"id": "2", "name": "Terminé"}, {"id": "3", "name": "Abandonné"}],
+                    "groups": [{"name": "To-do", "option_ids": ["1"]}, {"name": "Complete", "option_ids": ["2"]}]}},
+                  "Priority": {"name": "Priority", "type": "select", "select": {"options": [{"name": "Done"}]}},
+                  "Done": {"name": "Done", "type": "checkbox", "checkbox": {}},
+                  "Urgent": {"name": "Urgent", "type": "checkbox", "checkbox": {}}
+                }}
+                """#.utf8))
+        let filters = schema.notDone(["abandonné"])
+        #expect(
+            filters == [
+                .unticked(property: "Done"), .statusIsNot(property: "État", "Terminé"),
+                .statusIsNot(property: "État", "Abandonné"),
+            ])
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let json = String(
+            data: try encoder.encode(
+                NotionPlugin.Filter.and([.people(property: "Assignee", contains: "u1")] + filters)),
+            encoding: .utf8)
+        #expect(json?.contains(#"{"people":{"contains":"u1"},"property":"Assignee"}"#) == true)
+        #expect(json?.contains(#"{"property":"État","status":{"does_not_equal":"Terminé"}}"#) == true)
+        #expect(json?.contains(#"{"checkbox":{"equals":false},"property":"Done"}"#) == true)
     }
 
     /// A priority select isn't the status, and an "Urgent" checkbox doesn't mean done; a "Done" checkbox does.
