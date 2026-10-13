@@ -73,6 +73,46 @@ struct InboxModelTests {
     }
 
     /// From the diff: starting moves an item to In progress and cancels its pending notification; stopping puts it back.
+    /// TEST-01: the identity a session learned is reused across refreshes, and asked again where it may have
+    /// changed: connecting always tests the token, a new token starts over, and so does connecting again after a
+    /// disconnect. Same case as Windows.
+    @Test func theIdentityIsAskedOncePerSession() async throws {
+        let harness = Harness()
+        let model = harness.model()
+        let connect = { (token: String) in
+            try await model.connect(
+                pluginID: "gitlab", name: nil, settings: ["host": "gitlab.acme.io"], secrets: ["token": token])
+        }
+        try await connect("t1")
+        #expect(harness.server.gitLabIdentityCalls == 1, "connecting asks: it tests the token")
+        await model.refresh(manual: true)
+        await model.refresh(manual: true)
+        #expect(harness.server.gitLabIdentityCalls == 2, "the first refresh asks, the next ones remember")
+
+        try await connect("t2")
+        await model.refresh(manual: true)
+        #expect(harness.server.gitLabIdentityCalls == 4, "a new token: connecting asks, and the session starts over")
+
+        model.disconnect(try #require(model.accounts.first))
+        try await connect("t1")
+        await model.refresh(manual: true)
+        #expect(harness.server.gitLabIdentityCalls == 6, "after a disconnect, nothing was kept")
+
+        try model.eraseLocalData()
+        try await connect("t1")
+        await model.refresh(manual: true)
+        #expect(harness.server.gitLabIdentityCalls == 8, "after Erase, nothing was kept")
+    }
+
+    @Test func aNewTokenOrHostStartsANewSession() {
+        let fingerprint = { (host: String, token: String) in
+            AccountSession.fingerprint(settings: ["host": host], secrets: ["token": token])
+        }
+        #expect(fingerprint("gitlab.acme.io", "t1") == fingerprint("gitlab.acme.io", "t1"))
+        #expect(fingerprint("gitlab.acme.io", "t1") != fingerprint("gitlab.acme.io", "t2"))
+        #expect(fingerprint("gitlab.acme.io", "t1") != fingerprint("gitlab.example.org", "t1"))
+    }
+
     @Test func theBriefSeesTheTaskInProgressMarkedSo() async throws {
         let model = try await Harness().connected()
         let item = try issue(model)

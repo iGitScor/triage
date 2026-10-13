@@ -2115,6 +2115,73 @@ mod tests {
         assert!(inbox.accounts.is_empty() && vault.load().unwrap().is_empty());
     }
 
+    /// A GitLab that counts how often it is asked who the token belongs to.
+    #[derive(Default)]
+    struct CountingGitLab {
+        identity_calls: std::sync::atomic::AtomicUsize,
+    }
+
+    #[async_trait::async_trait]
+    impl HttpClient for CountingGitLab {
+        async fn send(&self, request: remora_plugins::Request) -> Result<remora_plugins::Response, PluginError> {
+            let body = if request.url.contains("/api/v4/user") {
+                self.identity_calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                r#"{"username": "alice"}"#
+            } else {
+                "[]"
+            };
+            Ok(remora_plugins::Response { status: 200, body: body.into(), etag: None, reset: None })
+        }
+    }
+
+    impl CountingGitLab {
+        fn calls(&self) -> usize {
+            self.identity_calls.load(std::sync::atomic::Ordering::SeqCst)
+        }
+    }
+
+    async fn refresh(inbox: &mut Inbox, http: &Arc<CountingGitLab>) {
+        for job in inbox.fetch_jobs(http.clone(), now(), true) {
+            job.plugin.fetch().await.unwrap();
+        }
+    }
+
+    /// TEST-01: the identity a session learned is reused across refreshes, and asked again where it may have
+    /// changed: connecting always tests the token, a new token starts over, and so does connecting again after a
+    /// disconnect.
+    #[tokio::test]
+    async fn the_identity_is_asked_once_per_session() {
+        let http = Arc::new(CountingGitLab::default());
+        let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
+        let settings = HashMap::from([("host".to_string(), "gitlab.acme.io".to_string())]);
+        let token = |t: &str| HashMap::from([("token".to_string(), t.to_string())]);
+        let connect = |inbox: &mut Inbox, http: &Arc<CountingGitLab>| {
+            inbox.prepare_connect("gitlab", None, settings.clone(), &token("t1"), http.clone()).unwrap()
+        };
+
+        let (account, plugin) = connect(&mut inbox, &http);
+        let snapshot = plugin.fetch().await.unwrap();
+        assert_eq!(http.calls(), 1, "connecting asks: it tests the token");
+        let id = account.id.clone();
+        inbox.finish_connect(account, token("t1"), snapshot, now()).unwrap();
+        refresh(&mut inbox, &http).await;
+        refresh(&mut inbox, &http).await;
+        assert_eq!(http.calls(), 2, "the first refresh asks, the next ones remember");
+
+        let plugin = inbox.prepare_reconnect(&id, &token("t2"), http.clone()).unwrap();
+        let snapshot = plugin.fetch().await.unwrap();
+        inbox.finish_reconnect(&id, token("t2"), snapshot, now()).unwrap();
+        refresh(&mut inbox, &http).await;
+        assert_eq!(http.calls(), 4, "a new token: reconnecting asks, and the session starts over");
+
+        inbox.disconnect(&id).unwrap();
+        let (account, plugin) = connect(&mut inbox, &http);
+        let snapshot = plugin.fetch().await.unwrap();
+        inbox.finish_connect(account, token("t1"), snapshot, now()).unwrap();
+        refresh(&mut inbox, &http).await;
+        assert_eq!(http.calls(), 6, "after a disconnect, nothing was kept");
+    }
+
     /// What a plugin renewed reaches the vault through the app, and only for accounts still here.
     #[test]
     fn renewed_secrets_are_saved_for_accounts_still_here() {

@@ -75,6 +75,17 @@ mod tests {
         assert_eq!(sessions.len(), 1);
     }
 
+    /// TEST-01: a new host starts a new session too, with nothing learned from the old one.
+    #[test]
+    fn a_new_host_starts_a_new_session() {
+        let mut sessions = HashMap::new();
+        let host = |h: &str| HashMap::from([("host".to_string(), h.to_string())]);
+        let token = HashMap::from([("token".to_string(), "t".to_string())]);
+        let (first, _) = AccountSession::current(&mut sessions, "a", &host("gitlab.acme.io"), &token);
+        let (moved, _) = AccountSession::current(&mut sessions, "a", &host("gitlab.example.org"), &token);
+        assert!(!Arc::ptr_eq(&first, &moved));
+    }
+
     /// A refresh token the plugin rotated keeps the session (its cached access token, its ETags); a new sign-in
     /// starts a new one.
     #[test]

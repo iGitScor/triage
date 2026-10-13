@@ -1498,4 +1498,19 @@ mod tests {
         assert!(snapshot.remarks.len() == 1 && snapshot.remarks[0].text.contains("channels:history"));
         assert!(!snapshot.items.iter().any(|i| i.context.starts_with("Thread")));
     }
+
+    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    #[tokio::test]
+    async fn the_identity_is_asked_once_across_refreshes() {
+        let stub = StubHttp::paths(&[
+            ("/auth.test", r#"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#),
+            ("/search.messages", r#"{"ok": true, "messages": {"matches": []}}"#),
+        ]);
+        let http = Arc::new(Recording::new(stub));
+        let config = config(&[("token", "xoxp")]);
+        for _ in 0..2 {
+            SlackPlugin::new(&config, http.clone()).unwrap().fetch().await.unwrap();
+        }
+        assert_eq!(http.paths().iter().filter(|p| p.ends_with("/auth.test")).count(), 1);
+    }
 }

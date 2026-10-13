@@ -404,6 +404,18 @@ struct SlackPluginTests {
         let scopes = ((json?["oauth_config"] as? [String: Any])?["scopes"] as? [String: Any])?["user"] as? [String]
         #expect(scopes == ["search:read", "channels:history", "groups:history", "reactions:read", "emoji:read"])
     }
+
+    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    @Test func theIdentityIsAskedOnceAcrossRefreshes() async throws {
+        let http = RecordingHTTP(
+            StubHTTP(routes: [
+                "/auth.test": #"{"ok": true, "user_id": "UME", "user": "alice", "team": "Acme"}"#,
+                "/search.messages": #"{"ok": true, "messages": {"matches": []}}"#,
+            ]))
+        let config = PluginConfig(accountID: UUID(), values: ["token": "xoxp"], cache: MemoryAccountCache())
+        for _ in 1...2 { _ = try await SlackPlugin(config: config, http: http).fetch() }
+        #expect(await http.paths.filter { $0.hasSuffix("/auth.test") }.count == 1)
+    }
 }
 
 /// Answers Slack by method, and the searches by their query: your own thread messages, mentions of you, or nothing.

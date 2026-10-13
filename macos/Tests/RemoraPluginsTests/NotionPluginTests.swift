@@ -104,6 +104,23 @@ struct NotionPluginTests {
         await #expect(throws: HTTPError.status(404)) { try await none.fetch() }
     }
 
+    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    @Test func theIdentityIsAskedOnceAcrossRefreshes() async throws {
+        let http = RecordingHTTP(
+            StubHTTP(routes: [
+                "/users/me": #"{"id": "u1", "type": "person", "name": "Alice"}"#,
+                "/databases/0123456789abcdef0123456789abcdef":
+                    #"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#,
+                "/data_sources/ds1": #"{"properties": {}}"#,
+                "/data_sources/ds1/query": #"{"results": []}"#,
+            ]))
+        let config = PluginConfig(
+            accountID: UUID(), values: ["token": "secret", "databases": "0123456789abcdef0123456789abcdef"],
+            cache: MemoryAccountCache())
+        for _ in 1...2 { _ = try await NotionPlugin(config: config, http: http).fetch() }
+        #expect(await http.paths.filter { $0.hasSuffix("/users/me") }.count == 1)
+    }
+
     /// A priority select isn't the status, and an "Urgent" checkbox doesn't mean done; a "Done" checkbox does.
     @Test func readsTheStatusAndDoneCheckboxByTypeAndName() throws {
         let json = { (extra: String) in

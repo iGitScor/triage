@@ -102,6 +102,8 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
     /// Fails as the system does when there's no network, before any answer.
     var offline = false
     private(set) var requests = 0
+    /// How often the GitLab on gitlab.acme.io was asked who the token belongs to.
+    private(set) var gitLabIdentityCalls = 0
     /// The OpenAI-compatible assistant's answer, and what happens while it is being written.
     static let assistantAnswer =
         #"{"choices": [{"message": {"content": "{\"summary\": \"Two reviews wait.\", \"focus\": []}", "refusal": null}, "finish_reason": "stop"}]}"#
@@ -122,6 +124,12 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
         if let hook = whileFetching {
             whileFetching = nil
             await hook()
+        }
+        // A GitLab on gitlab.acme.io, for the session tests: who the token belongs to, and empty lists.
+        if url.host == "gitlab.acme.io" {
+            if url.path.hasSuffix("/api/v4/user") { gitLabIdentityCalls += 1 }
+            let body = url.path.hasSuffix("/api/v4/user") ? #"{"username": "alice"}"# : "[]"
+            return (Data(body.utf8), HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
         }
         if offline { throw URLError(.notConnectedToInternet) }
         if let status {

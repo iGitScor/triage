@@ -758,4 +758,25 @@ mod tests {
             Some(PluginError::MissingField("databases".into()))
         );
     }
+
+    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    #[tokio::test]
+    async fn the_identity_is_asked_once_across_refreshes() {
+        let query = format!(r#"{{"results": [{}]}}"#, page("a", "In progress"));
+        let routes = [
+            ("/users/me", r#"{"id": "u1", "type": "person", "name": "Alice"}"#),
+            (
+                "/databases/0123456789abcdef0123456789abcdef",
+                r#"{"title": [{"plain_text": "Team tasks"}], "data_sources": [{"id": "ds1"}]}"#,
+            ),
+            ("/data_sources/ds1", r#"{"properties": {}}"#),
+            ("/data_sources/ds1/query", query.as_str()),
+        ];
+        let http = Arc::new(Recording::new(StubHttp::paths(&routes)));
+        let config = config(&[("token", "secret"), ("databases", ID)]);
+        for _ in 0..2 {
+            NotionPlugin::new(&config, http.clone()).unwrap().fetch().await.unwrap();
+        }
+        assert_eq!(http.paths().iter().filter(|p| p.ends_with("/users/me")).count(), 1);
+    }
 }

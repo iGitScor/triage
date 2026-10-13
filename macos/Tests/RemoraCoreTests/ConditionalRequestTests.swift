@@ -1,4 +1,5 @@
 import Foundation
+import Network
 import Testing
 
 @testable import RemoraCore
@@ -99,5 +100,77 @@ struct ConditionalRequestTests {
         await cache.renew("refreshToken", "r2")
         #expect(await cache.takeRenewed() == ["refreshToken": "r2"])
         #expect(await cache.takeRenewed().isEmpty)
+    }
+
+    /// TEST-01: through the real client and a socket, as Windows tests it: URLSession hands the 304 over (it isn't
+    /// turned into a 200 from its own cache, nor followed), and the answer comes from memory.
+    @Test func aRealServersNotModifiedIsServedFromMemory() async throws {
+        let server = try await LocalServer.start()
+        defer { server.stop() }
+        let url = URL(string: "http://127.0.0.1:\(server.port)/api/v4/merge_requests")!
+        let client = ConditionalHTTPClient(URLSessionHTTPClient(), store: ETagStore())
+        let (first, _) = try await client.send(.get(url))
+        let (second, response) = try await client.send(.get(url))
+        #expect(String(decoding: first, as: UTF8.self) == "[1]")
+        #expect(second == first && response.statusCode == 200)
+        #expect(server.conditions == [nil, #""v1""#], "the second request asked with the ETag, and got a 304")
+    }
+}
+
+/// An HTTP server on this Mac: `[1]` with `ETag: "v1"`, or 304 when asked with it. Records each If-None-Match.
+final class LocalServer: @unchecked Sendable {
+    private let listener: NWListener
+    private let queue = DispatchQueue(label: "fr.igitscor.remora.tests.server")
+    private let lock = NSLock()
+    private var asked: [String?] = []
+    let port: UInt16
+    var conditions: [String?] { lock.withLock { asked } }
+
+    private init(listener: NWListener, port: UInt16) {
+        self.listener = listener
+        self.port = port
+    }
+
+    static func start() async throws -> LocalServer {
+        let parameters = NWParameters.tcp
+        parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
+        let listener = try NWListener(using: parameters)
+        let queue = DispatchQueue(label: "fr.igitscor.remora.tests.listener")
+        let port: UInt16 = try await withCheckedThrowingContinuation { continuation in
+            listener.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    listener.stateUpdateHandler = nil
+                    continuation.resume(returning: listener.port?.rawValue ?? 0)
+                case .failed(let error):
+                    listener.stateUpdateHandler = nil
+                    continuation.resume(throwing: error)
+                default: break
+                }
+            }
+            listener.newConnectionHandler = { $0.cancel() }
+            listener.start(queue: queue)
+        }
+        let server = LocalServer(listener: listener, port: port)
+        listener.newConnectionHandler = { [server] in server.answer($0) }
+        return server
+    }
+
+    func stop() { listener.cancel() }
+
+    private func answer(_ connection: NWConnection) {
+        connection.start(queue: queue)
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 8192) { data, _, _, _ in
+            let request = String(decoding: data ?? Data(), as: UTF8.self)
+            let condition = request.components(separatedBy: "\r\n")
+                .first { $0.lowercased().hasPrefix("if-none-match:") }
+                .map { String($0.dropFirst("if-none-match:".count)).trimmingCharacters(in: .whitespaces) }
+            self.lock.withLock { self.asked.append(condition) }
+            let answer =
+                condition == #""v1""#
+                ? "HTTP/1.1 304 Not Modified\r\nETag: \"v1\"\r\nConnection: close\r\n\r\n"
+                : "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nETag: \"v1\"\r\nContent-Length: 3\r\nConnection: close\r\n\r\n[1]"
+            connection.send(content: Data(answer.utf8), completion: .contentProcessed { _ in connection.cancel() })
+        }
     }
 }
