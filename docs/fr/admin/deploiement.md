@@ -1,6 +1,6 @@
 ---
 title: Déployer Remora
-description: Distribuer Remora sur Mac et PC Windows. Le DMG, l’installeur et leurs empreintes, Gatekeeper et le trousseau, les mises à jour, une copie signée.
+description: Distribuer Remora sur Mac, PC Windows et bureaux Linux. Le DMG, l’installeur et leurs empreintes, Gatekeeper et le trousseau, les mises à jour, une copie signée.
 ---
 
 # Déployer Remora
@@ -75,6 +75,15 @@ Ses données sont dans `%LOCALAPPDATA%\fr.igitscor.remora` et ses jetons dans un
 *Exécuter quand même*) ; pour l’éviter, signez-le avec le certificat de signature de code de votre organisation avant
 de le déployer. La politique se règle dans le registre : voir [MDM](./mdm#windows-strategie-de-groupe-ou-intune).
 
+## Linux (aperçu)
+
+Chaque version publie aussi **Remora-x86_64.AppImage** et **Remora-amd64.deb**, chacun avec son SHA-256, son SBOM et
+son attestation, toujours à `https://github.com/iGitScor/triage/releases/latest/download/Remora-x86_64.AppImage` et `https://github.com/iGitScor/triage/releases/latest/download/Remora-amd64.deb`. Le `.deb`
+installe `remora` pour tout le système sous Ubuntu et Debian ; l’AppImage se lance de n’importe où et se met à jour
+seule. Ses données sont dans `~/.local/share/fr.igitscor.remora`, lisibles par l’utilisateur seul, et ses jetons dans
+le Secret Service (GNOME Keyring, KWallet ou KeePassXC). La politique est un fichier appartenant à root : voir
+[MDM](./mdm#linux-un-fichier-de-politique).
+
 ## Mises à jour
 
 Désactivées par défaut : rien n’appelle l’extérieur. Un utilisateur peut activer *Rechercher les mises à jour
@@ -93,3 +102,6 @@ supprime les deux avant de désinstaller.
 Sous Windows, désinstallez Remora depuis Paramètres → Applications ; l’option « supprimer les données de l’app » du
 désinstalleur retire `%LOCALAPPDATA%\fr.igitscor.remora`. Les jetons restent dans le Gestionnaire d’identification,
 sauf si *Effacer les données locales…* a été lancé avant.
+
+Sous Linux, retirez le paquet (`sudo apt remove remora`) ou l’AppImage ; ses données sont dans
+`~/.local/share/fr.igitscor.remora`, et *Effacer les données locales…* retire d’abord ses jetons du trousseau.

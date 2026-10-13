@@ -1,11 +1,12 @@
 ---
 title: Premiers pas
-description: Installer Remora sur votre Mac ou votre PC Windows, l’ouvrir la première fois, connecter un premier outil et prendre ses repères dans la boîte de réception.
+description: Installer Remora sur votre Mac, votre PC Windows ou votre bureau Linux, l’ouvrir la première fois, connecter un premier outil et prendre ses repères dans la boîte de réception.
 ---
 
 # Premiers pas
 
-Remora vit dans la barre des menus de votre Mac, ou dans la zone de notification de la barre des tâches de Windows.
+Remora vit dans la barre des menus de votre Mac, ou dans la zone de notification de la barre des tâches de Windows ou
+de votre bureau Linux.
 Elle rassemble ce qui a besoin de vous dans GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365, et le range par ce que vous avez
 à faire. Pas de compte à créer, pas de serveur : tout se passe sur votre ordinateur.
 
@@ -43,10 +44,24 @@ La première fois, un conseil en haut de la boîte rappelle tout cela, avec un i
 Windows** (aussi dans Réglages → Général) : il est éteint tant que vous ne l’allumez pas, et sans lui les rappels
 attendent que vous ouvriez Remora. Si une autre app utilise déjà Ctrl+Alt+R, Réglages → Général le dit.
 
-La version Windows a ce qu’a le Mac : les six outils, le report avec raisons et constats, la préparation et les
+La version Windows a ce qu’a le Mac : les sept outils, le report avec raisons et constats, la préparation et les
 sessions de relecture, l’assistant d’attente et l’assistant (Claude ou un serveur OpenAI-compatible). Elle trie les
 messages par mots-clés seulement ; la liste complète est dans
 [Remora pour Windows](/fr/developper/windows#ce-que-windows-a-et-ce-qu-il-n-a-pas-encore).
+
+## Sous Linux (aperçu)
+
+1. Téléchargez [Remora-x86_64.AppImage](https://github.com/iGitScor/triage/releases/latest/download/Remora-x86_64.AppImage), qui se met à jour seule, ou
+   [Remora-amd64.deb](https://github.com/iGitScor/triage/releases/latest/download/Remora-amd64.deb) pour Ubuntu et Debian (installez le nouveau pour mettre à jour). x86_64
+   seulement pour l’instant ; essayée sur Ubuntu 24.04 et Fedora KDE.
+2. Rendez l’AppImage exécutable (`chmod +x`) et lancez-la, ou installez le `.deb`.
+3. Il faut WebKitGTK 4.1 et un trousseau pour les jetons (GNOME Keyring, KWallet ou KeePassXC).
+
+C’est l’app Windows, dans la zone de notification de KDE, Cinnamon ou XFCE ; sous GNOME, ajoutez l’extension
+AppIndicator, sinon Remora s’ouvre en fenêtre. Ouvrez-la depuis le menu du poisson. Sous Wayland, KDE Plasma et GNOME
+48 ou ultérieur proposent **Ctrl+Alt+R** dans leur propre fenêtre la première fois ; ailleurs, ajoutez un raccourci
+système qui lance `remora --reminder`. Votre organisation peut régler la politique dans `/etc/remora/policy.json`
+([MDM](/fr/admin/mdm#linux-un-fichier-de-politique)).
 
 ## Connecter un premier outil
 

@@ -30,6 +30,8 @@ TOOLS = {
     "fr": "GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365",
 }
 EXE = REPO + "/releases/latest/download/Remora-Setup.exe"
+APPIMAGE = REPO + "/releases/latest/download/Remora-x86_64.AppImage"
+DEB = REPO + "/releases/latest/download/Remora-amd64.deb"
 # The released version, from the source `make version` sets, so the page's structured data never goes stale.
 VERSION = plistlib.loads((pathlib.Path(__file__).parent.parent / "macos/Resources/Info.plist").read_bytes())[
     "CFBundleShortVersionString"
@@ -111,6 +113,7 @@ T = {
         "home_label": "Remora, home",
         "get": "Download for Mac",
         "get_windows": "Download for Windows",
+        "get_linux": "Linux",
         "get_short": "Download",
         "source": "Source on GitHub",
         "footer_blurb": "An inbox in the menu bar or the system tray for everything that needs you. It runs on your computer and talks only to the tools you allow.",
@@ -183,6 +186,7 @@ T = {
         "home_label": "Remora, accueil",
         "get": "Télécharger pour Mac",
         "get_windows": "Télécharger pour Windows",
+        "get_linux": "Linux",
         "get_short": "Télécharger",
         "source": "Code source sur GitHub",
         "footer_blurb": "Une boîte de réception dans la barre des menus ou la zone de notification pour tout ce qui a besoin de vous. Elle tourne sur votre ordinateur et ne parle qu’aux outils autorisés.",
@@ -428,6 +432,11 @@ def windows_button(lang: str, cls: str = "btn btn-secondary btn-lg") -> str:
     return f'<a class="{cls}" href="{EXE}" data-download="windows">{T[lang]["get_windows"]}</a>'
 
 
+def linux_button(lang: str, cls: str = "btn btn-secondary btn-lg") -> str:
+    """The AppImage, which updates itself; the .deb is in the FAQ and the guide."""
+    return f'<a class="{cls}" href="{APPIMAGE}" data-download="linux">{T[lang]["get_linux"]}</a>'
+
+
 def faq(items: list[tuple[str, str]]) -> str:
     return (
         '<div class="faq">'
@@ -487,7 +496,7 @@ def home(lang: str) -> str:
     t = T[lang]
     if lang == "en":
         c = dict(
-            eyebrow="Menu bar inbox · macOS · Windows",
+            eyebrow="Menu bar inbox · macOS · Windows · Linux",
             h1='Everything that<br /><span class="mark">needs you.</span>',
             lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions, Linear and Jira issues, Notion tasks, Outlook and Teams, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
             secondary="Privacy & compliance",
@@ -496,7 +505,7 @@ def home(lang: str) -> str:
             desk_note="The real app, with sample data. One fish in the menu bar, one count per tool.",
             facts=[
                 ("0", "servers, accounts or trackers of ours"),
-                ("6", f"tools: {TOOLS['en']}"),
+                ("7", f"tools: {TOOLS['en']}"),
                 ("5", "items per verb, the rest folded away"),
                 ("100%", "of sorting and ranking done on your computer"),
             ],
@@ -633,6 +642,10 @@ def home(lang: str) -> str:
                     f'Yes, in preview: <a href="{EXE}">Remora-Setup.exe</a> for Windows 10 or 11, installed for your user only (no admin rights). Same rules, the same tools and the same assistant (Claude or OpenAI-compatible), same compliance model, with the policy in the registry for Group Policy or Intune. It sorts messages with keywords only. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway.',
                 ),
                 (
+                    "Is there a Linux version?",
+                    f'Yes, in preview and community supported: <a href="{APPIMAGE}">Remora-x86_64.AppImage</a>, which updates itself, or <a href="{DEB}">Remora-amd64.deb</a> for Ubuntu and Debian. The same app as on Windows, with the policy in <code>/etc/remora/policy.json</code>. It needs WebKitGTK 4.1, a keyring (GNOME Keyring, KWallet or KeePassXC) and a tray, or it opens as a window. <a href="/docs/guide/getting-started#on-linux-preview">Getting started on Linux</a>.',
+                ),
+                (
                     "Why does macOS ask for my Keychain password?",
                     "Remora keeps all your tokens in one Keychain item. macOS asks once per new build of an app that isn’t signed by a registered developer. Choose Always Allow.",
                 ),
@@ -650,7 +663,7 @@ def home(lang: str) -> str:
         )
     else:
         c = dict(
-            eyebrow="Barre des menus · macOS · Windows",
+            eyebrow="Barre des menus · macOS · Windows · Linux",
             h1='Tout ce qui a<br /><span class="mark">besoin de vous.</span>',
             lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack, tickets Linear et Jira, tâches Notion, Outlook et Teams, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
             secondary="Confidentialité et conformité",
@@ -659,7 +672,7 @@ def home(lang: str) -> str:
             desk_note="La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.",
             facts=[
                 ("0", "serveur, compte ou traceur de notre part"),
-                ("6", f"outils : {TOOLS['fr']}"),
+                ("7", f"outils : {TOOLS['fr']}"),
                 ("5", "éléments par verbe, le reste replié"),
                 ("100 %", "du tri et du classement faits sur votre ordinateur"),
             ],
@@ -812,6 +825,10 @@ def home(lang: str) -> str:
                     f'Oui, en aperçu : <a href="{EXE}">Remora-Setup.exe</a> pour Windows 10 ou 11, installée pour votre utilisateur seulement (sans droits d’administrateur). Mêmes règles, les mêmes outils et le même assistant (Claude ou OpenAI-compatible), même modèle de conformité, avec la politique dans le registre pour la stratégie de groupe ou Intune. Elle trie les messages par mots-clés seulement. L’installeur n’est pas encore signé : si SmartScreen prévient, cliquez sur Informations complémentaires → Exécuter quand même.',
                 ),
                 (
+                    "Existe-t-il une version Linux ?",
+                    f'Oui, en aperçu et soutenue par la communauté : <a href="{APPIMAGE}">Remora-x86_64.AppImage</a>, qui se met à jour seule, ou <a href="{DEB}">Remora-amd64.deb</a> pour Ubuntu et Debian. La même app que sous Windows, avec la politique dans <code>/etc/remora/policy.json</code>. Elle demande WebKitGTK 4.1, un trousseau (GNOME Keyring, KWallet ou KeePassXC) et une zone de notification, sinon elle s’ouvre en fenêtre. <a href="/docs/fr/guide/premiers-pas#sous-linux-apercu">Premiers pas sous Linux</a>.',
+                ),
+                (
                     "Pourquoi macOS demande-t-il le mot de passe du trousseau ?",
                     "Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une app qui n’est pas signée par un développeur enregistré. Choisissez Toujours autoriser.",
                 ),
@@ -887,7 +904,7 @@ def home(lang: str) -> str:
             <span class="eyebrow">{c["eyebrow"]}</span>
             <h1 id="hero-title">{c["h1"]}</h1>
             <p class="lead">{c["lead"]}</p>
-            <div class="ctas">{cta_button(lang)}{windows_button(lang)}</div>
+            <div class="ctas">{cta_button(lang)}{windows_button(lang)}{linux_button(lang)}</div>
             <p class="cta-note">{c["note"]}</p>
             <p class="notice">{icon("info", 18)}<span>{c["notice"]}</span></p>
           </div>
@@ -963,7 +980,7 @@ def home(lang: str) -> str:
         <div class="wrap">
           <h2 id="final-title">{c["final_title"]}</h2>
           <p class="lead">{c["final_lead"]}</p>
-          <div class="ctas">{cta_button(lang)}{windows_button(lang, "btn btn-ink btn-lg")}</div>
+          <div class="ctas">{cta_button(lang)}{windows_button(lang, "btn btn-ink btn-lg")}{linux_button(lang, "btn btn-ink btn-lg")}</div>
         </div>
       </section>
 """
@@ -1290,7 +1307,7 @@ def features(lang: str) -> str:
           <span class="eyebrow">{t["nav"]["features"]}</span>
           <h1 id="page-title">{title}</h1>
           <p class="lead">{lead}</p>
-          <div class="ctas">{cta_button(lang)}{windows_button(lang)}</div>
+          <div class="ctas">{cta_button(lang)}{windows_button(lang)}{linux_button(lang)}</div>
         </div>
       </section>
       <nav class="subnav" aria-label="{t["nav"]["features"]}"><div class="wrap"><ul>{subnav}</ul></div></nav>

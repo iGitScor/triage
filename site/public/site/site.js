@@ -20,13 +20,20 @@
     if (link) save(link.getAttribute('data-lang'))
   })
 
-  // The page offers the Mac download first; on Windows, the Windows one takes its place and style, the Mac one follows.
+  // The page offers the Mac download first; on Windows or Linux, that system's download takes its place and style,
+  // the Mac one follows.
   const platform = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent
-  if (/^win|windows/i.test(platform)) {
+  const system = /^win|windows/i.test(platform)
+    ? 'windows'
+    : /linux/i.test(platform) && !/android/i.test(platform)
+      ? 'linux'
+      : null
+  if (system) {
+    const file = system === 'windows' ? 'Remora-Setup.exe' : 'Remora-x86_64.AppImage'
     for (const mac of document.querySelectorAll('a[data-download="mac"]')) {
-      const other = mac.parentElement.querySelector('a[data-download="windows"]')
+      const other = mac.parentElement.querySelector(`a[data-download="${system}"]`)
       if (!other) {
-        mac.setAttribute('href', mac.getAttribute('href').replace('Remora.dmg', 'Remora-Setup.exe'))
+        mac.setAttribute('href', mac.getAttribute('href').replace('Remora.dmg', file))
         continue
       }
       const style = mac.className

@@ -1,6 +1,6 @@
 ---
 title: Deploying Remora
-description: Distribute Remora to Macs and Windows PCs. The DMG and installer and their checksums, Gatekeeper and the Keychain prompt, updates, and a signed copy.
+description: Distribute Remora to Macs, Windows PCs and Linux desktops. The DMG and installer and their checksums, Gatekeeper and the Keychain prompt, updates, and a signed copy.
 ---
 
 # Deploying Remora
@@ -72,6 +72,14 @@ Each release also has **Remora-Setup.exe** (with its SHA-256, SBOM and attestati
 SmartScreen warns once (*More info* → *Run anyway*); to avoid that, sign it with your organization’s code-signing
 certificate before deploying. The policy is set in the registry: see [MDM](./mdm#windows-group-policy-or-intune).
 
+## Linux (preview)
+
+Each release also has **Remora-x86_64.AppImage** and **Remora-amd64.deb**, each with its SHA-256, SBOM and
+attestation, always at `https://github.com/iGitScor/triage/releases/latest/download/Remora-x86_64.AppImage` and `https://github.com/iGitScor/triage/releases/latest/download/Remora-amd64.deb`. The `.deb`
+installs `remora` system-wide for Ubuntu and Debian; the AppImage runs from anywhere and updates itself. Its data is
+in `~/.local/share/fr.igitscor.remora`, readable by the user only, and its tokens in the Secret Service (GNOME
+Keyring, KWallet or KeePassXC). The policy is a root-owned file: see [MDM](./mdm#linux-a-policy-file).
+
 ## Updates
 
 Off by default: nothing calls home. A user can turn on *Check for updates automatically* (Settings → General);
@@ -87,3 +95,6 @@ Quit Remora and delete the app. Its data is in `~/Library/Application Support/Re
 
 On Windows, uninstall Remora from Settings → Apps; the uninstaller's “delete app data” option removes
 `%LOCALAPPDATA%\fr.igitscor.remora`. The tokens stay in the Credential Manager unless *Erase local data…* ran first.
+
+On Linux, remove the package (`sudo apt remove remora`) or the AppImage; its data is in
+`~/.local/share/fr.igitscor.remora`, and *Erase local data…* first removes its tokens from the keyring.
