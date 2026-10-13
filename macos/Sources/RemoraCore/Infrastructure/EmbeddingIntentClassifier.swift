@@ -57,11 +57,35 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     private let neighbors = 3
     /// Minimum gap between the two classes' distances (Apple's cosine scale) to trust the answer.
     private let margin: Double
+
+    /// A language's sentence embedding and the examples' vectors in it, computed once: comparing with
+    /// `distance(between:and:)` embedded every example again for every message.
+    private final class Model: @unchecked Sendable {
+        let embedding: NLEmbedding
+        let examples: [TextIntent: [[Double]]]
+        /// `NLEmbedding` isn't documented as thread-safe: one message at a time per language, without holding up
+        /// the cache or the other language.
+        let lock = NSLock()
+
+        init(embedding: NLEmbedding, examples: [TextIntent: [[Double]]]) {
+            self.embedding = embedding
+            self.examples = examples
+        }
+
+        func vector(for text: String) -> [Double]? {
+            lock.lock()
+            defer { lock.unlock() }
+            return embedding.vector(for: text)
+        }
+    }
+
+    /// Guards `models` and `answers`, held only to read or write them (ML-09): a model loads, and a message is
+    /// classified, outside it.
     private let lock = NSLock()
-    private var embeddings: [NLLanguage: NLEmbedding] = [:]
-    /// The examples' vectors, computed once per language: comparing with `distance(between:and:)` embedded every
-    /// example again for every message.
-    private var exampleVectors: [NLLanguage: [TextIntent: [[Double]]]] = [:]
+    /// Loading a model (possibly downloaded the first time) happens once per language, here.
+    private let loading = NSLock()
+    /// Nil when the language has no model on this Mac.
+    private var models: [NLLanguage: Model?] = [:]
     /// The same messages come back on every refresh: answer each one once.
     private var answers: [String: TextIntent?] = [:]
 
@@ -69,23 +93,31 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         self.margin = margin
     }
 
+    /// Loads both languages' models, so the first refresh doesn't wait for them. Call it off the main thread.
+    public func warmUp() {
+        for language in Self.examples.keys { _ = model(for: language) }
+    }
+
     public func intent(of text: String) -> TextIntent? {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return nil }
-        lock.lock()
-        defer { lock.unlock() }
-        if let answer = answers[text] { return answer }
+        if let answer = cached(text) { return answer }
         let answer = classify(text)
+        lock.lock()
         answers[text] = answer
+        lock.unlock()
         return answer
     }
 
+    private func cached(_ text: String) -> TextIntent?? {
+        lock.lock()
+        defer { lock.unlock() }
+        return answers[text]
+    }
+
     private func classify(_ text: String) -> TextIntent? {
-        let language = Self.language(of: text)
-        guard let embedding = embedding(for: language),
-            let examples = vectors(of: language, in: embedding),
-            let message = embedding.vector(for: text)
-        else { return nil }
+        guard let model = model(for: Self.language(of: text)), let message = model.vector(for: text) else { return nil }
+        let examples = model.examples
 
         func distance(to intent: TextIntent) -> Double {
             let nearest = (examples[intent] ?? []).map { Self.cosineDistance(message, $0) }.sorted().prefix(neighbors)
@@ -97,12 +129,30 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         return ranked[0].0
     }
 
-    private func vectors(of language: NLLanguage, in embedding: NLEmbedding) -> [TextIntent: [[Double]]]? {
-        if let cached = exampleVectors[language] { return cached }
-        guard let examples = Self.examples[language] else { return nil }
+    private func model(for language: NLLanguage) -> Model? {
+        lock.lock()
+        let known = models[language]
+        lock.unlock()
+        if let known { return known }
+        loading.lock()
+        defer { loading.unlock() }
+        lock.lock()
+        let loadedMeanwhile = models[language]
+        lock.unlock()
+        if let loadedMeanwhile { return loadedMeanwhile }
+        let model = Self.load(language)
+        lock.lock()
+        models[language] = .some(model)
+        lock.unlock()
+        return model
+    }
+
+    private static func load(_ language: NLLanguage) -> Model? {
+        guard let embedding = NLEmbedding.sentenceEmbedding(for: language), let examples = examples[language] else {
+            return nil
+        }
         let vectors = examples.mapValues { sentences in sentences.compactMap { embedding.vector(for: $0) } }
-        exampleVectors[language] = vectors
-        return vectors
+        return Model(embedding: embedding, examples: vectors)
     }
 
     /// The distance `NLEmbedding.distance(between:and:)` gives with its cosine type, measured: √(2 · (1 − cos(a, b))),
@@ -120,13 +170,6 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         guard normA > 0, normB > 0 else { return .infinity }
         let cosine = dot / (normA.squareRoot() * normB.squareRoot())
         return (2 * max(0, 1 - cosine)).squareRoot()
-    }
-
-    private func embedding(for language: NLLanguage) -> NLEmbedding? {
-        if let cached = embeddings[language] { return cached }
-        let loaded = NLEmbedding.sentenceEmbedding(for: language)
-        embeddings[language] = loaded
-        return loaded
     }
 
     static func language(of text: String) -> NLLanguage {

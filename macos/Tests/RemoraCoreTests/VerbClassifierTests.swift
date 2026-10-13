@@ -130,6 +130,35 @@ struct VerbClassifierTests {
         #expect(correct >= 8, "correct: \(correct) of \(cases.count)")
     }
 
+    /// ML-09: messages classified at the same time, while the models load, get the answers they get one at a time.
+    @Test(
+        .enabled(
+            if: NLEmbedding.sentenceEmbedding(for: .english) != nil
+                && NLEmbedding.sentenceEmbedding(for: .french) != nil))
+    func concurrentMessagesGetTheSameAnswers() {
+        let texts = [
+            "Would love your feedback on the new onboarding flow", "The incident is resolved",
+            "Ton retour sur la maquette serait précieux", "La démo s'est très bien passée",
+            "Need your sign-off on the budget", "Les accès sont rétablis pour tout le monde",
+        ]
+        let expected = texts.map { EmbeddingIntentClassifier().intent(of: $0) }
+        let shared = EmbeddingIntentClassifier()
+        final class Answers: @unchecked Sendable {
+            var values = [TextIntent??](repeating: nil, count: 60)
+            let lock = NSLock()
+        }
+        let answers = Answers()
+        DispatchQueue.concurrentPerform(iterations: 60) { i in
+            let answer = shared.intent(of: texts[i % texts.count])
+            answers.lock.lock()
+            answers.values[i] = .some(answer)
+            answers.lock.unlock()
+        }
+        for (i, answer) in answers.values.enumerated() {
+            #expect(answer == .some(expected[i % texts.count]), "\(texts[i % texts.count])")
+        }
+    }
+
     /// The examples are embedded once; the distance computed from their vectors must be Apple's, so the
     /// calibrated margin keeps its meaning.
     @Test(.enabled(if: NLEmbedding.sentenceEmbedding(for: .english) != nil))

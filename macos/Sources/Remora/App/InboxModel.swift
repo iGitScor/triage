@@ -80,9 +80,7 @@ final class InboxModel {
     let updater: Updater
     @ObservationIgnored private let http: HTTPClient
     /// Keywords, then on-device sentence embeddings. Slow on first sight of a message, so it runs off the main thread.
-    @ObservationIgnored private let classifier = VerbClassifier([
-        KeywordIntentClassifier(), EmbeddingIntentClassifier(),
-    ])
+    @ObservationIgnored private let classifier: VerbClassifier
     @ObservationIgnored private let accountsStore: JSONStore<[Account]>
     @ObservationIgnored private let statesStore: JSONStore<[String: ItemState]>
     @ObservationIgnored private let cacheStore: JSONStore<[UUID: [InboxItem]]>
@@ -114,6 +112,10 @@ final class InboxModel {
     @ObservationIgnored private var batchNeeds: (insights: Bool, ranker: Bool) = (false, false)
 
     init(environment: AppEnvironment) {
+        let embeddings = EmbeddingIntentClassifier()
+        classifier = VerbClassifier([KeywordIntentClassifier(), embeddings])
+        // The sentence models load in the background at launch, so the first refresh doesn't wait for them (ML-09).
+        Task.detached(priority: .utility) { embeddings.warmUp() }
         self.environment = environment
         http = environment.http
         updater = Updater(system: environment.updates)
