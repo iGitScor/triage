@@ -56,6 +56,23 @@ struct ClaudeCodePluginTests {
         #expect(!arguments.contains { $0.contains(item.title) }, "no title on the command line")
     }
 
+    @Test func runsAtLowEffortLikeTheAPIAndWithoutItOnAnOlderClaude() async throws {
+        let answer = #"{"is_error": false, "structured_output": {"summary": "ok"}}"#
+        let runner = RecordingRunner(output: answer)
+        _ = try await ClaudeCodePlugin(config: config(["path": fakeClaude()]), runner: runner).digest(
+            [item], topic: "x", now: .now)
+        let arguments = await runner.arguments
+        #expect(arguments[arguments.firstIndex(of: "--effort")! + 1] == "low")
+        let older = RecordingRunner(output: answer, version: "2.0.1 (Claude Code)", knowsEffort: false)
+        let summary = try await ClaudeCodePlugin(config: config(["path": fakeClaude()]), runner: older).digest(
+            [item], topic: "x", now: .now)
+        #expect(summary == "ok")
+        let retried = await older.arguments
+        #expect(!retried.contains("--effort") && retried.contains("--json-schema"), "run again without it")
+        #expect(ClaudeCodePlugin.rejectsEffort("error: unknown option '--effort'"))
+        #expect(!ClaudeCodePlugin.rejectsEffort("Not logged in"))
+    }
+
     // MARK: Finding and running claude
 
     @Test func runsClaudeWithItsOwnFoldersFirstOnPATH() async throws {
@@ -190,19 +207,25 @@ func makeProgram(named name: String, permissions: Int, folderPermissions: Int = 
 actor RecordingRunner: CommandRunner {
     let output: String
     let version: String
+    /// False: an older `claude` that refuses `--effort`.
+    let knowsEffort: Bool
     private(set) var arguments: [String] = []
     private(set) var environment: [String: String]?
     private(set) var input: Data?
 
-    init(output: String, version: String = "2.1.295 (Claude Code)") {
+    init(output: String, version: String = "2.1.295 (Claude Code)", knowsEffort: Bool = true) {
         self.output = output
         self.version = version
+        self.knowsEffort = knowsEffort
     }
 
     func run(_ executable: URL, arguments: [String], environment: [String: String]?, input: Data?) async throws -> Data
     {
         if arguments == ["--version"] { return Data(version.utf8) }
         self.arguments = arguments
+        if !knowsEffort, arguments.contains("--effort") {
+            throw CommandError.failed(1, "error: unknown option '--effort'")
+        }
         self.environment = environment
         self.input = input
         return Data(output.utf8)

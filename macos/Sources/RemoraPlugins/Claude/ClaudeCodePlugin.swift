@@ -188,7 +188,33 @@ public struct ClaudeCodePlugin: AssistantPlugin {
             "--json-schema", BriefPrompt.schemaJSON(schema),
         ]
         if !model.isEmpty { arguments += ["--model", model] }
+        // As the API: a brief needs no long thinking, and the user's own (often high) effort would spend their plan
+        // and can run past the time limit (AI-25).
+        arguments += effort
         return (arguments, Data(message.utf8))
+    }
+
+    static let effort = ["--effort", "low"]
+
+    /// An older `claude` that doesn't know `--effort` says "unknown option '--effort'": it runs again without.
+    static func rejectsEffort(_ message: String) -> Bool {
+        let lowered = message.lowercased()
+        return lowered.contains("unknown option") && lowered.contains("--effort")
+    }
+
+    static func withoutEffort(_ arguments: [String]) -> [String] {
+        var kept: [String] = []
+        var skip = false
+        for argument in arguments {
+            if skip {
+                skip = false
+            } else if argument == effort[0] {
+                skip = true
+            } else {
+                kept.append(argument)
+            }
+        }
+        return kept
     }
 
     static func parse(_ data: Data, knownIDs: Set<String>) throws -> Brief {
@@ -224,10 +250,16 @@ public struct ClaudeCodePlugin: AssistantPlugin {
             throw HTTPError.api(
                 L("%@ isn’t Claude Code. Run `which claude` in Terminal and paste the path it shows.", executable.path))
         }
+        let environment = Self.environment(for: executable)
         do {
-            return try await runner.run(
-                executable, arguments: command.arguments, environment: Self.environment(for: executable),
-                input: command.input)
+            do {
+                return try await runner.run(
+                    executable, arguments: command.arguments, environment: environment, input: command.input)
+            } catch CommandError.failed(_, let message) where Self.rejectsEffort(message) {
+                return try await runner.run(
+                    executable, arguments: Self.withoutEffort(command.arguments), environment: environment,
+                    input: command.input)
+            }
         } catch CommandError.failed(_, let message) {
             throw Self.explain(message)
         }

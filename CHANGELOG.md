@@ -19,6 +19,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Claude Code: the brief, summaries and triage run at low effort, as with the API, instead of your own setting:
+  quicker, lighter on your plan, and no longer past the time limit on a large inbox.
 - Claude API: a brief with Haiku no longer asks for a fallback model Haiku doesn't have, and when the organization
   lists the allowed models, Anthropic is never asked to answer with another one.
 - Windows and Linux: a confirmation in Settings (Disconnect, Erase local data) takes the keyboard focus, and gives

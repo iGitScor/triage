@@ -96,6 +96,8 @@ pub fn fake_claude() -> PathBuf {
 pub struct RecordingRunner {
     output: Result<String, CommandError>,
     version: String,
+    /// False: an older `claude` that refuses `--effort`.
+    knows_effort: bool,
     arguments: Mutex<Vec<String>>,
     environment: Mutex<HashMap<String, String>>,
     input: Mutex<Vec<u8>>,
@@ -115,10 +117,17 @@ impl RecordingRunner {
         Self::make(Err(CommandError::Failed(1, stderr.into())), "2.1.295 (Claude Code)")
     }
 
+    /// An older `claude`, which doesn't know `--effort` yet.
+    pub fn older(output: &str) -> Arc<Self> {
+        let runner = Self::make(Ok(output.into()), "2.0.1 (Claude Code)");
+        Arc::new(RecordingRunner { knows_effort: false, ..Arc::into_inner(runner).unwrap() })
+    }
+
     fn make(output: Result<String, CommandError>, version: &str) -> Arc<Self> {
         Arc::new(RecordingRunner {
             output,
             version: version.into(),
+            knows_effort: true,
             arguments: Mutex::default(),
             environment: Mutex::default(),
             input: Mutex::default(),
@@ -151,6 +160,9 @@ impl CommandRunner for RecordingRunner {
             return Ok(self.version.clone().into_bytes());
         }
         *self.arguments.lock().unwrap() = arguments.to_vec();
+        if !self.knows_effort && arguments.iter().any(|a| a == "--effort") {
+            return Err(CommandError::Failed(1, "error: unknown option '--effort'".into()));
+        }
         *self.environment.lock().unwrap() = environment.cloned().unwrap_or_default();
         *self.input.lock().unwrap() = input.unwrap_or_default().to_vec();
         self.output.clone().map(String::into_bytes)

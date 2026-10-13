@@ -394,7 +394,31 @@ pub fn command(message: &str, system: &str, schema: &Schema, model: &str) -> Com
     if !model.is_empty() {
         arguments.extend(["--model".to_string(), model.to_string()]);
     }
+    // As the API: a brief needs no long thinking, and the user's own (often high) effort would spend their plan and
+    // can run past the time limit (AI-25).
+    arguments.extend(EFFORT.iter().map(|s| s.to_string()));
     Command { arguments, input: message.as_bytes().to_vec() }
+}
+
+const EFFORT: [&str; 2] = ["--effort", "low"];
+
+/// An older `claude` that doesn't know `--effort` says "unknown option '--effort'": it runs again without.
+pub fn rejects_effort(message: &str) -> bool {
+    let lowered = message.to_lowercase();
+    lowered.contains("unknown option") && lowered.contains("--effort")
+}
+
+fn without_effort(arguments: &[String]) -> Vec<String> {
+    let mut kept = vec![];
+    let mut iter = arguments.iter();
+    while let Some(argument) = iter.next() {
+        if argument == EFFORT[0] {
+            iter.next();
+        } else {
+            kept.push(argument.clone());
+        }
+    }
+    kept
 }
 
 /// The brief's command line.
@@ -507,12 +531,16 @@ impl ClaudeCodePlugin {
             return Err(PluginError::Api(NOT_CLAUDE_CODE.replace("%@", &executable.display().to_string())));
         }
         let environment = environment(&executable, &std::env::vars().collect());
-        self.runner.run(&executable, &command.arguments, Some(&environment), Some(&command.input)).await.map_err(
-            |error| match error {
-                CommandError::Failed(_, message) => explain(&message),
-                other => PluginError::Api(other.to_string()),
-            },
-        )
+        let mut result =
+            self.runner.run(&executable, &command.arguments, Some(&environment), Some(&command.input)).await;
+        if matches!(&result, Err(CommandError::Failed(_, message)) if rejects_effort(message)) {
+            let arguments = without_effort(&command.arguments);
+            result = self.runner.run(&executable, &arguments, Some(&environment), Some(&command.input)).await;
+        }
+        result.map_err(|error| match error {
+            CommandError::Failed(_, message) => explain(&message),
+            other => PluginError::Api(other.to_string()),
+        })
     }
 }
 
@@ -593,6 +621,19 @@ mod tests {
         assert!(!arguments.iter().any(|a| a.contains("Fix login")), "no inbox content on the command line");
         let with_model = super::arguments(&[item("a")], "claude-sonnet-5-5", now(), "en");
         assert_eq!(after(&with_model, "--model"), "claude-sonnet-5-5");
+    }
+
+    #[tokio::test]
+    async fn runs_at_low_effort_like_the_api_and_without_it_on_an_older_claude() {
+        let answer = r#"{"is_error": false, "structured_output": {"summary": "ok"}}"#;
+        let runner = RecordingRunner::new(answer);
+        plugin(&fake_claude(), &runner).digest(&[item("a")], "x", now()).await.unwrap();
+        assert_eq!(after(&runner.arguments(), "--effort"), "low");
+        let older = RecordingRunner::older(answer);
+        assert_eq!(plugin(&fake_claude(), &older).digest(&[item("a")], "x", now()).await.unwrap(), "ok");
+        assert!(!older.arguments().contains(&"--effort".into()), "run again without it");
+        assert!(older.arguments().contains(&"--json-schema".into()));
+        assert!(rejects_effort("error: unknown option '--effort'") && !rejects_effort("Not logged in"));
     }
 
     #[test]
