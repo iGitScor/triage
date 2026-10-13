@@ -29,7 +29,7 @@ pub fn manifest() -> PluginManifest {
     PluginManifest {
         id: "microsoft".into(),
         name: "Microsoft 365".into(),
-        summary: "Flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats."
+        summary: "Preview: flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats."
             .into(),
         fields: vec![
             ConfigField {

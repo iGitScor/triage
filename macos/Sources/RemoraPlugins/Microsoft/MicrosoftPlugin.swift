@@ -17,7 +17,8 @@ public struct MicrosoftPlugin: SourcePlugin {
         id: "microsoft",
         name: "Microsoft 365",
         symbol: "envelope",
-        summary: "Flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats.",
+        summary:
+            "Preview: flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats.",
         fields: [
             ConfigField(
                 key: "tenant", label: "Tenant", placeholder: "your-company.onmicrosoft.com",

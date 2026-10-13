@@ -125,7 +125,7 @@ help of [Claude](https://claude.com) (Claude Code, Anthropic's AI assistant).
 | Slack | Mentions, DMs and replies in your threads from the last N days; your questions still waiting; reactions (✅ moves an item to Done) | User token `xoxp-…`: `search:read`, `channels:history`, `groups:history`, `reactions:read`, `emoji:read` |
 | Linear | Issues assigned to you (priority, due date), unread mentions and comments | Personal API key |
 | Jira (Cloud or Data Center) | Issues assigned to you (priority, due date, status), and recent comments that mention you | Cloud: API token and e-mail; Data Center: personal access token |
-| Microsoft 365 | Flagged mail and unread mail sent to you, invitations you haven’t answered, unread Teams chats | Sign in through the browser, with the app your organization registered in Microsoft Entra |
+| Microsoft 365 (preview) | Flagged mail and unread mail sent to you, invitations you haven’t answered, unread Teams chats | Sign in through the browser, with the app your organization registered in Microsoft Entra |
 | Notion | Open tasks assigned to you in chosen databases | Personal access token, or an internal connection's secret |
 | Claude Code | Brief, summaries, triage, on your Claude plan | Claude Code signed in on this computer |
 | Claude API | Brief, summaries, triage | Anthropic API key |

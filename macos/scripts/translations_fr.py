@@ -23,7 +23,7 @@ FR = {
     "timed out": "délai dépassé",
     "no browser": "aucun navigateur",
     # Microsoft 365
-    "Flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats.": "Les courriels signalés et les courriels non lus qui vous sont adressés, les invitations sans réponse et les conversations Teams non lues.",
+    "Preview: flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats.": "Aperçu : les courriels signalés et les courriels non lus qui vous sont adressés, les invitations sans réponse et les conversations Teams non lues.",
     "Signs in with Microsoft, then reads your flagged and unread mail, unanswered invitations and unread Teams chats from Microsoft Graph.": "Se connecte avec Microsoft, puis lit vos courriels signalés et non lus, les invitations sans réponse et les conversations Teams non lues dans Microsoft Graph.",
     "Ask your IT team for the tenant and the client ID of the app they registered for Remora.": "Demandez à votre service informatique le tenant et l’identifiant client de l’app inscrite pour Remora.",
     "Click “Sign in with Microsoft 365” and sign in in your browser.": "Cliquez sur « Se connecter avec Microsoft 365 » et connectez-vous dans votre navigateur.",

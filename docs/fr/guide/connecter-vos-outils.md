@@ -100,6 +100,10 @@ mention sur un ticket que vous ne suivez pas n’apparaît pas.
 
 ## Microsoft 365
 
+**Aperçu** : construit et testé sur les réponses documentées par Microsoft, pas encore essayé avec une vraie
+organisation. Si quelque chose ne marche pas, [ouvrez une issue](https://github.com/iGitScor/triage/issues) avec le
+message que Remora affiche.
+
 Affiche les courriels Outlook que vous avez signalés (dans *À faire*, avec leur échéance), les courriels non lus de
 la dernière semaine qui vous sont adressés, pas seulement en copie (rangés comme un message direct), les invitations
 des deux prochaines semaines sans réponse (dans *À répondre*, jusqu’au début de la réunion) et vos conversations

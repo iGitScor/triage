@@ -576,7 +576,7 @@ def home(lang: str) -> str:
                 ("jira", "Jira", "Issues assigned to you and comments that mention you. Cloud or Data Center."),
                 (
                     "microsoft",
-                    "Microsoft 365",
+                    "Microsoft 365 (preview)",
                     "Flagged and unread Outlook mail, invitations to answer and unread Teams chats. Signed in through your browser.",
                 ),
                 (
@@ -755,7 +755,7 @@ def home(lang: str) -> str:
                 ),
                 (
                     "microsoft",
-                    "Microsoft 365",
+                    "Microsoft 365 (aperçu)",
                     "Les courriels Outlook signalés et non lus, les invitations à traiter et les conversations Teams non lues. Connexion par votre navigateur.",
                 ),
                 (

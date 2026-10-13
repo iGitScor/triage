@@ -95,6 +95,9 @@ counted. Overdue and due-today issues get a notification. A mention on an issue 
 
 ## Microsoft 365
 
+**Preview**: built and tested against Microsoft’s documented answers, not yet tried with a real organization. If
+something doesn’t work, [open an issue](https://github.com/iGitScor/triage/issues) with the message Remora shows.
+
 Shows the Outlook mail you flagged (in *To do*, with its due date), the unread mail of the last week sent to you, not
 only copied (sorted like a direct message), the invitations of the next two weeks you haven’t answered (in *To
 reply*, until the meeting starts) and your unread Teams chats from the last week. Work and school accounts.
