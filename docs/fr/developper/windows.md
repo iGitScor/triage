@@ -21,7 +21,7 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 |---|---|---|
 | `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 114 |
 | `crates/remora_plugins` | GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365 ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 146 |
-| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 91 |
+| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 92 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 65 |
 
@@ -42,7 +42,7 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 | Mises à jour (sur option), hors ligne et reconnexion, politique de confidentialité | ✓ | ✓ |
 | Boutons dans les notifications (Terminé, Reporter, Commencer sur un rappel) | ✓ | ✓ (sous Linux, là où le bureau les affiche) |
 | Réglages gérés | Toutes les clés de [MDM](/fr/admin/mdm) | Toutes les clés : dans le registre sous Windows, dans `/etc/remora/policy.json` sous Linux |
-| Taille du texte | Réglages → Général | La mise à l’échelle de Windows |
+| Taille du texte | Réglages → Général | Réglages → Général, en plus de la mise à l’échelle de Windows |
 | Nouveau rappel | Glisser le poisson de la barre des menus | Un raccourci global, Ctrl+Alt+R : on ne peut pas glisser une icône de la zone de notification |
 | Terminé, Reporter sur une ligne | Balayer, ou le clavier | Des boutons sur chaque ligne, ou le clavier |
 

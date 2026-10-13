@@ -405,6 +405,9 @@ pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<Sett
 
 #[tauri::command]
 pub async fn set_preferences(app: AppHandle, state: State<'_, AppState>, preferences: Preferences) -> Result<()> {
+    if let Some(window) = app.get_webview_window("main") {
+        crate::set_text_scale(&window, preferences.text_size.scale());
+    }
     let (interval_changed, updates_turned_on) = {
         let mut inbox = state.inbox.lock().await;
         let was = inbox.managed.checks_for_updates(&inbox.preferences);

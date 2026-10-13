@@ -42,6 +42,11 @@ pub const REMINDER_SHORTCUT: &str = "CommandOrControl+Alt+R";
 /// False when another app holds the shortcut: Settings says so.
 pub static SHORTCUT_REGISTERED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
 /// The key a Wayland desktop bound through its portal, as it describes it; else `REMINDER_SHORTCUT`.
+/// The text size's zoom, as `f64` bits: `show` runs without the inbox lock (A11Y-25).
+pub static TEXT_SCALE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0x3FF0_0000_0000_0000);
+/// The window at the default text size, in logical pixels, as tauri.conf.json declares it.
+const WINDOW_SIZE: (f64, f64) = (460.0, 700.0);
+
 pub static PORTAL_SHORTCUT: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
 const TRAY_QUIET: &[u8] = include_bytes!("../icons/tray-quiet.png");
@@ -102,6 +107,7 @@ pub fn run() {
     if demo_mode {
         demo::load(&mut inbox, chrono::Utc::now());
     }
+    let text_scale = inbox.preferences.text_size.scale();
     let state = AppState {
         store: inbox.store(),
         inbox: Mutex::new(inbox),
@@ -198,7 +204,10 @@ pub fn run() {
         ])
         .setup(move |app| {
             let window = main_window(app.handle());
+            set_text_scale(&window, text_scale);
             if window_like {
+                // A window of its own (Linux, `--window`) can be made bigger too.
+                window.set_resizable(true)?;
                 window.set_decorations(true)?;
                 window.set_skip_taskbar(false)?;
                 window.set_always_on_top(false)?;
@@ -279,6 +288,7 @@ fn main_window(app: &AppHandle) -> WebviewWindow {
 /// Shows the popup next to the tray icon: above it on Windows (taskbar at the bottom), below it elsewhere. Linux
 /// never says where its tray is: the window opens centred.
 fn show(window: &WebviewWindow, at_tray: bool) {
+    fit(window);
     if cfg!(target_os = "linux") {
         if !window.is_visible().unwrap_or(false) {
             let _ = window.center();
@@ -289,6 +299,27 @@ fn show(window: &WebviewWindow, at_tray: bool) {
     let _ = window.show();
     let _ = window.unminimize();
     let _ = window.set_focus();
+}
+
+/// Zooms the window's content to the text size, and grows the window with it.
+pub fn set_text_scale(window: &WebviewWindow, scale: f64) {
+    TEXT_SCALE.store(scale.to_bits(), std::sync::atomic::Ordering::Relaxed);
+    let _ = window.set_zoom(scale);
+    fit(window);
+}
+
+/// The window's size for the text size, never larger than the screen's usable area: a 700-pixel window above the
+/// taskbar of a 1080p screen at 150 % would run off the top, where Refresh and Settings are (A11Y-25).
+fn fit(window: &WebviewWindow) {
+    let scale = f64::from_bits(TEXT_SCALE.load(std::sync::atomic::Ordering::Relaxed));
+    let (mut width, mut height) = (WINDOW_SIZE.0 * scale, WINDOW_SIZE.1 * scale);
+    let monitor = window.current_monitor().ok().flatten().or_else(|| window.primary_monitor().ok().flatten());
+    if let Some(monitor) = monitor {
+        let area = monitor.work_area().size.to_logical::<f64>(monitor.scale_factor());
+        width = width.min(area.width - 16.0);
+        height = height.min(area.height - 16.0);
+    }
+    let _ = window.set_size(tauri::LogicalSize::new(width, height));
 }
 
 fn toggle(app: &AppHandle) {

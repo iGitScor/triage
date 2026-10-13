@@ -17,6 +17,26 @@ pub enum Appearance {
     Dark,
 }
 
+/// The text size, as on the Mac (A11Y-25): the window's content is zoomed by `scale`, and the window grows with it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TextSize {
+    #[default]
+    Standard,
+    Large,
+    Larger,
+}
+
+impl TextSize {
+    pub fn scale(self) -> f64 {
+        match self {
+            TextSize::Standard => 1.0,
+            TextSize::Large => 1.15,
+            TextSize::Larger => 1.3,
+        }
+    }
+}
+
 /// The user's settings, as in the macOS app. Missing keys keep their defaults, so adding one never
 /// resets the others.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -33,6 +53,7 @@ pub struct Preferences {
     /// Bring snoozed items back early on new activity.
     pub wake_on_activity: bool,
     pub appearance: Appearance,
+    pub text_size: TextSize,
     pub open_in_apps: bool,
     /// Privacy: plugins allowed to connect (None = all), avatars. External AI has no plugin yet on Windows.
     pub allowed_plugins: Option<Vec<String>>,
@@ -68,6 +89,7 @@ impl Default for Preferences {
             hidden_content_plugins: vec![],
             wake_on_activity: true,
             appearance: Appearance::System,
+            text_size: TextSize::Standard,
             open_in_apps: true,
             allowed_plugins: None,
             allow_external_ai: false,
@@ -91,5 +113,14 @@ mod tests {
         assert_eq!(prefs.refresh_minutes, 15);
         assert!(prefs.notify_arrivals && !prefs.allow_external_ai);
         assert!(!prefs.check_for_updates, "updates are opt-in");
+    }
+
+    #[test]
+    fn the_text_size_is_kept_and_defaults_to_standard() {
+        let old: Preferences = serde_json::from_str(r#"{"appearance": "dark"}"#).unwrap();
+        assert_eq!(old.text_size, TextSize::Standard, "a file from before keeps the default");
+        let larger: Preferences = serde_json::from_str(r#"{"textSize": "larger"}"#).unwrap();
+        assert_eq!((larger.text_size, larger.text_size.scale()), (TextSize::Larger, 1.3));
+        assert!(serde_json::to_string(&larger).unwrap().contains(r#""textSize":"larger""#));
     }
 }

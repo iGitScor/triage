@@ -18,7 +18,7 @@ manques connus ci-dessous demeurent. Cette déclaration est revue à chaque vers
 | Gestes de glisser | Chaque balayage ou glisser a un bouton, un menu ou une touche : un nouveau rappel aussi, depuis le menu du poisson. | Aucun n’est nécessaire : chaque ligne a des boutons, et un nouveau rappel se crée avec Ctrl+Alt+R. |
 | Animations | Réduire les animations : rien ne glisse, ne rebondit ni ne tourne. | Effets d’animation désactivés : de même. |
 | Contraste et couleur | Augmenter le contraste fonce le texte et les bordures ; l’état des relecteurs et des vérifications a un symbole et un libellé, pas seulement une couleur. | Les thèmes de contraste donnent une bordure aux pastilles, puces et cartes ; les états ont un libellé. |
-| Taille du texte | Réglages → Général : par défaut, grande ou plus grande ; aucun texte sous 11 pt. | La mise à l’échelle de Windows. |
+| Taille du texte | Réglages → Général : par défaut, grande ou plus grande ; aucun texte sous 11 pt. | Réglages → Général : par défaut, grande ou plus grande, en plus de la mise à l’échelle de Windows ; la fenêtre grandit avec et ne dépasse jamais de l’écran. |
 | Langue | Anglais et français, chaque écran et chaque libellé lu. | De même. |
 
 ## Comment c’est vérifié
@@ -33,10 +33,7 @@ manques connus ci-dessous demeurent. Cette déclaration est revue à chaque vers
 
 ## Manques connus
 
-- **Windows** : la fenêtre ne s’agrandit pas et le texte ne grossit pas au-delà de la mise à l’échelle de Windows.
-- **macOS** : les éléments du brief ne s’ouvrent qu’au clic.
-
-Chaque manque est suivi, avec sa correction, dans la feuille de route du projet.
+Aucun connu aujourd’hui. Un manque trouvé plus tard est suivi, avec sa correction, dans la feuille de route du projet.
 
 ## Signaler un problème
 

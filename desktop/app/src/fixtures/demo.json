@@ -130,7 +130,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-13T07:54:39.078085Z",
+            "date": "2026-10-13T08:17:51.066672Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -169,7 +169,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-13T07:34:39.078085Z",
+            "date": "2026-10-13T07:57:51.066672Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -202,7 +202,7 @@
               "title": "To review"
             },
             "context": "acme/search #77",
-            "date": "2026-10-12T21:34:39.078085Z",
+            "date": "2026-10-12T21:57:51.066672Z",
             "due": null,
             "id": "demo/11",
             "needsAction": true,
@@ -228,7 +228,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-15T17:54:39.078085Z",
+            "date": "2026-09-15T18:17:51.066672Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -260,7 +260,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-13T07:54:39.078085Z",
+            "date": "2026-10-13T08:17:51.066672Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -299,7 +299,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-13T07:34:39.078085Z",
+            "date": "2026-10-13T07:57:51.066672Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -331,7 +331,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-15T17:54:39.078085Z",
+            "date": "2026-09-15T18:17:51.066672Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -346,7 +346,7 @@
         "kind": "stale"
       }
     ],
-    "lastRefresh": "2026-10-13T12:34:39.095471Z",
+    "lastRefresh": "2026-10-13T12:57:51.084855Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -373,7 +373,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-13T12:04:39.078085Z",
+              "date": "2026-10-13T12:27:51.066672Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -407,7 +407,7 @@
                 "title": "To reply"
               },
               "context": "Direct message",
-              "date": "2026-10-13T10:14:39.078085Z",
+              "date": "2026-10-13T10:37:51.066672Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -463,7 +463,7 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-13T12:22:39.078085Z",
+              "date": "2026-10-13T12:45:51.066672Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
@@ -513,7 +513,7 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-13T10:59:39.078085Z",
+              "date": "2026-10-13T11:22:51.066672Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
@@ -567,7 +567,7 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-13T05:54:39.078085Z",
+              "date": "2026-10-13T06:17:51.066672Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
@@ -627,7 +627,7 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-13T12:26:39.078085Z",
+              "date": "2026-10-13T12:49:51.066672Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
@@ -680,7 +680,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-12T03:14:39.078085Z",
+              "date": "2026-10-12T03:37:51.066672Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -711,7 +711,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-13T07:54:39.078085Z",
+          "date": "2026-10-13T08:17:51.066672Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -750,7 +750,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-13T07:34:39.078085Z",
+          "date": "2026-10-13T07:57:51.066672Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -783,7 +783,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-12T21:34:39.078085Z",
+          "date": "2026-10-12T21:57:51.066672Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -809,7 +809,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-15T17:54:39.078085Z",
+          "date": "2026-09-15T18:17:51.066672Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -844,7 +844,7 @@
                 "title": "Waiting on others"
               },
               "context": "Thread in #design",
-              "date": "2026-10-13T11:39:39.078085Z",
+              "date": "2026-10-13T12:02:51.066672Z",
               "due": null,
               "id": "demo/15",
               "needsAction": false,
@@ -885,7 +885,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-12T11:34:39.078085Z",
+              "date": "2026-10-12T11:57:51.066672Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -924,7 +924,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-11T10:34:39.078085Z",
+              "date": "2026-10-11T10:57:51.066672Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
@@ -959,7 +959,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791878079|",
+          "fingerprint": "1791879471|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -972,7 +972,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791840879|diff",
+          "fingerprint": "1791842271|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
@@ -985,7 +985,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789494879|",
+          "fingerprint": "1789496271|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -998,7 +998,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791876879|checks.passing,diff",
+          "fingerprint": "1791878271|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -1048,6 +1048,7 @@
     "notifyStatusChanges": true,
     "openInApps": true,
     "refreshMinutes": 5,
+    "textSize": "standard",
     "trayCount": "waitingOnMe",
     "wakeOnActivity": true,
     "welcomed": false,
@@ -1056,7 +1057,7 @@
   "snoozeReturns": {
     "focus": "2026-10-14T07:00:00Z",
     "motivation": "2026-10-14T07:00:00Z",
-    "noTime": "2026-10-13T15:45:00Z",
+    "noTime": "2026-10-13T16:00:00Z",
     "notUrgent": "2026-10-19T07:00:00Z",
     "waiting": "2026-10-16T07:00:00Z"
   },

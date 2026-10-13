@@ -18,7 +18,7 @@ statement is reviewed with each release.
 | Drag gestures | Each swipe or drag has a button, menu or key: a new reminder too, from the fish's menu. | None needed: each row has buttons, and a new reminder is Ctrl+Alt+R. |
 | Motion | Reduce Motion: nothing slides, springs or spins. | Animation effects off: the same. |
 | Contrast and colour | Increase Contrast darkens text and borders; reviewer and check states have a symbol and a label, not only a colour. | Contrast themes give pills, chips and cards a border; states have a label. |
-| Text size | Settings → General: default, large or larger; no text under 11 pt. | Windows display scaling. |
+| Text size | Settings → General: default, large or larger; no text under 11 pt. | Settings → General: default, large or larger, on top of Windows display scaling; the window grows with it and never runs past the screen. |
 | Language | English and French, each screen and spoken label. | The same. |
 
 ## How it is checked
@@ -33,10 +33,7 @@ statement is reviewed with each release.
 
 ## Known gaps
 
-- **Windows**: the window can't grow and text can't be made bigger than Windows scaling.
-- **macOS**: the brief's focus items open only with a click.
-
-Each gap is tracked, with its fix, in the project's roadmap.
+None known today. A gap found later is tracked, with its fix, in the project's roadmap.
 
 ## Report a problem
 

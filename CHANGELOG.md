@@ -5,6 +5,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Added
+
+- Windows and Linux: Settings → General → **Text size** (default, large or larger), as on the Mac. The window grows
+  with it, and is never taller than the screen above the taskbar.
+
 ### Fixed
 
 - Windows and Linux: Esc in Settings closes what is open first (a confirmation, a rename, a connect form) before

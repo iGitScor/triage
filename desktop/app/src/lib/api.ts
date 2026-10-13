@@ -227,6 +227,8 @@ export interface Preferences {
   hiddenContentPlugins: string[]
   wakeOnActivity: boolean
   appearance: Appearance
+  /** Zooms the window's content (A11Y-25), as the Mac's Text size. */
+  textSize: 'standard' | 'large' | 'larger'
   openInApps: boolean
   allowedPlugins?: string[] | null
   allowExternalAi: boolean

@@ -126,4 +126,4 @@ The first sync of a new account never notifies: connecting a tool doesn’t floo
 | One counter per source (Mac) | One count per tool in the menu bar, ordered by the most pressing verb |
 | Lime pill when something needs me (Mac) | Highlights the menu bar item when *My turn* isn’t empty |
 | Theme | System, light or dark |
-| Text size (Mac) | Default, large or larger; no text is smaller than 11 pt |
+| Text size | Default, large or larger; on the Mac no text is smaller than 11 pt, on Windows and Linux the window grows with it |

@@ -260,6 +260,15 @@ onMount(() => {
           <option value="dark">{t('Dark')}</option>
         </select>
       </label>
+      <label class="row line">
+        {t('Text size')}
+        <span class="spacer"></span>
+        <select class="field small" value={p.textSize} onchange={(e) => save({ textSize: e.currentTarget.value as Preferences['textSize'] })}>
+          <option value="standard">{t('Default')}</option>
+          <option value="large">{t('Large')}</option>
+          <option value="larger">{t('Larger')}</option>
+        </select>
+      </label>
       <h2 class="section-title">{t('Updates')}</h2>
       <p class="help">{t('Version')} {settings.version} · <button type="button" class="link" onclick={() => api.openNotices()}>{t('Third-party licences')}</button></p>
       {#if update.state === 'unsupported'}
