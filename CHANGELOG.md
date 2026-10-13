@@ -7,6 +7,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Windows and Linux: Esc in Settings closes what is open first (a confirmation, a rename, a connect form) before
+  going back to the inbox; a rename saves with Enter and has Cancel; the search is cleared when the window hides,
+  as on the Mac.
 - *Check every* offers the same choices on Mac, Windows and Linux: 1, 2, 5, 10, 15 and 30 minutes, and 1 hour.
 - Mac: snoozing from a review session no longer starts it over. The time picker opens over the session, which
   keeps its place, the reviews you skipped and its time.

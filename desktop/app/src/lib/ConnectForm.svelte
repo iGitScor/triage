@@ -1,7 +1,7 @@
 <script lang="ts">
 // The connect form, generated from the plugin's manifest: setup steps, the button to its token page,
 // its fields, and a name for the account. Secrets go to the Credential Manager, the rest to accounts.json.
-import { untrack } from 'svelte'
+import { onDestroy, untrack } from 'svelte'
 import { api, type Account, type Managed, type Manifest } from './api'
 import { t, translateMessage } from './i18n'
 
@@ -63,6 +63,11 @@ async function connect() {
     busy = false
   }
 }
+
+// Closed while the browser is still out (Esc, another screen): it stops waiting too.
+onDestroy(() => {
+  if (signingIn) api.cancelSignIn().catch(() => {})
+})
 
 function cancel() {
   if (signingIn) api.cancelSignIn().catch(() => {})

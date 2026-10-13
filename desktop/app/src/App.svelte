@@ -95,7 +95,11 @@ onMount(() => {
   // Relative times ("12m") stay current while the popup is open.
   // Keeps relative times current while the window shows; when it comes back, one reload catches up.
   const timer = setInterval(() => document.visibilityState === 'visible' && reload(), 60_000)
-  const onVisible = () => document.visibilityState === 'visible' && reload()
+  // The search doesn't outlive the window: hidden, it opens again on the whole inbox, as on the Mac (UX-25).
+  const onVisible = () => {
+    if (document.visibilityState === 'hidden') query = ''
+    else reload()
+  }
   document.addEventListener('visibilitychange', onVisible)
   return () => {
     stopAnnouncing()

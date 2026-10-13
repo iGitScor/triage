@@ -29,6 +29,25 @@ let erasing = $state(false)
 let reconnecting: string | null = $state(null)
 let update: UpdateStatus = $state({ state: 'idle' })
 
+/** Esc closes the innermost thing open (a confirmation, a rename, a form) before leaving Settings (UX-25). */
+function onkey(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return
+  if (confirming) confirming = null
+  else if (erasing) erasing = false
+  else if (renaming) renaming = null
+  else if (connecting) connecting = null
+  else if (reconnecting) reconnecting = null
+  else return
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+async function rename(id: string) {
+  await api.renameAccount(id, newName)
+  renaming = null
+  await load()
+}
+
 async function load() {
   ;[sources, accounts, settings, update] = await Promise.all([
     api.sources(),
@@ -87,7 +106,8 @@ onMount(() => {
 })
 </script>
 
-<div class="screen">
+<!-- svelte-ignore a11y_no_static_element_interactions: catches Esc from the controls inside, it isn't one -->
+<div class="screen" onkeydown={onkey}>
   <header class="row top">
     <button type="button" class="icon-button" onclick={onclose} aria-label={t('Back')}><Icon name="back" /></button>
     <h1 tabindex="-1">{t('Settings')}</h1>
@@ -117,8 +137,11 @@ onMount(() => {
           {#each mine as account (account.id)}
             <div class="account row">
               {#if renaming === account.id}
-                <input class="field" bind:value={newName} aria-label={t('Name')} />
-                <button type="button" class="link" onclick={async () => { await api.renameAccount(account.id, newName); renaming = null; await load() }}>{t('Save')}</button>
+                <form class="row grow" onsubmit={(e) => { e.preventDefault(); rename(account.id) }}>
+                  <input class="field grow" bind:value={newName} aria-label={t('Name')} />
+                  <button type="button" class="link" onclick={() => (renaming = null)}>{t('Cancel')}</button>
+                  <button type="submit" class="link">{t('Save')}</button>
+                </form>
               {:else}
                 <span class="grow">
                   <strong>{account.name ?? account.identity ?? source.manifest.name}</strong>
