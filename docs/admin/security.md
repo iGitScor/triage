@@ -1,6 +1,6 @@
 ---
 title: Security overview
-description: One page for a vendor security review of Remora. Architecture, data handled and where it goes, storage and encryption, AI, access control by MDM or Group Policy, signing and integrity, updates, dependencies, vulnerability disclosure, and today's known limits.
+description: One page for a vendor security review of Remora. Architecture, data and destinations, storage, AI, access control, signing, updates and known limits.
 ---
 
 # Security overview

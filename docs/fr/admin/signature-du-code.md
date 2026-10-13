@@ -1,6 +1,6 @@
 ---
 title: Politique de signature du code
-description: Comment les versions de Remora sont signées, aujourd’hui et une fois la signature en place. Aujourd’hui l’app Mac est signée ad hoc et l’installeur Windows n’est pas signé ; ensuite, SignPath sous Windows et le certificat propre à Remora sous macOS. Qui approuve une signature, et l’engagement de confidentialité.
+description: Comment les versions de Remora sont signées aujourd’hui et une fois la signature en place, qui approuve une signature, et l’engagement de confidentialité.
 ---
 
 # Politique de signature du code

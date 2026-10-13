@@ -1,6 +1,6 @@
 ---
 title: Writing a plugin
-description: Add a tool to Remora. The SourcePlugin contract, the manifest that drives the settings form and declares egress, mapping to InboxItems, fixture tests with StubHTTP, translations and the Windows port.
+description: Add a tool to Remora. The SourcePlugin contract, the manifest behind the settings form and egress, InboxItems, fixture tests and the Windows port.
 ---
 
 # Writing a plugin

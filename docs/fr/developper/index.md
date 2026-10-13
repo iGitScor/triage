@@ -1,6 +1,6 @@
 ---
 title: Architecture
-description: Comment Remora pour macOS est construite. Trois modules Swift dont les dépendances pointent vers l’intérieur, le domaine et ses règles, l’actualisation, les règles de la boîte et la barre des menus.
+description: Comment Remora pour macOS est construite. Trois modules Swift, le domaine et ses règles, l’actualisation, les règles de la boîte et la barre des menus.
 ---
 
 # Architecture

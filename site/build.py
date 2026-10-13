@@ -14,6 +14,7 @@ import json
 import pathlib
 import plistlib
 import re
+import subprocess
 
 ROOT = pathlib.Path(__file__).parent / "public"
 ORIGIN = "https://triage.iscor.me"
@@ -101,7 +102,8 @@ T = {
     "en": {
         "locale": "en_US",
         "tagline": "Everything that needs you. Nothing that doesn’t.",
-        "description": f"Remora is an inbox in your Mac’s menu bar or the system tray on Windows and Linux: {WHAT['en']}, sorted by what you have to do. On-device, no account, only the tools you allow.",
+        # Short enough to show whole in search results (MKT-04).
+        "description": "Remora: one inbox in your menu bar or tray for code reviews, Slack, Linear, Jira, Notion and Microsoft 365, sorted by what you have to do. On-device.",
         "skip": "Skip to content",
         "nav": {"features": "Features", "privacy": "Privacy & compliance"},
         "nav_label": "Main navigation",
@@ -152,11 +154,11 @@ T = {
         "seo": {
             "home": (
                 f"Remora — One inbox for {TOOLS['en']}",
-                f"{WHAT['en'].capitalize()} in one inbox in your Mac’s menu bar or the Windows and Linux tray, sorted by what to do. Free, open source, on-device, no account.",
+                "Code reviews, Slack, Linear, Jira, Notion and Microsoft 365 in one inbox in your menu bar or tray, sorted by what to do. Free, open source, no account.",
             ),
             "features": (
                 "Features — Remora, the menu bar inbox for developers",
-                "Verbs instead of apps, Done and Pin, snooze with a reason, reminders from the menu bar or a shortcut, review prep and sessions, a waiting assistant. All of Remora.",
+                "Verbs instead of apps, Done and Pin, snooze with a reason, reminders, review prep and sessions, a waiting assistant. All of Remora.",
             ),
             "privacy": (
                 "Privacy & compliance — Remora sends nothing but to your tools",
@@ -173,7 +175,7 @@ T = {
     "fr": {
         "locale": "fr_FR",
         "tagline": "Tout ce qui a besoin de vous. Rien de plus.",
-        "description": f"Remora est une boîte de réception dans la barre des menus du Mac ou la zone de notification de Windows et Linux : {WHAT['fr']}, rangés par ce que vous avez à faire. Sur l’appareil, sans compte, seulement les outils autorisés.",
+        "description": "Remora : une boîte dans la barre des menus ou la zone de notification pour relectures, Slack, Linear, Jira, Notion et Microsoft 365, rangées par action.",
         "skip": "Aller au contenu",
         "nav": {"features": "Fonctionnalités", "privacy": "Confidentialité et conformité"},
         "nav_label": "Navigation principale",
@@ -224,11 +226,11 @@ T = {
         "seo": {
             "home": (
                 f"Remora — Une seule boîte pour {TOOLS['fr']}",
-                f"{WHAT['fr'].capitalize()} dans une seule boîte, dans la barre des menus du Mac ou la zone de notification de Windows et Linux. Gratuit, open source, sans compte.",
+                "Relectures, Slack, Linear, Jira, Notion et Microsoft 365 dans une seule boîte, barre des menus ou zone de notification. Gratuit, open source, sans compte.",
             ),
             "features": (
                 "Fonctionnalités — Remora, la boîte de réception des développeurs",
-                "Des verbes plutôt que des applis, Terminé et Épingler, reporter avec une raison, des rappels depuis la barre des menus ou un raccourci, préparer ses relectures. Tout Remora.",
+                "Des verbes plutôt que des applis, Terminé et Épingler, reporter avec une raison, des rappels, préparer ses relectures. Tout Remora.",
             ),
             "privacy": (
                 "Confidentialité et conformité — Remora n’envoie rien ailleurs",
@@ -1706,9 +1708,9 @@ def privacy(lang: str) -> str:
 # ---------------------------------------------------------------- bilingual pages
 
 
-def bilingual_head(title: str, description: str, extra: str = "") -> str:
+def bilingual_head(title: str, description: str, extra: str = "", lang: str = "fr") -> str:
     return f"""<!doctype html>
-<html lang="fr"{extra}>
+<html lang="{lang}"{extra}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1726,10 +1728,13 @@ def bilingual_head(title: str, description: str, extra: str = "") -> str:
 
 def picker() -> str:
     return (
+        # The x-default page every unmatched visitor gets: English first, both languages side by side, and a
+        # description short enough to show whole in results (MKT-04).
         bilingual_head(
-            "Remora — Choisissez votre langue · Choose your language",
-            T["fr"]["description"] + " " + T["en"]["description"],
+            "Remora — Choose your language · Choisissez votre langue",
+            PICKER_DESCRIPTION,
             " data-lang-picker",
+            lang="en",
         )
         + f"""    <link rel="canonical" href="{ORIGIN}/" />
     <link rel="alternate" hreflang="fr" href="{ORIGIN}/fr/" />
@@ -1740,12 +1745,12 @@ def picker() -> str:
   <body>
     <main id="main" class="center-page">
       <div class="stack">
-        {brand("fr")}
-        <h1>{T["fr"]["tagline"]}</h1>
-        <p class="lead" lang="en">{T["en"]["tagline"]}</p>
+        {brand("en")}
+        <h1>{T["en"]["tagline"]}</h1>
+        <p class="lead" lang="fr">{T["fr"]["tagline"]}</p>
         <div class="ctas">
-          <a class="btn btn-primary btn-lg" href="/fr/" hreflang="fr" data-lang="fr">Français</a>
-          <a class="btn btn-secondary btn-lg" href="/en/" hreflang="en" lang="en" data-lang="en">English</a>
+          <a class="btn btn-primary btn-lg" href="/en/" hreflang="en" data-lang="en">English</a>
+          <a class="btn btn-primary btn-lg" href="/fr/" hreflang="fr" lang="fr" data-lang="fr">Français</a>
         </div>
       </div>
     </main>
@@ -1790,9 +1795,28 @@ def not_found() -> str:
     )
 
 
+PICKER_DESCRIPTION = (
+    "Remora, one inbox for what needs you: code reviews, Slack, Linear, Jira, Notion and Microsoft 365. "
+    "English or French · Anglais ou français."
+)
+
+
+def copy_date() -> str:
+    """When the pages' copy last changed (this file, in git), not the build date: a lastmod that changes at every
+    build tells search engines nothing (MKT-04)."""
+    try:
+        date = subprocess.run(
+            ["git", "log", "-1", "--format=%cs", "--", __file__], capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        date = ""
+    return date or datetime.date.today().isoformat()
+
+
 def sitemap() -> str:
+    lastmod = copy_date()
     urls = "".join(
-        f"  <url><loc>{ORIGIN}{paths[lang]}</loc><lastmod>{datetime.date.today().isoformat()}</lastmod>"
+        f"  <url><loc>{ORIGIN}{paths[lang]}</loc><lastmod>{lastmod}</lastmod>"
         + "".join(
             f'<xhtml:link rel="alternate" hreflang="{code}" href="{ORIGIN}{paths[code]}"/>' for code in ("en", "fr")
         )
@@ -1846,4 +1870,7 @@ if __name__ == "__main__":
     write("404.html", not_found())
     write("sitemap.xml", sitemap())
     write("llms.txt", llms())
-    write("robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {ORIGIN}/sitemap.xml\n")
+    # The documentation has its own sitemap (VitePress): advertised too, so its pages aren't found by crawling only.
+    write(
+        "robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {ORIGIN}/sitemap.xml\nSitemap: {ORIGIN}/docs/sitemap.xml\n"
+    )

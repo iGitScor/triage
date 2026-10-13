@@ -1,6 +1,6 @@
 ---
 title: Flux de données
-description: Chaque flux réseau de Remora (GitHub, GitLab, Slack, Linear, Notion, l’assistant, avatars, mises à jour), ce que chacun envoie, exactement ce qui parvient à l’assistant, ce qui est stocké sur l’ordinateur et où, et comment c’est appliqué.
+description: Chaque flux réseau de Remora, ce qu’il envoie, ce qui parvient à l’assistant, ce qui est stocké sur l’ordinateur, et comment c’est appliqué.
 ---
 
 # Flux de données

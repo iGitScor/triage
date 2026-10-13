@@ -1,6 +1,6 @@
 ---
 title: Écrire une extension
-description: Ajouter un outil à Remora. Le contrat SourcePlugin, le manifeste qui génère le formulaire de réglages et déclare les sorties réseau, la conversion en InboxItem, les tests sur fixtures avec StubHTTP, les traductions et le portage Windows.
+description: Ajouter un outil à Remora. Le contrat SourcePlugin, le manifeste du formulaire et des sorties réseau, les InboxItem, les tests et le portage Windows.
 ---
 
 # Écrire une extension

@@ -1,6 +1,6 @@
 ---
 title: Deploying Remora
-description: Distribute Remora to your Macs and Windows PCs. The release DMG and Windows installer and their checksums, Gatekeeper and the Keychain prompt with the current ad hoc signature, updates, and building a Developer ID signed copy.
+description: Distribute Remora to Macs and Windows PCs. The DMG and installer and their checksums, Gatekeeper and the Keychain prompt, updates, and a signed copy.
 ---
 
 # Deploying Remora

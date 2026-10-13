@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://triage.iscor.me/sitemap.xml
+Sitemap: https://triage.iscor.me/docs/sitemap.xml

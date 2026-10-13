@@ -1,6 +1,6 @@
 # Remora
 
-> Remora is an inbox in your Mac’s menu bar or the system tray on Windows and Linux: code reviews, merge requests, Slack mentions, Linear and Jira issues, Notion tasks, and Outlook and Teams, sorted by what you have to do. On-device, no account, only the tools you allow.
+> Remora: one inbox in your menu bar or tray for code reviews, Slack, Linear, Jira, Notion and Microsoft 365, sorted by what you have to do. On-device.
 
 Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
 (To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
@@ -9,8 +9,8 @@ app for Windows and Linux is in preview. French pages: https://triage.iscor.me/f
 
 ## Pages
 
-- [Remora — One inbox for GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365](https://triage.iscor.me/en/): Code reviews, merge requests, slack mentions, linear and jira issues, notion tasks, and outlook and teams in one inbox in your Mac’s menu bar or the Windows and Linux tray, sorted by what to do. Free, open source, on-device, no account.
-- [Features — Remora, the menu bar inbox for developers](https://triage.iscor.me/en/features): Verbs instead of apps, Done and Pin, snooze with a reason, reminders from the menu bar or a shortcut, review prep and sessions, a waiting assistant. All of Remora.
+- [Remora — One inbox for GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365](https://triage.iscor.me/en/): Code reviews, Slack, Linear, Jira, Notion and Microsoft 365 in one inbox in your menu bar or tray, sorted by what to do. Free, open source, no account.
+- [Features — Remora, the menu bar inbox for developers](https://triage.iscor.me/en/features): Verbs instead of apps, Done and Pin, snooze with a reason, reminders, review prep and sessions, a waiting assistant. All of Remora.
 - [Privacy & compliance — Remora sends nothing but to your tools](https://triage.iscor.me/en/privacy): No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow.
 
 ## Links

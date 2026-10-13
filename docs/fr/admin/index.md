@@ -1,6 +1,6 @@
 ---
 title: DSI et conformité
-description: Ce qu’une revue sécurité ou conformité de Remora doit savoir. Ni serveur, ni compte, ni télémétrie, des destinations déclarées et contrôlées dans le code, l’IA externe désactivée par défaut, une politique verrouillable par MDM ou stratégie de groupe.
+description: Ce qu’une revue sécurité de Remora doit savoir. Ni serveur, ni compte, ni télémétrie, des destinations contrôlées, l’IA coupée par défaut.
 ---
 
 # DSI et conformité

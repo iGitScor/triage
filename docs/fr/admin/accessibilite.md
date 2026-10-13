@@ -1,6 +1,6 @@
 ---
 title: Accessibilité
-description: La déclaration d’accessibilité de Remora. La norme visée (WCAG 2.1 AA), ce que prennent en charge les apps Mac et Windows (VoiceOver, Narrateur, clavier, animations réduites, contraste), comment c’est vérifié, les manques connus, et comment signaler un problème.
+description: La déclaration d’accessibilité de Remora. WCAG 2.1 AA, ce que gèrent les apps Mac et Windows, comment c’est vérifié, les manques, et les signaler.
 ---
 
 # Accessibilité

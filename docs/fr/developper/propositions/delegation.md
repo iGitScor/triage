@@ -1,6 +1,6 @@
 ---
 title: "Délégation et équipes"
-description: Une proposition, pas encore réalisée. Déléguer un élément avec un message de passation rédigé, l’attente regroupée par personne, et des fonctions d’équipe plus légères, le tout en local.
+description: Une proposition, pas encore réalisée. Déléguer un élément avec un message de passation, l’attente regroupée par personne, en local.
 ---
 
 # Proposition : délégation et fonctions d’équipe

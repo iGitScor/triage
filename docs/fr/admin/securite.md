@@ -1,6 +1,6 @@
 ---
 title: Synthèse sécurité
-description: Une page pour l’évaluation sécurité de Remora par un fournisseur. Architecture, données traitées et destinations, stockage et chiffrement, IA, contrôle par MDM ou stratégie de groupe, signature et intégrité, mises à jour, dépendances, signalement des vulnérabilités, et limites actuelles.
+description: Une page pour l’évaluation sécurité de Remora. Architecture, données et destinations, stockage, IA, contrôle, signature, mises à jour, limites.
 ---
 
 # Synthèse sécurité

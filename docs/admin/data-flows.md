@@ -1,6 +1,6 @@
 ---
 title: Data flows
-description: Every network flow of Remora (GitHub, GitLab, Slack, Linear, Notion, the assistant, avatars, updates), what each one sends, exactly what reaches the assistant, what is stored on the computer and where, and how it is enforced.
+description: Every network flow of Remora, what each one sends, what reaches the assistant, what is stored on the computer, and how it is enforced.
 ---
 
 # Data flows

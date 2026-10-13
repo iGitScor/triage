@@ -1,6 +1,6 @@
 ---
 title: Managing the policy with MDM
-description: Lock which tools Remora may connect, whether external AI is allowed, which servers the assistant may use, and whether avatars load, with a configuration profile on macOS (Jamf, Kandji, Intune, Mosyle, Apple Business Essentials) or registry values on Windows (Group Policy, Intune). Keys and a complete profile.
+description: Lock which tools Remora may connect, external AI and its servers, and avatars, with a macOS profile or Windows registry values. Every key, with examples.
 ---
 
 # Managing the policy with MDM

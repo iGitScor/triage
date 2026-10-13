@@ -1,6 +1,6 @@
 ---
 title: Code signing policy
-description: How Remora's releases are signed, today and once signing is set up. Today the Mac app is signed ad hoc and the Windows installer isn't signed; next, SignPath on Windows and Remora's own certificate on macOS. Who approves a signature, and the privacy commitment.
+description: How Remora's releases are signed today and once signing is set up, who approves a signature, and the privacy commitment.
 ---
 
 # Code signing policy

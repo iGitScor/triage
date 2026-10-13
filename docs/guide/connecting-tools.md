@@ -1,6 +1,6 @@
 ---
 title: Connecting your tools
-description: Step by step, connect GitHub (and Enterprise), GitLab (and self-hosted), Slack, Linear, Jira, Notion and Microsoft 365 to Remora, and optionally the assistant. Which token, which permission, and what Remora reads.
+description: Connect GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365 to Remora, and the assistant. Which token, which permission, and what it reads.
 ---
 
 # Connecting your tools

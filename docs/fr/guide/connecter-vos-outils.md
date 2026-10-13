@@ -1,6 +1,6 @@
 ---
 title: Connecter vos outils
-description: Pas à pas, connecter GitHub (et Enterprise), GitLab (et auto-hébergé), Slack, Linear, Jira, Notion et Microsoft 365 à Remora, et l’assistant en option. Quel jeton, quelle permission, et ce que Remora lit.
+description: Connecter GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365 à Remora, et l’assistant. Quel jeton, quelle permission, et ce que Remora lit.
 ---
 
 # Connecter vos outils

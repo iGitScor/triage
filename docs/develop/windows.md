@@ -1,6 +1,6 @@
 ---
 title: Remora for Windows and Linux
-description: Remora for Windows and Linux (preview), a Tauri 2 tray app in Rust and Svelte. What it does, what the Mac has that it does not yet, how it maps to the macOS app, and how to build it.
+description: Remora for Windows and Linux (preview), a Tauri 2 tray app in Rust and Svelte. What it does, what it lacks next to the Mac, and how to build it.
 ---
 
 # Remora for Windows and Linux

@@ -1,6 +1,6 @@
 ---
 title: Les relectures
-description: Préparer une relecture (estimation, fichiers, zones sensibles), les sessions de relecture au clavier, les liens entre pull requests et tickets Linear, et l’assistant d’attente pour vos merge requests.
+description: Préparer une relecture, les sessions de relecture au clavier, les liens entre pull requests et tickets, et l’assistant d’attente pour vos merge requests.
 ---
 
 # Les relectures

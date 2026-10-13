@@ -1,6 +1,6 @@
 ---
 title: Questions et dépannage
-description: Réponses sur la confidentialité de Remora, la demande du trousseau, macOS qui refuse d’ouvrir l’app, des éléments manquants, les notifications, Windows, et l’effacement de vos données.
+description: Réponses sur la confidentialité, la demande du trousseau, macOS qui refuse d’ouvrir l’app, des éléments manquants, Windows, et effacer vos données.
 ---
 
 # Questions et dépannage

@@ -1,6 +1,6 @@
 ---
 title: For IT and compliance
-description: What a security or compliance review of Remora needs to know. No server, no account, no telemetry, declared destinations enforced in code, external AI off by default, and a policy lockable by MDM or Group Policy.
+description: What a security or compliance review of Remora needs. No server, account or telemetry, enforced destinations, AI off by default, a lockable policy.
 ---
 
 # For IT and compliance

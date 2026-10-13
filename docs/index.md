@@ -1,7 +1,7 @@
 ---
 layout: home
 title: Documentation
-description: How to use Remora, the inbox for GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365 in the Mac menu bar or the Windows and Linux tray; how IT can deploy and lock it down; and how to write a plugin.
+description: Using Remora, one inbox for GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365 on Mac, Windows and Linux, and deploying it in an organization.
 
 hero:
   name: Remora

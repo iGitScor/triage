@@ -1,6 +1,6 @@
 ---
 title: The assistant
-description: Remora's optional AI features (brief, bundle summaries, snooze triage), how to connect Claude Code, the Claude API or an OpenAI-compatible server, what is sent, and how to keep token use low.
+description: Remora's optional AI features (brief, summaries, snooze triage), how to connect the assistant, what is sent, and how to keep token use low.
 ---
 
 # The assistant

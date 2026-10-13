@@ -1,6 +1,6 @@
 ---
 title: Reviews
-description: Review prep (estimate, files, risky areas), review sessions with the keyboard, links between pull requests and Linear issues, and the waiting assistant for your own merge requests.
+description: Review prep, review sessions with the keyboard, links between pull requests and issues, and the waiting assistant for your own merge requests.
 ---
 
 # Reviews

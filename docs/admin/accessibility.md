@@ -1,6 +1,6 @@
 ---
 title: Accessibility
-description: Remora's accessibility statement. The standard aimed at (WCAG 2.1 AA), what the Mac and Windows apps support (VoiceOver, Narrator, keyboard, reduced motion, contrast), how it is checked, the known gaps, and how to report a problem.
+description: Remora's accessibility statement. WCAG 2.1 AA, what the Mac and Windows apps support, how it is checked, the known gaps, and how to report a problem.
 ---
 
 # Accessibility

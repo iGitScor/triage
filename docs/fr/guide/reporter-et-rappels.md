@@ -1,6 +1,6 @@
 ---
 title: Reporter et rappels
-description: Reporter un élément à plus tard, avec une raison qui choisit l’heure de retour ; tirer un rappel depuis l’icône de Remora dans la barre des menus (Ctrl+Alt+R sous Windows) ; des conseils sur ce que vous repoussez.
+description: Reporter un élément avec une raison qui choisit l’heure de retour, tirer un rappel du poisson (Ctrl+Alt+R sous Windows), et ce que vous repoussez.
 ---
 
 # Reporter et rappels

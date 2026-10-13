@@ -1,6 +1,6 @@
 ---
 title: Gérer la politique par MDM
-description: Verrouiller les outils que Remora peut connecter, l’IA externe, les serveurs que l’assistant peut utiliser et le chargement des avatars, par un profil de configuration sur macOS (Jamf, Kandji, Intune, Mosyle, Apple Business Essentials) ou des valeurs de registre sous Windows (stratégie de groupe, Intune). Les clés et un profil complet.
+description: Verrouiller les outils que Remora peut connecter, l’IA externe et ses serveurs, les avatars, par profil macOS ou registre Windows. Toutes les clés.
 ---
 
 # Gérer la politique par MDM

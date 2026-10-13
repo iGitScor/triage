@@ -1,7 +1,7 @@
 ---
 layout: home
 title: Documentation
-description: Utiliser Remora, la boîte de réception pour GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365 dans la barre des menus du Mac ou la zone de notification de Windows et Linux ; la déployer et la verrouiller côté DSI.
+description: Utiliser Remora, une boîte pour GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365 sur Mac, Windows et Linux, et la déployer côté DSI.
 
 hero:
   name: Remora

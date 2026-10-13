@@ -1,6 +1,6 @@
 ---
 title: Snooze and reminders
-description: Snooze an item until later, with a reason that picks the return time; drag a reminder out of Remora's menu bar icon (Ctrl+Alt+R on Windows); insights on what you keep putting off.
+description: Snooze an item with a reason that picks the return time, drag a reminder out of the menu bar fish (Ctrl+Alt+R on Windows), and what you put off.
 ---
 
 # Snooze and reminders

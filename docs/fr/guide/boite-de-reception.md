@@ -1,6 +1,6 @@
 ---
 title: La boîte de réception
-description: Comment Remora range ce qui a besoin de vous. À moi et En attente, les verbes (À répondre, À relire, À corriger…), Terminé, Épingler, priorité, recherche, gestes et notifications.
+description: Comment Remora range ce qui a besoin de vous. À moi et En attente, les verbes, Terminé, Épingler, la priorité, la recherche et les notifications.
 ---
 
 # La boîte de réception

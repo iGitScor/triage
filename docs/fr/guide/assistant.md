@@ -1,6 +1,6 @@
 ---
 title: L’assistant
-description: Les fonctions d’IA facultatives de Remora (brief, résumés de liste, tri des reports), connecter Claude Code, l’API Claude ou un serveur OpenAI-compatible, ce qui est envoyé, et comment limiter les jetons consommés.
+description: Les fonctions d’IA facultatives de Remora (brief, résumés, tri des reports), comment connecter l’assistant, ce qui est envoyé, et limiter les jetons.
 ---
 
 # L’assistant

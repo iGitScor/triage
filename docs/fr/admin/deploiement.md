@@ -1,6 +1,6 @@
 ---
 title: Déployer Remora
-description: Distribuer Remora sur vos Mac et PC Windows. Le DMG et l’installeur Windows de chaque version et leurs empreintes, Gatekeeper et la demande du trousseau avec la signature actuelle, les mises à jour, et une copie signée avec votre Developer ID.
+description: Distribuer Remora sur Mac et PC Windows. Le DMG, l’installeur et leurs empreintes, Gatekeeper et le trousseau, les mises à jour, une copie signée.
 ---
 
 # Déployer Remora

@@ -1,6 +1,6 @@
 ---
 title: Construire et publier
-description: Construire et lancer Remora pour macOS depuis les sources, la signer pour que le trousseau cesse de demander, publier une version en DMG et en installeur Windows, régénérer les captures d’écran, et déployer le site et cette documentation.
+description: Construire et lancer Remora pour macOS, la signer, publier une version en DMG et en installeur Windows, et déployer le site et cette documentation.
 ---
 
 # Construire et publier

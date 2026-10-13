@@ -1,6 +1,6 @@
 ---
 title: Remora pour Windows et Linux
-description: Remora pour Windows et Linux (aperçu), une app de zone de notification Tauri 2 en Rust et Svelte. Ce qu’elle fait, ce que le Mac a et qu’elle n’a pas encore, sa correspondance avec l’app macOS, et comment la construire.
+description: Remora pour Windows et Linux (aperçu), une app Tauri 2 en Rust et Svelte. Ce qu’elle fait, ce qui lui manque face au Mac, et comment la construire.
 ---
 
 # Remora pour Windows et Linux

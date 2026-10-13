@@ -1,6 +1,6 @@
 ---
 title: Building and releasing
-description: Build and run Remora for macOS from source, sign it so the Keychain stops prompting, release a version as a DMG and a Windows installer, regenerate screenshots, and deploy the website and these docs.
+description: Build and run Remora for macOS from source, sign it, release a version as a DMG and a Windows installer, and deploy the website and these docs.
 ---
 
 # Building and releasing
