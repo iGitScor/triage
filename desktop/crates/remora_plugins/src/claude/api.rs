@@ -56,6 +56,7 @@ pub fn manifest() -> PluginManifest {
             external_ai: true,
         },
         logo: Some("anthropic".into()),
+        sign_in: None,
     }
 }
 

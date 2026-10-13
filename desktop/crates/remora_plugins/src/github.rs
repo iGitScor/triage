@@ -29,6 +29,7 @@ pub fn manifest() -> PluginManifest {
             external_ai: false,
         },
         logo: Some("github".into()),
+        sign_in: None,
     }
 }
 

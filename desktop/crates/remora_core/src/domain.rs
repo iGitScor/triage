@@ -384,4 +384,19 @@ pub struct PluginManifest {
     pub egress: Egress,
     /// File name of the bundled logo (SVG).
     pub logo: Option<String>,
+    /// Set when the account signs in through the browser instead of pasting a token.
+    #[serde(default)]
+    pub sign_in: Option<SignIn>,
+}
+
+/// Signing in through the browser: OAuth 2's authorization code with PKCE, for an app that keeps no secret, the
+/// answer coming back to this computer. `{key}` in the URLs is replaced by that setting of the account (a tenant).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SignIn {
+    pub authorize_url: String,
+    pub token_url: String,
+    /// The setting holding the app's client id, registered by the organization.
+    pub client_id_key: String,
+    pub scopes: Vec<String>,
 }

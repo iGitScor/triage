@@ -25,6 +25,8 @@
     "allow-accounts",
     "allow-connect",
     "allow-reconnect",
+    "allow-sign-in",
+    "allow-cancel-sign-in",
     "allow-rename-account",
     "allow-disconnect",
     "allow-settings",

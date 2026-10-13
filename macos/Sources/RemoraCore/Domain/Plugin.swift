@@ -16,6 +16,8 @@ public struct PluginManifest: Sendable, Identifiable {
     public var egress: Egress
     /// The tool's logo in the app's Resources/Logos (SVG), shown in the menu bar.
     public var logo: String?
+    /// Set when the account signs in through the browser instead of pasting a token.
+    public var signIn: SignIn?
 
     public init(
         id: String,
@@ -28,7 +30,8 @@ public struct PluginManifest: Sendable, Identifiable {
         setupURL: (@Sendable (PluginConfig) -> URL?)? = nil,
         isComingSoon: Bool = false,
         egress: Egress,
-        logo: String? = nil
+        logo: String? = nil,
+        signIn: SignIn? = nil
     ) {
         self.id = id
         self.name = name
@@ -41,6 +44,24 @@ public struct PluginManifest: Sendable, Identifiable {
         self.isComingSoon = isComingSoon
         self.egress = egress
         self.logo = logo
+        self.signIn = signIn
+    }
+}
+
+/// Signing in through the browser: OAuth 2's authorization code with PKCE, for an app that keeps no secret, the
+/// answer coming back to this Mac. `{key}` in the URLs is replaced by that setting of the account (a tenant).
+public struct SignIn: Sendable, Hashable {
+    public var authorizeURL: String
+    public var tokenURL: String
+    /// The setting holding the app's client id, registered by the organization.
+    public var clientIDKey: String
+    public var scopes: [String]
+
+    public init(authorizeURL: String, tokenURL: String, clientIDKey: String, scopes: [String]) {
+        self.authorizeURL = authorizeURL
+        self.tokenURL = tokenURL
+        self.clientIDKey = clientIDKey
+        self.scopes = scopes
     }
 }
 
@@ -161,6 +182,8 @@ public enum PluginError: LocalizedError, Equatable {
     case invalidField(String)
     case insecureField(String)
     case unknownPlugin(String)
+    /// The browser sign-in didn't finish: what the server answered (`access_denied`), or why.
+    case signIn(String)
 
     public var errorDescription: String? {
         switch self {
@@ -168,6 +191,7 @@ public enum PluginError: LocalizedError, Equatable {
         case .invalidField(let key): L("“%@” is not valid.", key)
         case .insecureField(let key): L("“%@” must start with https://: the token would travel unencrypted.", key)
         case .unknownPlugin(let id): L("Unknown plugin “%@”.", id)
+        case .signIn(let reason): L("The sign-in didn’t finish: %@.", L(reason))
         }
     }
 }

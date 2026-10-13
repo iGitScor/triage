@@ -45,6 +45,7 @@ const MESSAGES: Record<string, string> = {
   invalidField: '“%@” is not valid.',
   insecureField: '“%@” must start with https://: the token would travel unencrypted.',
   unknownPlugin: 'Unknown plugin “%@”.',
+  signIn: 'The sign-in didn’t finish: %@.',
   truncated: '%@ has more than Remora shows: only the latest 50 of each list are listed.',
   partial: '%@ couldn’t be read: %@',
   notionDatabase: 'A Notion database couldn’t be read (%@): %@',

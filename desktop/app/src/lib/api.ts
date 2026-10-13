@@ -190,6 +190,8 @@ export interface Manifest {
   setupUrl?: string | null
   egress: { hosts: string[]; description: string; externalAi: boolean }
   logo?: string | null
+  /** Set when the account signs in through the browser instead of pasting a token. */
+  signIn?: { authorizeUrl: string; tokenUrl: string; clientIdKey: string; scopes: string[] } | null
 }
 export interface Source {
   manifest: Manifest
@@ -349,6 +351,10 @@ export const api = {
   accounts: () => call<Account[]>('accounts'),
   connect: (pluginId: string, name: string, settings: Record<string, string>, secrets: Record<string, string>) =>
     call<void>('connect', { pluginId, name: name || null, settings, secrets }, QUIET),
+  /** Opens the browser to sign in; the secrets it gives go to `connect` or `reconnect`. */
+  signIn: (pluginId: string, accountId: string | null, settings: Record<string, string>) =>
+    call<Record<string, string>>('sign_in', { pluginId, accountId, settings }, QUIET),
+  cancelSignIn: () => call<void>('cancel_sign_in', {}, QUIET),
   reconnect: (accountId: string, secrets: Record<string, string>) =>
     call<void>('reconnect', { accountId, secrets }, QUIET),
   renameAccount: (id: string, name: string) => call<void>('rename_account', { id, name }),

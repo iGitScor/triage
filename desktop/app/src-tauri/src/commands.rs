@@ -5,7 +5,7 @@ use chrono::{DateTime, Local, NaiveDate, TimeZone, Utc};
 use remora_app::view::{inbox_view, InboxView};
 use remora_app::{paths, AccountInfo, Managed, Preferences, SourceInfo};
 use remora_core::{CompliancePolicy, Message, Preset, RecurrenceRule, SnoozeClock, SnoozeMode, SnoozeReason};
-use remora_plugins::{links, registry};
+use remora_plugins::{links, oauth, registry, PluginError};
 use serde::Serialize;
 use std::collections::HashMap;
 use tauri::{AppHandle, Manager, State};
@@ -295,6 +295,46 @@ pub async fn reconnect(
     state.inbox.lock().await.finish_reconnect_saved(&account_id, all, snapshot, Utc::now())?;
     changed(&app).await;
     Ok(())
+}
+
+/// How long the browser has to come back.
+const SIGN_IN_WAIT: std::time::Duration = std::time::Duration::from_secs(300);
+
+/// Signs in through the browser and returns the secrets for `connect` or `reconnect` (with `account_id`, that
+/// account's settings are used). Only the plugin's declared sign-in page opens.
+#[tauri::command]
+pub async fn sign_in(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    plugin_id: String,
+    account_id: Option<String>,
+    settings: HashMap<String, String>,
+) -> Result<HashMap<String, String>> {
+    let remora_app::SignInPlan { sign_in, settings: values, http } =
+        state.inbox.lock().await.prepare_sign_in(&plugin_id, account_id.as_deref(), settings, state.http.clone())?;
+    let loopback = oauth::Loopback::bind().await?;
+    let redirect = loopback.redirect.clone();
+    let pkce = oauth::Pkce::new();
+    let expected = oauth::random(16);
+    let page = oauth::authorize_url(&sign_in, &values, &redirect, &pkce, &expected)?;
+    // A sign-in started before this one stops waiting.
+    state.cancel_sign_in.notify_waiters();
+    let cancelled = state.cancel_sign_in.notified();
+    app.opener().open_url(page, None::<&str>).map_err(|e| Message::from(e.to_string()))?;
+    let code = tokio::select! {
+        code = loopback.code(&expected) => code?,
+        _ = tokio::time::sleep(SIGN_IN_WAIT) => return Err(PluginError::SignIn("timed out".into()).into()),
+        _ = cancelled => return Err(PluginError::SignIn("cancelled".into()).into()),
+    };
+    let tokens = oauth::redeem(http.as_ref(), &sign_in, &values, &code, &redirect, &pkce.verifier).await?;
+    let refresh = tokens.refresh_token.ok_or_else(|| PluginError::SignIn("no refresh token".into()))?;
+    // `signIn` changes with every sign-in, so the account starts over with it (`RENEWED_SECRETS`).
+    Ok(HashMap::from([("refreshToken".into(), refresh), ("signIn".into(), oauth::random(8))]))
+}
+
+#[tauri::command]
+pub fn cancel_sign_in(state: State<'_, AppState>) {
+    state.cancel_sign_in.notify_waiters();
 }
 
 #[tauri::command]

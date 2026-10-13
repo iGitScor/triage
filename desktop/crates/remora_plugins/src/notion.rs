@@ -57,6 +57,7 @@ pub fn manifest() -> PluginManifest {
             external_ai: false,
         },
         logo: Some("notion".into()),
+        sign_in: None,
     }
 }
 

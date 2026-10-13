@@ -113,6 +113,7 @@ Ensuite :
 | `fields` | Le formulaire de connexion. `.token(…)` et les champs avec `isSecret: true` vont dans le trousseau ; les autres dans `accounts.json`. `.host(default)` pour les outils auto-hébergés. |
 | `setupSteps`, `setupLabel`, `setupURL` | Le guide numéroté et le bouton en haut du formulaire. `setupURL` reçoit la configuration, il peut donc pointer vers l’adresse propre de l’utilisateur. |
 | `egress` | Les adresses et une description d’une phrase, affichées dans Réglages → Confidentialité et appliquées. `externalAI: true` pour les extensions qui envoient le contenu de la boîte à un fournisseur d’IA : elles restent désactivées tant que ce n’est pas autorisé. Un assistant dont l’utilisateur saisit le serveur (OpenAI-compatible) nomme ce réglage dans `serverField`, pour que la politique puisse le vérifier (`AllowedAIServers`, `AIServer`, `AllowLocalAI`). |
+| `signIn` | Facultatif : le compte se connecte par le navigateur au lieu de coller un jeton (OAuth 2, code d’autorisation avec PKCE, la réponse revenant sur `http://localhost` à un port libre). `{clé}` dans ses adresses est remplacé par ce réglage, lettres, chiffres, points et tirets seulement. Les secrets obtenus sont `refreshToken` et `signIn` ; une extension dont le jeton de renouvellement change passe le nouveau à `config.cache.renew`, et l’app l’enregistre. |
 | `isComingSoon` | Listée avec un badge *Bientôt*, impossible à connecter. |
 | `logo` | Le SVG de `Resources/Logos`, affiché dans les compteurs de la barre des menus. |
 

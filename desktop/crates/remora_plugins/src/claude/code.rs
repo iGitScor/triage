@@ -60,6 +60,7 @@ pub fn manifest() -> PluginManifest {
             external_ai: true,
         },
         logo: Some("claude".into()),
+        sign_in: None,
     }
 }
 

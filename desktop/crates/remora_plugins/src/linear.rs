@@ -27,6 +27,7 @@ pub fn manifest() -> PluginManifest {
             external_ai: false,
         },
         logo: Some("linear".into()),
+        sign_in: None,
     }
 }
 

@@ -31,6 +31,8 @@ pub struct AppState {
     pub store: Option<JsonStore>,
     pub http: Arc<dyn HttpClient>,
     pub refresh_now: Notify,
+    /// Stops a browser sign-in that is waiting (Cancel in the form).
+    pub cancel_sign_in: Notify,
     pub demo: bool,
     pub updates: updates::Updates,
 }
@@ -106,6 +108,7 @@ pub fn run() {
         vault_writes: Mutex::new(()),
         http: Arc::new(ReqwestClient::new()),
         refresh_now: Notify::new(),
+        cancel_sign_in: Notify::new(),
         demo: demo_mode,
         updates: Default::default(),
     };
@@ -164,6 +167,8 @@ pub fn run() {
             commands::accounts,
             commands::connect,
             commands::reconnect,
+            commands::sign_in,
+            commands::cancel_sign_in,
             commands::rename_account,
             commands::disconnect,
             commands::settings,

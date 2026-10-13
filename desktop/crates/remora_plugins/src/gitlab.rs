@@ -34,6 +34,7 @@ pub fn manifest() -> PluginManifest {
             external_ai: false,
         },
         logo: Some("gitlab".into()),
+        sign_in: None,
     }
 }
 

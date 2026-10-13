@@ -40,6 +40,21 @@ impl Request {
         })
     }
 
+    /// A form, as OAuth's token endpoints take it.
+    pub fn post_form(url: impl Into<String>, fields: &[(&str, &str)]) -> Self {
+        let body = reqwest::Url::parse_with_params("http://form", fields)
+            .ok()
+            .and_then(|url| url.query().map(str::to_string))
+            .unwrap_or_default();
+        Request {
+            method: Method::Post,
+            url: url.into(),
+            headers: vec![("Content-Type".into(), "application/x-www-form-urlencoded".into())],
+            body: Some(body),
+            timeout: None,
+        }
+    }
+
     pub fn header(mut self, name: &str, value: impl Into<String>) -> Self {
         self.headers.push((name.into(), value.into()));
         self
@@ -95,6 +110,8 @@ pub enum PluginError {
     InvalidField(String),
     InsecureField(String),
     UnknownPlugin(String),
+    /// The browser sign-in didn't finish: what the server answered (`access_denied`), or why.
+    SignIn(String),
 }
 
 impl PluginError {
@@ -142,6 +159,7 @@ impl fmt::Display for PluginError {
                 write!(f, "“{key}” must start with https://: the token would travel unencrypted.")
             }
             PluginError::UnknownPlugin(id) => write!(f, "Unknown plugin “{id}”."),
+            PluginError::SignIn(reason) => write!(f, "The sign-in didn’t finish: {reason}."),
         }
     }
 }
@@ -171,6 +189,7 @@ impl PluginError {
             PluginError::InvalidField(key) => with("invalidField", key),
             PluginError::InsecureField(key) => with("insecureField", key),
             PluginError::UnknownPlugin(id) => with("unknownPlugin", id),
+            PluginError::SignIn(reason) => with("signIn", reason),
         }
     }
 }

@@ -106,6 +106,7 @@ Then:
 | `fields` | The connect form. `.token(…)` and fields with `isSecret: true` go to the Keychain; the others to `accounts.json`. `.host(default)` for self-hosted tools. |
 | `setupSteps`, `setupLabel`, `setupURL` | The numbered guide and the button at the top of the form. `setupURL` gets the config, so it can point at the user’s own host. |
 | `egress` | Hosts and a one-sentence description, shown in Settings → Privacy and enforced. `externalAI: true` for plugins that send inbox content to an AI provider: they stay off until it’s allowed. An assistant whose server the user types (OpenAI-compatible) names that setting in `serverField`, so the policy can check it (`AllowedAIServers`, `AIServer`, `AllowLocalAI`). |
+| `signIn` | Optional: the account signs in through the browser instead of pasting a token (OAuth 2 authorization code with PKCE, the answer coming back to `http://localhost` on a free port). `{key}` in its URLs is replaced by that setting, letters, digits, dots and dashes only. The secrets it gives are `refreshToken` and `signIn`; a plugin that rotates the refresh token hands the new one to `config.cache.renew`, and the app saves it. |
 | `isComingSoon` | Listed with a *Soon* badge, not connectable. |
 | `logo` | The SVG in `Resources/Logos`, shown in the menu bar counters. |
 

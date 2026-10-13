@@ -45,6 +45,7 @@ pub fn manifest() -> PluginManifest {
             external_ai: false,
         },
         logo: Some("slack".into()),
+        sign_in: None,
     }
 }
 

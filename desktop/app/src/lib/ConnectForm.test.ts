@@ -48,6 +48,19 @@ const gitlab: Manifest = {
   egress: { hosts: [], description: '', externalAi: false },
 }
 
+const outlook: Manifest = {
+  id: 'microsoft',
+  name: 'Microsoft 365',
+  summary: '',
+  fields: [
+    { key: 'tenant', label: 'Tenant', placeholder: '', defaultValue: 'acme.com', isSecret: false, isOptional: false },
+  ],
+  setupSteps: [],
+  setupLabel: '',
+  egress: { hosts: [], description: '', externalAi: false },
+  signIn: { authorizeUrl: '', tokenUrl: '', clientIdKey: 'clientId', scopes: [] },
+}
+
 const inputs = (container: HTMLElement) => [...container.querySelectorAll('input')] as HTMLInputElement[]
 const submit = (container: HTMLElement) => container.querySelector('button[type=submit]') as HTMLButtonElement
 
@@ -109,6 +122,42 @@ describe('ConnectForm', () => {
   })
 
   // AI-23: the organization's AIServer is shown and can't be changed.
+  it('signs in through the browser, then connects with what it gave', async () => {
+    let comeBack: (secrets: Record<string, string>) => void = () => {}
+    invoke.mockImplementation((command: string) =>
+      command === 'sign_in' ? new Promise((resolve) => (comeBack = resolve)) : Promise.resolve(),
+    )
+    const ondone = vi.fn()
+    const { container } = render(ConnectForm, { props: { manifest: outlook, ondone } })
+    expect(submit(container).textContent).toBe('Sign in with Microsoft 365')
+    await fireEvent.click(submit(container))
+
+    await waitFor(() => expect(submit(container).textContent).toBe('Waiting for the browser…'))
+    expect(invoke).toHaveBeenCalledWith('sign_in', {
+      pluginId: 'microsoft',
+      accountId: null,
+      settings: { tenant: 'acme.com' },
+    })
+    comeBack({ refreshToken: 'r1', signIn: 'n1' })
+    await waitFor(() => expect(ondone).toHaveBeenCalled())
+    expect(invoke).toHaveBeenCalledWith('connect', {
+      pluginId: 'microsoft',
+      name: null,
+      settings: { tenant: 'acme.com' },
+      secrets: { refreshToken: 'r1', signIn: 'n1' },
+    })
+  })
+
+  it('stops waiting for the browser on Cancel', async () => {
+    invoke.mockImplementation((command: string) => (command === 'sign_in' ? new Promise(() => {}) : Promise.resolve()))
+    const ondone = vi.fn()
+    const { container } = render(ConnectForm, { props: { manifest: outlook, ondone } })
+    await fireEvent.click(submit(container))
+    await fireEvent.click(container.querySelector('button.link') as HTMLButtonElement)
+    expect(invoke).toHaveBeenCalledWith('cancel_sign_in', {})
+    expect(ondone).toHaveBeenCalled()
+  })
+
   it('locks the server the organization set', () => {
     const { container } = render(ConnectForm, {
       props: {

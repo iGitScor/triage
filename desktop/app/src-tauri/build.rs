@@ -21,6 +21,8 @@ pub const COMMANDS: &[&str] = &[
     "accounts",
     "connect",
     "reconnect",
+    "sign_in",
+    "cancel_sign_in",
     "rename_account",
     "disconnect",
     "settings",

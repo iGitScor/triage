@@ -29,15 +29,25 @@ $effect(() => {
 })
 let name = $state('')
 let busy = $state(false)
+/** Waiting for the browser to come back from signing in. */
+let signingIn = $state(false)
 let error = $state('')
 
 async function connect() {
   busy = true
   error = ''
   const settings: Record<string, string> = {}
-  const secrets: Record<string, string> = {}
+  let secrets: Record<string, string> = {}
   for (const field of fields) (field.isSecret ? secrets : settings)[field.key] = values[field.key].trim()
   try {
+    if (manifest.signIn) {
+      signingIn = true
+      try {
+        secrets = { ...secrets, ...(await api.signIn(manifest.id, account?.id ?? null, settings)) }
+      } finally {
+        signingIn = false
+      }
+    }
     if (account) await api.reconnect(account.id, secrets)
     else await api.connect(manifest.id, name, settings, secrets)
     ondone()
@@ -47,6 +57,23 @@ async function connect() {
     busy = false
   }
 }
+
+function cancel() {
+  if (signingIn) api.cancelSignIn().catch(() => {})
+  ondone()
+}
+
+const label = $derived(
+  signingIn
+    ? t('Waiting for the browser…')
+    : busy
+      ? t('Connecting…')
+      : manifest.signIn
+        ? t('Sign in with %@', manifest.name)
+        : account
+          ? t('Reconnect')
+          : t('Connect'),
+)
 
 const ready = $derived(fields.every((f) => f.isOptional || values[f.key]?.trim()))
 </script>
@@ -75,8 +102,8 @@ const ready = $derived(fields.every((f) => f.isOptional || values[f.key]?.trim()
   {#if error}<p class="error" role="alert">{error}</p>{/if}
   <div class="row">
     <span class="spacer"></span>
-    <button type="button" class="link" onclick={ondone}>{t('Cancel')}</button>
-    <button type="submit" class="pill primary" disabled={!ready || busy}>{busy ? t('Connecting…') : account ? t('Reconnect') : t('Connect')}</button>
+    <button type="button" class="link" onclick={cancel}>{t('Cancel')}</button>
+    <button type="submit" class="pill primary" disabled={!ready || busy}>{label}</button>
   </div>
 </form>
 

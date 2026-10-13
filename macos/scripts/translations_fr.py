@@ -15,6 +15,13 @@ FR = {
     "%@ on your message in %@": "%@ sur votre message dans %@",
     "Reactions: %@": "Réactions : %@",
     "Slack: reactions need the reactions:read permission. Add it to the Remora app in Slack, reinstall it, and paste the new token.": "Slack : les réactions demandent la permission reactions:read. Ajoutez-la à l’app Remora dans Slack, réinstallez-la et collez le nouveau jeton.",
+    # Browser sign-in
+    "Sign in with %@": "Se connecter avec %@",
+    "Waiting for the browser…": "En attente du navigateur…",
+    "The sign-in didn’t finish: %@.": "La connexion n’a pas abouti : %@.",
+    "cancelled": "annulée",
+    "timed out": "délai dépassé",
+    "no browser": "aucun navigateur",
     # Tabs and bundles
     "My turn": "À moi",
     "Waiting": "En attente",

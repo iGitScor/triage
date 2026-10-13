@@ -229,6 +229,9 @@ private struct ConnectForm: View {
     @State private var name = ""
     @State private var values: [String: String] = [:]
     @State private var connecting = false
+    /// Waiting for the browser to come back from signing in.
+    @State private var signingIn = false
+    @State private var connection: Task<Void, Never>?
     @State private var error: String?
 
     var body: some View {
@@ -265,8 +268,13 @@ private struct ConnectForm: View {
             }
             HStack {
                 Spacer()
-                Button("Cancel", action: dismiss).buttonStyle(PillButtonStyle(prominent: false))
-                Button(connecting ? L("Connecting…") : L("Connect"), action: connect)
+                Button("Cancel") {
+                    // Stops waiting for the browser.
+                    connection?.cancel()
+                    dismiss()
+                }
+                .buttonStyle(PillButtonStyle(prominent: false))
+                Button(connectLabel, action: connect)
                     .buttonStyle(PillButtonStyle())
                     .disabled(connecting)
                     .keyboardShortcut(.defaultAction)
@@ -314,6 +322,12 @@ private struct ConnectForm: View {
 
     private var config: PluginConfig { PluginConfig(accountID: UUID(), values: values) }
 
+    private var connectLabel: String {
+        if signingIn { return L("Waiting for the browser…") }
+        if connecting { return L("Connecting…") }
+        return manifest.signIn == nil ? L("Connect") : L("Sign in with %@", manifest.name)
+    }
+
     /// The AI server the organization set, for a plugin whose server the user chooses.
     private var forcedServer: String? {
         manifest.egress.serverField == nil ? nil : ManagedPolicy.aiServer()
@@ -327,12 +341,17 @@ private struct ConnectForm: View {
         let secretKeys = Set(manifest.fields.filter(\.isSecret).map(\.key))
         var settings = values.filter { !secretKeys.contains($0.key) }
         if let field = manifest.egress.serverField, let forcedServer { settings[field] = forcedServer }
-        let secrets = values.filter { secretKeys.contains($0.key) }
+        var secrets = values.filter { secretKeys.contains($0.key) }
         connecting = true
         error = nil
-        Task {
+        connection = Task {
             defer { connecting = false }
             do {
+                if manifest.signIn != nil {
+                    signingIn = true
+                    defer { signingIn = false }
+                    secrets.merge(try await model.signIn(pluginID: manifest.id, settings: settings)) { _, new in new }
+                }
                 try await model.connect(pluginID: manifest.id, name: name, settings: settings, secrets: secrets)
                 dismiss()
             } catch {

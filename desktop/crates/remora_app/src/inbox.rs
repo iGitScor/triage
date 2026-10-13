@@ -2,20 +2,29 @@ use crate::session::AccountSession;
 use crate::{JsonStore, Managed, Preferences, Secrets, Vault};
 use chrono::{DateTime, Utc};
 use remora_core::{
-    notices, while_closed, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief, BundleSummary,
-    CompliancePolicy, Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder,
-    Mark, Message, Notice, NoticeKind, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule, ReviewPace,
-    ReviewPrep, ReviewTiming, Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord,
-    SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion, VerbClassifier, WaitingAssistant, WaitingHelp,
-    AI_SERVER_PLUGIN,
+    host_matches, notices, while_closed, Account, ActionOutcome, ActionRecord, AssistantPolicy, Backoff, Brief,
+    BundleSummary, CompliancePolicy, Failure, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout,
+    ItemState, LinkFinder, Mark, Message, Notice, NoticeKind, PersonalRanker, PluginManifest, Recurrence,
+    RecurrenceRule, ReviewPace, ReviewPrep, ReviewTiming, SignIn, Snooze, SnoozeAdvisor, SnoozeInsight, SnoozeMode,
+    SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion, VerbClassifier,
+    WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
 };
 use remora_plugins::{
-    claude, links, registry, AssistantPlugin, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError,
-    SourcePlugin, SourceSnapshot,
+    claude, links, oauth, registry, AssistantPlugin, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError,
+    Request, SourcePlugin, SourceSnapshot,
 };
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+/// What a browser sign-in needs (`Inbox::prepare_sign_in`).
+pub struct SignInPlan {
+    pub sign_in: SignIn,
+    /// The settings its URLs are filled with.
+    pub settings: HashMap<String, String>,
+    /// Limited to the plugin's hosts.
+    pub http: Arc<dyn HttpClient>,
+}
 
 const ACCOUNTS: &str = "accounts";
 const CACHE: &str = "cache";
@@ -1206,6 +1215,40 @@ impl Inbox {
         Ok((account, plugin))
     }
 
+    /// What a browser sign-in needs: the plugin's `SignIn`, the settings it fills in (the account's own when signing
+    /// in again), and the HTTP client limited to the plugin's hosts. The page the browser opens must be one of them.
+    pub fn prepare_sign_in(
+        &self,
+        plugin_id: &str,
+        account_id: Option<&str>,
+        settings: HashMap<String, String>,
+        http: Arc<dyn HttpClient>,
+    ) -> Result<SignInPlan, Message> {
+        let manifest = registry::manifest(plugin_id).ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
+        let sign_in = manifest.sign_in.clone().ok_or_else(|| format!("{} has no sign-in.", manifest.name))?;
+        if let Some(refusal) = self.policy().refusal(&manifest) {
+            return Err(refusal.into());
+        }
+        let settings = match account_id {
+            Some(id) => self
+                .accounts
+                .iter()
+                .find(|a| a.id == id)
+                .ok_or("This account is no longer connected.")?
+                .settings
+                .clone(),
+            None => settings,
+        };
+        let account = Account { id: String::new(), plugin_id: plugin_id.into(), name: None, settings, identity: None };
+        let hosts = registry::allowed_hosts(&account, &manifest);
+        let page = oauth::fill(&sign_in.authorize_url, &account.settings).map_err(|e| e.message())?;
+        let host = Request::get(page).host();
+        if !host_matches(&host, &hosts) {
+            return Err(PluginError::BlockedHost(host).message());
+        }
+        Ok(SignInPlan { sign_in, settings: account.settings, http: Arc::new(GuardedHttpClient::new(http, hosts)) })
+    }
+
     /// Connecting an assistant: the caller tests it once with the plugin (a brief, or a made-up item
     /// when the whole-inbox brief is off, so no inbox content leaves yet), then calls `finish_assistant_connect`.
     pub fn prepare_assistant_connect(
@@ -1979,6 +2022,15 @@ mod tests {
         let refused = inbox.prepare_connect("github", None, HashMap::new(), &HashMap::new(), Arc::new(NoNetwork));
         assert_eq!(refused.err().map(|e| e.text).as_deref(), Some("Not allowed by your privacy policy."));
         assert!(!inbox.sources().iter().find(|s| s.manifest.id == "github").unwrap().refusal.is_none());
+    }
+
+    #[test]
+    fn only_a_plugin_with_a_sign_in_signs_in_through_the_browser() {
+        let inbox = inbox();
+        let refused = inbox.prepare_sign_in("linear", None, HashMap::new(), Arc::new(NoNetwork));
+        assert_eq!(refused.err().map(|e| e.text).as_deref(), Some("Linear has no sign-in."));
+        let gone = inbox.prepare_sign_in("linear", Some("gone"), HashMap::new(), Arc::new(NoNetwork));
+        assert!(gone.is_err());
     }
 
     #[tokio::test]

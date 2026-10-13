@@ -343,7 +343,9 @@ final class InboxModel {
         let renewed = await session.cache.takeRenewed()
         guard !renewed.isEmpty, self.account(account.id) != nil else { return }
         // The old one stays valid for a while, and a Keychain that refuses shows at the next connection.
-        guard let current = try? environment.secrets.secrets(for: account.id) else { return }
+        // Nothing read (a Keychain that refuses) must not become an entry holding only the renewed secret.
+        let current = environment.secrets.secrets(for: account.id)
+        guard !current.isEmpty else { return }
         try? environment.secrets.save(current.merging(renewed) { _, new in new }, for: account.id)
     }
 
@@ -1208,6 +1210,44 @@ final class InboxModel {
     }
 
     // MARK: Accounts
+
+    /// How long the browser has to come back.
+    static let signInWait: Duration = .seconds(300)
+
+    /// Signs in through the browser and returns the secrets for `connect`. Only the plugin's declared sign-in page
+    /// opens, on one of its hosts. Cancelling the task stops the wait.
+    func signIn(pluginID: String, settings: [String: String]) async throws -> [String: String] {
+        guard let manifest = PluginRegistry.manifest(pluginID) else { throw PluginError.unknownPlugin(pluginID) }
+        guard let signIn = manifest.signIn else { throw PluginError.signIn("no sign-in") }
+        let account = Account(pluginID: pluginID, settings: settings)
+        let http = try guardedClient(for: account)
+        let state = OAuth.random(16)
+        let loopback = try await Loopback.open(state: state)
+        let pkce = OAuth.PKCE()
+        let page = try OAuth.authorizeURL(
+            signIn, values: settings, redirect: loopback.redirect, pkce: pkce, state: state)
+        let host = page.host?.lowercased() ?? ""
+        guard GuardedHTTPClient.matches(host, allowedHosts(for: account, manifest: manifest)) else {
+            throw EgressError.blockedHost(host)
+        }
+        guard environment.open(page) else { throw PluginError.signIn("no browser") }
+        let code = try await withThrowingTaskGroup(of: String.self) { group in
+            group.addTask { try await loopback.code() }
+            group.addTask {
+                try await Task.sleep(for: Self.signInWait)
+                throw PluginError.signIn("timed out")
+            }
+            defer { group.cancelAll() }
+            do { return try await group.next()! } catch is CancellationError {
+                throw PluginError.signIn("cancelled")
+            }
+        }
+        let tokens = try await OAuth.redeem(
+            signIn, values: settings, code: code, redirect: loopback.redirect, verifier: pkce.verifier, http: http)
+        guard let refresh = tokens.refreshToken else { throw PluginError.signIn("no refresh token") }
+        // `signIn` changes with every sign-in, so the account starts over with it (`renewedSecrets`).
+        return ["refreshToken": refresh, "signIn": OAuth.random(8)]
+    }
 
     func connect(pluginID: String, name: String?, settings: [String: String], secrets: [String: String]) async throws {
         let name = name?.trimmingCharacters(in: .whitespaces).nilIfEmpty

@@ -80,6 +80,7 @@ pub fn manifest() -> PluginManifest {
         },
         // No OpenAI logo is bundled: the name says it.
         logo: None,
+        sign_in: None,
     }
 }
 

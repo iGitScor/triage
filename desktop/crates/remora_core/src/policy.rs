@@ -212,6 +212,7 @@ mod tests {
             setup_label: String::new(),
             setup_url: None,
             logo: None,
+            sign_in: None,
             egress: Egress { hosts: vec![], description: "d".into(), external_ai },
         }
     }
