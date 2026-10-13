@@ -436,6 +436,9 @@ struct InboxModelTests {
         let harness = Harness()
         let model = harness.model()
         model.addReminder("Call the bank", at: .now.addingTimeInterval(60))
+        // Its notification says "Reminder" once, as its title (UX-24).
+        let notice = try #require(harness.notifier.scheduled.last?.notice)
+        #expect(notice.title == "Reminder" && notice.subtitle.isEmpty && notice.body == "Call the bank")
         let reminder = try #require(model.reminders.first)
         model.unsnooze(reminder)
         model.toggleDone(reminder)

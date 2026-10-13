@@ -498,7 +498,8 @@ impl Inbox {
                     kind: NoticeKind::Reminder,
                     item_id: id.clone(),
                     title: if reminder { "Reminder" } else { "Back in your inbox" }.into(),
-                    subtitle: item.context.clone(),
+                    // A reminder's context is "Reminder" again: the title says it already.
+                    subtitle: if reminder { String::new() } else { item.context.clone() },
                     body: [Some(item.title.clone()), snooze.note].into_iter().flatten().collect::<Vec<_>>().join("\n"),
                     url: item.url.clone(),
                     count: None,
@@ -1947,6 +1948,7 @@ mod tests {
         assert_eq!(inbox.layout(now(), "").snoozed.len(), 1);
         let notices = inbox.tick(now() + Duration::minutes(10));
         assert_eq!((notices[0].title.as_str(), notices[0].body.as_str()), ("Reminder", "Call the bank"));
+        assert_eq!(notices[0].subtitle, "", "not \"Reminder\" twice");
         assert_eq!(inbox.layout(now() + Duration::minutes(10), "").my_turn_items().count(), 1);
         inbox.toggle_done(&id, now());
         assert!(inbox.all_items().is_empty());

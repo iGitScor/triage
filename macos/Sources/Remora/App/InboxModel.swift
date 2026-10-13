@@ -949,7 +949,8 @@ final class InboxModel {
                     kind: .reminder,
                     itemID: item.id,
                     title: L(item.bundle == .reminders ? "Reminder" : "Back in your inbox"),
-                    subtitle: item.context,
+                    // A reminder's context is "Reminder" again, stored in English: the title says it already.
+                    subtitle: item.bundle == .reminders ? "" : item.context,
                     body: [item.title, note].compactMap { $0 }.joined(separator: "\n"),
                     url: item.url
                 ), from: item.pluginID), at: date)
