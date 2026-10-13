@@ -86,7 +86,18 @@ private struct FocusRow: View {
 
     @State private var hovering = false
 
+    /// A button, not a tap: reachable from the keyboard and named for VoiceOver, as the inbox rows are (A11Y-27).
     var body: some View {
+        Button {
+            model.open(item)
+        } label: {
+            content
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L("%d. %@: %@", rank, item.title, reason))
+    }
+
+    private var content: some View {
         HStack(alignment: .top, spacing: 10) {
             Text("\(rank)")
                 .font(Myna.font(11, .bold))
@@ -104,7 +115,6 @@ private struct FocusRow: View {
             hovering ? Color.white.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous)
         )
         .contentShape(Rectangle())
-        .onTapGesture { model.open(item) }
         .onHover { hovering = $0 }
     }
 }

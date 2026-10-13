@@ -7,6 +7,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Mac: the items the brief puts first are buttons: reachable with the keyboard, and VoiceOver reads their rank,
+  title and reason.
 - The brief sees the task you started again, marked as in progress, so it no longer suggests something else as if
   you weren't on it.
 
