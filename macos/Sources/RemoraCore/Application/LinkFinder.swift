@@ -6,6 +6,9 @@ public struct LinkFinder: Sendable {
     public var similarity: [any SimilarityModel]
     /// At most this many links per item, most certain first.
     public var limit: Int
+    /// What the similarity models said of each pair of titles at the last search (ML-10): a refresh where nothing
+    /// changed compares nothing again, and a new or renamed item only its own pairs. Shared by copies of the finder.
+    let remembered = SimilarityMemory()
 
     public init(similarity: [any SimilarityModel] = [KeywordSimilarity()], limit: Int = 3) {
         self.similarity = similarity
@@ -27,12 +30,13 @@ public struct LinkFinder: Sendable {
                 if !keys[i].isDisjoint(with: keys[j]) {
                     strong[a, default: []].append(b)
                     strong[b, default: []].append(a)
-                } else if similarity.contains(where: { $0.similar(titles[i], titles[j]) }) {
+                } else if remembered.similar(titles[i], titles[j], by: similarity) {
                     weak[a, default: []].append(b)
                     weak[b, default: []].append(a)
                 }
             }
         }
+        remembered.forgetUnused()
         var links: [String: [String]] = [:]
         for id in Set(strong.keys).union(weak.keys) {
             links[id] = Array(((strong[id] ?? []) + (weak[id] ?? [])).prefix(limit))
@@ -51,6 +55,47 @@ public struct LinkFinder: Sendable {
         title
             .replacingOccurrences(of: #"^(\s*\[[^\]]*\])+\s*"#, with: "", options: .regularExpression)
             .replacingOccurrences(of: #"^[a-zA-Z]+(\([^)]*\))?!?:\s*"#, with: "", options: .regularExpression)
+    }
+}
+
+/// Whether two titles are similar, as last computed, keyed by the pair of titles whichever order they come in. A pair
+/// not looked at during a search is forgotten after it, so the memory follows the inbox.
+final class SimilarityMemory: @unchecked Sendable {
+    private struct Pair: Hashable {
+        let first: String
+        let second: String
+
+        init(_ a: String, _ b: String) { (first, second) = a < b ? (a, b) : (b, a) }
+    }
+
+    private let lock = NSLock()
+    private var answers: [Pair: Bool] = [:]
+    private var used: Set<Pair> = []
+    /// How many pairs the models were asked about, for tests.
+    private(set) var computed = 0
+
+    func similar(_ a: String, _ b: String, by models: [any SimilarityModel]) -> Bool {
+        let pair = Pair(a, b)
+        let known: Bool? = lock.withLock {
+            used.insert(pair)
+            return answers[pair]
+        }
+        if let known { return known }
+        // Computed outside the lock: an embedding comparison takes a while, and another search may run meanwhile.
+        let answer = models.contains { $0.similar(a, b) }
+        lock.withLock {
+            answers[pair] = answer
+            computed += 1
+        }
+        return answer
+    }
+
+    /// Ends a search: the pairs it didn't look at belong to items gone or renamed.
+    func forgetUnused() {
+        lock.withLock {
+            answers = answers.filter { used.contains($0.key) }
+            used = []
+        }
     }
 }
 

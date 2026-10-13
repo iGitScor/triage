@@ -20,6 +20,30 @@ struct LinkFinderTests {
         #expect(links["1"] == ["2"] && links["2"] == ["1"])
     }
 
+    /// ML-10: a refresh where nothing changed compares no title again; a renamed item, only its own pairs. The links
+    /// stay the same.
+    @Test func onlyNewOrChangedTitlesAreComparedAgain() {
+        final class Counting: SimilarityModel, @unchecked Sendable {
+            var asked = 0
+            func similar(_ a: String, _ b: String) -> Bool {
+                asked += 1
+                return a.contains("export") && b.contains("export")
+            }
+        }
+        let model = Counting()
+        let finder = LinkFinder(similarity: [model])
+        var items = [
+            item("1", "linear", "CSV export is slow"), item("2", "github", "Speed up the CSV export"),
+            item("3", "slack", "Lunch on Friday?"),
+        ]
+        let first = finder.links(items)
+        #expect(model.asked == 3, "three pairs across tools")
+        #expect(finder.links(items) == first && model.asked == 3, "nothing changed: nothing compared")
+        items[2].title = "Team lunch moved"
+        #expect(finder.links(items) == first)
+        #expect(model.asked == 5, "the renamed item's two pairs only")
+    }
+
     @Test func sameToolIsNeverLinked() {
         let a = item("1", "github", "CE-1380 part 1")
         let b = item("2", "github", "CE-1380 part 2")

@@ -14,6 +14,10 @@ public final class EmbeddingSimilarity: SimilarityModel, @unchecked Sendable {
     private let threshold: Double
     private let lock = NSLock()
     private var embeddings: [NLLanguage: NLEmbedding] = [:]
+    /// Word-to-word distances already measured (ML-10): the same words come back across titles and refreshes.
+    /// Emptied past `wordPairLimit`, so it can't grow without bound.
+    private var wordDistances: [String: Double] = [:]
+    static let wordPairLimit = 50_000
 
     public init(threshold: Double = EmbeddingSimilarity.topicThreshold) {
         self.threshold = threshold
@@ -32,16 +36,23 @@ public final class EmbeddingSimilarity: SimilarityModel, @unchecked Sendable {
 
         func side(_ from: [String], _ to: [String]) -> Double {
             let scores = from.map { word in
-                to.map { other in
-                    word == other
-                        ? 0
-                        : (embedding.contains(word) && embedding.contains(other)
-                            ? embedding.distance(between: word, and: other) : 2)
-                }.min() ?? 2
+                to.map { other in word == other ? 0 : wordDistance(word, other, in: embedding) }.min() ?? 2
             }
             return scores.reduce(0, +) / Double(scores.count)
         }
         return (side(wordsA, wordsB) + side(wordsB, wordsA)) / 2
+    }
+
+    private func wordDistance(_ a: String, _ b: String, in embedding: NLEmbedding) -> Double {
+        let key = "\(embedding.language?.rawValue ?? "")|" + (a < b ? "\(a)|\(b)" : "\(b)|\(a)")
+        if let known = lock.withLock({ wordDistances[key] }) { return known }
+        let distance =
+            embedding.contains(a) && embedding.contains(b) ? embedding.distance(between: a, and: b) : 2
+        lock.withLock {
+            if wordDistances.count >= Self.wordPairLimit { wordDistances = [:] }
+            wordDistances[key] = distance
+        }
+        return distance
     }
 
     static func words(_ text: String) -> [String] {
