@@ -166,6 +166,9 @@ pub struct AssistantPolicy {
 impl AssistantPolicy {
     /// The assistant settings that name a model.
     pub const MODEL_FIELDS: [&'static str; 2] = ["model", "digestModel"];
+    /// Set in the settings `constrained` returns when the organization lists the allowed models: the assistant then
+    /// never lets the provider answer with another one (Claude's server-side fallback).
+    pub const MODELS_MANAGED_KEY: &'static str = "modelsManaged";
 
     /// Blank model names are dropped: a policy listing only blanks allows any model.
     pub fn new(excluded_sources: HashSet<String>, allowed_models: Option<Vec<String>>) -> Self {
@@ -193,6 +196,7 @@ impl AssistantPolicy {
         let mut settings = settings.clone();
         let Some(allowed) = &self.allowed_models else { return settings };
         let Some(first) = allowed.first() else { return settings };
+        settings.insert(Self::MODELS_MANAGED_KEY.to_string(), "true".to_string());
         for key in Self::MODEL_FIELDS {
             let value = settings.get(key).map(|v| v.trim().to_string()).unwrap_or_default();
             let mut effective = if value.is_empty() { defaults.get(key).cloned().unwrap_or_default() } else { value };
@@ -369,9 +373,10 @@ mod tests {
         assert_eq!(settings.get("digestModel"), None, "empty means Haiku, which is allowed: left as is");
         assert_eq!(
             policy.constrained(&map(&[("model", "claude-opus-5-5"), ("digestModel", "claude-haiku-5-5")]), &defaults),
-            map(&[("model", "claude-sonnet-5-5"), ("digestModel", "claude-haiku-5-5")])
+            map(&[("model", "claude-sonnet-5-5"), ("digestModel", "claude-haiku-5-5"), ("modelsManaged", "true")])
         );
         assert_eq!(settings["token"], "k");
+        assert_eq!(settings["modelsManaged"], "true", "so the assistant never falls back to another model");
         // Claude Code's empty model means its own default, which nobody can vouch for: it becomes the first allowed.
         assert_eq!(policy.constrained(&HashMap::new(), &HashMap::new())["model"], "claude-sonnet-5-5");
     }

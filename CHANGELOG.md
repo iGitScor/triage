@@ -19,6 +19,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Claude API: a brief with Haiku no longer asks for a fallback model Haiku doesn't have, and when the organization
+  lists the allowed models, Anthropic is never asked to answer with another one.
 - Windows and Linux: a confirmation in Settings (Disconnect, Erase local data) takes the keyboard focus, and gives
   it back when it closes.
 - Notion: a database that moved or lost its access no longer hides the tasks of the others; the account names it

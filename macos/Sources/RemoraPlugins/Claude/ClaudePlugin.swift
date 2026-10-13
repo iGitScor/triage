@@ -29,6 +29,8 @@ public struct ClaudePlugin: AssistantPlugin {
     private let apiKey: String
     private let model: String
     private let digestModel: String
+    /// The organization lists the allowed models: no fallback to another one.
+    private let modelsManaged: Bool
     private let http: HTTPClient
     /// How a retry waits; tests replace it to run instantly.
     var sleep: @Sendable (TimeInterval) async throws -> Void = { try await Task.sleep(for: .seconds($0)) }
@@ -38,11 +40,12 @@ public struct ClaudePlugin: AssistantPlugin {
         apiKey = try config.required("token")
         model = config["model"].nilIfEmpty ?? "claude-opus-5-5"
         digestModel = config["digestModel"].nilIfEmpty ?? "claude-haiku-5-5"
+        modelsManaged = config[AssistantPolicy.modelsManagedKey] == "true"
         self.http = http
     }
 
     public func brief(_ items: [InboxItem], now: Date) async throws -> Brief {
-        let response = try await send(Self.body(items: items, model: model, now: now))
+        let response = try await send(Self.body(items: items, model: model, now: now, modelsManaged: modelsManaged))
         return try Self.parse(response, knownIDs: Set(items.map(\.id)))
     }
 
@@ -53,7 +56,7 @@ public struct ClaudePlugin: AssistantPlugin {
             system: BriefPrompt.digestSystem,
             messages: [.init(role: "user", content: BriefPrompt.digestMessage(items: items, topic: topic, now: now))],
             outputConfig: .init(effort: "low", format: .init(type: "json_schema", schema: .digest)),
-            fallbacks: nil
+            fallbacks: Self.fallbacks(model: digestModel, modelsManaged: modelsManaged)
         )
         let output: BriefPrompt.DigestOutput = try await send(body).decode()
         return output.summary
@@ -66,7 +69,7 @@ public struct ClaudePlugin: AssistantPlugin {
             system: BriefPrompt.triageSystem,
             messages: [.init(role: "user", content: BriefPrompt.triageMessage(items: items, now: now))],
             outputConfig: .init(effort: "low", format: .init(type: "json_schema", schema: .triage)),
-            fallbacks: "default"
+            fallbacks: Self.fallbacks(model: model, modelsManaged: modelsManaged)
         )
         let output: BriefPrompt.TriageOutput = try await send(body).decode()
         return output.suggestions(knownIDs: Set(items.map(\.item.id)), now: now)
@@ -84,14 +87,21 @@ public struct ClaudePlugin: AssistantPlugin {
             tooSlow: L("Claude took too long to answer. Try again later."), sleep: sleep)
     }
 
-    static func body(items: [InboxItem], model: String, now: Date) -> Request {
+    /// Claude's server-side fallback on a refusal, for the models that have it (not Haiku, nor older ones), and never
+    /// when the organization lists the allowed models: the answer could then come from a model it didn't allow.
+    static func fallbacks(model: String, modelsManaged: Bool) -> String? {
+        let supported = ["claude-opus-5", "claude-sonnet-5", "claude-fable-5"].contains { model.hasPrefix($0) }
+        return supported && !modelsManaged ? "default" : nil
+    }
+
+    static func body(items: [InboxItem], model: String, now: Date, modelsManaged: Bool = false) -> Request {
         Request(
             model: model,
             maxTokens: 16_000,
             system: BriefPrompt.system,
             messages: [.init(role: "user", content: BriefPrompt.message(items: items, now: now))],
             outputConfig: .init(effort: "low", format: .init(type: "json_schema", schema: .brief)),
-            fallbacks: "default"
+            fallbacks: fallbacks(model: model, modelsManaged: modelsManaged)
         )
     }
 
@@ -123,7 +133,7 @@ extension ClaudePlugin {
         var system: String
         var messages: [Message]
         var outputConfig: OutputConfig
-        /// Server-side fallback on refusal; not available for Haiku.
+        /// Server-side fallback on refusal (`fallbacks(model:modelsManaged:)`).
         var fallbacks: String?
 
         enum CodingKeys: String, CodingKey {

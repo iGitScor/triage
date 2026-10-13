@@ -10,6 +10,9 @@ public struct AssistantPolicy: Equatable, Sendable {
 
     /// The assistant settings that name a model, with the value used when the field is empty.
     public static let modelFields = ["model", "digestModel"]
+    /// Set in the settings `constrained` returns when the organization lists the allowed models: the assistant then
+    /// never lets the provider answer with another one (Claude's server-side fallback).
+    public static let modelsManagedKey = "modelsManaged"
 
     public init(excludedSources: Set<String> = [], allowedModels: [String]? = nil) {
         self.excludedSources = excludedSources
@@ -32,6 +35,7 @@ public struct AssistantPolicy: Equatable, Sendable {
     public func constrained(_ settings: [String: String], defaults: [String: String]) -> [String: String] {
         guard let allowed = allowedModels, let first = allowed.first else { return settings }
         var settings = settings
+        settings[Self.modelsManagedKey] = "true"
         for key in Self.modelFields {
             let value = settings[key]?.trimmingCharacters(in: .whitespaces) ?? ""
             var effective = value.isEmpty ? (defaults[key] ?? "") : value

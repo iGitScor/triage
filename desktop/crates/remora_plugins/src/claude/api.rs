@@ -6,7 +6,9 @@ use crate::assistant::{decode_reply, json_text, AssistantFailure, AssistantReply
 use crate::{decode, AssistantPlugin, HttpClient, PluginConfig, PluginError, Request};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use remora_core::{Brief, ConfigField, Egress, InboxItem, PluginManifest, SnoozedItem, TriageSuggestion};
+use remora_core::{
+    AssistantPolicy, Brief, ConfigField, Egress, InboxItem, PluginManifest, SnoozedItem, TriageSuggestion,
+};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -65,6 +67,8 @@ pub struct ClaudePlugin {
     api_key: String,
     model: String,
     digest_model: String,
+    /// The organization lists the allowed models: no fallback to another one.
+    models_managed: bool,
     language: String,
     http: Arc<dyn HttpClient>,
 }
@@ -76,7 +80,7 @@ pub struct ApiRequest {
     pub system: String,
     pub messages: Vec<Message>,
     pub output_config: OutputConfig,
-    /// Server-side fallback on refusal; not available for Haiku.
+    /// Server-side fallback on refusal (`fallbacks`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fallbacks: Option<&'static str>,
 }
@@ -101,16 +105,30 @@ pub struct Format {
 }
 
 impl ApiRequest {
-    fn new(model: &str, max_tokens: u32, system: String, message: String, schema: Schema, fallbacks: bool) -> Self {
+    fn new(
+        model: &str,
+        max_tokens: u32,
+        system: String,
+        message: String,
+        schema: Schema,
+        models_managed: bool,
+    ) -> Self {
         ApiRequest {
             model: model.into(),
             max_tokens,
             system,
             messages: vec![Message { role: "user", content: message }],
             output_config: OutputConfig { effort: "low", format: Format { kind: "json_schema", schema } },
-            fallbacks: fallbacks.then_some("default"),
+            fallbacks: fallbacks(model, models_managed),
         }
     }
+}
+
+/// Claude's server-side fallback on a refusal, for the models that have it (not Haiku, nor older ones), and never when
+/// the organization lists the allowed models: the answer could then come from a model it didn't allow. As on macOS.
+pub fn fallbacks(model: &str, models_managed: bool) -> Option<&'static str> {
+    let supported = ["claude-opus-5", "claude-sonnet-5", "claude-fable-5"].iter().any(|p| model.starts_with(p));
+    (supported && !models_managed).then_some("default")
 }
 
 #[derive(Deserialize)]
@@ -135,14 +153,28 @@ impl ClaudePlugin {
             api_key: config.required("token")?,
             model: or("model", DEFAULT_MODEL),
             digest_model: or("digestModel", DEFAULT_DIGEST_MODEL),
+            models_managed: config.get(AssistantPolicy::MODELS_MANAGED_KEY) == "true",
             language: language.into(),
             http,
         })
     }
 
     /// The brief's request.
-    pub fn body(items: &[InboxItem], model: &str, now: DateTime<Utc>, language: &str) -> ApiRequest {
-        ApiRequest::new(model, 16_000, prompt::system(language), prompt::message(items, now), Schema::brief(), true)
+    pub fn body(
+        items: &[InboxItem],
+        model: &str,
+        now: DateTime<Utc>,
+        language: &str,
+        models_managed: bool,
+    ) -> ApiRequest {
+        ApiRequest::new(
+            model,
+            16_000,
+            prompt::system(language),
+            prompt::message(items, now),
+            Schema::brief(),
+            models_managed,
+        )
     }
 
     async fn send(&self, body: &ApiRequest) -> Result<ApiResponse, PluginError> {
@@ -214,7 +246,7 @@ fn output<T: DeserializeOwned>(response: ApiResponse) -> Result<T, PluginError> 
 #[async_trait]
 impl AssistantPlugin for ClaudePlugin {
     async fn brief(&self, items: &[InboxItem], now: DateTime<Utc>) -> Result<Brief, PluginError> {
-        let response = self.send(&Self::body(items, &self.model, now, &self.language)).await?;
+        let response = self.send(&Self::body(items, &self.model, now, &self.language, self.models_managed)).await?;
         Self::parse(response, &prompt::ids(items))
     }
 
@@ -225,7 +257,7 @@ impl AssistantPlugin for ClaudePlugin {
             prompt::digest_system(&self.language),
             prompt::digest_message(items, topic, now),
             Schema::digest(),
-            false,
+            self.models_managed,
         );
         output::<prompt::DigestOutput>(self.send(&body).await?).map(|o| o.summary)
     }
@@ -237,7 +269,7 @@ impl AssistantPlugin for ClaudePlugin {
             prompt::triage_system(&self.language),
             prompt::triage_message(items, now),
             Schema::triage(),
-            true,
+            self.models_managed,
         );
         let output: prompt::TriageOutput = output(self.send(&body).await?)?;
         Ok(output.suggestions(&prompt::snoozed_ids(items), now))
@@ -287,13 +319,40 @@ mod tests {
 
     #[test]
     fn request_uses_structured_output_and_fallbacks() {
-        let json = serde_json::to_string(&ClaudePlugin::body(&[item("a")], "claude-opus-5-5", now(), "en")).unwrap();
+        let json =
+            serde_json::to_string(&ClaudePlugin::body(&[item("a")], "claude-opus-5-5", now(), "en", false)).unwrap();
         assert!(json.contains(r#""fallbacks":"default""#));
         assert!(json.contains(r#""type":"json_schema""#));
         assert!(json.contains(r#""additionalProperties":false"#));
         assert!(json.contains(r#""max_tokens":16000"#));
         assert!(json.contains(r#""output_config":{"effort":"low""#));
         assert!(json.contains("Fix login"));
+    }
+
+    #[test]
+    fn the_fallback_only_for_models_that_have_it_and_never_under_an_allowed_models_policy() {
+        assert_eq!(fallbacks("claude-opus-5-5", false), Some("default"));
+        assert_eq!(fallbacks("claude-sonnet-5-5", false), Some("default"));
+        assert_eq!(fallbacks("claude-fable-5-1", false), Some("default"));
+        assert_eq!(fallbacks("claude-haiku-5-5", false), None);
+        assert_eq!(fallbacks("claude-opus-4-1", false), None, "an older model: not known to have it");
+        assert_eq!(fallbacks("claude-opus-5-5", true), None);
+        let json =
+            serde_json::to_string(&ClaudePlugin::body(&[item("a")], "claude-haiku-5-5", now(), "en", false)).unwrap();
+        assert!(!json.contains("fallbacks"), "a Haiku brief");
+    }
+
+    #[tokio::test]
+    async fn an_allowed_models_policy_sends_no_fallback() {
+        let recorder = Recorder::new(200, Ok(&answer(r#"{"summary": "s", "focus": []}"#, "end_turn")));
+        ClaudePlugin::new(&config(&[("token", "k"), ("modelsManaged", "true")]), recorder.clone(), "en")
+            .unwrap()
+            .brief(&[item("a")], now())
+            .await
+            .unwrap();
+        let request = recorder.request();
+        assert!(!request.body.as_deref().unwrap().contains("fallbacks"));
+        assert!(!request.headers.iter().any(|(k, _)| k == "anthropic-beta"));
     }
 
     #[tokio::test]

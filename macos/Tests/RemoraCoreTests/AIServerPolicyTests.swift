@@ -76,7 +76,7 @@ struct AIServerPolicyTests {
 
     @Test func anEmptySummariesModelIsCheckedAsTheBriefs() {
         let policy = AssistantPolicy(allowedModels: ["gpt-a", "gpt-b"])
-        #expect(policy.constrained(["model": "gpt-b"], defaults: [:]) == ["model": "gpt-b"])
+        #expect(policy.constrained(["model": "gpt-b"], defaults: [:])["model"] == "gpt-b")
         #expect(policy.constrained(["model": "gpt-z"], defaults: [:])["model"] == "gpt-a")
         #expect(
             policy.constrained(["model": "gpt-b", "digestModel": "gpt-z"], defaults: [:])["digestModel"] == "gpt-a")

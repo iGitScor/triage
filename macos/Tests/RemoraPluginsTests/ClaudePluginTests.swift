@@ -18,6 +18,18 @@ struct ClaudePluginTests {
         #expect(json.contains("Fix login"))
     }
 
+    @Test func theFallbackOnlyForModelsThatHaveItAndNeverUnderAnAllowedModelsPolicy() throws {
+        #expect(ClaudePlugin.fallbacks(model: "claude-opus-5-5", modelsManaged: false) == "default")
+        #expect(ClaudePlugin.fallbacks(model: "claude-sonnet-5-5", modelsManaged: false) == "default")
+        #expect(ClaudePlugin.fallbacks(model: "claude-fable-5-1", modelsManaged: false) == "default")
+        #expect(ClaudePlugin.fallbacks(model: "claude-haiku-5-5", modelsManaged: false) == nil)
+        #expect(ClaudePlugin.fallbacks(model: "claude-opus-4-1", modelsManaged: false) == nil, "an older model")
+        #expect(ClaudePlugin.fallbacks(model: "claude-opus-5-5", modelsManaged: true) == nil)
+        let haiku = ClaudePlugin.body(items: [item], model: "claude-haiku-5-5", now: .now)
+        let json = try #require(String(data: JSONEncoder().encode(haiku), encoding: .utf8))
+        #expect(!json.contains("fallbacks"), "a Haiku brief")
+    }
+
     @Test func parsesBriefAndDropsUnknownItems() async throws {
         let text =
             #"{\"summary\": \"One review waits.\", \"focus\": [{\"id\": \"a\", \"reason\": \"Blocks Frank\"}, {\"id\": \"ghost\", \"reason\": \"?\"}]}"#

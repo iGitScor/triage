@@ -25,8 +25,9 @@ struct AssistantPolicyTests {
         #expect(settings["digestModel"] == nil, "empty means Haiku, which is allowed: left as is")
         #expect(
             policy.constrained(["model": "claude-opus-5-5", "digestModel": "claude-haiku-5-5"], defaults: defaults)
-                == ["model": "claude-sonnet-5-5", "digestModel": "claude-haiku-5-5"])
+                == ["model": "claude-sonnet-5-5", "digestModel": "claude-haiku-5-5", "modelsManaged": "true"])
         #expect(settings["token"] == "k")
+        #expect(settings["modelsManaged"] == "true", "so the assistant never falls back to another model")
         // Claude Code's empty model means its own default, which nobody can vouch for: it becomes the first allowed.
         #expect(policy.constrained([:], defaults: [:])["model"] == "claude-sonnet-5-5")
     }

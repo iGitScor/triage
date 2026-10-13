@@ -60,6 +60,9 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 - **Envoyer à l’assistant** (Réglages → Général) tient les éléments d’un outil entièrement à l’écart de
   l’assistant ; l’organisation peut faire de même et limiter les modèles avec des
   [clés MDM](./mdm#les-cles) (`AIExcludedSources`, `AllowedAIModels`).
+- Avec l’API Claude, si le modèle choisi refuse un brief ou un tri, Anthropic peut répondre avec un autre de ses
+  modèles (repli côté serveur). Remora ne le demande qu’avec Opus, Sonnet et Fable, et jamais quand `AllowedAIModels`
+  est réglée : la réponse vient alors toujours d’un modèle autorisé, ou échoue.
 - **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications :
   les titres de cet outil peuvent toujours parvenir à l’assistant : c’est le rôle d’*Envoyer à l’assistant*.
 - Avec Claude Code, Remora lance `claude` sans outils, sans extensions, hooks ni serveurs MCP, et sans rien

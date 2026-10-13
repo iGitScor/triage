@@ -57,6 +57,9 @@ sent: tokens, links, code, the rest of a message, notes, files.
 - **Send to the assistant** (Settings → General) keeps a tool's items away from the assistant entirely; the
   organization can do the same and limit the models with [MDM keys](./mdm#keys) (`AIExcludedSources`,
   `AllowedAIModels`).
+- With the Claude API, if the chosen model declines a brief or triage, Anthropic may answer with another of its
+  models (server-side fallback). Remora asks for it only with Opus, Sonnet and Fable, and never when
+  `AllowedAIModels` is set: the answer then always comes from an allowed model, or fails.
 - **Hide message content** (Settings → General → Notifications) applies to notifications only: it doesn’t keep that tool’s
   titles away from the assistant: that is *Send to the assistant*.
 - With Claude Code, Remora runs `claude` with no tools, no plugins, hooks or MCP servers, and nothing saved to the
