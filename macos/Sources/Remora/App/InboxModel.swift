@@ -222,14 +222,24 @@ final class InboxModel {
         (links[item.id] ?? []).compactMap { self.item($0) }
     }
 
+    /// One link search at a time: a new one cancels the last, and only the newest result is kept, so an older
+    /// search finishing late can't bring back links to items already gone (PERF-18).
     private func recomputeLinks() {
         let items = allItems
         let finder = linkFinder
-        Task {
+        linksGeneration &+= 1
+        let generation = linksGeneration
+        linksTask?.cancel()
+        linksTask = Task {
             let links = await Task.detached { finder.links(items) }.value
+            guard !Task.isCancelled, generation == self.linksGeneration else { return }
             self.links = links
         }
     }
+
+    @ObservationIgnored private var linksGeneration = 0
+    /// The latest link search, for tests to wait on.
+    @ObservationIgnored private(set) var linksTask: Task<Void, Never>?
 
     func state(of item: InboxItem) -> ItemState { states[item.id] ?? ItemState() }
 
