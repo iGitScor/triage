@@ -172,6 +172,24 @@ describe('ConnectForm', () => {
     expect(container.textContent).toContain('Managed by your organization')
   })
 
+  it('locks the settings the organization set for a source', async () => {
+    const managedTenant: Manifest = {
+      ...outlook,
+      fields: [{ ...outlook.fields[0], managedKey: 'MicrosoftTenant' }],
+    }
+    const { container } = render(ConnectForm, {
+      props: {
+        manifest: managedTenant,
+        managed: { settings: { MicrosoftTenant: 'acme.onmicrosoft.com' }, unreadable: [] },
+        ondone: () => {},
+      },
+    })
+    const tenant = container.querySelector('input') as HTMLInputElement
+    await waitFor(() => expect(tenant.value).toBe('acme.onmicrosoft.com'))
+    expect(tenant.disabled).toBe(true)
+    expect(container.textContent).toContain('Managed by your organization')
+  })
+
   it('leaves it to the user otherwise', () => {
     const { container } = render(ConnectForm, {
       props: { manifest: openai, managed: { unreadable: [] }, ondone: () => {} },

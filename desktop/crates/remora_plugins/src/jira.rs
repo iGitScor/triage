@@ -26,6 +26,7 @@ pub fn manifest() -> PluginManifest {
                 is_secret: false,
                 is_optional: false,
                 help: None,
+                managed_key: None,
             },
             ConfigField {
                 key: "email".into(),
@@ -35,6 +36,7 @@ pub fn manifest() -> PluginManifest {
                 is_secret: false,
                 is_optional: true,
                 help: Some("Jira Cloud only: the e-mail you sign in with. Leave empty for Data Center.".into()),
+                managed_key: None,
             },
             ConfigField::token("API token", "Jira Cloud: an API token. Data Center: a personal access token."),
         ],

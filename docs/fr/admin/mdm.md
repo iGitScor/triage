@@ -29,8 +29,10 @@ peut plus modifier la politique.
 | `OpenInApps` | Booléen | Ouvrir les éléments Slack et Linear dans leur app quand elle est installée ; `false` ouvre toujours la page web | `true` |
 | `ClaudeCodePath` | Chaîne | Le `claude` que Remora exécute, à la place de celui trouvé ou saisi dans le compte. Il doit toujours s’appeler `claude`, appartenir à l’utilisateur ou à root, et répondre comme Claude Code | Trouvé automatiquement |
 | `AutomaticUpdates` | Booléen | `true` : interroge GitHub une fois par jour pour une nouvelle version, verrouillé. `false` : aucune vérification, même pas *Vérifier maintenant*, pour les parcs que vous redéployez vous-même | Désactivé ; l’utilisateur décide |
+| `MicrosoftTenant` | Chaîne | Le tenant Microsoft Entra de l’organisation (`acme.onmicrosoft.com`, ou son identifiant), pour la connexion à Microsoft 365. Rempli et verrouillé dans le formulaire de connexion, y compris pour les comptes déjà connectés | Choisi par l’utilisateur |
+| `MicrosoftClientID` | Chaîne | L’identifiant d’application (client) de l’app que vous avez inscrite dans Microsoft Entra pour Remora. Rempli et verrouillé dans le formulaire de connexion | Choisi par l’utilisateur |
 
-`AIServer` et les cinq dernières sont des réglages, pas des règles de confidentialité : elles ne verrouillent pas Réglages → Confidentialité.
+`AIServer` et les sept dernières sont des réglages, pas des règles de confidentialité : elles ne verrouillent pas Réglages → Confidentialité.
 
 Identifiants : `github`, `gitlab`, `slack`, `linear`, `jira`, `notion`, `claude-code` (Claude Code), `claude` (API Claude),
 `openai` (OpenAI-compatible). Pour choisir l’assistant, ne listez que celui-là dans `AllowedPlugins`.
@@ -150,6 +152,8 @@ puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par 
 | `RefreshMinutes` | `REG_DWORD` | La fréquence de vérification des outils, de 1 à 60 |
 | `OpenInApps` | `REG_DWORD` | `1` pour ouvrir Slack et Linear dans leur app, `0` pour la page web |
 | `ClaudeCodePath` | `REG_SZ` | Le `claude.exe` (ou `claude.cmd`) que Remora exécute |
+| `MicrosoftTenant` | `REG_SZ` | Le tenant Microsoft Entra, réglé et verrouillé |
+| `MicrosoftClientID` | `REG_SZ` | L’identifiant client de l’app inscrite pour Remora, réglé et verrouillé |
 
 Déployez-les par une préférence de stratégie de groupe (Configuration ordinateur → Préférences → Paramètres Windows →
 Registre), un script de correction ou de configuration Intune, ou un fichier `.reg`. La même politique que le profil

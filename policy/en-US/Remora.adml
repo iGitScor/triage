@@ -31,6 +31,10 @@
       <string id="OpenInApps_Help">Open Slack and Linear items in their desktop app when installed; disabled always opens the web page.</string>
       <string id="ClaudeCodePath">Claude Code path</string>
       <string id="ClaudeCodePath_Help">The claude program Remora runs, instead of the one found or entered. It must still be named claude and pass Remora's checks.</string>
+      <string id="MicrosoftTenant">Microsoft 365 tenant</string>
+      <string id="MicrosoftTenant_Help">The organization's Microsoft Entra tenant, by domain or ID, for signing in to Microsoft 365. Filled in and locked in the connect form.</string>
+      <string id="MicrosoftClientID">Microsoft 365 client ID</string>
+      <string id="MicrosoftClientID_Help">The application (client) ID of the app the organization registered in Microsoft Entra for Remora. Filled in and locked in the connect form.</string>
       <string id="AutomaticUpdates">Automatic updates</string>
       <string id="AutomaticUpdates_Help">Enabled: check for a new version once a day, locked on. Disabled: no update check at all.</string>
     </stringTable>
@@ -43,6 +47,8 @@
       <presentation id="HiddenContentSources"><multiTextBox refId="HiddenContentSources">One value per line</multiTextBox></presentation>
       <presentation id="RefreshMinutes"><decimalTextBox refId="RefreshMinutes" defaultValue="5">Minutes</decimalTextBox></presentation>
       <presentation id="ClaudeCodePath"><textBox refId="ClaudeCodePath"><label>Claude Code path</label></textBox></presentation>
+      <presentation id="MicrosoftTenant"><textBox refId="MicrosoftTenant"><label>Microsoft 365 tenant</label></textBox></presentation>
+      <presentation id="MicrosoftClientID"><textBox refId="MicrosoftClientID"><label>Microsoft 365 client ID</label></textBox></presentation>
     </presentationTable>
   </resources>
 </policyDefinitionResources>

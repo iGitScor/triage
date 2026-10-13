@@ -31,6 +31,10 @@
       <string id="OpenInApps_Help">Ouvrir les éléments Slack et Linear dans leur app quand elle est installée ; désactivé, ouvre toujours la page web.</string>
       <string id="ClaudeCodePath">Chemin de Claude Code</string>
       <string id="ClaudeCodePath_Help">Le programme claude que Remora exécute, au lieu de celui trouvé ou saisi. Il doit toujours s’appeler claude et passer les vérifications de Remora.</string>
+      <string id="MicrosoftTenant">Tenant Microsoft 365</string>
+      <string id="MicrosoftTenant_Help">Le tenant Microsoft Entra de l’organisation, par domaine ou identifiant, pour la connexion à Microsoft 365. Rempli et verrouillé dans le formulaire de connexion.</string>
+      <string id="MicrosoftClientID">ID client Microsoft 365</string>
+      <string id="MicrosoftClientID_Help">L’identifiant d’application (client) de l’app que l’organisation a inscrite dans Microsoft Entra pour Remora. Rempli et verrouillé dans le formulaire de connexion.</string>
       <string id="AutomaticUpdates">Mises à jour automatiques</string>
       <string id="AutomaticUpdates_Help">Activé : vérifier une nouvelle version une fois par jour, verrouillé. Désactivé : aucune vérification.</string>
     </stringTable>
@@ -43,6 +47,8 @@
       <presentation id="HiddenContentSources"><multiTextBox refId="HiddenContentSources">Une valeur par ligne</multiTextBox></presentation>
       <presentation id="RefreshMinutes"><decimalTextBox refId="RefreshMinutes" defaultValue="5">Minutes</decimalTextBox></presentation>
       <presentation id="ClaudeCodePath"><textBox refId="ClaudeCodePath"><label>Chemin de Claude Code</label></textBox></presentation>
+      <presentation id="MicrosoftTenant"><textBox refId="MicrosoftTenant"><label>Tenant Microsoft 365</label></textBox></presentation>
+      <presentation id="MicrosoftClientID"><textBox refId="MicrosoftClientID"><label>ID client Microsoft 365</label></textBox></presentation>
     </presentationTable>
   </resources>
 </policyDefinitionResources>

@@ -341,6 +341,9 @@ pub struct ConfigField {
     pub is_secret: bool,
     pub is_optional: bool,
     pub help: Option<String>,
+    /// The policy value that sets this field for the organization (`MicrosoftTenant`), locking it in the form.
+    #[serde(default)]
+    pub managed_key: Option<String>,
 }
 
 impl ConfigField {
@@ -353,6 +356,7 @@ impl ConfigField {
             is_secret: true,
             is_optional: false,
             help: Some(help.into()),
+            managed_key: None,
         }
     }
 
@@ -365,6 +369,7 @@ impl ConfigField {
             is_secret: false,
             is_optional: false,
             help: None,
+            managed_key: None,
         }
     }
 }

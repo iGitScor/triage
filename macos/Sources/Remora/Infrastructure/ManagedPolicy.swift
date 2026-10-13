@@ -66,6 +66,15 @@ enum ManagedPolicy {
     }
 
     /// Whether a setting is the organization's: its control is then locked in Settings.
+    /// The organization's value for a source's setting (`ConfigField.managedKey`), locked in the form. Empty when
+    /// it isn't text: the source can't sign in, rather than going somewhere the organization didn't choose.
+    static func setting(_ key: String, _ managed: ManagedValues = ManagedDefaults()) -> String? {
+        guard let value = managed.forced(key) else { return nil }
+        let text = (value as? String)?.trimmingCharacters(in: .whitespaces)
+        if text?.isEmpty == true { return nil }
+        return text ?? ""
+    }
+
     static func isForced(_ key: String, _ managed: ManagedValues = ManagedDefaults()) -> Bool {
         managed.forced(key) != nil
     }

@@ -95,6 +95,20 @@
         <text id="ClaudeCodePath" valueName="ClaudeCodePath" />
       </elements>
     </policy>
+    <policy name="MicrosoftTenant" class="Both" displayName="$(string.MicrosoftTenant)" explainText="$(string.MicrosoftTenant_Help)" key="Software\Policies\Remora" presentation="$(presentation.MicrosoftTenant)">
+      <parentCategory ref="Remora" />
+      <supportedOn ref="SUPPORTED_Remora" />
+      <elements>
+        <text id="MicrosoftTenant" valueName="MicrosoftTenant" />
+      </elements>
+    </policy>
+    <policy name="MicrosoftClientID" class="Both" displayName="$(string.MicrosoftClientID)" explainText="$(string.MicrosoftClientID_Help)" key="Software\Policies\Remora" presentation="$(presentation.MicrosoftClientID)">
+      <parentCategory ref="Remora" />
+      <supportedOn ref="SUPPORTED_Remora" />
+      <elements>
+        <text id="MicrosoftClientID" valueName="MicrosoftClientID" />
+      </elements>
+    </policy>
     <policy name="AutomaticUpdates" class="Both" displayName="$(string.AutomaticUpdates)" explainText="$(string.AutomaticUpdates_Help)" key="Software\Policies\Remora" valueName="AutomaticUpdates">
       <parentCategory ref="Remora" />
       <supportedOn ref="SUPPORTED_Remora" />

@@ -29,8 +29,10 @@ the policy.
 | `OpenInApps` | Boolean | Open Slack and Linear items in their desktop app when installed; `false` always opens the web page | `true` |
 | `ClaudeCodePath` | String | The `claude` Remora runs, instead of the one found or entered in the account. It must still be named `claude`, belong to the user or root, and answer as Claude Code | Found automatically |
 | `AutomaticUpdates` | Boolean | `true`: check GitHub for a new version once a day, locked on. `false`: no update check at all, not even *Check now*, for fleets you redeploy yourself | Off; the user decides |
+| `MicrosoftTenant` | String | The organization’s Microsoft Entra tenant (`acme.onmicrosoft.com`, or its ID), for signing in to Microsoft 365. Filled in and locked in the connect form, also for accounts already connected | Set by the user |
+| `MicrosoftClientID` | String | The application (client) ID of the app you registered in Microsoft Entra for Remora. Filled in and locked in the connect form | Set by the user |
 
-`AIServer` and the last five are settings, not privacy rules: they don’t make Settings → Privacy read-only.
+`AIServer` and the last seven are settings, not privacy rules: they don’t make Settings → Privacy read-only.
 
 Plugin IDs: `github`, `gitlab`, `slack`, `linear`, `jira`, `notion`, `claude-code` (Claude Code), `claude` (Claude API),
 `openai` (OpenAI-compatible). To choose the assistant, list only that one in `AllowedPlugins`.
@@ -147,6 +149,8 @@ then from `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` for user-scoped policies 
 | `RefreshMinutes` | `REG_DWORD` | How often tools are checked, 1 to 60 |
 | `OpenInApps` | `REG_DWORD` | `1` to open Slack and Linear in their app, `0` for the web page |
 | `ClaudeCodePath` | `REG_SZ` | The `claude.exe` (or `claude.cmd`) Remora runs |
+| `MicrosoftTenant` | `REG_SZ` | The Microsoft Entra tenant, set and locked |
+| `MicrosoftClientID` | `REG_SZ` | The client ID of the app registered for Remora, set and locked |
 
 Deploy them with a Group Policy Preference (Computer Configuration → Preferences → Windows Settings → Registry), an
 Intune remediation or configuration script, or a `.reg` file. The same policy as the profile above, in PowerShell

@@ -179,6 +179,8 @@ export interface Field {
   isSecret: boolean
   isOptional: boolean
   help?: string | null
+  /** The policy value that sets this field for the organization (`MicrosoftTenant`), locking it. */
+  managedKey?: string | null
 }
 export interface Manifest {
   id: string
@@ -245,6 +247,8 @@ export interface Managed {
   allowedAiServers?: string[] | null
   /** AI-23: its server, set by the organization and locked in Settings. */
   aiServer?: string | null
+  /** Sources' settings by policy name (`Field.managedKey`), locked in the connect form. */
+  settings?: Record<string, string>
   allowLocalAi?: boolean | null
   /** SEC-29: sources the organization keeps from the assistant, locked off in Settings. */
   aiExcludedSources?: string[] | null

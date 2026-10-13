@@ -98,6 +98,16 @@ struct ManagedPolicyTests {
         #expect(ManagedPolicy.isManaged(managed))
     }
 
+    @Test func aSourcesSettingsFailClosed() {
+        let managed = ManagedDictionary(values: [
+            "MicrosoftTenant": " acme.onmicrosoft.com ", "MicrosoftClientID": NSNumber(value: 1),
+        ])
+        #expect(ManagedPolicy.setting("MicrosoftTenant", managed) == "acme.onmicrosoft.com")
+        #expect(ManagedPolicy.setting("MicrosoftClientID", managed) == "", "not text: emptied, so no sign-in")
+        #expect(ManagedPolicy.setting("Other", managed) == nil)
+        #expect(!ManagedPolicy.isManaged(managed), "the Privacy settings stay the user's")
+    }
+
     /// AI-23: the AI server keys.
     @Test func aiServerKeys() {
         var managed = ManagedDictionary(values: [

@@ -121,10 +121,22 @@
       "property_order": 60,
       "type": "string"
     },
+    "MicrosoftTenant": {
+      "title": "Microsoft 365 tenant",
+      "description": "The organization's Microsoft Entra tenant, by domain or ID, for signing in to Microsoft 365. Filled in and locked in the connect form.",
+      "property_order": 65,
+      "type": "string"
+    },
+    "MicrosoftClientID": {
+      "title": "Microsoft 365 client ID",
+      "description": "The application (client) ID of the app the organization registered in Microsoft Entra for Remora. Filled in and locked in the connect form.",
+      "property_order": 70,
+      "type": "string"
+    },
     "AutomaticUpdates": {
       "title": "Automatic updates",
       "description": "Enabled: check for a new version once a day, locked on. Disabled: no update check at all.",
-      "property_order": 65,
+      "property_order": 75,
       "type": "boolean"
     }
   }

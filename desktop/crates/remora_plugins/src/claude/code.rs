@@ -29,6 +29,7 @@ pub fn manifest() -> PluginManifest {
         is_secret: false,
         is_optional: false,
         help: None,
+        managed_key: None,
     };
     PluginManifest {
         id: ID.into(),
@@ -39,12 +40,14 @@ pub fn manifest() -> PluginManifest {
                 placeholder: "Found automatically".into(),
                 is_optional: true,
                 help: Some(PATH_HELP.into()),
+                managed_key: None,
                 ..field("path", "Path to claude")
             },
             ConfigField { placeholder: "Claude Code’s default".into(), is_optional: true, ..field("model", "Model for the brief") },
             ConfigField {
                 default_value: DEFAULT_DIGEST_MODEL.into(),
                 help: Some("A lighter model is enough for two sentences and uses less of your plan.".into()),
+                managed_key: None,
                 ..field("digestModel", "Model for bundle summaries")
             },
         ],

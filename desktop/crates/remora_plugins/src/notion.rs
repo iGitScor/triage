@@ -28,6 +28,7 @@ fn field(
         is_secret: false,
         is_optional,
         help: help.map(Into::into),
+        managed_key: None,
     }
 }
 

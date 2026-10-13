@@ -275,7 +275,7 @@ impl Inbox {
             .iter()
             .filter_map(|account| {
                 let manifest = any_manifest(&account.plugin_id)?;
-                let account = &self.with_policy_server(account);
+                let account = &self.with_policy_settings(account);
                 let refusal = policy.account_refusal(&manifest, &account.settings);
                 Some(AccountInfo {
                     hosts: registry::allowed_hosts(account, &manifest),
@@ -370,6 +370,7 @@ impl Inbox {
         let policy = self.policy();
         let mut jobs = vec![];
         for account in self.accounts.clone() {
+            let account = self.with_policy_settings(&account);
             if self.backoff.get(&account.id).is_some_and(|b| b.waits(now, manual)) {
                 continue;
             }
@@ -734,7 +735,7 @@ impl Inbox {
         self.accounts
             .iter()
             .find(|a| {
-                let a = self.with_policy_server(a);
+                let a = self.with_policy_settings(a);
                 claude::assistant_manifests()
                     .iter()
                     .any(|m| m.id == a.plugin_id && policy.account_refusal(m, &a.settings).is_none())
@@ -742,12 +743,18 @@ impl Inbox {
             .cloned()
     }
 
-    /// An account with the organization's `AIServer` in place of its own, for the OpenAI-compatible assistant.
-    fn with_policy_server(&self, account: &Account) -> Account {
+    /// An account with the organization's settings in place of its own: `AIServer` for the OpenAI-compatible
+    /// assistant, and each field's `managed_key` (`MicrosoftTenant`).
+    fn with_policy_settings(&self, account: &Account) -> Account {
         let mut account = account.clone();
         if account.plugin_id == AI_SERVER_PLUGIN {
             if let Some(forced) = &self.policy().ai_server {
                 account.settings.insert("host".into(), forced.clone());
+            }
+        }
+        for field in any_manifest(&account.plugin_id).map(|m| m.fields).unwrap_or_default() {
+            if let Some(forced) = field.managed_key.and_then(|key| self.managed.settings.get(&key)) {
+                account.settings.insert(field.key, forced.clone());
             }
         }
         account
@@ -804,7 +811,7 @@ impl Inbox {
             .into_iter()
             .find(|m| m.id == account.plugin_id)
             .ok_or("Unknown assistant.")?;
-        let account = &self.with_policy_server(account);
+        let account = &self.with_policy_settings(account);
         if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
             return Err(refusal.into());
         }
@@ -1202,13 +1209,13 @@ impl Inbox {
         if let Some(refusal) = self.policy().refusal(&manifest) {
             return Err(refusal.into());
         }
-        let account = Account {
+        let account = self.with_policy_settings(&Account {
             id: uuid::Uuid::new_v4().to_string(),
             plugin_id: plugin_id.into(),
             name: name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
             settings,
             identity: None,
-        };
+        });
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
         let plugin = registry::make(&account, secrets, guarded, Default::default()).map_err(|e| e.message())?;
@@ -1239,7 +1246,13 @@ impl Inbox {
                 .clone(),
             None => settings,
         };
-        let account = Account { id: String::new(), plugin_id: plugin_id.into(), name: None, settings, identity: None };
+        let account = self.with_policy_settings(&Account {
+            id: String::new(),
+            plugin_id: plugin_id.into(),
+            name: None,
+            settings,
+            identity: None,
+        });
         let hosts = registry::allowed_hosts(&account, &manifest);
         let page = oauth::fill(&sign_in.authorize_url, &account.settings).map_err(|e| e.message())?;
         let host = Request::get(page).host();
@@ -1264,7 +1277,7 @@ impl Inbox {
             .into_iter()
             .find(|m| m.id == plugin_id)
             .ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
-        let account = self.with_policy_server(&Account {
+        let account = self.with_policy_settings(&Account {
             id: uuid::Uuid::new_v4().to_string(),
             plugin_id: plugin_id.into(),
             name: name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
@@ -1428,8 +1441,9 @@ impl Inbox {
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
     ) -> Result<Box<dyn SourcePlugin>, Message> {
-        let account =
-            self.accounts.iter().find(|a| a.id == account_id).ok_or("This account is no longer connected.")?;
+        let account = &self.with_policy_settings(
+            self.accounts.iter().find(|a| a.id == account_id).ok_or("This account is no longer connected.")?,
+        );
         let manifest =
             registry::manifest(&account.plugin_id).ok_or_else(|| format!("Unknown plugin “{}”.", account.plugin_id))?;
         if let Some(refusal) = self.policy().refusal(&manifest) {

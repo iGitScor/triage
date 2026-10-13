@@ -116,6 +116,22 @@ KEYS = [
         "Le programme claude que Remora exécute, au lieu de celui trouvé ou saisi. Il doit toujours s’appeler claude et passer les vérifications de Remora.",
     ),
     (
+        "MicrosoftTenant",
+        "string",
+        "Microsoft 365 tenant",
+        "The organization's Microsoft Entra tenant, by domain or ID, for signing in to Microsoft 365. Filled in and locked in the connect form.",
+        "Tenant Microsoft 365",
+        "Le tenant Microsoft Entra de l’organisation, par domaine ou identifiant, pour la connexion à Microsoft 365. Rempli et verrouillé dans le formulaire de connexion.",
+    ),
+    (
+        "MicrosoftClientID",
+        "string",
+        "Microsoft 365 client ID",
+        "The application (client) ID of the app the organization registered in Microsoft Entra for Remora. Filled in and locked in the connect form.",
+        "ID client Microsoft 365",
+        "L’identifiant d’application (client) de l’app que l’organisation a inscrite dans Microsoft Entra pour Remora. Rempli et verrouillé dans le formulaire de connexion.",
+    ),
+    (
         "AutomaticUpdates",
         "bool",
         "Automatic updates",

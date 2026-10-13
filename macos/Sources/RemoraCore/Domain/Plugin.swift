@@ -73,6 +73,8 @@ public struct ConfigField: Sendable, Identifiable, Hashable {
     public var isSecret: Bool
     public var isOptional: Bool
     public var help: String?
+    /// The managed value that sets this field for the organization (`MicrosoftTenant`), locking it in the form.
+    public var managedKey: String?
 
     public var id: String { key }
 
@@ -83,7 +85,8 @@ public struct ConfigField: Sendable, Identifiable, Hashable {
         defaultValue: String = "",
         isSecret: Bool = false,
         isOptional: Bool = false,
-        help: String? = nil
+        help: String? = nil,
+        managedKey: String? = nil
     ) {
         self.key = key
         self.label = label
@@ -92,6 +95,7 @@ public struct ConfigField: Sendable, Identifiable, Hashable {
         self.isSecret = isSecret
         self.isOptional = isOptional
         self.help = help
+        self.managedKey = managedKey
     }
 
     public static func token(_ label: String = "Access token", help: String? = nil) -> ConfigField {

@@ -244,19 +244,18 @@ private struct ConnectForm: View {
                         TextField(manifest.name, text: $name)
                     }
                     ForEach(manifest.fields) { field in
-                        let locked = forcedServer != nil && field.key == manifest.egress.serverField
+                        let forced = forcedValue(field)
+                        let locked = forced != nil
                         self.field(
                             field.isOptional ? L("%@ (optional)", L(field.label)) : field.label, help: field.help
                         ) {
                             if field.isSecret {
                                 SecureField(L(field.placeholder), text: binding(field))
                             } else {
-                                // The organization's `AIServer`: shown, not editable.
-                                TextField(
-                                    L(field.placeholder), text: locked ? .constant(forcedServer ?? "") : binding(field)
-                                )
-                                .disabled(locked)
-                                .help(locked ? L("Managed by your organization") : "")
+                                // The organization's `AIServer`, or its value for this field: shown, not editable.
+                                TextField(L(field.placeholder), text: locked ? .constant(forced ?? "") : binding(field))
+                                    .disabled(locked)
+                                    .help(locked ? L("Managed by your organization") : "")
                             }
                         }
                     }
@@ -333,6 +332,12 @@ private struct ConnectForm: View {
         manifest.egress.serverField == nil ? nil : ManagedPolicy.aiServer()
     }
 
+    /// What the organization set for this field: its `AIServer`, or the field's `managedKey`.
+    private func forcedValue(_ field: ConfigField) -> String? {
+        if field.key == manifest.egress.serverField, let forcedServer { return forcedServer }
+        return field.managedKey.flatMap { ManagedPolicy.setting($0) }
+    }
+
     private func binding(_ field: ConfigField) -> Binding<String> {
         Binding(get: { values[field.key] ?? "" }, set: { values[field.key] = $0 })
     }
@@ -340,7 +345,7 @@ private struct ConnectForm: View {
     private func connect() {
         let secretKeys = Set(manifest.fields.filter(\.isSecret).map(\.key))
         var settings = values.filter { !secretKeys.contains($0.key) }
-        if let field = manifest.egress.serverField, let forcedServer { settings[field] = forcedServer }
+        for field in manifest.fields { if let forced = forcedValue(field) { settings[field.key] = forced } }
         var secrets = values.filter { secretKeys.contains($0.key) }
         connecting = true
         error = nil

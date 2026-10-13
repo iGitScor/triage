@@ -1,7 +1,7 @@
 use crate::Preferences;
 use remora_core::{AssistantPolicy, CompliancePolicy};
 use serde::Serialize;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 
 /// The organization's policy, from `HKLM\SOFTWARE\Policies\Remora` (Group Policy or Intune), and
 /// `HKCU\SOFTWARE\Policies\Remora` for user-scoped policies: a value set in HKLM wins. On Linux, from
@@ -13,7 +13,8 @@ use std::collections::HashSet;
 /// For every assistant, as on macOS: `AIExcludedSources` (REG_MULTI_SZ of plugin IDs, or `reminders`), added to the
 /// user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs). And the Mac's other
 /// settings: `HiddenContentSources` (REG_MULTI_SZ, added to the user's), `RefreshMinutes` (REG_DWORD, 1 to 60),
-/// `OpenInApps` (REG_DWORD 0/1) and `ClaudeCodePath` (REG_SZ).
+/// `OpenInApps` (REG_DWORD 0/1) and `ClaudeCodePath` (REG_SZ). A source's settings (REG_SZ, `SETTINGS`): what
+/// the organization registered for Microsoft 365, `MicrosoftTenant` and `MicrosoftClientID`, locked in the form.
 /// A key that is set wins over the user's own choice.
 ///
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -43,6 +44,9 @@ pub struct Managed {
     pub open_in_apps: Option<bool>,
     /// Where Claude Code is, locked in Settings. Empty: unreadable, so Claude Code is refused.
     pub claude_code_path: Option<String>,
+    /// Sources' settings by policy name (`ConfigField::managed_key`), replacing what the user typed. Empty:
+    /// unreadable, so the source can't sign in.
+    pub settings: BTreeMap<String, String>,
     /// Names of the values that were present but unreadable, applied as "deny".
     pub unreadable: Vec<String>,
 }
@@ -50,7 +54,9 @@ pub struct Managed {
 pub const POLICY_KEY: &str = r"SOFTWARE\Policies\Remora";
 /// Linux: the same values as a root-owned JSON file (LINUX-05).
 pub const POLICY_FILE: &str = "/etc/remora/policy.json";
-pub const VALUES: [&str; 13] = [
+/// The sources' settings an organization may set (`ConfigField::managed_key`).
+pub const SETTINGS: [&str; 2] = ["MicrosoftTenant", "MicrosoftClientID"];
+pub const VALUES: [&str; 15] = [
     "AllowedPlugins",
     "AllowExternalAI",
     "AllowRemoteImages",
@@ -64,6 +70,8 @@ pub const VALUES: [&str; 13] = [
     "RefreshMinutes",
     "OpenInApps",
     "ClaudeCodePath",
+    "MicrosoftTenant",
+    "MicrosoftClientID",
 ];
 
 /// A registry value as found, before interpretation.
@@ -278,6 +286,19 @@ impl Managed {
             unreadable.push("ClaudeCodePath".to_string());
             Some(String::new())
         });
+        let mut settings = BTreeMap::new();
+        for name in SETTINGS {
+            match text(value(name)) {
+                Ok(Some(setting)) => {
+                    settings.insert(name.to_string(), setting);
+                }
+                Ok(None) => {}
+                Err(()) => {
+                    unreadable.push(name.to_string());
+                    settings.insert(name.to_string(), String::new());
+                }
+            }
+        }
         let mut flag = |name: &str| match switch(value(name)) {
             Ok(on) => on,
             Err(()) => {
@@ -305,6 +326,7 @@ impl Managed {
             refresh_minutes,
             open_in_apps,
             claude_code_path,
+            settings,
             unreadable,
         }
     }
@@ -535,6 +557,20 @@ mod tests {
     }
 
     /// SEC-29: the organization keeps sources from the assistant and limits its models, as on macOS.
+    #[test]
+    fn a_sources_settings_are_read_and_fail_closed() {
+        let it = Managed::from_values(values(&[
+            ("MicrosoftTenant", RawValue::String(" acme.onmicrosoft.com ".into())),
+            ("MicrosoftClientID", RawValue::String("  ".into())),
+        ]));
+        assert_eq!(it.settings, BTreeMap::from([("MicrosoftTenant".into(), "acme.onmicrosoft.com".into())]));
+        assert!(it.unreadable.is_empty());
+        assert!(!it.is_managed(), "the Privacy settings stay the user's");
+        let broken = Managed::from_values(values(&[("MicrosoftClientID", RawValue::Number(1))]));
+        assert_eq!(broken.settings, BTreeMap::from([("MicrosoftClientID".into(), String::new())]));
+        assert_eq!(broken.unreadable, ["MicrosoftClientID"]);
+    }
+
     #[test]
     fn ai_exclusions_and_models_are_read() {
         let it = Managed::from_values(values(&[

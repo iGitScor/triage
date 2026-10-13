@@ -266,13 +266,19 @@ final class InboxModel {
         accounts.first { PluginRegistry.isAssistant($0.pluginID) && refusal(for: $0) == nil }
     }
 
-    /// The account as Remora uses it: the organization's `AIServer` replaces the server the user typed.
+    /// The account as Remora uses it: the organization's `AIServer` replaces the server the user typed, and its
+    /// value for a field with a `managedKey` (`MicrosoftTenant`) replaces that field.
     func effective(_ account: Account) -> Account {
-        guard let field = PluginRegistry.manifest(account.pluginID)?.egress.serverField,
-            let server = ManagedPolicy.aiServer(environment.managed)
-        else { return account }
+        guard let manifest = PluginRegistry.manifest(account.pluginID) else { return account }
         var account = account
-        account.settings[field] = server
+        if let field = manifest.egress.serverField, let server = ManagedPolicy.aiServer(environment.managed) {
+            account.settings[field] = server
+        }
+        for field in manifest.fields {
+            if let key = field.managedKey, let value = ManagedPolicy.setting(key, environment.managed) {
+                account.settings[field.key] = value
+            }
+        }
         return account
     }
 
@@ -326,6 +332,7 @@ final class InboxModel {
     private func sourcePlugin(_ account: Account, secrets: [String: String], remembering: Bool = true) throws
         -> any SourcePlugin
     {
+        let account = effective(account)
         guard remembering else {
             return try PluginRegistry.make(account, secrets: secrets, http: guardedClient(for: account))
         }
@@ -1219,7 +1226,8 @@ final class InboxModel {
     func signIn(pluginID: String, settings: [String: String]) async throws -> [String: String] {
         guard let manifest = PluginRegistry.manifest(pluginID) else { throw PluginError.unknownPlugin(pluginID) }
         guard let signIn = manifest.signIn else { throw PluginError.signIn("no sign-in") }
-        let account = Account(pluginID: pluginID, settings: settings)
+        let account = effective(Account(pluginID: pluginID, settings: settings))
+        let settings = account.settings
         let http = try guardedClient(for: account)
         let state = OAuth.random(16)
         let loopback = try await Loopback.open(state: state)
