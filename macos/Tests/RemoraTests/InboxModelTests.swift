@@ -327,8 +327,11 @@ struct InboxModelTests {
         let arrived = try #require(model.allItems.last { $0.needsAction })
         let next = Date.now.addingTimeInterval(60)
         model.preferences.batchNotifications = true
-        model.preferences.notificationTimes = next.formatted(
-            .dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
+        // "HH:mm" whatever the machine's locale: a 12-hour clock would write "4:31".
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "HH:mm"
+        model.preferences.notificationTimes = formatter.string(from: next)
         _ = harness.model()
         let cache = JSONStore<[UUID: [InboxItem]]>("cache", in: harness.folder, backedUp: false)
         var items = try #require(cache.load())
