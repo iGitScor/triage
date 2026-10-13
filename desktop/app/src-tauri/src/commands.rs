@@ -1,7 +1,7 @@
 //! What the interface may ask. Each command locks the inbox briefly; network calls run without the lock.
 
 use crate::{changed, save_secrets, AppState, REMINDER_SHORTCUT};
-use chrono::{DateTime, Duration, Local, NaiveDate, TimeZone, Utc};
+use chrono::{DateTime, Local, NaiveDate, TimeZone, Utc};
 use remora_app::view::{inbox_view, InboxView};
 use remora_app::{paths, AccountInfo, Managed, Preferences, SourceInfo};
 use remora_core::{CompliancePolicy, Message, Preset, RecurrenceRule, SnoozeClock, SnoozeMode, SnoozeReason};
@@ -98,17 +98,6 @@ pub async fn unsnooze(app: AppHandle, state: State<'_, AppState>, id: String) ->
 #[tauri::command]
 pub fn presets() -> Vec<Preset> {
     SnoozeClock::local_presets()
-}
-
-/// The slider counts from `from` (a preset picked first) or from now: minutes, then hours, then days.
-#[tauri::command]
-pub fn slider_date(progress: f64, from: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    from.unwrap_or_else(Utc::now) + Duration::seconds(SnoozeClock::duration_at(progress))
-}
-
-#[tauri::command]
-pub fn slider_progress(date: DateTime<Utc>, from: Option<DateTime<Utc>>) -> f64 {
-    SnoozeClock::progress_for((date - from.unwrap_or_else(Utc::now)).num_seconds())
 }
 
 /// `until` is the last day (a date in this computer's time zone).

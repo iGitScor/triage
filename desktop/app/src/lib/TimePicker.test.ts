@@ -16,13 +16,15 @@ const invoke = vi.hoisted(() =>
 vi.mock('@tauri-apps/api/core', () => ({ invoke }))
 
 import TimePicker from './TimePicker.svelte'
+import { sliderDate } from './clock'
 import { when } from './time'
 
 describe('Time picker', () => {
   it('says the time on the slider, and which preset is chosen', async () => {
     const { container, getByText } = render(TimePicker, { props: { confirm: 'Snooze', onpick: () => {} } })
     const slider = container.querySelector('input[type=range]') as HTMLInputElement
-    await waitFor(() => expect(slider.getAttribute('aria-valuetext')).toBe(when(later)))
+    // The slider starts an hour out, computed here without asking Rust (PERF-14).
+    await waitFor(() => expect(slider.getAttribute('aria-valuetext')).toBe(when(sliderDate(6 / 18, null))))
 
     const preset = getByText('Tomorrow') as HTMLButtonElement
     expect(preset.getAttribute('aria-pressed')).toBe('false')

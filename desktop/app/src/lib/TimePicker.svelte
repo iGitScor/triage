@@ -3,6 +3,7 @@
 // picked, or from now: minutes first, then hours, then days (SnoozeClock in remora_core).
 import { onMount, type Snippet } from 'svelte'
 import { api, type Preset, type SnoozeMode } from './api'
+import { sliderDate } from './clock'
 import { t } from './i18n'
 import { when } from './time'
 
@@ -29,8 +30,8 @@ let base: string | null = $state(null)
 let progress = $state(6 / 18)
 let mode: SnoozeMode = $state('hide')
 
-async function update() {
-  date = await api.sliderDate(progress, base)
+function update() {
+  date = sliderDate(progress, base)
 }
 
 function choose(preset: Preset) {
@@ -41,7 +42,7 @@ function choose(preset: Preset) {
 
 onMount(async () => {
   presets = await api.presets()
-  if (!start) await update()
+  if (!start) update()
 })
 
 // A suggested return (a snooze reason): the slider then counts from it, as from a preset.

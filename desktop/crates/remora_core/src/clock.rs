@@ -98,6 +98,15 @@ mod tests {
     }
 
     #[test]
+    fn the_interface_uses_the_same_steps() {
+        // The Windows and Linux interface draws the slider itself (PERF-14): its table must be this one.
+        let interface = include_str!("../../../app/src/lib/clock.ts");
+        let table = interface.split("STEPS_MINUTES = [").nth(1).and_then(|rest| rest.split(']').next()).unwrap();
+        let steps: Vec<i64> = table.split(',').map(|n| n.trim().parse().unwrap()).collect();
+        assert_eq!(steps, SnoozeClock::STEPS_MINUTES);
+    }
+
+    #[test]
     fn progress_follows_any_date() {
         assert_eq!(SnoozeClock::progress_for(60), 0.0);
         assert_eq!(SnoozeClock::progress_for(30 * 86_400), 1.0);

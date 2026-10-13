@@ -13,8 +13,6 @@ pub const COMMANDS: &[&str] = &[
     "snooze",
     "unsnooze",
     "presets",
-    "slider_date",
-    "slider_progress",
     "add_reminder",
     "stop_repeating",
     "open_item",

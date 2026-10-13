@@ -64,6 +64,8 @@ struct TrayLook {
 }
 
 static TRAY_LOOK: std::sync::Mutex<Option<TrayLook>> = std::sync::Mutex::new(None);
+/// Raised when a focus session starts, so the fish's swim loop sleeps the rest of the time (PERF-14).
+static FOCUS_STARTED: std::sync::LazyLock<Notify> = std::sync::LazyLock::new(Notify::new);
 /// The icon the tray shows: set again only when it changes (or after the fish swam).
 static TRAY_ICON: std::sync::Mutex<Option<TrayImage>> = std::sync::Mutex::new(None);
 
@@ -154,8 +156,6 @@ pub fn run() {
             commands::snooze,
             commands::unsnooze,
             commands::presets,
-            commands::slider_date,
-            commands::slider_progress,
             commands::add_reminder,
             commands::stop_repeating,
             commands::open_item,
@@ -471,6 +471,9 @@ pub(crate) async fn update_tray(app: &AppHandle) {
 
     let look = TrayLook { focused: summary.focused, task: summary.task, update: updates::offered(app).await };
     let previous = TRAY_LOOK.lock().ok().and_then(|mut last| last.replace(look.clone()));
+    if look.focused && !previous.as_ref().is_some_and(|p| p.focused) {
+        FOCUS_STARTED.notify_one();
+    }
     if previous.as_ref().map(|p| (&p.task, &p.update)) != Some((&look.task, &look.update)) {
         if let Ok(menu) = tray_menu(app, look.task.as_ref().map(|(_, title)| title.as_str()), look.update.as_deref()) {
             let _ = tray.set_menu(Some(menu));
@@ -478,11 +481,16 @@ pub(crate) async fn update_tray(app: &AppHandle) {
     }
 }
 
-/// Every 10 seconds while focused, the fish wiggles for a moment, unless Windows animations are off.
+/// Every 10 seconds while focused, the fish wiggles for a moment, unless Windows animations are off. Outside a focus
+/// session it sleeps until one starts, instead of waking every 10 seconds for nothing.
 async fn swim(app: AppHandle) {
     loop {
-        tokio::time::sleep(Duration::from_secs(10)).await;
         if !tray_look().focused || !animations_enabled() {
+            FOCUS_STARTED.notified().await;
+            continue;
+        }
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        if !tray_look().focused {
             continue;
         }
         let Some(tray) = app.tray_by_id("main") else { continue };

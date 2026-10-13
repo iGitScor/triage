@@ -337,8 +337,6 @@ export const api = {
   discardTriage: () => call<void>('discard_triage'),
   unsnooze: (id: string) => call<void>('unsnooze', { id }),
   presets: () => call<Preset[]>('presets', undefined, QUIET),
-  sliderDate: (progress: number, from: string | null) => call<string>('slider_date', { progress, from }, QUIET),
-  sliderProgress: (date: string, from: string | null) => call<number>('slider_progress', { date, from }, QUIET),
   /** `until`: the last day, as YYYY-MM-DD. */
   addReminder: (title: string, at: string, repeat: RecurrenceRule | null = null, until: string | null = null) =>
     call<void>('add_reminder', { title, at, repeat, until }, QUIET),
