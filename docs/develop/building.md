@@ -71,8 +71,10 @@ git push origin main v0.3.2
 first checks that the tag matches the version in the source, then builds both apps in parallel with the same checks
 as CI: the Mac app is tested, stamped with a build number (`CFBundleVersion`, the run number), built Universal,
 signed, and packaged as `Remora.dmg` with the licences; the Windows app goes through the translation check,
-type-check, clippy and tests before `Remora-Setup.exe` is built. Only when both succeed does a last job publish the
-GitHub release, with every file, its SHA-256 and its SBOM (CycloneDX) at once. Each build job signs the provenance
+type-check, clippy and tests before `Remora-Setup.exe` is built. Meanwhile a `ci-passed` job waits for CI's own runs
+on the tagged commit (Format, macOS, Windows and Linux, Website, Dependencies) and fails if one didn't succeed, so
+tag a commit whose CI passed, and don't push to `main` until it has (a newer push cancels the runs in progress). Only
+when all succeed does a last job publish the GitHub release, with every file, its SHA-256 and its SBOM (CycloneDX) at once. Each build job signs the provenance
 and SBOM attestations of the file it built (`gh attestation verify`). The names never change, so
 `releases/latest/download/Remora.dmg` always serves the newest.
 

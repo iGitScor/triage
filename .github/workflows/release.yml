@@ -52,6 +52,9 @@ jobs:
           format: cyclonedx-json
           output-file: macos/Remora.dmg.cdx.json
           upload-artifact: false
+      # The same checks as macos.yml (CI-12).
+      - name: Formatting (.swift-format)
+        run: swift format lint --strict --parallel -r Sources Tests Package.swift
       - name: Every UI string has French
         run: python3 scripts/make-strings.py --check
       - name: Test
@@ -172,13 +175,18 @@ jobs:
           cache-dependency-path: desktop/app/package-lock.json
       - run: npm ci
         working-directory: desktop/app
-      # The same checks as windows.yml: a release never skips what CI runs.
+      # The same checks as desktop.yml's Windows job (CI-12); the ci-passed job also waits for CI itself.
       - name: French strings are up to date
         run: python scripts/make-i18n.py --check
         working-directory: desktop/app
+      - name: Emoji tables match scripts/make-emoji.py
+        run: python scripts/make-emoji.py --check
+        working-directory: .
       - name: Type-check, test and build the interface
         run: npm run check && npm test && npm run build
         working-directory: desktop/app
+      - name: Formatting (rustfmt.toml)
+        run: cargo fmt --all --check
       - name: Lint
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
@@ -328,7 +336,11 @@ jobs:
           node-version: 22
       - run: npm ci
         working-directory: desktop/app
-      # The same checks as CI: a release never skips what CI runs.
+      # The same checks as desktop.yml's Linux job (CI-12).
+      - name: Formatting (rustfmt.toml)
+        run: cargo fmt --all --check
+      - name: The policy files match scripts/make-policy-files.py
+        run: python3 ../scripts/make-policy-files.py --check
       - name: Lint and test
         run: cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
       # The licences of what the app bundles (DEP-07), with cargo-about pinned by checksum.
@@ -422,8 +434,38 @@ jobs:
             dist/Remora-x86_64.AppImage.sig
           if-no-files-found: ignore
 
+  # CI-12: the tagged commit must have passed CI itself (Format, macOS, Windows and Linux, Website, Dependencies):
+  # a tag pushed from a commit whose CI failed, or never finished, isn't published. Waits for the runs still going,
+  # alongside the builds. A workflow that didn't run on this commit (its paths didn't change) isn't asked for.
+  ci-passed:
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: read
+    steps:
+      - name: Every CI run on this commit succeeded
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          runs() {
+            gh run list --commit "$GITHUB_SHA" --limit 50 --json workflowName,status,conclusion \
+              --jq '[.[] | select(.workflowName != "Release")]'
+          }
+          while [ "$(runs | jq '[.[] | select(.status != "completed")] | length')" != "0" ]; do
+            echo "Waiting for: $(runs | jq -r '[.[] | select(.status != "completed") | .workflowName] | join(", ")')"
+            sleep 30
+          done
+          runs | jq -r '.[] | "\(.workflowName): \(.conclusion)"'
+          failed=$(runs | jq -r '[.[] | select(.conclusion != "success" and .conclusion != "skipped") | .workflowName] | join(", ")')
+          if [ -n "$failed" ]; then
+            echo "::error::CI didn't pass on this commit: $failed. Fix it on main, then tag the fixed commit."
+            exit 1
+          fi
+
   publish:
-    needs: [macos, windows, linux, windows-update]
+    needs: [macos, windows, linux, windows-update, ci-passed]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

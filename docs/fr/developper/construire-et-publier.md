@@ -75,7 +75,10 @@ vérifie d’abord que le tag correspond à la version des sources, puis constru
 mêmes contrôles que la CI : l’app Mac est testée, reçoit un numéro de build (`CFBundleVersion`, le numéro
 d’exécution), est compilée en Universal, signée, et empaquetée en `Remora.dmg` avec les licences ; l’app Windows
 passe la vérification des traductions, la vérification de types, clippy et les tests avant la construction de
-`Remora-Setup.exe`. Ce n’est que si les deux réussissent qu’un dernier job publie la version GitHub, avec chaque
+`Remora-Setup.exe`. Pendant ce temps, un job `ci-passed` attend les exécutions de la CI sur le commit tagué (Format,
+macOS, Windows et Linux, site, dépendances) et échoue si l’une n’a pas réussi : taguez un commit dont la CI est passée,
+et ne poussez pas sur `main` avant qu’elle le soit (un nouveau push annule les exécutions en cours). Ce n’est que si
+tout réussit qu’un dernier job publie la version GitHub, avec chaque
 fichier, son SHA-256 et son SBOM (CycloneDX) d’un coup. Chaque job de build signe les attestations de provenance et
 de SBOM du fichier qu’il a construit (`gh attestation verify`). Les noms ne changent jamais, donc
 `releases/latest/download/Remora.dmg` sert toujours la plus récente.
