@@ -188,6 +188,8 @@ struct InboxView: View {
                         }
                         if model.accounts.isEmpty && model.allItems.isEmpty {
                             Onboarding(connect: showSettings)
+                        } else if layout.myTurnItems.isEmpty, let unread = unreadState {
+                            unread
                         } else if layout.myTurnItems.isEmpty {
                             EmptyState(
                                 symbol: "sun.max.fill",
@@ -454,6 +456,28 @@ struct InboxView: View {
         return L(
             "%@ needs reconnecting", account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID
         )
+    }
+
+    /// When nothing could be read from the tools (offline at launch, every token rejected), the empty inbox says
+    /// so instead of "All done!", which would look like there is nothing to do (UX-26).
+    private var unreadState: EmptyState? {
+        guard model.allItems.allSatisfy({ $0.bundle == .reminders }) else { return nil }
+        switch model.sourcesHealth {
+        case .fine: return nil
+        case .offline:
+            return EmptyState(
+                symbol: "wifi.slash", title: offlineText,
+                message: "Your tools show up here when the connection is back.")
+        case .reconnect(let ids):
+            return EmptyState(
+                symbol: "key.fill", title: reconnectText(ids),
+                message: "Nothing can be read until then.", action: ("Reconnect…", showSettings))
+        case .failing(let count):
+            return EmptyState(
+                symbol: "exclamationmark.triangle.fill",
+                title: L("%d source failing", plural: "%d sources failing", count),
+                message: "Nothing could be read: Settings says why.", action: ("Open Settings", showSettings))
+        }
     }
 
     private var footer: some View {
@@ -902,6 +926,7 @@ private struct EmptyState: View {
     let symbol: String
     let title: String
     let message: String
+    var action: (label: String, perform: () -> Void)?
 
     var body: some View {
         VStack(spacing: 10) {
@@ -912,6 +937,9 @@ private struct EmptyState: View {
                 .background(Myna.accent, in: Circle())
             Text(L(title)).font(Myna.font(17, .semibold)).foregroundStyle(Myna.ink)
             Text(L(message)).font(Myna.font(12.5)).foregroundStyle(Myna.muted).multilineTextAlignment(.center)
+            if let action {
+                Button(L(action.label), action: action.perform).buttonStyle(PillButtonStyle())
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)

@@ -138,6 +138,22 @@ const empty: Record<Tab, string> = {
   done: 'Nothing done yet.',
 }
 
+/** Nothing could be read from the tools (offline at launch, every token rejected): the empty inbox says so
+    instead of "Nothing needs you", which would look like there is nothing to do (UX-26). */
+const unread = $derived.by(() => {
+  if (!view || view.health.state === 'fine') return false
+  const { inProgress, pinned, myTurn, waiting, snoozed, done } = view.layout
+  const items = [
+    ...inProgress,
+    ...pinned,
+    ...myTurn.flatMap((g) => g.items),
+    ...waiting.flatMap((g) => g.items),
+    ...snoozed,
+    ...done,
+  ]
+  return items.every((item) => item.pluginId === 'reminders')
+})
+
 /** Clear all, with Undo for a few seconds. */
 async function clearAll() {
   await api.clearDone()
@@ -210,7 +226,22 @@ async function clearAll() {
           {#each view.layout.pinned as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = [i])} {ondraft} />{/each}
         {/if}
         {#each view.layout.myTurn as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} onreview={() => (reviewing = true)} />{/each}
-        {#if !view.layout.pinned.length && !view.layout.myTurn.length}<p class="empty muted">{t(empty.myTurn)}</p>{/if}
+        {#if unread && !view.layout.pinned.length && !view.layout.myTurn.length}
+          <div class="empty unread" role="status">
+            {#if view.health.state === 'offline'}
+              <strong>{t('Offline')}</strong>
+              <p class="muted">{t('Your tools show up here when the connection is back.')}</p>
+            {:else if view.health.state === 'reconnect'}
+              <strong>{view.reconnectNames.length === 1 ? t('%@ needs reconnecting', view.reconnectNames[0]) : t('%d sources need reconnecting', view.reconnectNames.length)}</strong>
+              <p class="muted">{t('Nothing can be read until then.')}</p>
+              <button type="button" class="pill" onclick={onsettings}>{t('Reconnect…')}</button>
+            {:else if view.health.state === 'failing'}
+              <strong>{view.health.count === 1 ? t('1 source failing') : t('%d sources failing', view.health.count)}</strong>
+              <p class="muted">{t('Nothing could be read: Settings says why.')}</p>
+              <button type="button" class="pill" onclick={onsettings}>{t('Open Settings')}</button>
+            {/if}
+          </div>
+        {:else if !view.layout.pinned.length && !view.layout.myTurn.length}<p class="empty muted">{t(empty.myTurn)}</p>{/if}
       {:else if tab === 'waiting'}
         {#each view.layout.waiting as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} />{/each}
         {#if !view.layout.waiting.length}<p class="empty muted">{t(empty.waiting)}</p>{/if}
@@ -344,6 +375,14 @@ async function clearAll() {
   .empty {
     margin: 40px 0;
     text-align: center;
+  }
+  .unread {
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+  }
+  .unread p {
+    margin: 0 0 6px;
   }
   .clear {
     margin-top: 10px;

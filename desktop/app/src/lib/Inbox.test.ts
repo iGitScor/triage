@@ -74,3 +74,24 @@ describe('First-run tip', () => {
     expect(onautostart).toHaveBeenCalledWith(true)
   })
 })
+
+describe('An inbox nothing could be read into', () => {
+  it('says why instead of "Nothing needs you"', () => {
+    const failing: InboxView = {
+      ...view(),
+      counts: { inProgress: 0, myTurn: 0, waiting: 0, snoozed: 0, done: 0 },
+      health: { state: 'reconnect', accounts: ['a1'] },
+      reconnectNames: ['Work GitLab'],
+    }
+    const { container, getByText } = render(Inbox, { props: props(failing) })
+    expect(getByText('Work GitLab needs reconnecting', { selector: 'strong' })).toBeTruthy()
+    expect(container.textContent).not.toContain('Nothing needs you right now.')
+  })
+
+  it('keeps "Nothing needs you" when the sources are fine', () => {
+    const { container } = render(Inbox, {
+      props: props({ ...view(), counts: { inProgress: 0, myTurn: 0, waiting: 0, snoozed: 0, done: 0 } }),
+    })
+    expect(container.textContent).toContain('Nothing needs you right now.')
+  })
+})
