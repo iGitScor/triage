@@ -847,10 +847,16 @@ impl Inbox {
     }
 
     /// The whole inbox as the assistant may see it, for a brief.
+    /// What a brief is written from: the task in progress (marked so), the pinned items and My turn, as the
+    /// assistant may see them (AI-20).
     pub fn brief_items(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
         let layout = self.layout(now, "");
+        let started = layout.in_progress.into_iter().map(|mut item| {
+            item.badges.push(remora_core::Badge::new("inProgress", "In progress", remora_core::Tone::Accent));
+            item
+        });
         let items: Vec<InboxItem> =
-            layout.pinned.into_iter().chain(layout.my_turn.into_iter().flat_map(|g| g.items)).collect();
+            started.chain(layout.pinned).chain(layout.my_turn.into_iter().flat_map(|g| g.items)).collect();
         self.assistant_policy().items(&items)
     }
 
@@ -2024,6 +2030,16 @@ mod tests {
         assert_eq!(inbox.layout(now() + Duration::minutes(10), "").my_turn_items().count(), 1);
         inbox.toggle_done(&id, now());
         assert!(inbox.all_items().is_empty());
+    }
+
+    #[test]
+    fn the_brief_sees_the_task_in_progress_marked_so() {
+        let mut inbox = inbox();
+        inbox.apply(snapshot(vec![item("1", InboxBundle::reviews()), item("2", InboxBundle::reviews())]), now());
+        inbox.start("1", now());
+        let items = inbox.brief_items(now());
+        assert_eq!(items.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(), ["1", "2"], "in progress first");
+        assert!(items[0].has_badge("inProgress") && !items[1].has_badge("inProgress"));
     }
 
     #[test]

@@ -73,6 +73,16 @@ struct InboxModelTests {
     }
 
     /// From the diff: starting moves an item to In progress and cancels its pending notification; stopping puts it back.
+    @Test func theBriefSeesTheTaskInProgressMarkedSo() async throws {
+        let model = try await Harness().connected()
+        let item = try issue(model)
+        model.start(item)
+        let items = model.briefItems
+        #expect(items.first?.id == item.id, "in progress first")
+        #expect(items.first?.badges.contains { $0.id == "inProgress" } == true)
+        #expect(items.count == 2 && !items[1].badges.contains { $0.id == "inProgress" })
+    }
+
     @Test func startAndStop() async throws {
         let harness = Harness()
         let model = try await harness.connected()

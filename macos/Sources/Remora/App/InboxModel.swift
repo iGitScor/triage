@@ -469,10 +469,16 @@ final class InboxModel {
         assistantAccount?.id == account.id
     }
 
-    /// What a brief is written from: the pinned items and My turn, as the assistant may see them.
+    /// What a brief is written from: the task in progress (marked so), the pinned items and My turn, as the
+    /// assistant may see them (AI-20).
     var briefItems: [InboxItem] {
         let layout = layout
-        return assistantPolicy.items(layout.pinned + layout.groups.flatMap(\.items))
+        let started = layout.inProgress.map { item in
+            var item = item
+            item.badges.append(Badge(id: "inProgress", label: L("In progress"), symbol: "play.fill", tone: .accent))
+            return item
+        }
+        return assistantPolicy.items(started + layout.pinned + layout.groups.flatMap(\.items))
     }
 
     var isBriefFresh: Bool {
@@ -1264,7 +1270,7 @@ final class InboxModel {
             let assistant = try assistantPlugin(account, secrets: secrets)
             if preferences.wholeInboxBrief {
                 // The first brief doubles as the connection test.
-                store(try await assistant.brief(assistantPolicy.items(layout.groups.flatMap(\.items)), now: .now))
+                store(try await assistant.brief(briefItems, now: .now))
             } else {
                 // The brief is off: test with one made-up item, so no inbox content leaves the Mac yet.
                 _ = try await assistant.digest([Self.connectionTest], topic: "Test", now: .now)
