@@ -146,14 +146,11 @@ pub struct Inbox {
 impl Inbox {
     /// The real inbox, from its files and the credential store.
     pub fn open(store: JsonStore, vault: Arc<dyn Vault>, managed: Managed) -> Self {
-        let items: HashMap<String, Vec<InboxItem>> = store.load(CACHE).unwrap_or_default();
         let mut inbox = Inbox {
             preferences: store.load(PREFERENCES).unwrap_or_default(),
             accounts: store.load(ACCOUNTS).unwrap_or_default(),
-            items: items
-                .into_iter()
-                .map(|(id, items)| (id, items.into_iter().map(VerbClassifier::classify).collect()))
-                .collect(),
+            // Cached items keep the verbs the refresh gave them (ML-16).
+            items: store.load(CACHE).unwrap_or_default(),
             states: store.load(STATES).unwrap_or_default(),
             reminders: store.load(REMINDERS).unwrap_or_default(),
             snooze_history: store.load(HISTORY).unwrap_or_default(),

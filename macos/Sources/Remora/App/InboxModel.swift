@@ -163,8 +163,9 @@ final class InboxModel {
             snoozeHistory = demo.history
         } else {
             accounts = read(accountsStore) ?? []
-            // Fetched again at the next refresh: a broken cache or brief is just started again.
-            itemsByAccount = (cacheStore.load() ?? [:]).mapValues { $0.map(VerbClassifier().classify) }
+            // Fetched again at the next refresh: a broken cache or brief is just started again. Cached items keep
+            // the verbs the refresh gave them, with the full classifier (ML-16).
+            itemsByAccount = cacheStore.load() ?? [:]
             reminders = read(remindersStore) ?? []
             states = read(statesStore) ?? [:]
             brief = briefStore.load() ?? nil
