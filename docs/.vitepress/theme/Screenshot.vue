@@ -2,14 +2,32 @@
 import { computed, nextTick, ref } from 'vue'
 import { useData, withBase } from 'vitepress'
 
-const props = defineProps<{ name: 'myturn' | 'waiting' | 'snoozed'; alt: string; caption?: string }>()
+// platform: the Mac app's captures (macos/scripts/screenshots.sh) by default, or the Windows and Linux app's
+// (desktop/app/scripts/screenshots.mjs), named under the image.
+const props = defineProps<{
+  name: 'myturn' | 'waiting' | 'snoozed'
+  alt: string
+  caption?: string
+  platform?: 'mac' | 'windows'
+}>()
 
 const { lang } = useData()
 const dialog = ref<HTMLDialogElement>()
 // The full-size images load only once the dialog has been opened.
 const zoomed = ref(false)
 const locale = computed(() => (lang.value.startsWith('fr') ? 'fr' : 'en'))
-const url = (scheme: string, ext: string) => withBase(`/screenshots/${props.name}.${locale.value}.${scheme}.${ext}`)
+const windows = computed(() => props.platform === 'windows')
+const shown = computed(() =>
+  locale.value === 'fr'
+    ? windows.value
+      ? 'L’app Windows et Linux'
+      : 'L’app Mac'
+    : windows.value
+      ? 'The Windows and Linux app'
+      : 'The Mac app',
+)
+const url = (scheme: string, ext: string) =>
+  withBase(`/screenshots/${windows.value ? 'windows/' : ''}${props.name}.${locale.value}.${scheme}.${ext}`)
 
 async function open() {
   zoomed.value = true
@@ -26,7 +44,10 @@ async function open() {
         <img :src="url(scheme, 'png')" :alt="alt" width="920" height="1400" loading="lazy" decoding="async" />
       </picture>
     </button>
-    <figcaption v-if="caption">{{ caption }}</figcaption>
+    <figcaption>
+      <template v-if="caption">{{ caption }}<br /></template>
+      <span class="platform">{{ shown }}</span>
+    </figcaption>
     <dialog ref="dialog" class="screenshot-full" :aria-label="alt" @click="dialog?.close()">
       <template v-if="zoomed">
         <picture v-for="scheme in ['light', 'dark']" :key="scheme" :class="`only-${scheme}`">
@@ -64,6 +85,9 @@ figcaption {
   color: var(--vp-c-text-2);
   font-size: 14px;
   text-align: center;
+}
+.platform {
+  font-size: 13px;
 }
 .screenshot-full {
   max-width: min(92vw, 560px);

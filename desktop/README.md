@@ -36,6 +36,7 @@ npm run tauri dev -- -- --demo   # sample data in a window, nothing saved
 npm run check                    # type-check the interface
 npm run i18n                     # French strings from macos/scripts/translations_fr.py
 npm run build && node scripts/preview.mjs   # every screen in English and French, light and dark
+node scripts/screenshots.mjs     # the three tabs for the website and docs (make screenshots does both apps)
 npm run tauri build              # the NSIS installer (on Windows)
 npx tauri build --bundles appimage,deb   # the AppImage and the .deb (on Linux)
 ```

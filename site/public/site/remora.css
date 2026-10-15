@@ -204,6 +204,19 @@
   height: auto;
 }
 
+/* The other platform's capture, until site.js swaps them. */
+.screen[hidden] {
+  display: none;
+}
+
+/* Which app the captures show. */
+.screen-platform {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
 /* A full screenshot, outside the desk. */
 .screen-whole {
   border-bottom: 1px solid var(--border);

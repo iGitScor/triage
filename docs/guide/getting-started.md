@@ -40,6 +40,8 @@ new reminder is **Ctrl+Alt+R**, from anywhere. A tip at the top of the inbox rec
 **Start with Windows** switch (also in Settings → General): it's off until you turn it on, and without it reminders
 wait until you open Remora. If another app already uses Ctrl+Alt+R, Settings → General says so.
 
+<Screenshot name="myturn" platform="windows" alt="The Windows inbox: tabs, search, then items grouped by verb" />
+
 The Windows version has what the Mac has: the seven tools, snooze with reasons and insights, review prep and sessions,
 the waiting assistant and the assistant (Claude or an OpenAI-compatible server). It sorts messages with keywords
 only; the full list is in [Remora for

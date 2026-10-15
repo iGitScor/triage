@@ -82,6 +82,7 @@ cd app && npm ci
 npm run tauri dev -- -- --demo     # sample data in a window
 npm run check && npm run build     # type-check and build the interface
 node scripts/preview.mjs           # every screen, English and French, light and dark
+node scripts/screenshots.mjs       # the three tabs for the website and docs
 npm run tauri build                # the installer (on Windows)
 ```
 

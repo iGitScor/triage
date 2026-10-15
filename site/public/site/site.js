@@ -41,6 +41,8 @@
       other.className = style
       mac.before(other)
     }
+    // The Windows app's captures (the same interface on Linux) instead of the Mac ones.
+    for (const el of document.querySelectorAll('[data-platform]')) el.hidden = el.dataset.platform === 'mac'
   }
 
   if (!document.documentElement.hasAttribute('data-lang-picker')) return

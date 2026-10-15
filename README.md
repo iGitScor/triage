@@ -44,6 +44,11 @@
   </tr>
 </table>
 
+<sub>The Mac app. The Windows and Linux app, with buttons on each row instead of swipes:
+<a href="site/public/site/screens/windows/myturn.en.light.png">My turn</a>,
+<a href="site/public/site/screens/windows/waiting.en.light.png">Waiting</a>,
+<a href="site/public/site/screens/windows/snoozed.en.light.png">Snoozed</a>.</sub>
+
 ## Install
 
 - **Mac** (macOS 14 or later): [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg),

@@ -44,6 +44,8 @@ La première fois, un conseil en haut de la boîte rappelle tout cela, avec un i
 Windows** (aussi dans Réglages → Général) : il est éteint tant que vous ne l’allumez pas, et sans lui les rappels
 attendent que vous ouvriez Remora. Si une autre app utilise déjà Ctrl+Alt+R, Réglages → Général le dit.
 
+<Screenshot name="myturn" platform="windows" alt="La boîte sous Windows : onglets, recherche, puis les éléments rangés par verbe" />
+
 La version Windows a ce qu’a le Mac : les sept outils, le report avec raisons et constats, la préparation et les
 sessions de relecture, l’assistant d’attente et l’assistant (Claude ou un serveur OpenAI-compatible). Elle trie les
 messages par mots-clés seulement ; la liste complète est dans

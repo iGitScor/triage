@@ -122,8 +122,9 @@ site: ## Write the marketing pages (site/public) from site/build.py
 site-preview: site docs-build ## Pages and docs together on http://127.0.0.1:8787
 	python3 -m http.server 8787 --bind 127.0.0.1 --directory site/public
 
-screenshots: ## Recapture the app screenshots used by the site, docs and README
+screenshots: ## Recapture the screenshots of both apps used by the site, docs and README (on a Retina Mac)
 	macos/scripts/screenshots.sh
+	cd desktop/app && npm ci && npm run build && node scripts/screenshots.mjs
 
 deploy: ## Publish the website and docs to Cloudflare (maintainers; needs a wrangler login)
 	site/deploy.sh

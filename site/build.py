@@ -3,7 +3,7 @@
 
     python3 site/build.py     then    cd site && npx wrangler deploy
 
-Screenshots come from macos/scripts/screenshots.sh. Same design system as Myna (site.css, tokens.css).
+Screenshots come from macos/scripts/screenshots.sh and desktop/app/scripts/screenshots.mjs (make screenshots). Same design system as Myna (site.css, tokens.css).
 """
 
 from __future__ import annotations
@@ -174,6 +174,7 @@ T = {
             "waiting": "The Waiting tab: merge requests waiting on reviewers, with a suggested nudge",
             "snoozed": "The Snoozed tab: items coming back on Monday and an insight about the ones you keep putting off",
         },
+        "platform_note": ("Screenshots: the Mac app.", "Screenshots: the Windows and Linux app."),
     },
     "fr": {
         "locale": "fr_FR",
@@ -247,6 +248,7 @@ T = {
             "waiting": "L’onglet En attente : les merge requests qui attendent des relecteurs, avec une relance suggérée",
             "snoozed": "L’onglet Reportés : ce qui revient lundi, et un conseil sur ce que vous repoussez sans cesse",
         },
+        "platform_note": ("Captures : l’app Mac.", "Captures : l’app Windows et Linux."),
     },
 }
 
@@ -382,17 +384,36 @@ def footer(lang: str) -> str:
 """
 
 
-def screen(tab: str, lang: str, eager: bool = False, whole: bool = False) -> str:
-    base = f"/site/screens/{tab}.{lang}"
+def screen(tab: str, lang: str, eager: bool = False, whole: bool = False, platform: str = "") -> str:
+    """One capture. With a platform, it is tagged for site.js, which shows the Windows captures (from
+    desktop/app/scripts/screenshots.mjs, hidden by default) to Windows and Linux visitors instead of the Mac ones."""
+    base = f"/site/screens/{'windows/' if platform == 'windows' else ''}{tab}.{lang}"
     loading = 'fetchpriority="high"' if eager else 'loading="lazy"'
     cls = "screen screen-whole" if whole else "screen"
+    tag = f' data-platform="{platform}"' if platform else ""
+    if platform == "windows":
+        tag += " hidden"
     return (
-        f'<picture class="{cls}">'
+        f'<picture class="{cls}"{tag}>'
         f'<source media="(prefers-color-scheme: dark)" type="image/webp" srcset="{base}.dark.webp" />'
         f'<source media="(prefers-color-scheme: dark)" srcset="{base}.dark.png" />'
         f'<source type="image/webp" srcset="{base}.light.webp" />'
         f'<img src="{base}.light.png" alt="{e(T[lang]["screens"][tab])}" width="920" height="1400" {loading} decoding="async" />'
         f"</picture>"
+    )
+
+
+def screens(tab: str, lang: str) -> str:
+    """The Mac capture, and the Windows one in its place for Windows and Linux visitors."""
+    return screen(tab, lang, whole=True, platform="mac") + screen(tab, lang, whole=True, platform="windows")
+
+
+def platform_note(lang: str, tag: str = "p") -> str:
+    """Which app the captures above show, swapped by site.js like the captures."""
+    mac, windows = T[lang]["platform_note"]
+    return (
+        f'<{tag} class="screen-platform"><span data-platform="mac">{mac}</span>'
+        f'<span data-platform="windows" hidden>{windows}</span></{tag}>'
     )
 
 
@@ -917,7 +938,7 @@ def home(lang: str) -> str:
 
     facts = "".join(f'<div class="fact"><strong>{n}</strong><span>{label}</span></div>' for n, label in c["facts"])
     tabs = "".join(
-        f"<li><figure>{screen(tab, lang, whole=True)}<figcaption><strong>{name}</strong>{text}</figcaption></figure></li>"
+        f"<li><figure>{screens(tab, lang)}<figcaption><strong>{name}</strong>{text}</figcaption></figure></li>"
         for tab, name, text in c["tabs"]
     )
     verbs = "".join(
@@ -990,6 +1011,7 @@ def home(lang: str) -> str:
         <div class="wrap">
           {section_head(c["tabs_eyebrow"], c["tabs_title"], c["tabs_lead"], ident="tabs-title")}
           <ul class="tabs-show">{tabs}</ul>
+          {platform_note(lang)}
         </div>
       </section>
 
@@ -1368,7 +1390,7 @@ def features(lang: str) -> str:
     for key, name, intro, items in groups:
         shot = ""
         if key in shots:
-            shot = f'<figure class="shot shot-narrow">{screen(shots[key], lang, whole=True)}</figure>'
+            shot = f'<figure class="shot shot-narrow">{screens(shots[key], lang)}{platform_note(lang, "figcaption")}</figure>'
         body += f"""
       <section class="section-tight" id="{key}" aria-labelledby="{key}-title">
         <div class="wrap">
