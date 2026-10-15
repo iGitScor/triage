@@ -93,7 +93,7 @@ struct ReviewSession: View {
                 Text(
                     L(
                         "%d of %d · ~%d min left", index + 1, queue.count,
-                        ReviewQueue.remainingMinutes(Array(queue[index...]), pace: model.reviewPace))
+                        ReviewQueue.remainingMinutes(Array(queue[index...]), pace: model.learning.reviewPace))
                 )
                 .font(Myna.font(11.5))
                 .foregroundStyle(Myna.muted)
@@ -104,7 +104,7 @@ struct ReviewSession: View {
                         Text(L("by %@", author.name)).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
                     }
                     HStack(spacing: 4) { ForEach(item.badges) { BadgeChip(badge: $0) } }
-                    if let prep = ReviewPrep(item, pace: model.reviewPace) { ReviewPrepLine(prep: prep) }
+                    if let prep = ReviewPrep(item, pace: model.learning.reviewPace) { ReviewPrepLine(prep: prep) }
                 }
                 .padding(12)
                 .background(Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))

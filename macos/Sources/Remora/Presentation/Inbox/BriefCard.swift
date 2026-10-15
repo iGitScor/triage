@@ -20,7 +20,7 @@ struct BriefCard: View {
                     .background(Myna.accent, in: Circle())
                 Text("Your brief").font(Myna.font(14, .semibold))
                 Spacer()
-                if model.isBriefing {
+                if model.assistant.isBriefing {
                     ProgressView().controlSize(.small).tint(Myna.accent)
                 } else {
                     Button {
@@ -39,9 +39,9 @@ struct BriefCard: View {
                 }
             }
 
-            if let error = model.briefError {
+            if let error = model.assistant.briefError {
                 Text(error).font(Myna.font(12)).foregroundStyle(Myna.danger)
-            } else if let brief = model.brief {
+            } else if let brief = model.assistant.brief {
                 Text(brief.summary)
                     .font(Myna.font(13))
                     .foregroundStyle(Myna.onDark(opacity: 0.85))
@@ -66,7 +66,7 @@ struct BriefCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous).strokeBorder(Myna.border.opacity(0.6))
         )
-        .task { if model.brief == nil { await model.makeBrief() } }
+        .task { if model.assistant.brief == nil { await model.makeBrief() } }
     }
 
     private func footer(for brief: Brief) -> String {

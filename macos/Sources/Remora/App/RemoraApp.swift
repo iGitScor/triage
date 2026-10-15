@@ -6,41 +6,46 @@ import SwiftUI
 @main
 struct RemoraApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @State private var model = InboxModel.shared
 
     var body: some Scene {
         Settings {
-            SettingsView().environment(model)
+            SettingsView().environment(delegate.model)
         }
     }
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// The inbox of this run, handed to the menu bar, the window, Settings, notifications and the `remora` command.
+    /// The delegate is made on the main thread, before the app finishes launching.
+    let model = MainActor.assumeIsolated { InboxModel(environment: .live) }
     private var window: NSWindow?
     private var statusItem: StatusItemController?
     private var commands: LocalSocketServer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Fonts.register()
+        let model = model
         if CommandLine.arguments.contains("--dark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
         if CommandLine.arguments.contains("--window") || CommandLine.arguments.contains("--demo") { showWindow() }
         Notifier.shared.onOpen = { [weak self] itemID in
             // The summary of what arrived while Remora was closed opens the inbox.
             guard itemID.hasSuffix(ChangeDetector.whileClosedSuffix) else {
-                return InboxModel.shared.openFromNotification(itemID)
+                return model.openFromNotification(itemID)
             }
             self?.statusItem?.showInbox()
             return true
         }
-        Notifier.shared.onAction = { action, itemID in InboxModel.shared.perform(action, onItem: itemID) }
+        Notifier.shared.onAction = { action, itemID in model.perform(action, onItem: itemID) }
         Notifier.shared.activate()
-        statusItem = MainActor.assumeIsolated { StatusItemController(model: .shared) }
-        Task { @MainActor in InboxModel.shared.start() }
-        commands = MainActor.assumeIsolated { CommandEndpoint.start(demo: CommandLine.arguments.contains("--demo")) }
+        statusItem = MainActor.assumeIsolated { StatusItemController(model: model) }
+        Task { @MainActor in model.start() }
+        commands = MainActor.assumeIsolated {
+            CommandEndpoint.start(model: model, demo: CommandLine.arguments.contains("--demo"))
+        }
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { _ in
-            Task { @MainActor in await InboxModel.shared.refresh() }
+            Task { @MainActor in await model.refresh() }
         }
     }
 
@@ -55,10 +60,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor private func follow(_ url: URL) {
         switch RemoraLink(url) {
         case .open(let tab):
-            InboxModel.shared.requestedTab = tab
+            model.requestedTab = tab
             showInbox()
         case .remind(let text, let at): statusItem?.newReminder(text: text, at: at)
-        case .refresh: Task { await InboxModel.shared.refresh(manual: true) }
+        case .refresh: Task { await model.refresh(manual: true) }
         case nil: break
         }
     }
@@ -81,7 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard userActivity.activityType == CSSearchableItemActionType else { return false }
         let id = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String
         MainActor.assumeIsolated {
-            if let id, InboxModel.shared.openFromNotification(id) { return }
+            if let id, model.openFromNotification(id) { return }
             showInbox()
         }
         return true
@@ -89,7 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Changes are saved a moment later, off the main thread: what's still pending is written before quitting.
     func applicationWillTerminate(_ notification: Notification) {
-        MainActor.assumeIsolated { InboxModel.shared.flushWrites() }
+        MainActor.assumeIsolated { model.flushWrites() }
         commands?.stop()
     }
 
@@ -102,7 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         window.titlebarAppearsTransparent = true
         window.title = "Remora"
-        window.contentView = NSHostingView(rootView: InboxView().environment(InboxModel.shared))
+        window.contentView = NSHostingView(rootView: InboxView().environment(model))
         window.center()
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)

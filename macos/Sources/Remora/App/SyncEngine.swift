@@ -3,9 +3,9 @@ import Observation
 import RemoraCore
 import RemoraPlugins
 
-/// The sync engine's bookkeeping: what each account's last fetch said, which accounts wait before being asked again,
-/// whether the Mac is offline, and the notifications held for the next set time. `InboxModel.refresh` runs the
-/// fetches and stores the items. Same on Windows (`sync.rs`).
+/// The sync engine: the refresh (polling, the fetches run at once, their results), what each account's last fetch
+/// said, which accounts wait before being asked again, whether the Mac is offline, and the notifications held for the
+/// next set time. `InboxModel` says what to fetch and stores the items. Same on Windows (`sync.rs`).
 @MainActor @Observable
 final class SyncEngine {
     /// Each failing account's last failure, by kind.
@@ -23,22 +23,79 @@ final class SyncEngine {
     /// Notifications waiting for the next set time (IDEA-26), and when the last batch went out.
     @ObservationIgnored private var waitingNotices: [Notice] = []
     @ObservationIgnored private var batchedAt = Date.now
+    @ObservationIgnored private var polling: Task<Void, Never>?
 
     /// What the footer says about the sources.
     var health: SourcesHealth { SourcesHealth(failures: errors, offline: isOffline) }
 
     // MARK: Refreshing
 
-    /// False when a refresh is already running.
-    func begin() -> Bool {
-        guard !isRefreshing else { return false }
-        isRefreshing = true
-        return true
+    /// One account's fetch: its plugin, or why it couldn't be made.
+    struct FetchJob: Sendable {
+        let id: UUID
+        let plugin: Result<any SourcePlugin, Error>
     }
 
-    func end() { isRefreshing = false }
+    /// Refreshes now, then every `interval`. A new call replaces the last.
+    func poll(every interval: TimeInterval, refresh: @escaping @MainActor () async -> Void) {
+        polling?.cancel()
+        polling = Task {
+            while !Task.isCancelled {
+                await refresh()
+                try? await Task.sleep(for: .seconds(interval))
+            }
+        }
+    }
 
-    func refreshed(at date: Date) { lastRefresh = date }
+    /// One refresh, unless one is running or the Mac is offline: every tool would fail the same way, so it waits for
+    /// the network (`networkChanged`). `jobs` makes the fetches, told which accounts sit this one out; they run at
+    /// once, each item classified off the main actor. Fetches run while the main actor is free: a result is kept only
+    /// while `keeps` still finds its account (SEC-26), and `apply` stores it. True when one was kept.
+    func refresh(
+        manual: Bool, interval: TimeInterval, classifier: VerbClassifier,
+        jobs: (_ waits: (UUID) -> Bool) -> [FetchJob],
+        keeps: (UUID) -> Account?,
+        apply: @MainActor (Account, SourceSnapshot) async -> Void
+    ) async -> Bool {
+        guard !isRefreshing else { return false }
+        isRefreshing = true
+        defer { isRefreshing = false }
+        let now = Date.now
+        guard !isOffline else { return false }
+        // An account that keeps failing, or is rate-limited, sits this one out and keeps its items and its error.
+        let jobs = jobs { waits($0, at: now, manual: manual) }
+        var kept = 0
+        await withTaskGroup(of: (UUID, Result<SourceSnapshot, Error>).self) { group in
+            for job in jobs {
+                let (id, made) = (job.id, job.plugin)
+                group.addTask {
+                    do {
+                        let plugin = try made.get()
+                        var snapshot = try await plugin.fetch()
+                        snapshot.items = snapshot.items.map(classifier.classify)
+                        return (id, .success(snapshot))
+                    } catch {
+                        return (id, .failure(error))
+                    }
+                }
+            }
+            for await (id, result) in group {
+                // An account erased, disconnected or blocked by the policy meanwhile must not come back (as SEC-09
+                // on Windows). A reconnected account has a new id.
+                guard let account = keeps(id) else { continue }
+                kept += 1
+                switch result {
+                case .success(let snapshot):
+                    retry(id)
+                    await apply(account, snapshot)
+                case .failure(let error):
+                    failed(id, error: error, interval: interval)
+                }
+            }
+        }
+        lastRefresh = .now
+        return kept > 0
+    }
 
     /// The network came and went: offline, nothing is refreshed; back online, failures that were only the missing
     /// network go. True when it just came back, so everything is refreshed at once.

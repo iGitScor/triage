@@ -162,7 +162,7 @@ struct InboxView: View {
             focus = .list
             if !layout.inProgress.isEmpty, Self.launchTab == .myTurn { tab = .inProgress }
             model.refreshIfStale()
-            if model.brief != nil, model.preferences.wholeInboxBrief { showBrief = true }
+            if model.assistant.brief != nil, model.preferences.wholeInboxBrief { showBrief = true }
         }
     }
 
@@ -171,7 +171,7 @@ struct InboxView: View {
             RemoraMark()
             Text("Remora").font(Myna.font(18, .bold)).foregroundStyle(Myna.ink)
             Spacer()
-            if model.preferences.wholeInboxBrief, model.assistantAccount != nil || model.brief != nil {
+            if model.preferences.wholeInboxBrief, model.assistantAccount != nil || model.assistant.brief != nil {
                 ActionButton(label: "Brief", symbol: "sparkles", prominent: showBrief) {
                     withAnimation(.snappy) { showBrief.toggle() }
                     if showBrief { tab = .myTurn }
@@ -179,8 +179,8 @@ struct InboxView: View {
             }
             // Spins while refreshing; with Reduce Motion it dims instead.
             IconButton(symbol: "arrow.clockwise", help: "Refresh") { Task { await model.refresh(manual: true) } }
-                .modifier(Spin(active: model.isRefreshing && !reduceMotion))
-                .opacity(model.isRefreshing && reduceMotion ? 0.4 : 1)
+                .modifier(Spin(active: model.sync.isRefreshing && !reduceMotion))
+                .opacity(model.sync.isRefreshing && reduceMotion ? 0.4 : 1)
             IconButton(symbol: "gearshape", help: "Settings", action: showSettings)
         }
         .padding(.horizontal, Self.gutter)

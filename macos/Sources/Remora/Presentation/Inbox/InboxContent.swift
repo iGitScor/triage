@@ -51,7 +51,7 @@ extension InboxView {
                         } else {
                             InsightCard()
                             if model.assistantAccount != nil, layout.snoozed.count >= 2,
-                                model.triageSuggestions.isEmpty, !model.isTriaging
+                                model.assistant.triageSuggestions.isEmpty, !model.assistant.isTriaging
                             {
                                 HStack {
                                     Spacer()
@@ -133,9 +133,9 @@ extension InboxView {
         )
         if canSummarize, showingSummary.contains(id) {
             BundleSummaryLine(
-                text: model.bundleSummaries[id].map(\.text),
-                error: model.bundleSummaryErrors[id],
-                loading: model.summarizing.contains(id)
+                text: model.assistant.bundleSummaries[id].map(\.text),
+                error: model.assistant.bundleSummaryErrors[id],
+                loading: model.assistant.summarizing.contains(id)
             )
             .transition(.opacity.combined(with: .move(edge: .top)))
         }
@@ -148,8 +148,8 @@ extension InboxView {
                 let restKey = "\(id)/rest"
                 OverflowHelp(
                     rest: rest,
-                    summary: showingSummary.contains(restKey) ? model.bundleSummaries[restKey]?.text : nil,
-                    summarizing: model.summarizing.contains(restKey),
+                    summary: showingSummary.contains(restKey) ? model.assistant.bundleSummaries[restKey]?.text : nil,
+                    summarizing: model.assistant.summarizing.contains(restKey),
                     showAll: { withAnimation(.snappy) { _ = expanded.insert(id) } },
                     snoozeAll: { picker = .snoozeMany(rest) },
                     summarize: model.assistantAccount == nil

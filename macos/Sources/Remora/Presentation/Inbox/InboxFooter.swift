@@ -4,11 +4,11 @@ import SwiftUI
 
 extension InboxView {
     @ViewBuilder private var updated: some View {
-        if let last = model.lastRefresh {
+        if let last = model.sync.lastRefresh {
             LiveText { L("Updated %@", last.formatted(.relative(presentation: .named))) }
                 .foregroundStyle(Myna.muted)
             // A list cut at its limit or a missing permission: the details are in Settings.
-            let remarks = model.remarks.values.flatMap { $0 }
+            let remarks = model.sync.remarks.values.flatMap { $0 }
             if !remarks.isEmpty {
                 Button(action: showSettings) { Image(systemName: "info.circle") }
                     .buttonStyle(.plain)
@@ -21,7 +21,7 @@ extension InboxView {
     }
 
     private var offlineText: String {
-        guard let last = model.lastRefresh else { return L("Offline") }
+        guard let last = model.sync.lastRefresh else { return L("Offline") }
         return L("Offline · updated %@", last.formatted(.relative(presentation: .named)))
     }
 
@@ -38,7 +38,7 @@ extension InboxView {
     /// so instead of "All done!", which would look like there is nothing to do (UX-26).
     var unreadState: EmptyState? {
         guard model.allItems.allSatisfy({ $0.bundle == .reminders }) else { return nil }
-        switch model.sourcesHealth {
+        switch model.sync.health {
         case .fine: return nil
         case .offline:
             return EmptyState(
@@ -58,7 +58,7 @@ extension InboxView {
 
     var footer: some View {
         HStack(spacing: 8) {
-            switch model.sourcesHealth {
+            switch model.sync.health {
             case .offline:
                 // Not the tools' fault: one calm line, and the inbox as it was.
                 Label {
@@ -73,7 +73,7 @@ extension InboxView {
                         .foregroundStyle(Myna.color(for: .warning).foreground)
                 }
                 .buttonStyle(.plain)
-                .help(ids.compactMap { model.errors[$0]?.message }.joined(separator: "\n"))
+                .help(ids.compactMap { model.sync.errors[$0]?.message }.joined(separator: "\n"))
                 .accessibilityHint(L("Opens Settings to reconnect"))
             case .failing(let count):
                 Button(action: showSettings) {
@@ -84,7 +84,7 @@ extension InboxView {
                     .foregroundStyle(Myna.danger)
                 }
                 .buttonStyle(.plain)
-                .help(model.errors.values.map(\.message).joined(separator: "\n"))
+                .help(model.sync.errors.values.map(\.message).joined(separator: "\n"))
                 .accessibilityHint(L("Opens Settings to see why"))
             case .fine:
                 updated

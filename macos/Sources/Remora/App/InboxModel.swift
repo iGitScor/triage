@@ -9,17 +9,20 @@ import RemoraPlugins
 /// - `SyncEngine`: failures, slow-downs, the network, notifications held for later.
 /// - `SnoozeService`: the history, the advisor, insights.
 /// - `AssistantCoordinator`: the brief, summaries and triage.
+/// - `LearningService`: the ranker and review times, learned from your actions.
+/// - `SpotlightService`: what Spotlight holds.
 /// - `Persistence`: the files each of them saves.
-/// This class holds what they share (the items, their states, reminders, preferences and the policy), the refresh,
-/// the actions on items, Undo and Spotlight.
+/// - `InboxPolicy`: the privacy policy, from the preferences and the organization's settings.
+/// This class holds what they share (the items, their states, reminders and preferences), what to fetch and how to
+/// store it, the actions on items, and Undo.
 @MainActor @Observable
 final class InboxModel {
-    static let shared = InboxModel(environment: .live)
-
     @ObservationIgnored let accountsService: AccountsService
     @ObservationIgnored let sync: SyncEngine
     @ObservationIgnored let snoozes: SnoozeService
     @ObservationIgnored let assistant: AssistantCoordinator
+    @ObservationIgnored let learning: LearningService
+    @ObservationIgnored let spotlight: SpotlightService
     @ObservationIgnored let persistence: Persistence
 
     var accounts: [Account] { accountsService.accounts }
@@ -36,8 +39,6 @@ final class InboxModel {
         }
     }
     private(set) var states: [String: ItemState] { didSet { layoutChanged() } }
-    /// Each failing account's last failure, by kind.
-    var errors: [UUID: SourceFailure] { sync.errors }
     struct StorageIssue: Equatable, Identifiable {
         var file: String
         /// Read and kept aside at launch, rather than failing to save.
@@ -48,37 +49,11 @@ final class InboxModel {
 
     /// Files that couldn't be read (kept aside) or saved, for Settings → Privacy.
     private(set) var storageIssues: [StorageIssue] = []
-    /// No network: refreshes wait for it, and the footer says so once instead of every source failing.
-    var isOffline: Bool { sync.isOffline }
-    /// What the last fetch of each account said besides its items: a list cut at its limit, a missing permission.
-    var remarks: [UUID: [String]] { sync.remarks }
-    var isRefreshing: Bool { sync.isRefreshing }
-    var lastRefresh: Date? { sync.lastRefresh }
     /// When the passing of time changed the layout: it moves only when an item expires or a new day starts
     /// (what's due today). Snoozes ending change `states` instead. The layout itself is computed at the real time.
     private(set) var now = Date.now { didSet { layoutChanged() } }
-    var brief: Brief? { assistant.brief }
-    var briefError: String? { assistant.briefError }
-    var isBriefing: Bool { assistant.isBriefing }
-    var bundleSummaries: [String: BundleSummary] { assistant.bundleSummaries }
-    var bundleSummaryErrors: [String: String] { assistant.bundleSummaryErrors }
-    var summarizing: Set<String> { assistant.summarizing }
-    var snoozeHistory: [SnoozeRecord] { snoozes.history }
-    /// Patterns in the snoozed pile; recomputed when snoozes change, shown one at a time.
-    var insights: [SnoozeInsight] { snoozes.insights }
-    var dismissedInsights: Set<String> { snoozes.dismissed }
-    var triageSuggestions: [TriageSuggestion] { assistant.triageSuggestions }
-    var triageError: String? { assistant.triageError }
-    var isTriaging: Bool { assistant.isTriaging }
     /// Item ID → items from other tools about the same thing. Computed in the background after each refresh.
     private(set) var links: [String: [String]] = [:] { didSet { layoutChanged() } }
-    /// Learned from your actions on this Mac; silent until it has enough of them.
-    private(set) var ranker = PersonalRanker(records: []) { didSet { layoutChanged() } }
-    /// Reviews you timed (Start, then Done): how long they really took.
-    private(set) var reviewTimings: [ReviewTiming] = []
-    /// How your reviews compare with the estimate; 1 until five were timed.
-    var reviewPace: Double { ReviewPace.factor(reviewTimings) }
-    @ObservationIgnored private var actionRecords: [ActionRecord] = []
     var query = ""
     /// Bumped each time the menu bar popover opens, so the inbox can pick its starting tab.
     var popoverOpenings = 0
@@ -96,7 +71,7 @@ final class InboxModel {
             {
                 enforcePolicy()
             }
-            if ManagedPolicy.effective(oldValue, managed: environment.managed).refreshMinutes
+            if InboxPolicy(preferences: oldValue, managed: environment.managed).effectivePreferences.refreshMinutes
                 != effectivePreferences.refreshMinutes
             {
                 startPolling()
@@ -115,23 +90,19 @@ final class InboxModel {
     @ObservationIgnored private let http: HTTPClient
     /// Keywords, then on-device sentence embeddings. Slow on first sight of a message, so it runs off the main thread.
     @ObservationIgnored private let classifier: VerbClassifier
-    var advisor: SnoozeAdvisor { snoozes.advisor }
     @ObservationIgnored private let linkFinder = LinkFinder(
         similarity: [
             KeywordSimilarity(), RareTokenSimilarity(),
             EmbeddingSimilarity(threshold: EmbeddingSimilarity.linkThreshold),
         ]
     )
-    @ObservationIgnored private var polling: Task<Void, Never>?
     @ObservationIgnored private var ticking: Task<Void, Never>?
     @ObservationIgnored private let isDemo: Bool
     /// Saves the files off the main thread, each once per burst of changes.
     var writer: DiskWriter { persistence.writer }
-    /// Inside `batch`: insights and the ranker are worked out once, at the end.
+    /// Inside `batch`: insights are worked out once, at the end.
     @ObservationIgnored private var batchDepth = 0
-    @ObservationIgnored private var batchNeeds: (insights: Bool, ranker: Bool) = (false, false)
-    /// What this launch put in Spotlight; nil until the first update, which starts the index over (IDEA-38).
-    @ObservationIgnored private var spotlightIndexed: [String: SpotlightEntry]?
+    @ObservationIgnored private var batchNeedsInsights = false
 
     init(environment: AppEnvironment) {
         let embeddings = EmbeddingIntentClassifier()
@@ -159,6 +130,7 @@ final class InboxModel {
         self.preferences = preferences
         Myna.textScale = preferences.textSize.scale
         sync = SyncEngine()
+        spotlight = SpotlightService(index: environment.spotlight, demo: environment.demo)
         if isDemo {
             accountsService = AccountsService(accounts: [], secrets: environment.secrets, persistence: files)
             let demoItems = DemoData.items().mapValues { $0.map(VerbClassifier().classify) }
@@ -168,6 +140,7 @@ final class InboxModel {
             let demo = DemoData.snoozes(items: demoItems.values.flatMap { $0 })
             states = demo.states
             snoozes = SnoozeService(history: demo.history, persistence: files)
+            learning = LearningService(records: [], reviewTimings: [], persistence: files)
         } else {
             accountsService = AccountsService(
                 accounts: read(files.accounts) ?? [], secrets: environment.secrets, persistence: files)
@@ -180,13 +153,13 @@ final class InboxModel {
                 brief: files.brief.load() ?? nil, bundleSummaries: files.bundleSummaries.load() ?? [:],
                 persistence: files)
             snoozes = SnoozeService(history: read(files.history) ?? [], persistence: files)
-            actionRecords = read(files.learning) ?? []
-            reviewTimings = read(files.reviewTimes) ?? []
-            ranker = PersonalRanker(records: actionRecords)
+            learning = LearningService(
+                records: read(files.learning) ?? [], reviewTimings: read(files.reviewTimes) ?? [], persistence: files)
             environment.removeURLCaches()
         }
         storageIssues = issues
         writer.onResult = { [weak self] file, failure in self?.recordWrite(file, failure: failure) }
+        learning.rankerChanged = { [weak self] in self?.layoutChanged() }
     }
 
     // MARK: Reading
@@ -213,7 +186,7 @@ final class InboxModel {
         let version = layoutVersion
         if cachedLayouts.version != version { cachedLayouts = (version, [:]) }
         if let cached = cachedLayouts.byQuery[query] { return cached }
-        let ranker = ranker
+        let ranker = learning.ranker
         // The real time, not `now`: items fetched since may have expired already.
         let layout = InboxAssembler(wakeOnActivity: preferences.wakeOnActivity, personal: { ranker.score($0) })
             .layout(items: itemsWithLinkedPriority, states: states, now: .now, query: query)
@@ -280,42 +253,21 @@ final class InboxModel {
 
     /// The connected assistant, only when the privacy policy allows it, its AI server included.
     var assistantAccount: Account? {
-        accounts.first { PluginRegistry.isAssistant($0.pluginID) && refusal(for: $0) == nil }
-    }
-
-    /// The account as Remora uses it: the organization's `AIServer` replaces the server the user typed, and its
-    /// value for a field with a `managedKey` (`MicrosoftTenant`) replaces that field.
-    func effective(_ account: Account) -> Account {
-        guard let manifest = PluginRegistry.manifest(account.pluginID) else { return account }
-        var account = account
-        if let field = manifest.egress.serverField, let server = ManagedPolicy.aiServer(environment.managed) {
-            account.settings[field] = server
-        }
-        for field in manifest.fields {
-            if let key = field.managedKey, let value = ManagedPolicy.setting(key, environment.managed) {
-                account.settings[field.key] = value
-            }
-        }
-        return account
-    }
-
-    /// Why the privacy policy blocks an account: its tool, or for an assistant its AI server. Nil when allowed.
-    func refusal(for account: Account) -> String? {
-        guard let manifest = PluginRegistry.manifest(account.pluginID) else { return nil }
-        return policy.refusal(for: manifest, settings: effective(account).settings)
+        accounts.first { PluginRegistry.isAssistant($0.pluginID) && privacy.refusal(for: $0) == nil }
     }
 
     // MARK: Privacy
 
-    var policy: CompliancePolicy { ManagedPolicy.policy(user: preferences, managed: environment.managed) }
+    /// The privacy policy, from the preferences as they are now (`InboxPolicy`).
+    var privacy: InboxPolicy { InboxPolicy(preferences: preferences, managed: environment.managed) }
+
+    var policy: CompliancePolicy { privacy.compliance }
 
     /// What Remora acts on: your preferences with the organization's settings in place.
-    var effectivePreferences: Preferences { ManagedPolicy.effective(preferences, managed: environment.managed) }
+    var effectivePreferences: Preferences { privacy.effectivePreferences }
 
     /// What the assistant may read and which models it may use.
-    var assistantPolicy: AssistantPolicy {
-        ManagedPolicy.assistantPolicy(user: preferences, managed: environment.managed)
-    }
+    var assistantPolicy: AssistantPolicy { privacy.assistantPolicy }
 
     /// What the privacy policy refuses leaves the screen and the disk at once, not at the next successful
     /// refresh: a refused tool's cached items, its notifications and the AI summaries that may quote them. Its account
@@ -325,7 +277,7 @@ final class InboxModel {
         guard !isDemo else { return }
         var dropped = false
         for account in accounts {
-            guard let refusal = refusal(for: account) else { continue }
+            guard let refusal = privacy.refusal(for: account) else { continue }
             sync.setFailure(
                 SourceFailure(kind: .other, message: L("%@ Remove the account to delete its token.", refusal)),
                 for: account.id)
@@ -343,24 +295,18 @@ final class InboxModel {
         updateSpotlight()
     }
 
-    /// Spotlight holds the inbox's titles and where they come from only while the user wants it, and never a blocked
-    /// tool's or one whose content is hidden (IDEA-38). The diff with what this launch indexed is sent.
+    /// What Spotlight may hold: reminders, and the items of tools the policy allows (`SpotlightService`).
     private func updateSpotlight() {
         guard !isDemo else { return }
-        let preferences = effectivePreferences
         var names = Dictionary(
             PluginRegistry.manifests.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         names[SpotlightIndex.remindersDomain] = L("Reminder")
+        let privacy = privacy
         let items = allItems.filter { item in
             item.pluginID == SpotlightIndex.remindersDomain
-                || account(item.accountID).map { refusal(for: $0) == nil } == true
+                || account(item.accountID).map { privacy.refusal(for: $0) == nil } == true
         }
-        let wanted = SpotlightIndex.entries(
-            items: items, enabled: preferences.spotlight, hiddenContent: preferences.hiddenContentPlugins,
-            sourceNames: names)
-        let changes = SpotlightIndex.changes(indexed: spotlightIndexed, wanted: wanted)
-        if !changes.isEmpty { environment.spotlight.apply(changes) }
-        spotlightIndexed = Dictionary(wanted.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        spotlight.update(items: items, preferences: privacy.effectivePreferences, sourceNames: names)
     }
 
     /// The only way to build a plugin: it must be allowed, and it can only reach its declared hosts. A refresh
@@ -368,7 +314,7 @@ final class InboxModel {
     private func sourcePlugin(_ account: Account, secrets: [String: String], remembering: Bool = true) throws
         -> any SourcePlugin
     {
-        let account = effective(account)
+        let account = privacy.effective(account)
         guard remembering else {
             return try PluginRegistry.make(account, secrets: secrets, http: guardedClient(for: account))
         }
@@ -381,70 +327,27 @@ final class InboxModel {
 
     /// Built with its model fields kept within the organization's allowed models, if any.
     private func assistantPlugin(_ account: Account, secrets: [String: String]) throws -> any AssistantPlugin {
-        let account = effective(account)
-        var constrained = account
-        let defaults = Dictionary(
-            (PluginRegistry.manifest(account.pluginID)?.fields ?? []).map { ($0.key, $0.defaultValue) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        constrained.settings = assistantPolicy.constrained(account.settings, defaults: defaults)
-        if account.pluginID == ClaudeCodePlugin.manifest.id,
-            let path = ManagedPolicy.claudeCodePath(environment.managed)
-        {
-            constrained.settings["path"] = path
-        }
-        return try PluginRegistry.makeAssistant(constrained, secrets: secrets, http: guardedClient(for: account))
+        let privacy = privacy
+        return try PluginRegistry.makeAssistant(
+            privacy.constrained(assistant: account), secrets: secrets,
+            http: guardedClient(for: privacy.effective(account)))
     }
 
     /// `base` is what the guard lets requests through to: the network, or a layer in front of it.
     private func guardedClient(for account: Account, through base: HTTPClient? = nil) throws -> HTTPClient {
-        guard let manifest = PluginRegistry.manifest(account.pluginID) else {
-            throw PluginError.unknownPlugin(account.pluginID)
-        }
-        if let refusal = refusal(for: account) { throw EgressError.blockedPlugin(refusal) }
-        return GuardedHTTPClient(base ?? http, allowing: allowedHosts(for: account, manifest: manifest))
-    }
-
-    func allowedHosts(for account: Account, manifest: PluginManifest) -> [String] {
-        let settings = effective(account).settings
-        let own = (settings["host"] ?? manifest.server(in: settings)).flatMap {
-            URL(string: $0.contains("://") ? $0 : "https://" + $0)?.host
-        }
-        return manifest.egress.hosts + [own].compactMap { $0 }
+        try privacy.guardedClient(for: account, through: base ?? http)
     }
 
     /// Avatars load only from the hosts of allowed, connected tools.
-    func allowsImage(_ url: URL?) -> Bool {
-        guard policy.allowRemoteImages, url?.scheme?.lowercased() == "https", let host = url?.host?.lowercased()
-        else { return false }
-        return sourceAccounts.contains { account in
-            guard let manifest = PluginRegistry.manifest(account.pluginID), policy.allows(manifest) else {
-                return false
-            }
-            let hosts = allowedHosts(for: account, manifest: manifest) + (Self.imageOnlyHosts[account.pluginID] ?? [])
-            return GuardedHTTPClient.matches(host, hosts)
-        }
-    }
-
-    /// Hosts a tool's pictures come from without the tool ever being asked anything there: GitLab serves most
-    /// avatars from Gravatar (Jira Cloud too), Slack a workspace's own emoji from its edge. Images only, and only while the policy
-    /// allows them; never a request with a token.
-    /// Same list on Windows (`view.rs`).
-    static let imageOnlyHosts = [
-        "gitlab": ["secure.gravatar.com", "www.gravatar.com"],
-        // A workspace's own emoji, in reactions.
-        "slack": ["emoji.slack-edge.com"],
-        // Jira Cloud's avatars: Gravatar, falling back to Atlassian's initials pictures.
-        "jira": ["secure.gravatar.com", "www.gravatar.com", "atl-paas.net"],
-        // Bitbucket Cloud's avatars: the same.
-        "bitbucket": ["secure.gravatar.com", "www.gravatar.com", "atl-paas.net"],
-    ]
+    func allowsImage(_ url: URL?) -> Bool { privacy.allowsImage(url, from: sourceAccounts) }
 
     // MARK: Assistant
 
     /// Writes a new brief, unless the current one is still fresh (Settings → General → Assistant).
     func makeBrief() async {
-        guard preferences.wholeInboxBrief, let account = assistantAccount, !isBriefing, !isBriefFresh else { return }
+        guard preferences.wholeInboxBrief, let account = assistantAccount, !assistant.isBriefing, !isBriefFresh else {
+            return
+        }
         await assistant.makeBrief(
             from: briefItems, assistant: { try assistantPlugin(for: account) }, stillAnswers: { stillAnswers(account) })
     }
@@ -527,9 +430,6 @@ final class InboxModel {
         }
     }
 
-    /// What the footer says about the sources.
-    var sourcesHealth: SourcesHealth { sync.health }
-
     /// The network came and went: offline, nothing is refreshed; back online, everything is, at once. Failures that
     /// were only the missing network go.
     func networkChanged(online: Bool) {
@@ -538,87 +438,50 @@ final class InboxModel {
         }
     }
 
-    /// The organization can turn updating off entirely, or on for everyone.
-    var updatesAllowed: Bool { ManagedPolicy.updatesAllowed(environment.managed) }
-
     private func scheduleUpdates() {
         guard !isDemo else { return }
-        updater.schedule(enabled: updatesAllowed && effectivePreferences.checkForUpdates)
+        updater.schedule(enabled: privacy.updatesAllowed && effectivePreferences.checkForUpdates)
     }
 
     /// Check now: the user asked, so it runs even with automatic checks off, unless the organization forbids it.
     func checkForUpdates() async {
-        guard updatesAllowed, !isDemo else { return }
+        guard privacy.updatesAllowed, !isDemo else { return }
         await updater.check()
     }
 
     private func startPolling() {
-        polling?.cancel()
         let interval = Double(max(1, effectivePreferences.refreshMinutes) * 60)
-        polling = Task { [weak self] in
-            while !Task.isCancelled {
-                await self?.refresh()
-                try? await Task.sleep(for: .seconds(interval))
-            }
-        }
+        sync.poll(every: interval) { [weak self] in await self?.refresh() }
     }
 
     func refreshIfStale() {
-        guard (lastRefresh ?? .distantPast).timeIntervalSinceNow < -60 else { return }
+        guard (sync.lastRefresh ?? .distantPast).timeIntervalSinceNow < -60 else { return }
         Task { await refresh() }
     }
 
     /// `manual`: asked for by the user (the button, ⌘R, the menu), which doesn't wait out a slow-down (`Backoff`).
+    /// The sync engine runs the fetches; this says which, and stores what comes back.
     func refresh(manual: Bool = false) async {
-        guard sync.begin() else { return }
-        defer { sync.end() }
-
-        let classifier = classifier
-        let now = Date.now
-        let interval = Double(max(1, effectivePreferences.refreshMinutes) * 60)
-        // An account that keeps failing, or is rate-limited, sits this one out and keeps its items and its error.
-        // Offline, every tool would fail the same way: wait for the network (`networkChanged`).
-        guard !isOffline else { return }
-        enforcePolicy()
-        let policy = policy
-        let due = sourceAccounts.filter { account in
-            PluginRegistry.manifest(account.pluginID).map(policy.allows) == true
-        }.filter { !sync.waits($0.id, at: now, manual: manual) }
-        let jobs = due.map { account in
-            (account.id, Result { try sourcePlugin(account, secrets: accountsService.secrets(for: account.id)) })
-        }
-        var kept = 0
-        await withTaskGroup(of: (UUID, Result<SourceSnapshot, Error>).self) { group in
-            for (id, made) in jobs {
-                group.addTask {
-                    do {
-                        let plugin = try made.get()
-                        var snapshot = try await plugin.fetch()
-                        snapshot.items = snapshot.items.map(classifier.classify)
-                        return (id, .success(snapshot))
-                    } catch {
-                        return (id, .failure(error))
-                    }
+        let kept = await sync.refresh(
+            manual: manual, interval: Double(max(1, effectivePreferences.refreshMinutes) * 60), classifier: classifier,
+            jobs: { waits in
+                enforcePolicy()
+                let policy = policy
+                return sourceAccounts.filter { account in
+                    PluginRegistry.manifest(account.pluginID).map(policy.allows) == true && !waits(account.id)
+                }.map { account in
+                    SyncEngine.FetchJob(
+                        id: account.id,
+                        plugin: Result { try sourcePlugin(account, secrets: accountsService.secrets(for: account.id)) })
                 }
-            }
-            for await (id, result) in group {
-                // Fetches run while the main actor is free: an account erased, disconnected or blocked by the policy
-                // meanwhile must not come back (SEC-26, as SEC-09 on Windows). A reconnected account has a new id.
-                guard let account = account(id), refusal(for: account) == nil else { continue }
-                kept += 1
-                switch result {
-                case .success(let snapshot):
-                    sync.retry(id)
-                    apply(snapshot, to: id)
-                    await accountsService.saveRenewed(for: account)
-                case .failure(let error):
-                    sync.failed(id, error: error, interval: interval)
-                }
-            }
-        }
-        sync.refreshed(at: .now)
+            },
+            keeps: { id in account(id).flatMap { privacy.refusal(for: $0) == nil ? $0 : nil } },
+            apply: { account, snapshot in
+                apply(snapshot, to: account.id)
+                await accountsService.saveRenewed(for: account)
+            })
         // Nothing to store: in particular, nothing written back after Erase.
-        guard kept > 0 else { return }
+        guard kept else { return }
         persistence.save(itemsByAccount, to: persistence.cache)
         pruneStates()
         refreshInsights()
@@ -710,7 +573,7 @@ final class InboxModel {
             _ = environment.open(url)
         }
         update(item) { $0.remindedAt = nil }
-        learnHandled(item)
+        learning.handled(item)
     }
 
     /// The item's web page, if it's one Remora may open (see `LinkPolicy`).
@@ -732,25 +595,6 @@ final class InboxModel {
             now: .now)
     }
 
-    /// Why an item ranks higher than its priority alone would put it.
-    func rankingReason(_ item: InboxItem) -> String? { ranker.reason(item) }
-
-    /// Opened or finished within a day of its last activity: something you handle quickly.
-    private func learnHandled(_ item: InboxItem) {
-        guard item.bundle != .reminders, Date.now.timeIntervalSince(item.date) < .day else { return }
-        learn(ActionRecord(item: item, outcome: .quick))
-    }
-
-    private func learn(_ record: ActionRecord) {
-        actionRecords = Array((actionRecords + [record]).suffix(1_000))
-        if batchDepth > 0 {
-            batchNeeds.ranker = true
-        } else {
-            ranker = PersonalRanker(records: actionRecords)
-        }
-        persistence.save(actionRecords, to: persistence.learning)
-    }
-
     /// What the last Done, Mark all as done or Clear changed, for its Undo: shown a few seconds, ⌘Z.
     struct UndoPoint: Identifiable {
         let id = UUID()
@@ -766,7 +610,7 @@ final class InboxModel {
 
     private func remember(_ message: String) {
         undoPoint = UndoPoint(
-            message: message, states: states, reminders: reminders, history: snoozeHistory, records: actionRecords)
+            message: message, states: states, reminders: reminders, history: snoozes.history, records: learning.records)
     }
 
     /// Puts back what the last undoable action changed, and the snoozes' return notifications it cancelled.
@@ -781,11 +625,9 @@ final class InboxModel {
         states = point.states
         reminders = point.reminders
         snoozes.restore(point.history)
-        actionRecords = point.records
-        ranker = PersonalRanker(records: actionRecords)
+        learning.restore(point.records)
         persistence.save(states, to: persistence.states)
         persistence.save(reminders, to: persistence.reminders)
-        persistence.save(actionRecords, to: persistence.learning)
         for (id, state) in cancelled {
             if let snooze = state.snooze, snooze.until > .now, let item = item(id) {
                 scheduleReturn(of: item, at: snooze.until, note: snooze.note)
@@ -835,7 +677,7 @@ final class InboxModel {
         }
         let markingDone = state(of: item).done == nil
         if markingDone, item.bundle == .reviews, let started = state(of: item).startedAt {
-            learnReviewTime(item, startedAt: started)
+            learning.reviewed(item, startedAt: started)
         }
         update(item) { state in
             state.done = markingDone ? .init(at: .now, fingerprint: item.fingerprint) : nil
@@ -844,17 +686,9 @@ final class InboxModel {
             state.startedAt = nil
         }
         environment.notifications.cancel(item.id)
-        if markingDone { learnHandled(item) }
+        if markingDone { learning.handled(item) }
         if markingDone { snoozes.done(item) }
         refreshInsights()
-    }
-
-    /// A review started then done: its real duration against the plain estimate, the last 50 kept.
-    private func learnReviewTime(_ item: InboxItem, startedAt: Date) {
-        guard let estimate = ReviewPrep(item)?.estimatedMinutes else { return }
-        let actual = Int((Date.now.timeIntervalSince(startedAt) / 60).rounded())
-        reviewTimings = Array((reviewTimings + [ReviewTiming(estimated: estimate, actual: actual)]).suffix(50))
-        persistence.save(reviewTimings, to: persistence.reviewTimes)
     }
 
     func clear(_ items: [InboxItem]) {
@@ -919,7 +753,7 @@ final class InboxModel {
             state.startedAt = nil
         }
         if item.bundle != .reminders {
-            learn(ActionRecord(item: item, outcome: .deferred))
+            learning.deferred(item)
             snoozes.record(item, reason: reason, until: date)
         }
         scheduleReturn(of: item, at: date, note: note)
@@ -992,7 +826,7 @@ final class InboxModel {
     /// A newer request wins over a slower, older one.
     func refreshInsights() {
         guard batchDepth == 0 else {
-            batchNeeds.insights = true
+            batchNeedsInsights = true
             return
         }
         snoozes.refreshInsights(snoozed: layout.snoozed, states: states)
@@ -1001,13 +835,11 @@ final class InboxModel {
     /// Several actions as one (Mark all as done, Snooze all): insights and the ranker are worked out once, after.
     private func batch(_ actions: () -> Void) {
         batchDepth += 1
-        actions()
+        learning.batch(actions)
         batchDepth -= 1
-        guard batchDepth == 0 else { return }
-        let needs = batchNeeds
-        batchNeeds = (false, false)
-        if needs.ranker { ranker = PersonalRanker(records: actionRecords) }
-        if needs.insights { refreshInsights() }
+        guard batchDepth == 0, batchNeedsInsights else { return }
+        batchNeedsInsights = false
+        refreshInsights()
     }
     /// The latest computation, for tests to wait on.
     var insightsTask: Task<Void, Never>? { snoozes.insightsTask }
@@ -1020,7 +852,7 @@ final class InboxModel {
     func spread(_ items: [InboxItem], from start: Date) {
         remember(L("%lld return moved", plural: "%lld returns moved", items.count))
         batch {
-            for (id, date) in advisor.spread(items, from: start) {
+            for (id, date) in snoozes.advisor.spread(items, from: start) {
                 if let item = item(id) { reschedule(item, to: date) }
             }
         }
@@ -1037,7 +869,7 @@ final class InboxModel {
 
     /// Asks the assistant what to do with each snoozed item, reusing a fresh answer for the same pile.
     func triage() async {
-        guard let account = assistantAccount, !isTriaging else { return }
+        guard let account = assistantAccount, !assistant.isTriaging else { return }
         let snoozed = layout.snoozed
         await assistant.triage(
             ids: snoozed.map(\.id).sorted(),
@@ -1163,7 +995,7 @@ final class InboxModel {
     func signIn(pluginID: String, settings: [String: String]) async throws -> [String: String] {
         guard let manifest = PluginRegistry.manifest(pluginID) else { throw PluginError.unknownPlugin(pluginID) }
         guard let signIn = manifest.signIn else { throw PluginError.signIn("no sign-in") }
-        let account = effective(Account(pluginID: pluginID, settings: settings))
+        let account = privacy.effective(Account(pluginID: pluginID, settings: settings))
         let settings = account.settings
         let http = try guardedClient(for: account)
         let state = OAuth.random(16)
@@ -1172,7 +1004,7 @@ final class InboxModel {
         let page = try OAuth.authorizeURL(
             signIn, values: settings, redirect: loopback.redirect, pkce: pkce, state: state)
         let host = page.host?.lowercased() ?? ""
-        guard GuardedHTTPClient.matches(host, allowedHosts(for: account, manifest: manifest)) else {
+        guard GuardedHTTPClient.matches(host, privacy.allowedHosts(for: account, manifest: manifest)) else {
             throw EgressError.blockedHost(host)
         }
         guard environment.open(page) else { throw PluginError.signIn("no browser") }
@@ -1252,14 +1084,10 @@ final class InboxModel {
         sync.reset()
         assistant.reset()
         snoozes.reset()
-        actionRecords = []
-        reviewTimings = []
-        ranker = PersonalRanker(records: [])
+        learning.reset()
         links = [:]
         preferences = Preferences()
-        // Whatever an earlier launch put in Spotlight goes too.
-        if !isDemo { environment.spotlight.apply(SpotlightIndex.Changes(deleteAll: true)) }
-        spotlightIndexed = [:]
+        spotlight.reset()
         // Nothing pending or in progress may land after the files are gone.
         writer.discard()
         let left = Self.removeContents(of: environment.folder)
@@ -1302,9 +1130,7 @@ final class InboxModel {
         }
         undoPoint = nil
         accountsService.remove(account.id)
-        // Its items leave Spotlight, whatever this launch knows of them.
-        if !isDemo { environment.spotlight.delete(domain: account.id.uuidString) }
-        spotlightIndexed = spotlightIndexed?.filter { $0.value.domain != account.id.uuidString }
+        spotlight.remove(account: account.id)
         if PluginRegistry.isAssistant(account.pluginID) { assistant.disconnected() }
         itemsByAccount[account.id] = nil
         sync.forget(account.id)

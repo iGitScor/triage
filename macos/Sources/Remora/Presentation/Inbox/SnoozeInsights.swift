@@ -88,7 +88,7 @@ struct InsightCard: View {
         case .loop(let item, _):
             L("“%@” keeps coming back. Decide once: do it now, or let it go.", item.title)
         case .avoidance(_, _, let items):
-            L("%@ A short slot at your best time often breaks the loop.", model.advisor.nudge(for: items[0]))
+            L("%@ A short slot at your best time often breaks the loop.", model.snoozes.advisor.nudge(for: items[0]))
         case .pileUp:
             L("Spread them 30 minutes apart so they don’t land all at once.")
         case .cluster(let items):
@@ -141,14 +141,14 @@ struct TriagePanel: View {
     @State private var toggled: Set<String> = []
 
     var body: some View {
-        if model.isTriaging {
+        if model.assistant.isTriaging {
             Label(L("The assistant is looking at your snoozed items…"), systemImage: "sparkles")
                 .font(Myna.font(12))
                 .foregroundStyle(Myna.muted)
                 .padding(.horizontal, 2)
-        } else if let error = model.triageError {
+        } else if let error = model.assistant.triageError {
             Text(error).font(Myna.font(12)).foregroundStyle(Myna.danger)
-        } else if !model.triageSuggestions.isEmpty {
+        } else if !model.assistant.triageSuggestions.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label(L("The assistant’s suggestions"), systemImage: "sparkles")
@@ -156,17 +156,17 @@ struct TriagePanel: View {
                     Spacer()
                     IconButton(symbol: "xmark", help: "Close", size: 22) { model.discardTriage() }
                 }
-                ForEach(model.triageSuggestions) { suggestion in
+                ForEach(model.assistant.triageSuggestions) { suggestion in
                     if let item = model.item(suggestion.id) {
                         row(suggestion, item: item)
                     }
                 }
-                if model.triageSuggestions.contains(where: { $0.action == .done || $0.action == .now }) {
+                if model.assistant.triageSuggestions.contains(where: { $0.action == .done || $0.action == .now }) {
                     Text(L("“Let it go” and “Do it now” are yours to tick."))
                         .font(Myna.font(11))
                         .foregroundStyle(Myna.onDark(opacity: 0.6))
                 }
-                let selected = TriageSuggestion.selection(model.triageSuggestions, toggled: toggled)
+                let selected = TriageSuggestion.selection(model.assistant.triageSuggestions, toggled: toggled)
                 Button {
                     withAnimation(.snappy) { model.apply(selected) }
                 } label: {

@@ -63,7 +63,10 @@ struct InsightsTests {
         for _ in 0..<3 { model.snooze(item, until: .now.addingTimeInterval(3_600), mode: .hide, note: nil) }
         model.refreshInsights()
         await model.insightsTask?.value
-        #expect(model.insights.contains { if case .loop(let looped, _) = $0 { looped.id == item.id } else { false } })
+        #expect(
+            model.snoozes.insights.contains {
+                if case .loop(let looped, _) = $0 { looped.id == item.id } else { false }
+            })
     }
 }
 
@@ -80,7 +83,7 @@ struct PolicyEnforcementTests {
         #expect(model.allItems.isEmpty, "gone from the screen")
         #expect(!harness.writtenText().contains("Fix CSV export"), "and from the cache on disk")
         #expect(harness.notifier.removedPrefixes.contains("\(account.id.uuidString)/"))
-        #expect(model.errors[account.id]?.message.contains("Remove the account") == true)
+        #expect(model.sync.errors[account.id]?.message.contains("Remove the account") == true)
         #expect(model.accounts.map(\.id) == [account.id], "the account stays, to remove its token")
 
         let before = harness.server.requests
@@ -90,7 +93,7 @@ struct PolicyEnforcementTests {
         model.preferences.allowedPlugins = nil
         await model.refresh(manual: true)
         #expect(model.allItems.count == 2, "back once allowed")
-        #expect(model.errors[account.id] == nil)
+        #expect(model.sync.errors[account.id] == nil)
     }
 }
 
@@ -105,14 +108,14 @@ struct AIServerTests {
         ]
         let model = harness.model()
         let account = Account(pluginID: "openai", name: nil, settings: ["host": "https://api.openai.com/v1"])
-        #expect(model.effective(account).settings["host"] == "https://acme.openai.azure.com/openai/v1")
-        #expect(model.refusal(for: account) == nil)
+        #expect(model.privacy.effective(account).settings["host"] == "https://acme.openai.azure.com/openai/v1")
+        #expect(model.privacy.refusal(for: account) == nil)
         let manifest = OpenAIPlugin.manifest
-        #expect(model.allowedHosts(for: account, manifest: manifest) == ["acme.openai.azure.com"])
+        #expect(model.privacy.allowedHosts(for: account, manifest: manifest) == ["acme.openai.azure.com"])
 
         harness.managed.values["AIServer"] = "https://api.openai.com/v1"
         #expect(
-            harness.model().refusal(for: account) == L("Your organization doesn’t allow this AI server."),
+            harness.model().privacy.refusal(for: account) == L("Your organization doesn’t allow this AI server."),
             "a forced server outside the list")
     }
 
@@ -122,8 +125,8 @@ struct AIServerTests {
         model.preferences.allowExternalAI = false
         let local = Account(pluginID: "openai", name: nil, settings: ["host": "http://localhost:11434/v1"])
         let cloud = Account(pluginID: "openai", name: nil, settings: ["host": "https://api.openai.com/v1"])
-        #expect(model.refusal(for: local) == nil)
-        #expect(model.refusal(for: cloud) != nil)
+        #expect(model.privacy.refusal(for: local) == nil)
+        #expect(model.privacy.refusal(for: cloud) != nil)
     }
 }
 
@@ -165,9 +168,9 @@ struct ReviewTimingTests {
         review.changes = ChangeSet(files: [ChangedFile(path: "src/retry.ts", additions: 40, deletions: 0)])
         model.start(review)
         model.toggleDone(review)
-        #expect(model.reviewTimings.count == 1)
-        #expect(harness.model().reviewTimings.count == 1, "saved")
-        #expect(model.reviewPace == 1, "not before five")
+        #expect(model.learning.reviewTimings.count == 1)
+        #expect(harness.model().learning.reviewTimings.count == 1, "saved")
+        #expect(model.learning.reviewPace == 1, "not before five")
     }
 }
 
@@ -297,8 +300,8 @@ struct AssistantInFlightTests {
         let (model, _) = try connected(harness)
         await model.makeBrief()
         await model.summarize(key: "k", topic: "Reviews", items: [item])
-        #expect(model.brief?.summary == "Two reviews wait.")
-        #expect(model.bundleSummaries["k"]?.text == "Two reviews wait.")
+        #expect(model.assistant.brief?.summary == "Two reviews wait.")
+        #expect(model.assistant.bundleSummaries["k"]?.text == "Two reviews wait.")
     }
 
     @Test func aBriefThatComesBackAfterEraseIsDropped() async throws {
@@ -306,7 +309,7 @@ struct AssistantInFlightTests {
         let (model, _) = try connected(harness)
         harness.server.whileAnswering = { await MainActor.run { try? model.eraseLocalData() } }
         await model.makeBrief()
-        #expect(model.brief == nil)
+        #expect(model.assistant.brief == nil)
         #expect(!harness.writtenText().contains("Two reviews wait."), "nothing written back")
     }
 
@@ -315,7 +318,7 @@ struct AssistantInFlightTests {
         let (model, account) = try connected(harness)
         harness.server.whileAnswering = { await MainActor.run { model.disconnect(account) } }
         await model.summarize(key: "k", topic: "Reviews", items: [item])
-        #expect(model.bundleSummaries.isEmpty)
+        #expect(model.assistant.bundleSummaries.isEmpty)
         #expect(!harness.writtenText().contains("Two reviews wait."))
     }
 
@@ -324,6 +327,6 @@ struct AssistantInFlightTests {
         let (model, _) = try connected(harness)
         harness.server.whileAnswering = { await MainActor.run { model.preferences.allowExternalAI = false } }
         await model.makeBrief()
-        #expect(model.brief == nil)
+        #expect(model.assistant.brief == nil)
     }
 }

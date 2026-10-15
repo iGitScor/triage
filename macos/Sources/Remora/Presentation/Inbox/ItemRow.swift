@@ -37,7 +37,7 @@ struct ItemRow: View {
                         .foregroundStyle(Myna.inkSoft)
                 }
                 footer
-                if item.bundle == .reviews, let prep = ReviewPrep(item, pace: model.reviewPace) {
+                if item.bundle == .reviews, let prep = ReviewPrep(item, pace: model.learning.reviewPace) {
                     ReviewPrepLine(prep: prep)
                 }
                 if let onDraft, let help = model.waitingHelp(item) {
@@ -123,7 +123,7 @@ struct ItemRow: View {
         if let reactions = item.reactions, !reactions.isEmpty { parts.append(ReactionChips.spoken(reactions)) }
         parts += Self.spokenExtras(
             participants: item.participants,
-            prep: item.bundle == .reviews ? ReviewPrep(item, pace: model.reviewPace) : nil,
+            prep: item.bundle == .reviews ? ReviewPrep(item, pace: model.learning.reviewPace) : nil,
             help: onDraft == nil ? nil : model.waitingHelp(item))
         return parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
     }
@@ -207,7 +207,7 @@ struct ItemRow: View {
                 .font(Myna.font(10.5, .medium))
                 .foregroundStyle(Myna.accentText)
             } else if !showsActions {
-                if let reason = model.rankingReason(item) {
+                if let reason = model.learning.reason(item) {
                     Image(systemName: "star.fill")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(Myna.accentText)

@@ -113,7 +113,7 @@ private struct AccountRow: View {
                             .accessibilityLabel(L("Rename"))
                     }
                 }
-                let failure = model.errors[account.id]
+                let failure = model.sync.errors[account.id]
                 if let failure {
                     Text(failure.message).font(Myna.font(11.5)).foregroundStyle(Self.color(failure.kind)).lineLimit(2)
                 } else {
@@ -128,7 +128,7 @@ private struct AccountRow: View {
                             ConnectForm(manifest: manifest, account: account) { reconnecting = false }
                         }
                 }
-                ForEach(model.remarks[account.id] ?? [], id: \.self) { remark in
+                ForEach(model.sync.remarks[account.id] ?? [], id: \.self) { remark in
                     Label(remark, systemImage: "info.circle")
                         .font(Myna.font(11.5))
                         .foregroundStyle(Myna.inkSoft)
@@ -680,7 +680,7 @@ private struct UpdatesSection: View {
             if !updater.isSupported {
                 Text(L("This copy of Remora doesn’t update itself: download new versions from the releases page."))
                     .font(Myna.font(11.5)).foregroundStyle(Myna.muted)
-            } else if !model.updatesAllowed {
+            } else if !model.privacy.updatesAllowed {
                 Text(L("Your organization installs new versions of Remora.")).font(Myna.font(11.5)).foregroundStyle(
                     Myna.muted
                 )
@@ -699,7 +699,7 @@ private struct UpdatesSection: View {
         } header: {
             Text("Updates")
         } footer: {
-            if updater.isSupported, model.updatesAllowed {
+            if updater.isSupported, model.privacy.updatesAllowed {
                 Text(
                     "Once a day, Remora asks GitHub whether a new version is out. Nothing about you or your inbox is sent. A new version is installed only when you choose, and only if it is signed by Remora’s release key."
                 )

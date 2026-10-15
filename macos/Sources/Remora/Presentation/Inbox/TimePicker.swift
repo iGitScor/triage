@@ -155,8 +155,8 @@ struct TimePicker: View {
 
     private var nudge: String? {
         switch subject {
-        case .snooze(let item): model.advisor.nudge(for: item)
-        case .snoozeMany(let items): items.first.map(model.advisor.nudge(for:))
+        case .snooze(let item): model.snoozes.advisor.nudge(for: item)
+        case .snoozeMany(let items): items.first.map(model.snoozes.advisor.nudge(for:))
         case .newReminder: nil
         }
     }

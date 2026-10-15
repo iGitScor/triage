@@ -4,12 +4,12 @@ import RemoraCore
 /// The `remora` command (IDEA-22): `remora count`, `list`, `remind` ask the app on its socket (`LocalSocket`). A demo
 /// run answers only where REMORA_SOCKET says, never in the real app's place.
 @MainActor enum CommandEndpoint {
-    static func start(demo: Bool) -> LocalSocketServer? {
+    static func start(model: InboxModel, demo: Bool) -> LocalSocketServer? {
         let environment = ProcessInfo.processInfo.environment
         if demo && environment[LocalSocket.variable] == nil { return nil }
         do {
             return try LocalSocketServer(path: LocalSocket.path(environment: environment)) { line in
-                DispatchQueue.main.sync { MainActor.assumeIsolated { InboxModel.shared.answerCommand(line) } }
+                DispatchQueue.main.sync { MainActor.assumeIsolated { model.answerCommand(line) } }
             }
         } catch {
             print("Remora: the remora command can't reach this app: \(error)")

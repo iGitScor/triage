@@ -58,7 +58,7 @@ struct PrivacyPane: View {
                 }
                 ForEach(model.accounts) { account in
                     if let manifest = PluginRegistry.manifest(account.pluginID) {
-                        let refusal = model.refusal(for: account)
+                        let refusal = model.privacy.refusal(for: account)
                         VStack(alignment: .leading, spacing: 3) {
                             HStack {
                                 Text(account.name ?? manifest.name).font(Myna.font(13, .semibold))
@@ -70,7 +70,7 @@ struct PrivacyPane: View {
                                 .font(Myna.font(11.5, .semibold))
                                 .foregroundStyle(refusal == nil ? Myna.ok : Myna.danger)
                             }
-                            let hosts = model.allowedHosts(for: account, manifest: manifest)
+                            let hosts = model.privacy.allowedHosts(for: account, manifest: manifest)
                             Text(hosts.isEmpty ? localProgram(account) : hosts.joined(separator: ", "))
                                 .font(Myna.font(11.5, .medium))
                                 .foregroundStyle(Myna.inkSoft)

@@ -253,7 +253,7 @@ struct InboxModelTests {
         await blocked.refresh(manual: true)
         #expect(harness.server.requests == before, "nothing reaches a blocked tool")
         let account = try #require(connected.accounts.first)
-        #expect(blocked.errors[account.id] != nil)
+        #expect(blocked.sync.errors[account.id] != nil)
     }
 
     @Test func aFailedRefreshKeepsTheItems() async throws {
@@ -262,7 +262,7 @@ struct InboxModelTests {
         harness.server.failing = true
         await model.refresh(manual: true)
         #expect(model.allItems.count == 2)
-        #expect(model.errors.count == 1)
+        #expect(model.sync.errors.count == 1)
     }
 
     /// Offline, Remora doesn't ask the tools, says so once, and refreshes as soon as the network is back.
@@ -274,12 +274,12 @@ struct InboxModelTests {
         let before = harness.server.requests
         await model.refresh(manual: true)
         #expect(harness.server.requests == before, "no request while offline")
-        #expect(model.sourcesHealth == .offline && model.errors.isEmpty)
+        #expect(model.sync.health == .offline && model.sync.errors.isEmpty)
         #expect(model.allItems.count == 2, "the inbox as it was")
 
         harness.network.set(online: true)
         await eventually("refreshed when back online") {
-            harness.server.requests > before && model.sourcesHealth == .fine
+            harness.server.requests > before && model.sync.health == .fine
         }
     }
 
@@ -289,12 +289,12 @@ struct InboxModelTests {
         let model = try await harness.connected()
         harness.server.offline = true
         await model.refresh(manual: true)
-        #expect(model.sourcesHealth == .offline)
+        #expect(model.sync.health == .offline)
         harness.server.offline = false
         let before = harness.server.requests
         await model.refresh()
         #expect(harness.server.requests > before, "no slow-down after an offline failure")
-        #expect(model.sourcesHealth == .fine)
+        #expect(model.sync.health == .fine)
     }
 
     /// A rejected token asks for reconnecting, and reconnecting keeps the account.
@@ -304,14 +304,14 @@ struct InboxModelTests {
         let account = try #require(model.accounts.first)
         harness.server.status = 401
         await model.refresh(manual: true)
-        #expect(model.sourcesHealth == .reconnect([account.id]))
-        #expect(model.errors[account.id]?.kind == .auth)
+        #expect(model.sync.health == .reconnect([account.id]))
+        #expect(model.sync.errors[account.id]?.kind == .auth)
 
         harness.server.status = nil
         try await model.connect(
             pluginID: "linear", name: nil, settings: account.settings, secrets: ["token": "lin_new_key"])
         #expect(model.accounts.map(\.id) == [account.id], "the same account")
-        #expect(model.sourcesHealth == .fine)
+        #expect(model.sync.health == .fine)
     }
 
     /// A new token any time, not only after a rejection: the account and its states stay.
@@ -408,7 +408,7 @@ struct InboxModelTests {
         let posted = harness.notifier.posted.count
         harness.server.whileFetching = { await MainActor.run { try? model.eraseLocalData() } }
         await model.refresh(manual: true)
-        #expect(model.allItems.isEmpty && model.errors.isEmpty)
+        #expect(model.allItems.isEmpty && model.sync.errors.isEmpty)
         #expect(harness.writtenText().isEmpty, "nothing back on disk")
         #expect(harness.notifier.posted.count == posted)
     }
@@ -452,7 +452,7 @@ struct InboxModelTests {
         harness.secrets.refusing = true
         model.disconnect(account)
         #expect(model.accounts.map(\.id) == [account.id])
-        #expect(model.errors[account.id] != nil)
+        #expect(model.sync.errors[account.id] != nil)
         #expect(harness.secrets.stored[account.id] != nil)
     }
 
