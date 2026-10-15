@@ -36,7 +36,9 @@ export function when(iso: string, now = new Date()): string {
   const date = new Date(iso)
   const time = date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
   const sameDay = date.toDateString() === now.toDateString()
-  const tomorrow = new Date(now.getTime() + 86_400_000).toDateString() === date.toDateString()
+  // The next calendar day, not 24 hours on: a day can be 23 or 25 hours long when the clocks change.
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+  const tomorrow = next.toDateString() === date.toDateString()
   if (sameDay) return `${t('Today')} ${time}`
   if (tomorrow) return `${t('Tomorrow')} ${time}`
   const days = (date.getTime() - now.getTime()) / 86_400_000

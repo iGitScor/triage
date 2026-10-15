@@ -34,6 +34,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
   `remora remind "…" --at 15:00` ask the running app, for a status bar, Raycast, Alfred or a script. Titles you hide
   with *Hide message content* stay hidden; nothing is marked done or snoozed.
 
+### Fixed
+
+- Windows and Linux: a snooze or reminder coming back the next day says *Tomorrow* on the night the clocks change
+  too, not the weekday.
+
 ## 0.9.0 (2026-10-13)
 
 ### Changed
