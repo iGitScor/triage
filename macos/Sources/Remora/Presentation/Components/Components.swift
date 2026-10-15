@@ -2,15 +2,12 @@ import RemoraCore
 import SwiftUI
 
 struct Avatar: View {
-    @Environment(InboxModel.self) private var model
     let person: Person?
     var size: CGFloat = 28
 
     var body: some View {
         // Remote images only from allowed tools' hosts; initials otherwise.
-        AsyncImage(url: model.allowsImage(person?.avatarURL) ? person?.avatarURL : nil) { image in
-            image.resizable().scaledToFill()
-        } placeholder: {
+        RemoteImage(url: person?.avatarURL, mode: .fill) {
             Text(person?.initials ?? "")
                 .font(Myna.font(size * 0.38, .semibold))
                 .foregroundStyle(Myna.inkSoft)
@@ -20,6 +17,36 @@ struct Avatar: View {
         .frame(width: size, height: size)
         .clipShape(Circle())
         .help(person?.name ?? "")
+    }
+}
+
+/// A remote picture through `ImageLoader` (memory only, same-host redirects), while the allowlist lets it load;
+/// `placeholder` until then and when it can't.
+struct RemoteImage<Placeholder: View>: View {
+    @Environment(InboxModel.self) private var model
+    let url: URL?
+    var mode: ContentMode
+    @ViewBuilder var placeholder: Placeholder
+    @State private var loaded: (url: URL, image: NSImage)?
+
+    var body: some View {
+        Group {
+            if let image = shown {
+                Image(nsImage: image).resizable().aspectRatio(contentMode: mode)
+            } else {
+                placeholder
+            }
+        }
+        .task(id: url) {
+            guard let url, let image = await model.image(at: url) else { return }
+            loaded = (url, image)
+        }
+    }
+
+    /// Nothing once the allowlist no longer lets it load (images turned off, the tool removed).
+    private var shown: NSImage? {
+        guard let url, model.allowsImage(url) else { return nil }
+        return loaded?.url == url ? loaded?.image : model.cachedImage(url)
     }
 }
 
@@ -112,12 +139,8 @@ struct ReactionChips: View {
             ForEach(reactions.prefix(limit), id: \.name) { reaction in
                 HStack(spacing: 2) {
                     if let image = reaction.image, model.allowsImage(image) {
-                        AsyncImage(url: image) {
-                            $0.resizable().scaledToFit()
-                        } placeholder: {
-                            Color.clear
-                        }
-                        .frame(width: 13, height: 13)
+                        RemoteImage(url: image, mode: .fit) { Color.clear }
+                            .frame(width: 13, height: 13)
                     } else {
                         Text(reaction.emoji).font(Myna.system(11, design: .default)).lineLimit(1)
                     }

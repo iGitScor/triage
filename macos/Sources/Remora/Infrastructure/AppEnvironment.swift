@@ -18,6 +18,8 @@ struct AppEnvironment {
     var demo: Bool
     /// Removes what earlier versions left in the HTTP cache.
     var removeURLCaches: () -> Void
+    /// Where avatars and emoji pictures load from.
+    var images: ImageLoader
     /// Where updates come from and how they are installed.
     var updates: UpdateSystem
     /// Whether the Mac has a network.
@@ -36,6 +38,7 @@ struct AppEnvironment {
             open: { NSWorkspace.shared.open($0) },
             demo: CommandLine.arguments.contains("--demo"),
             removeURLCaches: URLCaches.remove,
+            images: ImageLoader(),
             updates: LiveUpdateSystem(),
             network: NetworkMonitor(),
             spotlight: LiveSpotlight()

@@ -17,8 +17,9 @@ enum AppFolder {
     }()
 }
 
-/// The HTTP cache and cookies that earlier versions left on disk through `URLSession.shared` (API answers,
-/// message content included). Requests no longer write there; this removes what's left.
+/// The HTTP cache and cookies that earlier versions left on disk through `URLSession.shared` (API answers, message
+/// content included, then avatars). Every request now goes through an ephemeral session that writes nothing
+/// there; this removes what's left.
 enum URLCaches {
     static func remove() {
         URLCache.shared.removeAllCachedResponses()

@@ -147,7 +147,9 @@ vide.
    serveur OpenAI-compatible ailleurs) est refusé tant que l’IA externe n’est pas autorisée ; brief, résumés et tri
    n’apparaissent qu’ensuite. Un serveur sur cet ordinateur suit `AllowLocalAI` à la place.
 4. **Avatars** chargés seulement depuis les outils autorisés et connectés, les images Gravatar de GitLab, de Jira et de
-   Bitbucket, les images par défaut d’Atlassian et les emoji des espaces Slack : aucun autre tiers.
+   Bitbucket, les images par défaut d’Atlassian et les emoji des espaces Slack : aucun autre tiers. Une redirection
+   vers un autre hôte est refusée, et les images restent en mémoire seulement, jamais dans un cache sur disque, sans
+   cookies.
 5. **Réglages → Confidentialité** affiche les destinations de chaque compte connecté et s’il est autorisé.
 
 L’organisation peut verrouiller tout cela : [Gérer la politique par MDM](./mdm).

@@ -341,6 +341,17 @@ final class InboxModel {
     /// Avatars load only from the hosts of allowed, connected tools.
     func allowsImage(_ url: URL?) -> Bool { privacy.allowsImage(url, from: sourceAccounts) }
 
+    /// The picture at `url` when the allowlist lets it load (`cachedImage` when it already has).
+    func image(at url: URL?) async -> NSImage? {
+        guard let url, allowsImage(url) else { return nil }
+        return await environment.images.image(at: url)
+    }
+
+    func cachedImage(_ url: URL?) -> NSImage? {
+        guard let url, allowsImage(url) else { return nil }
+        return environment.images.cached(url)
+    }
+
     // MARK: Assistant
 
     /// Writes a new brief, unless the current one is still fresh (Settings → General → Assistant).
@@ -1092,6 +1103,7 @@ final class InboxModel {
         writer.discard()
         let left = Self.removeContents(of: environment.folder)
         environment.removeURLCaches()
+        environment.images.forget()
         if !left.isEmpty {
             var keychainError: String?
             if case .failure(let error) = keychain { keychainError = error.localizedDescription }

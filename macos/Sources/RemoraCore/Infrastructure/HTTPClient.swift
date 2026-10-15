@@ -28,9 +28,12 @@ public struct URLSessionHTTPClient: HTTPClient {
     }
 }
 
-/// Refuses redirects that leave the host or drop to http; the 3xx answer then fails in `decode`.
-final class SameHostRedirects: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
-    func urlSession(
+/// Refuses redirects that leave the host or drop to http; the 3xx answer then fails in `decode` (or in the app's
+/// image loader, which wants a 2xx image).
+public final class SameHostRedirects: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    override public init() {}
+
+    public func urlSession(
         _ session: URLSession,
         task: URLSessionTask,
         willPerformHTTPRedirection response: HTTPURLResponse,

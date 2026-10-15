@@ -185,6 +185,8 @@ struct Harness {
     let updates = StandInUpdates()
     let network = StandInNetwork()
     let spotlight = RecordingSpotlight()
+    /// Pictures come from `ImageServer`, never the network.
+    let images = ImageLoader(session: ImageServer.session())
     var managed = ManagedDictionary()
     var demo = false
 
@@ -209,6 +211,7 @@ struct Harness {
                 },
                 demo: demo,
                 removeURLCaches: { outside.cachesRemoved += 1 },
+                images: images,
                 updates: updates,
                 network: network,
                 spotlight: spotlight

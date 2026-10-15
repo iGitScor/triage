@@ -139,7 +139,8 @@ finds an empty inbox.
    server elsewhere) is refused until external AI is allowed; the brief, summaries and triage then appear in the UI.
    A server on this computer follows `AllowLocalAI` instead.
 4. **Avatars** load only from the hosts of allowed, connected tools, GitLab's, Jira's and Bitbucket's Gravatar
-   images, Atlassian's default pictures and Slack's workspace emoji: no other third party.
+   images, Atlassian's default pictures and Slack's workspace emoji: no other third party. A redirect to another
+   host is refused, and the pictures are kept in memory only, never in a disk cache, with no cookies.
 5. **Settings → Privacy** shows each connected account’s destinations and whether it is allowed.
 
 The organization can lock all of this: [Managing the policy with MDM](./mdm).
