@@ -4,7 +4,7 @@
   "properties": {
     "AllowedPlugins": {
       "title": "Allowed tools",
-      "description": "The tools that may be connected and refreshed, by plugin ID: github, gitlab, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.",
+      "description": "The tools that may be connected and refreshed, by plugin ID: github, gitlab, bitbucket, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.",
       "property_order": 5,
       "type": "array",
       "items": {
@@ -12,6 +12,7 @@
         "enum": [
           "github",
           "gitlab",
+          "bitbucket",
           "slack",
           "linear",
           "jira",
@@ -45,6 +46,7 @@
         "enum": [
           "github",
           "gitlab",
+          "bitbucket",
           "slack",
           "linear",
           "jira",
@@ -94,6 +96,7 @@
         "enum": [
           "github",
           "gitlab",
+          "bitbucket",
           "slack",
           "linear",
           "jira",

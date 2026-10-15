@@ -45,6 +45,22 @@ assigned to you goes to *To do*, a mention to *Mentions*. Mark a To-Do done in G
 
 *Changes requested* needs GitLab 16.10 or later; older instances show everything else.
 
+## Bitbucket
+
+Shows your open pull requests and the ones waiting for your review, with approvals, *Changes requested* (*Needs
+work* on Data Center), conflicts (Data Center) and build status. A pull request you approved or sent back leaves
+*To review*. Works with Bitbucket Cloud and Bitbucket Data Center.
+
+- **Bitbucket Cloud**: keep the host `https://bitbucket.org`, then **Create a token**: Atlassian opens your API
+  tokens. Choose *Create API token with scopes*, then Bitbucket, with `read:user`, `read:repository` and
+  `read:pullrequest`. Paste it, and enter your **Workspace** (as in `bitbucket.org/your-workspace`) and the
+  **E-mail** of your Atlassian account.
+- **Bitbucket Data Center**: set your Bitbucket's host, then in Bitbucket open your profile → **Manage account** →
+  **HTTP access tokens**, create a read token, paste it, and leave the workspace and e-mail empty.
+
+Bitbucket Cloud has no list of your review requests: Remora looks for them in the workspace's 25 most recently
+updated repositories.
+
 ## Slack
 
 Shows mentions, direct messages and replies in your threads from the last few days. Mentions are one item per

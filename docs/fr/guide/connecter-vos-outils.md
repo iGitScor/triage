@@ -49,6 +49,23 @@ il quitte aussi Remora.
 
 *Modifications demandées* nécessite GitLab 16.10 ou ultérieur ; les versions plus anciennes affichent tout le reste.
 
+## Bitbucket
+
+Affiche vos pull requests ouvertes et celles qui attendent votre relecture, avec les approbations, *Modifications
+demandées* (*Needs work* sur Data Center), les conflits (Data Center) et l’état des builds. Une pull request que vous
+avez approuvée ou renvoyée quitte *À relire*. Fonctionne avec Bitbucket Cloud et Bitbucket Data Center.
+
+- **Bitbucket Cloud** : gardez l’hôte `https://bitbucket.org`, puis **Créer un jeton** : Atlassian ouvre vos jetons
+  d’API. Choisissez *Create API token with scopes*, puis Bitbucket, avec `read:user`, `read:repository` et
+  `read:pullrequest`. Collez-le, et indiquez votre **Espace de travail** (comme dans `bitbucket.org/votre-espace`) et
+  l’**E-mail** de votre compte Atlassian.
+- **Bitbucket Data Center** : indiquez l’hôte de votre Bitbucket, puis dans Bitbucket ouvrez votre profil → **Gérer
+  le compte** → **Jetons d’accès HTTP**, créez un jeton en lecture, collez-le, et laissez vides l’espace de travail et
+  l’e-mail.
+
+Bitbucket Cloud n’a pas de liste de vos demandes de relecture : Remora les cherche dans les 25 dépôts de l’espace de
+travail mis à jour le plus récemment.
+
 ## Slack
 
 Affiche les mentions, messages directs et réponses dans vos fils des derniers jours. Une mention est un élément

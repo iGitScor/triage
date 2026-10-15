@@ -5,6 +5,7 @@ public enum PluginRegistry {
     public static let sources: [any SourcePlugin.Type] = [
         GitHubPlugin.self,
         GitLabPlugin.self,
+        BitbucketPlugin.self,
         SlackPlugin.self,
         LinearPlugin.self,
         JiraPlugin.self,

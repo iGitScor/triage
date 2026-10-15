@@ -292,7 +292,7 @@ fn image_hosts(inbox: &Inbox) -> HashMap<String, Vec<String>> {
 }
 
 /// Hosts a tool's pictures come from without the tool ever being asked anything there: GitLab serves most
-/// avatars from Gravatar (Jira Cloud too, falling back to Atlassian's initials pictures), Slack a workspace's own emoji (in reactions) from its edge. Images only, and only while
+/// avatars from Gravatar (Jira and Bitbucket Cloud too, falling back to Atlassian's initials pictures), Slack a workspace's own emoji (in reactions) from its edge. Images only, and only while
 /// the policy allows them; never a request with a token. Same list on macOS (`InboxModel.imageOnlyHosts`).
 const IMAGE_ONLY_HOSTS: &[(&str, &str)] = &[
     ("gitlab", "secure.gravatar.com"),
@@ -301,6 +301,9 @@ const IMAGE_ONLY_HOSTS: &[(&str, &str)] = &[
     ("jira", "secure.gravatar.com"),
     ("jira", "www.gravatar.com"),
     ("jira", "atl-paas.net"),
+    ("bitbucket", "secure.gravatar.com"),
+    ("bitbucket", "www.gravatar.com"),
+    ("bitbucket", "atl-paas.net"),
 ];
 
 /// Whether an avatar may be shown, and so fetched: an https URL on one of an account's hosts, while the policy

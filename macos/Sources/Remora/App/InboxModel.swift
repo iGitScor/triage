@@ -470,6 +470,8 @@ final class InboxModel {
         "slack": ["emoji.slack-edge.com"],
         // Jira Cloud's avatars: Gravatar, falling back to Atlassian's initials pictures.
         "jira": ["secure.gravatar.com", "www.gravatar.com", "atl-paas.net"],
+        // Bitbucket Cloud's avatars: the same.
+        "bitbucket": ["secure.gravatar.com", "www.gravatar.com", "atl-paas.net"],
     ]
 
     // MARK: Assistant

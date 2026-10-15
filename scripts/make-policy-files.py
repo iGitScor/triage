@@ -14,8 +14,20 @@ from xml.sax.saxutils import escape
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "policy"
 DOMAIN = "fr.igitscor.remora"
-PLUGINS = ["github", "gitlab", "slack", "linear", "jira", "notion", "microsoft", "claude-code", "claude", "openai"]
-SOURCES = ["github", "gitlab", "slack", "linear", "jira", "notion", "microsoft", "reminders"]
+PLUGINS = [
+    "github",
+    "gitlab",
+    "bitbucket",
+    "slack",
+    "linear",
+    "jira",
+    "notion",
+    "microsoft",
+    "claude-code",
+    "claude",
+    "openai",
+]
+SOURCES = ["github", "gitlab", "bitbucket", "slack", "linear", "jira", "notion", "microsoft", "reminders"]
 
 # name, type (list, bool, string, minutes), English title and help, French title and help.
 KEYS = [
@@ -23,9 +35,9 @@ KEYS = [
         "AllowedPlugins",
         "list",
         "Allowed tools",
-        "The tools that may be connected and refreshed, by plugin ID: github, gitlab, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.",
+        "The tools that may be connected and refreshed, by plugin ID: github, gitlab, bitbucket, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.",
         "Outils autorisés",
-        "Les outils qui peuvent être connectés et actualisés, par identifiant : github, gitlab, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Tout autre est refusé.",
+        "Les outils qui peuvent être connectés et actualisés, par identifiant : github, gitlab, bitbucket, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Tout autre est refusé.",
     ),
     (
         "AllowExternalAI",

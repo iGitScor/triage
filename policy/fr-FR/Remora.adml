@@ -8,7 +8,7 @@
       <string id="Remora">Remora</string>
       <string id="SUPPORTED_Remora">Remora 0.6 ou ultérieure</string>
       <string id="AllowedPlugins">Outils autorisés</string>
-      <string id="AllowedPlugins_Help">Les outils qui peuvent être connectés et actualisés, par identifiant : github, gitlab, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Tout autre est refusé.</string>
+      <string id="AllowedPlugins_Help">Les outils qui peuvent être connectés et actualisés, par identifiant : github, gitlab, bitbucket, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Tout autre est refusé.</string>
       <string id="AllowExternalAI">Autoriser l’IA externe</string>
       <string id="AllowExternalAI_Help">Autoriser l’assistant à envoyer le contenu de la boîte hors de l’ordinateur : à Anthropic pour Claude, au serveur configuré pour OpenAI-compatible.</string>
       <string id="AllowRemoteImages">Autoriser les avatars</string>

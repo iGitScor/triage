@@ -130,7 +130,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-13T12:57:02.162190Z",
+            "date": "2026-10-15T06:23:06.349580Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -169,7 +169,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-13T12:37:02.162190Z",
+            "date": "2026-10-15T06:03:06.349580Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -202,7 +202,7 @@
               "title": "To review"
             },
             "context": "acme/search #77",
-            "date": "2026-10-13T02:37:02.162190Z",
+            "date": "2026-10-14T20:03:06.349580Z",
             "due": null,
             "id": "demo/11",
             "needsAction": true,
@@ -228,7 +228,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-15T22:57:02.162190Z",
+            "date": "2026-09-17T16:23:06.349580Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -260,7 +260,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-13T12:57:02.162190Z",
+            "date": "2026-10-15T06:23:06.349580Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -299,7 +299,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-13T12:37:02.162190Z",
+            "date": "2026-10-15T06:03:06.349580Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -331,7 +331,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-15T22:57:02.162190Z",
+            "date": "2026-09-17T16:23:06.349580Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -346,7 +346,7 @@
         "kind": "stale"
       }
     ],
-    "lastRefresh": "2026-10-13T17:37:02.177213Z",
+    "lastRefresh": "2026-10-15T11:03:06.373692Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -373,7 +373,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-13T17:07:02.162190Z",
+              "date": "2026-10-15T10:33:06.349580Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -407,7 +407,7 @@
                 "title": "To reply"
               },
               "context": "Direct message",
-              "date": "2026-10-13T15:17:02.162190Z",
+              "date": "2026-10-15T08:43:06.349580Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -463,7 +463,7 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-13T17:25:02.162190Z",
+              "date": "2026-10-15T10:51:06.349580Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
@@ -513,7 +513,7 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-13T16:02:02.162190Z",
+              "date": "2026-10-15T09:28:06.349580Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
@@ -567,7 +567,7 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-13T10:57:02.162190Z",
+              "date": "2026-10-15T04:23:06.349580Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
@@ -627,7 +627,7 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-13T17:29:02.162190Z",
+              "date": "2026-10-15T10:55:06.349580Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
@@ -680,7 +680,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-12T08:17:02.162190Z",
+              "date": "2026-10-14T01:43:06.349580Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -711,7 +711,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-13T12:57:02.162190Z",
+          "date": "2026-10-15T06:23:06.349580Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -750,7 +750,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-13T12:37:02.162190Z",
+          "date": "2026-10-15T06:03:06.349580Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -783,7 +783,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-13T02:37:02.162190Z",
+          "date": "2026-10-14T20:03:06.349580Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -809,7 +809,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-15T22:57:02.162190Z",
+          "date": "2026-09-17T16:23:06.349580Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -844,7 +844,7 @@
                 "title": "Waiting on others"
               },
               "context": "Thread in #design",
-              "date": "2026-10-13T16:42:02.162190Z",
+              "date": "2026-10-15T10:08:06.349580Z",
               "due": null,
               "id": "demo/15",
               "needsAction": false,
@@ -885,7 +885,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-12T16:37:02.162190Z",
+              "date": "2026-10-14T10:03:06.349580Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -924,7 +924,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-11T15:37:02.162190Z",
+              "date": "2026-10-13T09:03:06.349580Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
@@ -959,7 +959,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791896222|",
+          "fingerprint": "1792045386|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -972,7 +972,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791859022|diff",
+          "fingerprint": "1792008186|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
@@ -985,7 +985,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789513022|",
+          "fingerprint": "1789662186|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -998,7 +998,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1791895022|checks.passing,diff",
+          "fingerprint": "1792044186|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -1057,11 +1057,11 @@
     "wholeInboxBrief": true
   },
   "snoozeReturns": {
-    "focus": "2026-10-14T07:00:00Z",
-    "motivation": "2026-10-14T07:00:00Z",
-    "noTime": "2026-10-14T07:00:00Z",
+    "focus": "2026-10-16T07:00:00Z",
+    "motivation": "2026-10-16T07:00:00Z",
+    "noTime": "2026-10-15T14:15:00Z",
     "notUrgent": "2026-10-19T07:00:00Z",
-    "waiting": "2026-10-16T07:00:00Z"
+    "waiting": "2026-10-19T07:00:00Z"
   },
   "sources": [
     {
@@ -1151,6 +1151,72 @@
         "setupUrl": "{host}/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api",
         "signIn": null,
         "summary": "Merge requests you opened and those you review, and your To-Dos. Works with self-hosted GitLab."
+      },
+      "refusal": null
+    },
+    {
+      "assistant": false,
+      "manifest": {
+        "egress": {
+          "description": "Reads your pull requests, review requests, approvals and build status from Bitbucket Cloud or your Bitbucket host.",
+          "externalAi": false,
+          "hosts": ["bitbucket.org"]
+        },
+        "fields": [
+          {
+            "defaultValue": "https://bitbucket.org",
+            "help": null,
+            "isOptional": false,
+            "isSecret": false,
+            "key": "host",
+            "label": "Host",
+            "managedKey": null,
+            "placeholder": "https://bitbucket.org"
+          },
+          {
+            "defaultValue": "",
+            "help": "Bitbucket Cloud only: the workspace in your links, bitbucket.org/your-workspace.",
+            "isOptional": true,
+            "isSecret": false,
+            "key": "workspace",
+            "label": "Workspace",
+            "managedKey": null,
+            "placeholder": "your-workspace"
+          },
+          {
+            "defaultValue": "",
+            "help": "Bitbucket Cloud only: your Atlassian account’s e-mail.",
+            "isOptional": true,
+            "isSecret": false,
+            "key": "email",
+            "label": "E-mail",
+            "managedKey": null,
+            "placeholder": "you@company.com"
+          },
+          {
+            "defaultValue": "",
+            "help": "Bitbucket Cloud: an API token. Data Center: an HTTP access token.",
+            "isOptional": false,
+            "isSecret": true,
+            "key": "token",
+            "label": "API token",
+            "managedKey": null,
+            "placeholder": ""
+          }
+        ],
+        "id": "bitbucket",
+        "logo": "bitbucket",
+        "name": "Bitbucket",
+        "setupLabel": "Create a token",
+        "setupSteps": [
+          "Bitbucket Cloud: click “Create a token”, choose “Create API token with scopes”, then Bitbucket, with read:user, read:repository and read:pullrequest.",
+          "Enter your workspace and the e-mail of your Atlassian account too.",
+          "Data Center: set your Bitbucket host, then in Bitbucket open your profile → Manage account → HTTP access tokens, create a read token, and leave the workspace and e-mail empty.",
+          "Paste the token below."
+        ],
+        "setupUrl": "https://id.atlassian.com/manage-profile/security/api-tokens",
+        "signIn": null,
+        "summary": "Pull requests you opened and those you review. Bitbucket Cloud or Data Center."
       },
       "refusal": null
     },

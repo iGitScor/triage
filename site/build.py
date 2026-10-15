@@ -505,7 +505,7 @@ def home(lang: str) -> str:
             desk_note="The real app, with sample data. One fish in the menu bar, one count per tool.",
             facts=[
                 ("0", "servers, accounts or trackers of ours"),
-                ("7", f"tools: {TOOLS['en']}"),
+                ("8", f"tools: {TOOLS['en']}"),
                 ("5", "items per verb, the rest folded away"),
                 ("100%", "of sorting and ranking done on your computer"),
             ],
@@ -585,6 +585,11 @@ def home(lang: str) -> str:
                     "gitlab",
                     "GitLab",
                     "Your merge requests, the ones you review, approvals, pipelines and To-Dos. Self-hosted too.",
+                ),
+                (
+                    "bitbucket",
+                    "Bitbucket",
+                    "Pull requests you opened and those you review, with approvals and builds. Cloud or Data Center.",
                 ),
                 ("slack", "Slack", "Mentions and direct messages, opened in the Slack app."),
                 ("linear", "Linear", "Issues assigned to you with their priority and due date, plus unread mentions."),
@@ -672,7 +677,7 @@ def home(lang: str) -> str:
             desk_note="La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.",
             facts=[
                 ("0", "serveur, compte ou traceur de notre part"),
-                ("7", f"outils : {TOOLS['fr']}"),
+                ("8", f"outils : {TOOLS['fr']}"),
                 ("5", "éléments par verbe, le reste replié"),
                 ("100 %", "du tri et du classement faits sur votre ordinateur"),
             ],
@@ -760,6 +765,11 @@ def home(lang: str) -> str:
                     "gitlab",
                     "GitLab",
                     "Vos merge requests, celles que vous relisez, approbations, pipelines et To-Dos. Auto-hébergé aussi.",
+                ),
+                (
+                    "bitbucket",
+                    "Bitbucket",
+                    "Vos pull requests et celles que vous relisez, avec approbations et builds. Cloud ou Data Center.",
                 ),
                 ("slack", "Slack", "Mentions et messages directs, ouverts dans l’appli Slack."),
                 (
@@ -1369,6 +1379,12 @@ def privacy(lang: str) -> str:
                     "Allowed",
                 ),
                 (
+                    "Bitbucket",
+                    "<code>api.bitbucket.org</code>, or your Data Center",
+                    "Your token (and e-mail on Cloud); your open pull requests, those you review, and their build status",
+                    "Allowed",
+                ),
+                (
                     "Jira",
                     "Your Jira host: <code>*.atlassian.net</code>, or your Data Center",
                     "Your token (and e-mail on Cloud); searches for issues assigned to you, and for the comments of the last week on issues you watch; on Cloud, if you turn it on, for the Confluence pages and comments of the last week that mention you",
@@ -1400,7 +1416,7 @@ def privacy(lang: str) -> str:
                 ),
                 (
                     "Avatars",
-                    "Image hosts of your connected tools, Gravatar for GitLab and Jira, and <code>emoji.slack-edge.com</code> for a workspace’s own emoji",
+                    "Image hosts of your connected tools, Gravatar for GitLab, Jira and Bitbucket, and <code>emoji.slack-edge.com</code> for a workspace’s own emoji",
                     "An image request, never with a token",
                     "Allowed",
                 ),
@@ -1539,6 +1555,12 @@ def privacy(lang: str) -> str:
                     "Autorisé",
                 ),
                 (
+                    "Bitbucket",
+                    "<code>api.bitbucket.org</code>, ou votre Data Center",
+                    "Votre jeton (et l’e-mail sur Cloud) ; vos pull requests ouvertes, celles que vous relisez, et l’état de leurs builds",
+                    "Autorisé",
+                ),
+                (
                     "Jira",
                     "Votre hôte Jira : <code>*.atlassian.net</code>, ou votre Data Center",
                     "Votre jeton (et l’e-mail sur Cloud) ; des recherches des tickets qui vous sont assignés, et des commentaires de la dernière semaine sur les tickets que vous suivez ; sur Cloud, si vous l’activez, des pages et commentaires Confluence de la dernière semaine qui vous mentionnent",
@@ -1570,7 +1592,7 @@ def privacy(lang: str) -> str:
                 ),
                 (
                     "Avatars",
-                    "Les serveurs d’images de vos outils connectés, Gravatar pour GitLab et Jira, et <code>emoji.slack-edge.com</code> pour les emoji propres à un espace de travail",
+                    "Les serveurs d’images de vos outils connectés, Gravatar pour GitLab, Jira et Bitbucket, et <code>emoji.slack-edge.com</code> pour les emoji propres à un espace de travail",
                     "Une requête d’image, jamais avec un jeton",
                     "Autorisé",
                 ),

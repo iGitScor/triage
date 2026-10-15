@@ -16,6 +16,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - Jira Cloud: **Mentions in Confluence**, an option that also brings the Confluence pages and comments that mention
   you, with the same token, sorted like any mention.
+- Bitbucket, on Mac, Windows and Linux: your open pull requests and those waiting for your review, with approvals,
+  changes requested (*Needs work*), conflicts and build status. Bitbucket Cloud (API token, e-mail and workspace) or
+  Data Center (HTTP access token).
 - Mac: ⌃⌥R opens the inbox from any app (Settings → General → **Open Remora from anywhere**: another shortcut, or
   off).
 - `remora://` links, on Mac, Windows and Linux: Shortcuts, Raycast, Alfred, a Stream Deck or a script can open the
