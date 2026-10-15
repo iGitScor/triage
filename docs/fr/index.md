@@ -1,7 +1,7 @@
 ---
 layout: home
 title: Documentation
-description: Utiliser Remora, une boîte pour GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365 sur Mac, Windows et Linux, et la déployer côté DSI.
+description: Utiliser Remora, une boîte pour GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365 sur Mac, Windows et Linux, et la déployer côté DSI.
 
 hero:
   name: Remora

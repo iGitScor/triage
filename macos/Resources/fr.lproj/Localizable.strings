@@ -107,6 +107,7 @@
 "Assistant" = "Assistant";
 "At" = "À";
 "Auth" = "Authentification";
+"Azure DevOps Server: your collection, for example https://tfs.acme.example/tfs/DefaultCollection." = "Azure DevOps Server : votre collection, par exemple https://tfs.acme.example/tfs/DefaultCollection.";
 "Back" = "Retour";
 "Back in your inbox" = "De retour dans votre boîte";
 "Back, or hide Remora" = "Revenir, ou masquer Remora";
@@ -148,7 +149,9 @@
 "Clear search" = "Effacer la recherche";
 "Cleared" = "Effacé";
 "Click Connect: Remora writes a first brief to check that everything works." = "Cliquez sur Connecter : Remora écrit un premier brief pour vérifier que tout fonctionne.";
+"Click Create and paste the token below." = "Cliquez sur Create et collez le jeton ci-dessous.";
 "Click to open Remora, drag down to add a reminder, right-click for more" = "Cliquez pour ouvrir Remora, faites glisser vers le bas pour un rappel, clic droit pour plus";
+"Click “Create a token”, name it Remora, and select Code (Read) and Work Items (Read)." = "Cliquez sur « Créer un jeton », nommez-le Remora et cochez Code (Read) et Work Items (Read).";
 "Click “Create a token”, then “New token”. Name it Remora, keep the “Notion API” capability, pick an expiration and create it." = "Cliquez sur « Créer un jeton », puis « New token ». Nommez-le Remora, gardez la capacité « Notion API », choisissez une expiration et créez-le.";
 "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues." = "Cliquez sur « Créer un jeton » : GitHub ouvre un jeton à granularité fine nommé Remora, avec Pull requests et Issues en lecture seule.";
 "Click “Create a token”: GitLab opens with the read_api scope selected." = "Cliquez sur « Créer un jeton » : GitLab s’ouvre avec la permission read_api cochée.";
@@ -242,7 +245,7 @@
 "From your provider. Not needed for a server on this computer." = "Chez votre fournisseur. Inutile pour un serveur sur cet ordinateur.";
 "General" = "Général";
 "GitHub returned no data." = "GitHub n’a renvoyé aucune donnée.";
-"GitHub, GitLab, Bitbucket, Slack, Linear, Jira, Notion or Microsoft 365. Remora only reads, and only talks to the tools you allow." = "GitHub, GitLab, Bitbucket, Slack, Linear, Jira, Notion ou Microsoft 365. Remora ne fait que lire, et ne parle qu’aux outils autorisés.";
+"GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion or Microsoft 365. Remora only reads, and only talks to the tools you allow." = "GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion ou Microsoft 365. Remora ne fait que lire, et ne parle qu’aux outils autorisés.";
 "Got it" = "Compris";
 "Group message" = "Message de groupe";
 "Group them at set times" = "Les regrouper à heures fixes";
@@ -399,6 +402,7 @@
 "Opens Settings to reconnect" = "Ouvre les réglages pour reconnecter";
 "Opens Settings to see why" = "Ouvre les Réglages pour voir pourquoi";
 "Or slide" = "Ou faites glisser";
+"Organization URL" = "URL de l’organisation";
 "Overdue" = "En retard";
 "Pair it with something easy" = "Associez-le à quelque chose de facile";
 "Paste the links of your task databases. No sharing needed: the token sees what you see." = "Collez les liens de vos bases de tâches. Aucun partage nécessaire : le jeton voit ce que vous voyez.";
@@ -412,11 +416,13 @@
 "Pin" = "Épingler";
 "Pinned" = "Épinglés";
 "Plan a short slot" = "Prévoir un court créneau";
+"Policy checks or changed files" = "les vérifications de stratégie ou fichiers modifiés";
 "Press %@ from anywhere to add a reminder." = "Appuyez sur %@ de partout pour ajouter un rappel.";
 "Preview: flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats." = "Aperçu : les courriels signalés et les courriels non lus qui vous sont adressés, les invitations sans réponse et les conversations Teams non lues.";
 "Privacy" = "Confidentialité";
 "Pull requests you opened and those you review. Bitbucket Cloud or Data Center." = "Les pull requests que vous avez ouvertes et celles que vous relisez. Bitbucket Cloud ou Data Center.";
 "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise." = "Vos pull requests, les demandes de relecture et les tickets qui vous sont assignés. Compatible GitHub Enterprise.";
+"Pull requests you review or opened, with votes and policy checks, and work items assigned to you. Works with Azure DevOps Server." = "Les pull requests à relire et les vôtres, avec votes et vérifications de stratégie, et les éléments de travail qui vous sont assignés. Compatible Azure DevOps Server.";
 "Puts each item’s title and where it comes from in this Mac’s Spotlight index, never previews or people. Tools whose content is hidden stay out. Turning this off, disconnecting a tool or erasing removes them." = "Met le titre de chaque élément et sa provenance dans l’index Spotlight de ce Mac, jamais les aperçus ni les personnes. Les outils dont le contenu est masqué en restent exclus. Désactiver ce réglage, déconnecter un outil ou tout effacer les retire.";
 "Quit" = "Quitter";
 "Quit Remora" = "Quitter Remora";
@@ -427,6 +433,7 @@
 "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host." = "Lit vos merge requests, approbations, pipelines et To-Dos sur votre GitLab.";
 "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host)." = "Lit vos pull requests, demandes de relecture et tickets assignés sur GitHub (ou votre GitHub Enterprise).";
 "Reads your pull requests, review requests, approvals and build status from Bitbucket Cloud or your Bitbucket host." = "Lit vos pull requests, demandes de relecture, approbations et états de build sur Bitbucket Cloud ou votre hôte Bitbucket.";
+"Reads your pull requests, votes, policy checks, changed file paths and assigned work items from your Azure DevOps organization or server." = "Lit vos pull requests, votes, vérifications de stratégie, chemins des fichiers modifiés et éléments de travail assignés dans votre organisation ou serveur Azure DevOps.";
 "Ready to merge" = "Prêtes à fusionner";
 "Reconnect" = "Reconnecter";
 "Reconnect…" = "Reconnecter…";
@@ -467,6 +474,7 @@
 "Same as the brief" = "Le même que pour le brief";
 "Same time for all" = "Même heure pour tous";
 "Save" = "Enregistrer";
+"Scopes: Code (Read) and Work Items (Read)." = "Étendues : Code (Read) et Work Items (Read).";
 "Search" = "Rechercher";
 "Searches your recent mentions and direct messages in Slack, and reads the threads you wrote in." = "Cherche vos mentions et messages directs récents dans Slack, et lit les fils où vous avez écrit.";
 "Searches your recent mentions and direct messages in Slack." = "Recherche vos mentions et messages directs récents dans Slack.";
@@ -475,6 +483,7 @@
 "Sends the titles, contexts, authors and statuses of inbox items to the server you set." = "Envoie au serveur choisi les titres, contextes, auteurs et statuts des éléments.";
 "Server" = "Serveur";
 "Set your Jira host first, for example your-company.atlassian.net." = "Indiquez d’abord votre hôte Jira, par exemple votre-entreprise.atlassian.net.";
+"Set your organization URL first: https://dev.azure.com/your-organization, or your server’s collection." = "Indiquez d’abord l’URL de votre organisation : https://dev.azure.com/votre-organisation, ou la collection de votre serveur.";
 "Settings" = "Réglages";
 "Settings…" = "Réglages…";
 "Show %d more" = "Afficher %d de plus";
@@ -629,6 +638,7 @@
 "Windows has turned off Remora’s notifications." = "Windows a désactivé les notifications de Remora.";
 "Windows notifications are turned off for every app." = "Les notifications de Windows sont désactivées pour toutes les apps.";
 "Without it, reminders and notifications wait until you open Remora. You can change it later in Settings → General." = "Sans cela, rappels et notifications attendent que vous ouvriez Remora. Vous pourrez le changer plus tard dans Réglages → Général.";
+"Work items" = "les éléments de travail";
 "Work, Client…" = "Boulot, Client…";
 "Workspace" = "Espace de travail";
 "Write a new brief" = "Écrire un nouveau brief";
@@ -657,6 +667,7 @@
 "You’re not waiting on anyone." = "Vous n’attendez personne.";
 "by %@" = "par %@";
 "cancelled" = "annulée";
+"https://dev.azure.com/your-organization" = "https://dev.azure.com/votre-organisation";
 "https://your-company.atlassian.net" = "https://votre-entreprise.atlassian.net";
 "in %d d" = "dans %d j";
 "in %d h" = "dans %d h";

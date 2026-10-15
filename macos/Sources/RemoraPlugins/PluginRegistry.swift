@@ -6,6 +6,7 @@ public enum PluginRegistry {
         GitHubPlugin.self,
         GitLabPlugin.self,
         BitbucketPlugin.self,
+        AzureDevOpsPlugin.self,
         SlackPlugin.self,
         LinearPlugin.self,
         JiraPlugin.self,

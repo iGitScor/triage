@@ -11,7 +11,7 @@ mêmes tests.
 
 ```mermaid
 flowchart TB
-  App["Remora<br/>SwiftUI, AppKit, trousseau, fichiers, notifications"] --> Plugins["RemoraPlugins<br/>GitHub, GitLab, Slack, Linear, Jira, Notion, Microsoft 365, Claude, OpenAI-compatible"]
+  App["Remora<br/>SwiftUI, AppKit, trousseau, fichiers, notifications"] --> Plugins["RemoraPlugins<br/>GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion, Microsoft 365, Claude, OpenAI-compatible"]
   App --> Core["RemoraCore<br/>domaine et règles, Foundation seulement"]
   Plugins --> Core
 ```

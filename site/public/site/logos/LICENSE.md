@@ -3,3 +3,4 @@ The logos remain trademarks of their owners; Remora shows them only to identify 
 Bundled in the app: they are never downloaded at runtime.
 
 mail.svg is drawn for Remora (a plain envelope, no brand), for Microsoft 365, which Simple Icons has no logo for.
+branch.svg is drawn for Remora too (a plain pull request, no brand), for Azure DevOps.

@@ -26,8 +26,8 @@ WHAT = {
     "fr": "relectures de code, merge requests, mentions Slack, tickets Linear et Jira, tâches Notion, et Outlook et Teams",
 }
 TOOLS = {
-    "en": "GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365",
-    "fr": "GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365",
+    "en": "GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365",
+    "fr": "GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365",
 }
 EXE = REPO + "/releases/latest/download/Remora-Setup.exe"
 APPIMAGE = REPO + "/releases/latest/download/Remora-x86_64.AppImage"
@@ -591,6 +591,11 @@ def home(lang: str) -> str:
                     "Bitbucket",
                     "Pull requests you opened and those you review, with approvals and builds. Cloud or Data Center.",
                 ),
+                (
+                    "azuredevops",
+                    "Azure DevOps",
+                    "Pull requests you review or opened, votes and policy checks, and work items assigned to you. Server too.",
+                ),
                 ("slack", "Slack", "Mentions and direct messages, opened in the Slack app."),
                 ("linear", "Linear", "Issues assigned to you with their priority and due date, plus unread mentions."),
                 ("jira", "Jira", "Issues assigned to you and comments that mention you. Cloud or Data Center."),
@@ -770,6 +775,11 @@ def home(lang: str) -> str:
                     "bitbucket",
                     "Bitbucket",
                     "Vos pull requests et celles que vous relisez, avec approbations et builds. Cloud ou Data Center.",
+                ),
+                (
+                    "azuredevops",
+                    "Azure DevOps",
+                    "Les pull requests à relire et les vôtres, votes et stratégies, et vos éléments de travail. Server aussi.",
                 ),
                 ("slack", "Slack", "Mentions et messages directs, ouverts dans l’appli Slack."),
                 (
@@ -1367,6 +1377,12 @@ def privacy(lang: str) -> str:
                     "Allowed",
                 ),
                 (
+                    "Azure DevOps",
+                    "Your Azure DevOps organization (<code>dev.azure.com</code>) or server",
+                    "Your token; read requests for your pull requests, votes, policy checks, changed file paths and assigned work items. File contents are never read",
+                    "Allowed",
+                ),
+                (
                     "Slack",
                     "<code>slack.com</code>",
                     "Your user token; searches for your mentions, direct messages and your own recent messages, the replies in up to 10 of your threads, reactions (yours, and on up to 15 recent messages) and the workspace’s own emoji",
@@ -1540,6 +1556,12 @@ def privacy(lang: str) -> str:
                     "GitLab",
                     "Votre serveur GitLab",
                     "Votre jeton ; des lectures de vos merge requests, approbations, pipelines, To-Dos, et chemins et nombre de lignes des fichiers modifiés. Les diffs ne sont jamais lus",
+                    "Autorisé",
+                ),
+                (
+                    "Azure DevOps",
+                    "Votre organisation Azure DevOps (<code>dev.azure.com</code>) ou votre serveur",
+                    "Votre jeton ; des lectures de vos pull requests, votes, vérifications de stratégie, chemins des fichiers modifiés et éléments de travail assignés. Le contenu des fichiers n’est jamais lu",
                     "Autorisé",
                 ),
                 (

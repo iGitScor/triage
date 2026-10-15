@@ -27,6 +27,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Mac: inbox items in Spotlight, if you turn it on (Settings → Privacy → **Find inbox items in Spotlight**): titles
   and where they come from, never previews; a hit opens the item. Tools whose content is hidden stay out, and
   turning it off, disconnecting or Erase removes them.
+- Azure DevOps, on Mac, Windows and Linux: pull requests you opened or still have to vote on, with votes, conflicts
+  and build policies as badges and review prep, and the open work items assigned to you in *To do*. Azure DevOps
+  Services or Server 2020 and later, with a personal access token.
 
 ## 0.9.0 (2026-10-13)
 

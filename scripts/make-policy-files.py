@@ -18,6 +18,7 @@ PLUGINS = [
     "github",
     "gitlab",
     "bitbucket",
+    "azuredevops",
     "slack",
     "linear",
     "jira",
@@ -27,7 +28,18 @@ PLUGINS = [
     "claude",
     "openai",
 ]
-SOURCES = ["github", "gitlab", "bitbucket", "slack", "linear", "jira", "notion", "microsoft", "reminders"]
+SOURCES = [
+    "github",
+    "gitlab",
+    "bitbucket",
+    "azuredevops",
+    "slack",
+    "linear",
+    "jira",
+    "notion",
+    "microsoft",
+    "reminders",
+]
 
 # name, type (list, bool, string, minutes), English title and help, French title and help.
 KEYS = [
@@ -35,9 +47,9 @@ KEYS = [
         "AllowedPlugins",
         "list",
         "Allowed tools",
-        "The tools that may be connected and refreshed, by plugin ID: github, gitlab, bitbucket, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.",
+        "The tools that may be connected and refreshed, by plugin ID: github, gitlab, bitbucket, azuredevops, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.",
         "Outils autorisés",
-        "Les outils qui peuvent être connectés et actualisés, par identifiant : github, gitlab, bitbucket, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Tout autre est refusé.",
+        "Les outils qui peuvent être connectés et actualisés, par identifiant : github, gitlab, bitbucket, azuredevops, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Tout autre est refusé.",
     ),
     (
         "AllowExternalAI",

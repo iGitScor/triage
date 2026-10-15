@@ -48,6 +48,14 @@ struct InboxModelTests {
                 as: Account(pluginID: "gitlab", name: nil, settings: ["host": "gitlab.other.io"]), identity: "alice"))
         #expect(!saved.isSame(as: one, identity: "bob"))
         #expect(!saved.isSame(as: one, identity: ""))
+        // Two Azure DevOps organizations on one host are two accounts.
+        var acme = Account(pluginID: "azuredevops", name: nil, settings: ["host": "https://dev.azure.com/acme/"])
+        acme.identity = "alice"
+        let org = { (path: String) in
+            Account(pluginID: "azuredevops", name: nil, settings: ["host": "dev.azure.com/\(path)"])
+        }
+        #expect(acme.isSame(as: org("Acme"), identity: "alice"))
+        #expect(!acme.isSame(as: org("globex"), identity: "alice"))
     }
 
     @Test func aNewLaunchFindsAccountsItemsAndStates() async throws {

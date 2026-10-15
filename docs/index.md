@@ -1,7 +1,7 @@
 ---
 layout: home
 title: Documentation
-description: Using Remora, one inbox for GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365 on Mac, Windows and Linux, and deploying it in an organization.
+description: Using Remora, one inbox for GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365 on Mac, Windows and Linux, and deploying it in an organization.
 
 hero:
   name: Remora

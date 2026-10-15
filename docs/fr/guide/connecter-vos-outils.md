@@ -1,6 +1,6 @@
 ---
 title: Connecter vos outils
-description: Connecter GitHub, GitLab, Slack, Linear, Jira, Notion et Microsoft 365 à Remora, et l’assistant. Quel jeton, quelle permission, et ce que Remora lit.
+description: Connecter GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365 à Remora, et l’assistant. Quel jeton, quelle permission, et ce que Remora lit.
 ---
 
 # Connecter vos outils
@@ -56,10 +56,10 @@ demandées* (*Needs work* sur Data Center), les conflits (Data Center) et l’é
 avez approuvée ou renvoyée quitte *À relire*. Fonctionne avec Bitbucket Cloud et Bitbucket Data Center.
 
 - **Bitbucket Cloud** : gardez l’hôte `https://bitbucket.org`, puis **Créer un jeton** : Atlassian ouvre vos jetons
-  d’API. Choisissez *Create API token with scopes*, puis Bitbucket, avec `read:user`, `read:repository` et
+  d’API. Choisissez *Create API token with scopes*, puis Bitbucket, Azure DevOps, avec `read:user`, `read:repository` et
   `read:pullrequest`. Collez-le, et indiquez votre **Espace de travail** (comme dans `bitbucket.org/votre-espace`) et
   l’**E-mail** de votre compte Atlassian.
-- **Bitbucket Data Center** : indiquez l’hôte de votre Bitbucket, puis dans Bitbucket ouvrez votre profil → **Gérer
+- **Bitbucket Data Center** : indiquez l’hôte de votre Bitbucket, Azure DevOps, puis dans Bitbucket ouvrez votre profil → **Gérer
   le compte** → **Jetons d’accès HTTP**, créez un jeton en lecture, collez-le, et laissez vides l’espace de travail et
   l’e-mail.
 

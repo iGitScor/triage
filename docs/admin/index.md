@@ -33,7 +33,7 @@ flowchart LR
     Store[("Local files<br/>+ Keychain or Credential Manager")]
     UI --- Store
   end
-  Client --> Tools["GitHub · GitLab · Slack · Linear · Jira · Notion · Microsoft 365<br/>(allowed tools only)"]
+  Client --> Tools["GitHub · GitLab · Azure DevOps · Slack · Linear · Jira · Notion · Microsoft 365<br/>(allowed tools only)"]
   Client -. "only if the policy allows it" .-> Claude["AI provider: Anthropic or an OpenAI-compatible server"]
   Client -- "any other host" --x Blocked["Blocked"]
 ```

@@ -1495,12 +1495,15 @@ extension Account {
         guard pluginID == other.pluginID, !identity.isEmpty, self.identity?.lowercased() == identity.lowercased() else {
             return false
         }
-        // "gitlab.acme.io", "https://gitlab.acme.io/" and an empty field (the default host) compare by host.
+        // "gitlab.acme.io", "https://gitlab.acme.io/" and an empty field (the default host) compare by host, and
+        // the path: two Azure DevOps organizations share dev.azure.com.
         let host = { (account: Account) -> String? in
-            guard let value = account.settings["host"]?.trimmingCharacters(in: .whitespaces), !value.isEmpty else {
-                return nil
-            }
-            return URL(string: value.contains("://") ? value : "https://" + value)?.host?.lowercased()
+            guard let value = account.settings["host"]?.trimmingCharacters(in: .whitespaces), !value.isEmpty,
+                let url = URL(string: value.contains("://") ? value : "https://" + value)
+            else { return nil }
+            var path = url.path
+            while path.hasSuffix("/") { path.removeLast() }
+            return ((url.host ?? "") + path).lowercased()
         }
         return host(self) == host(other)
     }

@@ -1417,11 +1417,15 @@ impl Inbox {
         if identity.is_empty() {
             return None;
         }
-        // "gitlab.acme.io", "https://gitlab.acme.io/" and an empty field (the default host) compare by host.
+        // "gitlab.acme.io", "https://gitlab.acme.io/" and an empty field (the default host) compare by host, and the
+        // path: two Azure DevOps organizations share dev.azure.com.
         let host = |account: &Account| {
             let value = account.settings.get("host").map(|h| h.trim()).filter(|h| !h.is_empty())?;
             let rest = value.split_once("://").map_or(value, |(_, rest)| rest);
-            Some(rest.split(['/', ':', '?', '#']).next().unwrap_or_default().to_lowercase())
+            let rest = rest.split(['?', '#']).next().unwrap_or_default().trim_end_matches('/');
+            let (host, path) = rest.split_once('/').unwrap_or((rest, ""));
+            let host = host.split(':').next().unwrap_or_default();
+            Some(format!("{host}/{path}").to_lowercase())
         };
         self.accounts.iter().find(|saved| {
             saved.plugin_id == account.plugin_id
@@ -2327,6 +2331,14 @@ mod tests {
         assert!(inbox.existing_account(&account("gitlab.other.io"), "alice").is_none());
         assert!(inbox.existing_account(&account("gitlab.acme.io"), "bob").is_none());
         assert!(inbox.existing_account(&account("gitlab.acme.io"), "").is_none());
+        // Two Azure DevOps organizations on one host are two accounts.
+        let org = |host: &str| Account { plugin_id: "azuredevops".into(), ..account(host) };
+        let mut acme = org("https://dev.azure.com/acme/");
+        acme.id = "acme".into();
+        acme.identity = Some("alice".into());
+        inbox.accounts.push(acme);
+        assert!(inbox.existing_account(&org("dev.azure.com/Acme"), "alice").is_some());
+        assert!(inbox.existing_account(&org("dev.azure.com/globex"), "alice").is_none());
     }
 
     #[test]

@@ -88,6 +88,10 @@
 .logo-microsoft {
   --logo: url("/site/logos/mail.svg");
 }
+/* No brand logo for Azure DevOps in Simple Icons: a plain pull request. */
+.logo-azuredevops {
+  --logo: url("/site/logos/branch.svg");
+}
 .logo-claude {
   --logo: url("/site/logos/claude.svg");
 }

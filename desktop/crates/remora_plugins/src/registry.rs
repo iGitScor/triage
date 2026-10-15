@@ -1,6 +1,6 @@
 use crate::{
-    bitbucket, github, gitlab, jira, linear, microsoft, notion, slack, AccountCache, HttpClient, PluginConfig,
-    PluginError, SourcePlugin,
+    azuredevops, bitbucket, github, gitlab, jira, linear, microsoft, notion, slack, AccountCache, HttpClient,
+    PluginConfig, PluginError, SourcePlugin,
 };
 use remora_core::{Account, PluginManifest};
 use std::collections::HashMap;
@@ -12,6 +12,7 @@ pub fn manifests() -> Vec<PluginManifest> {
         github::manifest(),
         gitlab::manifest(),
         bitbucket::manifest(),
+        azuredevops::manifest(),
         slack::manifest(),
         linear::manifest(),
         jira::manifest(),
@@ -51,6 +52,7 @@ pub fn make(
         "github" => Box::new(github::GitHubPlugin::new(&config, http)?),
         "gitlab" => Box::new(gitlab::GitLabPlugin::new(&config, http)?),
         "bitbucket" => Box::new(bitbucket::BitbucketPlugin::new(&config, http)?),
+        "azuredevops" => Box::new(azuredevops::AzureDevOpsPlugin::new(&config, http)?),
         "slack" => Box::new(slack::SlackPlugin::new(&config, http)?),
         "linear" => Box::new(linear::LinearPlugin::new(&config, http)?),
         "jira" => Box::new(jira::JiraPlugin::new(&config, http)?),

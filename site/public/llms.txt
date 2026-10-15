@@ -4,12 +4,12 @@
 
 Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
 (To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
-ranking on the device, and only talks to the tools the user or their organization allows: GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365. A tray
+ranking on the device, and only talks to the tools the user or their organization allows: GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365. A tray
 app for Windows and Linux is in preview. French pages: https://triage.iscor.me/fr/.
 
 ## Pages
 
-- [Remora — One inbox for GitHub, GitLab, Slack, Linear, Jira, Notion and Microsoft 365](https://triage.iscor.me/en/): Code reviews, Slack, Linear, Jira, Notion and Microsoft 365 in one inbox in your menu bar or tray, sorted by what to do. Free, open source, no account.
+- [Remora — One inbox for GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365](https://triage.iscor.me/en/): Code reviews, Slack, Linear, Jira, Notion and Microsoft 365 in one inbox in your menu bar or tray, sorted by what to do. Free, open source, no account.
 - [Features — Remora, the menu bar inbox for developers](https://triage.iscor.me/en/features): Verbs instead of apps, Done and Pin, snooze with a reason, reminders, review prep and sessions, a waiting assistant. All of Remora.
 - [Privacy & compliance — Remora sends nothing but to your tools](https://triage.iscor.me/en/privacy): No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow.
 

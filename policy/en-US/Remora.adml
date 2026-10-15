@@ -8,7 +8,7 @@
       <string id="Remora">Remora</string>
       <string id="SUPPORTED_Remora">Remora 0.6 or later</string>
       <string id="AllowedPlugins">Allowed tools</string>
-      <string id="AllowedPlugins_Help">The tools that may be connected and refreshed, by plugin ID: github, gitlab, bitbucket, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.</string>
+      <string id="AllowedPlugins_Help">The tools that may be connected and refreshed, by plugin ID: github, gitlab, bitbucket, azuredevops, slack, linear, jira, notion, microsoft, claude-code, claude, openai. Any other is refused.</string>
       <string id="AllowExternalAI">Allow external AI</string>
       <string id="AllowExternalAI_Help">Allow the assistant to send inbox content off the computer: to Anthropic for Claude, to the configured server for OpenAI-compatible.</string>
       <string id="AllowRemoteImages">Allow avatars</string>

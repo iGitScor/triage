@@ -179,10 +179,14 @@ struct ReviewSession: View {
         withAnimation(.snappy) { index += 1 }
     }
 
-    /// GitHub and GitLab open straight on the changes.
+    /// GitHub, GitLab and Azure DevOps open straight on the changes.
     private func diffItem(_ item: InboxItem) -> InboxItem {
         var item = item
         guard let url = item.url else { return item }
+        if item.pluginID == "azuredevops" {
+            item.url = url.appending(queryItems: [URLQueryItem(name: "_a", value: "files")])
+            return item
+        }
         let suffix = item.pluginID == "gitlab" ? "diffs" : "files"
         if !url.path.hasSuffix(suffix) { item.url = url.appending(path: suffix) }
         return item
