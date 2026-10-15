@@ -13,7 +13,7 @@ public struct WaitingAssistant: Sendable {
     /// A reviewer counts as silent after this long without activity.
     public var patience: TimeInterval
 
-    public init(patience: TimeInterval = 86_400) {
+    public init(patience: TimeInterval = .day) {
         self.patience = patience
     }
 
@@ -26,7 +26,7 @@ public struct WaitingAssistant: Sendable {
         }
         let silence = now.timeIntervalSince(item.date)
         guard !waitingOn.isEmpty, silence > patience else { return nil }
-        return .nudge(waitingOn, days: max(1, Int(silence / 86_400)))
+        return .nudge(waitingOn, days: max(1, Int(silence / .day)))
     }
 
     /// The source's suggestions first, then who reviews most often in the same repo.

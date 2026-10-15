@@ -23,7 +23,7 @@ public enum NotificationBatch {
     /// Whether one of `times` (on this Mac's clock) came after `since` and by `now`. After two days away, one has.
     public static func isDue(_ times: [Int], since: Date, now: Date, calendar: Calendar = .current) -> Bool {
         guard !times.isEmpty, now > since else { return false }
-        if now.timeIntervalSince(since) > 2 * 86_400 { return true }
+        if now.timeIntervalSince(since) > 2 * .day { return true }
         var day = calendar.startOfDay(for: since)
         while day <= now {
             for minutes in times {

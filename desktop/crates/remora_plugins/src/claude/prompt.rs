@@ -145,7 +145,7 @@ pub fn triage_message(items: &[SnoozedItem], now: DateTime<Utc>) -> String {
             title: &snoozed.item.title,
             context: &snoozed.item.context,
             status: status(&snoozed.item),
-            last_activity_days_ago: (now - snoozed.item.date).num_seconds() / 86_400,
+            last_activity_days_ago: (now - snoozed.item.date).num_days(),
             returns_at: iso8601(snoozed.snooze.until),
             reason: snoozed.snooze.reason.and_then(|r| serde_json::to_value(r).ok()),
             times_snoozed: snoozed.times,

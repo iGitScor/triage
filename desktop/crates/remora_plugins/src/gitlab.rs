@@ -12,6 +12,9 @@ use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
+/// One page, asked for by every list request: a full page of merge requests means the list was cut (FEAT-05).
+const PAGE_SIZE: usize = 50;
+
 pub fn manifest() -> PluginManifest {
     PluginManifest {
         id: "gitlab".into(),
@@ -70,12 +73,13 @@ impl GitLabPlugin {
         let base = format!("projects/{}/merge_requests/{}", mr.project_id, mr.iid);
         let approvals_path = format!("{base}/approvals");
         let diffs_path = format!("{base}/diffs");
+        let per_page = PAGE_SIZE.to_string();
         // Review prep: file paths only. The diff text in this response is never decoded.
         let files = async {
             if authored {
                 None
             } else {
-                Some(self.get::<Vec<DiffFile>>(&diffs_path, &[("per_page", "50")]).await)
+                Some(self.get::<Vec<DiffFile>>(&diffs_path, &[("per_page", per_page.as_str())]).await)
             }
         };
         let (approvals, detail, files) =
@@ -101,12 +105,14 @@ impl GitLabPlugin {
     /// Approvals, pipeline and changed files of every open merge request you wrote or review, in one GraphQL
     /// request instead of two or three REST calls each. Keyed by the REST id. Same query as the macOS app.
     async fn graphql_details(&self) -> Result<HashMap<u64, graphql::Details>, PluginError> {
-        const QUERY: &str = "query { currentUser { \
-            authored: authoredMergeRequests(state: opened, first: 50) { nodes { ...status } } \
-            reviewing: reviewRequestedMergeRequests(state: opened, first: 50) { nodes { ...status diffStats { path additions deletions } } } } } \
-            fragment status on MergeRequest { id approved approvedBy { nodes { username avatarUrl } } headPipeline { status } }";
+        let query = format!(
+            "query {{ currentUser {{ \
+            authored: authoredMergeRequests(state: opened, first: {PAGE_SIZE}) {{ nodes {{ ...status }} }} \
+            reviewing: reviewRequestedMergeRequests(state: opened, first: {PAGE_SIZE}) {{ nodes {{ ...status diffStats {{ path additions deletions }} }} }} }} }} \
+            fragment status on MergeRequest {{ id approved approvedBy {{ nodes {{ username avatarUrl }} }} headPipeline {{ status }} }}"
+        );
         let url = format!("{}/api/graphql", self.host.trim_end_matches('/'));
-        let request = Request::post_json(url, &serde_json::json!({ "query": QUERY }))?
+        let request = Request::post_json(url, &serde_json::json!({ "query": query }))?
             .header("PRIVATE-TOKEN", self.token.clone());
         let response: graphql::Response = decode(self.http.as_ref(), request).await?;
         Ok(response.details())
@@ -214,10 +220,15 @@ impl GitLabPlugin {
 impl SourcePlugin for GitLabPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
         let user: User = self.cache.value("user", IDENTITY_LIFETIME, || self.get("user", &[])).await?;
-        let authored_query = [("scope", "created_by_me"), ("state", "opened"), ("per_page", "50")];
-        let reviewing_query =
-            [("scope", "all"), ("state", "opened"), ("per_page", "50"), ("reviewer_username", user.username.as_str())];
-        let todos_query = [("state", "pending"), ("per_page", "50")];
+        let per_page = PAGE_SIZE.to_string();
+        let authored_query = [("scope", "created_by_me"), ("state", "opened"), ("per_page", per_page.as_str())];
+        let reviewing_query = [
+            ("scope", "all"),
+            ("state", "opened"),
+            ("per_page", per_page.as_str()),
+            ("reviewer_username", user.username.as_str()),
+        ];
+        let todos_query = [("state", "pending"), ("per_page", per_page.as_str())];
         let (authored, reviewing, todos) = futures::join!(
             self.get::<Vec<MergeRequest>>("merge_requests", &authored_query),
             self.get::<Vec<MergeRequest>>("merge_requests", &reviewing_query),
@@ -225,8 +236,11 @@ impl SourcePlugin for GitLabPlugin {
         );
         let (authored, reviewing) = (authored?, reviewing?);
         // A full page means there may be more: GitLab's count header isn't always sent.
-        let mut remarks =
-            if authored.len() >= 50 || reviewing.len() >= 50 { vec![crate::truncated("GitLab")] } else { vec![] };
+        let mut remarks = if authored.len() >= PAGE_SIZE || reviewing.len() >= PAGE_SIZE {
+            vec![crate::truncated("GitLab")]
+        } else {
+            vec![]
+        };
         let all: Vec<(MergeRequest, bool)> =
             authored.into_iter().map(|mr| (mr, true)).chain(reviewing.into_iter().map(|mr| (mr, false))).collect();
         // One GraphQL request for every merge request's details; an instance where it fails gets the REST calls.

@@ -61,7 +61,7 @@ public struct SlackPlugin: SourcePlugin {
         let auth: Auth = try await cache.value("auth.test", lifetime: CacheLifetime.identity) {
             try await call("auth.test")
         }
-        let since = Date.now.addingTimeInterval(-Double(days) * 86_400).formatted(.iso8601.year().month().day())
+        let since = Date.now.addingTimeInterval(-Double(days) * .day).formatted(.iso8601.year().month().day())
         let me = "<@\(auth.userId)>"
         async let mentions: Search = call("search.messages", ["query": "\(me) -from:\(me) after:\(since)"])
         async let direct: Search = call("search.messages", ["query": "to:me -from:\(me) after:\(since)"])
@@ -108,7 +108,7 @@ public struct SlackPlugin: SourcePlugin {
     /// picture's address. Asked once a day; without the emoji:read permission there are none, and reactions with
     /// a workspace emoji show as `:name:`, their meaning taken from the name.
     func customEmoji() async -> [String: String] {
-        let lifetime: TimeInterval = 86_400
+        let lifetime: TimeInterval = .day
         return
             (try? await cache.value("emoji.list", lifetime: lifetime) {
                 let list: CustomEmoji? = try? await call("emoji.list")

@@ -53,7 +53,7 @@ enum BriefPrompt {
                 title: snoozed.item.title,
                 context: snoozed.item.context,
                 status: snoozed.item.badges.map(\.label) + snoozed.item.reactionNotes,
-                lastActivityDaysAgo: Int(now.timeIntervalSince(snoozed.item.date) / 86_400),
+                lastActivityDaysAgo: Int(now.timeIntervalSince(snoozed.item.date) / .day),
                 returnsAt: snoozed.snooze.until.ISO8601Format(),
                 reason: snoozed.snooze.reason?.rawValue,
                 timesSnoozed: snoozed.times
@@ -85,7 +85,7 @@ enum BriefPrompt {
         var suggestions: [Item]
 
         /// The latest a reschedule may suggest: a later date is brought back to it.
-        static let latestReturn: TimeInterval = 60 * 86_400
+        static let latestReturn: TimeInterval = 60 * .day
 
         /// Drops unknown items and actions; reschedules need a valid future date, at most 60 days ahead.
         func suggestions(knownIDs: Set<String>, now: Date) -> [TriageSuggestion] {

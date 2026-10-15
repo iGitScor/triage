@@ -50,15 +50,15 @@ public struct GitLabPlugin: SourcePlugin {
         async let authored: [MergeRequest] = get(
             "merge_requests",
             [
-                "scope": "created_by_me", "state": "opened", "per_page": "50",
+                "scope": "created_by_me", "state": "opened", "per_page": Self.perPage,
             ])
         async let reviewing: [MergeRequest] = get(
             "merge_requests",
             [
-                "scope": "all", "state": "opened", "per_page": "50", "reviewer_username": user.username,
+                "scope": "all", "state": "opened", "per_page": Self.perPage, "reviewer_username": user.username,
             ])
         async let todos = BestEffort.attempt {
-            try await get("todos", ["state": "pending", "per_page": "50"]) as [Todo]
+            try await get("todos", ["state": "pending", "per_page": Self.perPage]) as [Todo]
         }
         let all = try await [(authored, true), (reviewing, false)].flatMap { list, isAuthored in
             list.map { ($0, isAuthored) }
@@ -85,7 +85,7 @@ public struct GitLabPlugin: SourcePlugin {
             return await self.item(for: mr, authored: isAuthored)
         }
         // A full page means there may be more: GitLab's count header isn't always sent.
-        let truncated = try await [authored, reviewing].contains { $0.count >= 50 }
+        let truncated = try await [authored, reviewing].contains { $0.count >= Self.pageSize }
         var remarks = truncated ? [SourceSnapshot.truncated("GitLab")] : []
         // Without approvals, an approved merge request would wait as if it weren't: say so.
         if let failed = results.lazy.compactMap(\.1).first {
@@ -106,7 +106,7 @@ public struct GitLabPlugin: SourcePlugin {
         async let detail = BestEffort.attempt { try await get(base) as Detail }
         // Review prep: file paths only. The diff text in this response is never decoded.
         let files: Result<[DiffFile], Error>? =
-            authored ? nil : await BestEffort.attempt { try await get("\(base)/diffs", ["per_page": "50"]) }
+            authored ? nil : await BestEffort.attempt { try await get("\(base)/diffs", ["per_page": Self.perPage]) }
         let (approved, detailed) = await (approvals, detail)
         let failed = [approved.error, detailed.error, files?.error].compactMap { $0 }.first
         let item = Self.item(
@@ -116,10 +116,14 @@ public struct GitLabPlugin: SourcePlugin {
         return (item, failed)
     }
 
+    /// One page, asked for by every list request: a full page of merge requests means the list was cut (FEAT-05).
+    static let pageSize = 50
+    static let perPage = String(pageSize)
+
     static let detailsQuery = """
         query { currentUser {
-          authored: authoredMergeRequests(state: opened, first: 50) { nodes { ...status } }
-          reviewing: reviewRequestedMergeRequests(state: opened, first: 50) { nodes { ...status diffStats { path additions deletions } } }
+          authored: authoredMergeRequests(state: opened, first: \(pageSize)) { nodes { ...status } }
+          reviewing: reviewRequestedMergeRequests(state: opened, first: \(pageSize)) { nodes { ...status diffStats { path additions deletions } } }
         } }
         fragment status on MergeRequest { id approved approvedBy { nodes { username avatarUrl } } headPipeline { status } }
         """

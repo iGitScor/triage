@@ -61,7 +61,7 @@ public struct MicrosoftPlugin: SourcePlugin {
         }
         let now = Date.now
         let fields = "id,subject,bodyPreview,receivedDateTime,webLink,importance,from,toRecipients,flag"
-        let since = Self.graphTime(now.addingTimeInterval(-7 * 86_400))
+        let since = Self.graphTime(now.addingTimeInterval(-7 * .day))
         async let flagged: Page<Message> = get(
             token, "me/messages", ["$filter": "flag/flagStatus eq 'flagged'", "$select": fields, "$top": "25"])
         async let unread: Page<Message> = get(
@@ -72,7 +72,7 @@ public struct MicrosoftPlugin: SourcePlugin {
                 token, "me/calendarView",
                 [
                     "startDateTime": Self.graphTime(now),
-                    "endDateTime": Self.graphTime(now.addingTimeInterval(14 * 86_400)),
+                    "endDateTime": Self.graphTime(now.addingTimeInterval(14 * .day)),
                     "$select":
                         "id,subject,webLink,isOrganizer,isCancelled,responseRequested,lastModifiedDateTime,start,organizer,responseStatus",
                     "$top": "50",
@@ -103,7 +103,7 @@ public struct MicrosoftPlugin: SourcePlugin {
         accountID: UUID, now: Date
     ) -> SourceSnapshot {
         let flaggedIDs = Set(flagged.value.map(\.id))
-        let weekAgo = now.addingTimeInterval(-7 * 86_400)
+        let weekAgo = now.addingTimeInterval(-7 * .day)
         let items =
             flagged.value.map { $0.flaggedItem(accountID: accountID) }
             + unread.value.filter { !flaggedIDs.contains($0.id) && $0.isTo(me) }.map {

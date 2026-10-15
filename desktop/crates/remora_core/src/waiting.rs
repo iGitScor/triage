@@ -46,7 +46,7 @@ impl WaitingAssistant {
         if waiting_on.is_empty() || silence <= self.patience {
             return None;
         }
-        Some(WaitingHelp::Nudge { people: waiting_on, days: silence.num_seconds().div_euclid(86_400).max(1) })
+        Some(WaitingHelp::Nudge { people: waiting_on, days: silence.num_days().max(1) })
     }
 
     /// The source's suggestions first, then who reviews most often in the same repo.

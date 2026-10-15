@@ -75,7 +75,7 @@ public struct JiraPlugin: SourcePlugin {
         me: Myself, assigned: SearchPage, watched: SearchPage, host: URL, accountID: UUID, now: Date
     ) -> SourceSnapshot {
         let issues = assigned.issues.map { $0.item(host: host, accountID: accountID) }
-        let weekAgo = now.addingTimeInterval(-7 * 86_400)
+        let weekAgo = now.addingTimeInterval(-7 * .day)
         let mentions = watched.issues.flatMap { issue in
             (issue.fields.comment?.comments ?? [])
                 .filter { comment in

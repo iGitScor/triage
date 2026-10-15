@@ -931,7 +931,7 @@ private struct OverflowHelp: View {
         if pressing > 0 { parts.append(L("%d overdue or due today", pressing)) }
         if low > 0 { parts.append(L("%d low priority", low)) }
         if let oldest = rest.map(\.date).min() {
-            parts.append(L("oldest %d d", max(0, Int(Date.now.timeIntervalSince(oldest) / 86_400))))
+            parts.append(L("oldest %d d", max(0, Int(Date.now.timeIntervalSince(oldest) / .day))))
         }
         return parts.joined(separator: " · ")
     }

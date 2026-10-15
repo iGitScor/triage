@@ -52,7 +52,7 @@ public struct LinearPlugin: SourcePlugin {
 
     static func snapshot(viewer: Viewer, notifications: [Notification], accountID: UUID, now: Date) -> SourceSnapshot {
         let issues = viewer.assignedIssues.nodes.map { $0.item(accountID: accountID) }
-        let weekAgo = now.addingTimeInterval(-7 * 86_400)
+        let weekAgo = now.addingTimeInterval(-7 * .day)
         let mentions =
             notifications
             .filter { $0.readAt == nil && $0.createdAt > weekAgo && $0.isActionable }

@@ -142,7 +142,7 @@ public struct SnoozeAdvisor: Sendable {
         history: [SnoozeRecord],
         now: Date = .now
     ) -> [SnoozeInsight] {
-        let recent = history.filter { $0.at > now.addingTimeInterval(-30 * 86_400) }
+        let recent = history.filter { $0.at > now.addingTimeInterval(-30 * .day) }
         var insights: [SnoozeInsight] = []
 
         let loops =
@@ -174,7 +174,7 @@ public struct SnoozeAdvisor: Sendable {
             insights.append(.cluster(cluster))
         }
 
-        let stale = snoozed.filter { $0.date < now.addingTimeInterval(-21 * 86_400) }
+        let stale = snoozed.filter { $0.date < now.addingTimeInterval(-21 * .day) }
         if !stale.isEmpty { insights.append(.stale(stale)) }
 
         return insights

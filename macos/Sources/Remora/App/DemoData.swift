@@ -115,7 +115,7 @@ enum DemoData {
     {
         let clock = SnoozeClock()
         let monday =
-            clock.presets(now: now).first { $0.symbol == "calendar" }?.date ?? now.addingTimeInterval(3 * 86_400)
+            clock.presets(now: now).first { $0.symbol == "calendar" }?.date ?? now.addingTimeInterval(3 * .day)
         let snoozedIDs = ["demo/9", "demo/10", "demo/11", "demo/12"]
         var states: [String: ItemState] = [:]
         var history: [SnoozeRecord] = []
@@ -127,7 +127,7 @@ enum DemoData {
             for day in 0..<times {
                 history.append(
                     SnoozeRecord(
-                        item: item, reason: reason, at: now.addingTimeInterval(Double(-day) * 86_400), until: monday))
+                        item: item, reason: reason, at: now.addingTimeInterval(Double(-day) * .day), until: monday))
             }
         }
         return (states, history)

@@ -828,7 +828,7 @@ final class InboxModel {
 
     /// Opened or finished within a day of its last activity: something you handle quickly.
     private func learnHandled(_ item: InboxItem) {
-        guard item.bundle != .reminders, Date.now.timeIntervalSince(item.date) < 86_400 else { return }
+        guard item.bundle != .reminders, Date.now.timeIntervalSince(item.date) < .day else { return }
         learn(ActionRecord(item: item, outcome: .quick))
     }
 
@@ -1079,7 +1079,7 @@ final class InboxModel {
         let history = snoozeHistory
         let today = Calendar.current.startOfDay(for: .now)
         if let cachedSnoozeCounts, cachedSnoozeCounts.day == today { return cachedSnoozeCounts.counts[item.id] ?? 0 }
-        let since = Date.now.addingTimeInterval(-30 * 86_400)
+        let since = Date.now.addingTimeInterval(-30 * .day)
         let counts = Dictionary(history.filter { $0.at > since }.map { ($0.itemID, 1) }, uniquingKeysWith: +)
         cachedSnoozeCounts = (today, counts)
         return counts[item.id] ?? 0

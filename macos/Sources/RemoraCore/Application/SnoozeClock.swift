@@ -63,7 +63,7 @@ public struct SnoozeClock: Sendable {
     }
 
     public func tomorrowMorning(after now: Date = .now) -> Date {
-        let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now.addingTimeInterval(86_400)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now.addingTimeInterval(.day)
         return at(hour: 9, on: tomorrow) ?? tomorrow
     }
 
@@ -72,11 +72,11 @@ public struct SnoozeClock: Sendable {
         let relative: String
         switch seconds {
         case ..<3_600: relative = L("in %d min", Int((seconds / 60).rounded()))
-        case ..<86_400:
+        case ..<TimeInterval.day:
             let hours = Int(seconds / 3_600)
             let minutes = Int(seconds.truncatingRemainder(dividingBy: 3_600) / 60)
             relative = minutes == 0 ? L("in %d h", hours) : L("in %d h %02d", hours, minutes)
-        default: relative = L("in %d d", Int((seconds / 86_400).rounded()))
+        default: relative = L("in %d d", Int((seconds / .day).rounded()))
         }
         let style: Date.FormatStyle =
             calendar.isDate(date, inSameDayAs: now)

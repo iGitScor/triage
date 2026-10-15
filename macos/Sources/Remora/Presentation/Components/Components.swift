@@ -301,8 +301,8 @@ extension Date {
         switch seconds {
         case ..<60: return L("now")
         case ..<3_600: return L("%dm", Int(seconds / 60))
-        case ..<86_400: return L("%dh", Int(seconds / 3_600))
-        case ..<604_800: return L("%dd", Int(seconds / 86_400))
+        case ..<TimeInterval.day: return L("%dh", Int(seconds / 3_600))
+        case ..<(7 * TimeInterval.day): return L("%dd", Int(seconds / .day))
         default: return formatted(.dateTime.day().month(.abbreviated))
         }
     }
