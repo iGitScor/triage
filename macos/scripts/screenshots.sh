@@ -22,8 +22,9 @@ cat > "$WORK/window-id.swift" <<'EOF'
 import CoreGraphics
 let pid = Int(CommandLine.arguments[1])!
 let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
-if let window = windows.first(where: { $0[kCGWindowOwnerPID as String] as? Int == pid && $0[kCGWindowLayer as String] as? Int == 0 }) {
-    print(window[kCGWindowNumber as String]!)
+if let window = windows.first(where: { $0[kCGWindowOwnerPID as String] as? Int == pid && $0[kCGWindowLayer as String] as? Int == 0 }),
+   let bounds = window[kCGWindowBounds as String] as? [String: Any], let width = bounds["Width"] as? Int {
+    print(window[kCGWindowNumber as String]!, width)
 }
 EOF
 swiftc -o "$WORK/window-id" "$WORK/window-id.swift"
@@ -32,10 +33,13 @@ cat > "$WORK/crop-top.swift" <<'EOF'
 import CoreGraphics
 import Foundation
 import ImageIO
+// Crops the title bar, given in points, at the capture's own scale (2 on a Retina screen, 1 otherwise).
 let url = URL(fileURLWithPath: CommandLine.arguments[1]) as CFURL
-let top = Int(CommandLine.arguments[2])!
+let points = Int(CommandLine.arguments[2])!
+let windowWidth = Int(CommandLine.arguments[3])!
 let source = CGImageSourceCreateWithURL(url, nil)!
 let image = CGImageSourceCreateImageAtIndex(source, 0, nil)!
+let top = points * image.width / windowWidth
 let cropped = image.cropping(to: CGRect(x: 0, y: top, width: image.width, height: image.height - top))!
 let destination = CGImageDestinationCreateWithURL(url, "public.png" as CFString, 1, nil)!
 CGImageDestinationAddImage(destination, cropped, nil)
@@ -55,13 +59,15 @@ for lang in en fr; do
             for _ in 1 2 3 4 5; do
                 sleep 2
                 pid="$(pgrep -f "$BINARY" | head -1)"
-                id="$("$WORK/window-id" "$pid")"
-                [ -n "$id" ] && screencapture -x -o -l "$id" "$file" 2>/dev/null && break
+                read -r id width <<<"$("$WORK/window-id" "$pid")" || true
+                [ -n "${id:-}" ] && screencapture -x -o -l "$id" "$file" 2>/dev/null && break
             done
             kill "$pid"
             [ -f "$file" ] || { echo "✗ $file"; exit 1; }
             # Drop the window title bar: the site frames the inbox as the menu bar popover.
-            "$WORK/crop-top" "$file" 64
+            "$WORK/crop-top" "$file" 32 "$width"
+            size="$(sips -g pixelWidth -g pixelHeight "$file" | awk '/pixel/ { printf "%s ", $2 }')"
+            [ "$size" = "920 1400 " ] || { echo "✗ $file is ${size% } pixels, not 920 1400: capture on a Retina screen"; exit 1; }
             cwebp -quiet -q 85 "$file" -o "${file%.png}.webp"
             echo "✓ $file"
             sleep 1
