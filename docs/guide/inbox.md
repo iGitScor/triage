@@ -115,8 +115,8 @@ them until the next of the times you list (10:00, 14:00 and 17:00 at first), the
 when there are more than three; reminders and snoozes coming back don’t wait.
 
 **Hide message content** lists your connected tools (and your reminders): for the ones you tick, notifications
-still say what happened and where (*Mentions · #general*) but not what was written. Handy for Slack during a
-screen share.
+still say what happened and where (*Mentions · #general*) but not what was written, and a task in progress shows as
+*Slack · #general* in the menu bar or tray menu. Handy for Slack during a screen share.
 
 **Find inbox items in Spotlight** (Mac, Settings → Privacy, off by default) lets you search “that PR Erin asked
 about” from Spotlight: each item’s title and where it comes from go to this Mac’s index, never previews or people,

@@ -185,6 +185,21 @@ struct MenuTitleTests {
         #expect(title == "Can you look at the deploy that failed last night on…")
         #expect(StatusItemController.menuTitle("First line\nsecond line") == "First line second line", "one line")
     }
+
+    /// SEC-23: a tool in "hide message content" shows where the task is from, not what it says.
+    @Test func aHiddenToolsTaskShowsWhereItIsFrom() {
+        var task = InboxItem(
+            id: "s", accountID: UUID(), pluginID: "slack", bundle: .mentions, title: "Salaries", context: "#payroll",
+            date: .now)
+        #expect(StatusItemController.taskLabel(task, hidden: false) == "Salaries")
+        #expect(StatusItemController.taskLabel(task, hidden: true) == "Slack · #payroll")
+        task.context = ""
+        #expect(StatusItemController.taskLabel(task, hidden: true) == "Slack")
+        let reminder = InboxItem(
+            id: "r", accountID: UUID(), pluginID: "reminders", bundle: .reminders, title: "Call the bank",
+            context: "Reminder", date: .now)
+        #expect(StatusItemController.taskLabel(reminder, hidden: true) == L("Reminder"))
+    }
 }
 
 /// A reminder's context is stored in English and translated when shown.

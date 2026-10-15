@@ -214,8 +214,10 @@ final class StatusItemController: NSObject {
         let running = model.layout.inProgress
         if running.count == 1, let task = running.first {
             // A long Slack message would make the whole menu as wide: the menu shows its start.
-            let header = NSMenuItem(title: Self.menuTitle(task.title), action: nil, keyEquivalent: "")
-            header.toolTip = task.title
+            let label = Self.taskLabel(
+                task, hidden: model.effectivePreferences.hiddenContentPlugins.contains(task.pluginID))
+            let header = NSMenuItem(title: Self.menuTitle(label), action: nil, keyEquivalent: "")
+            header.toolTip = label
             header.isEnabled = false
             menu.addItem(header)
             menu.addItem(item(L("Done"), symbol: "checkmark", key: "") { [weak self] in self?.model.toggleDone(task) })
@@ -244,6 +246,15 @@ final class StatusItemController: NSObject {
     /// Only a left mouse-down can be the start of a drag to set a reminder.
     static func canStartDrag(_ event: NSEvent.EventType?) -> Bool {
         event == .leftMouseDown
+    }
+
+    /// What the menu calls the task in progress: its title, or where it's from ("Slack · #general") when that tool's
+    /// content is hidden, as its notifications do (SEC-23).
+    static func taskLabel(_ task: InboxItem, hidden: Bool) -> String {
+        guard hidden else { return task.title }
+        let context = task.shownContext.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = [PluginRegistry.manifest(task.pluginID)?.name, context.isEmpty ? nil : context].compactMap { $0 }
+        return parts.isEmpty ? L("New activity") : parts.joined(separator: " · ")
     }
 
     /// At most `limit` characters, cut at a word when one is close, with an ellipsis; on one line.

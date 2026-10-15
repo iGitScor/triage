@@ -65,7 +65,8 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 - Avec l’API Claude, si le modèle choisi refuse un brief ou un tri, Anthropic peut répondre avec un autre de ses
   modèles (repli côté serveur). Remora ne le demande qu’avec Opus, Sonnet et Fable, et jamais quand `AllowedAIModels`
   est réglée : la réponse vient alors toujours d’un modèle autorisé, ou échoue.
-- **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications :
+- **Masquer le contenu des messages** (Réglages → Général → Notifications) ne s’applique qu’aux notifications et à
+  la tâche en cours du menu de la barre des menus ou de la zone de notification :
   les titres de cet outil peuvent toujours parvenir à l’assistant : c’est le rôle d’*Envoyer à l’assistant*.
 - Avec Claude Code, Remora lance `claude` sans outils, sans extensions, hooks ni serveurs MCP, et sans rien
   enregistrer dans l’historique de sessions, avec un effort faible comme par l’API. Le contenu de la boîte passe par son entrée standard, jamais par la

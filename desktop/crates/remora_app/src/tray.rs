@@ -3,7 +3,7 @@
 
 use crate::{Inbox, TrayCount};
 use chrono::{DateTime, Utc};
-use remora_core::{Notice, NoticeKind, WHILE_CLOSED_SUFFIX};
+use remora_core::{InboxBundle, InboxItem, Notice, NoticeKind, WHILE_CLOSED_SUFFIX};
 use std::collections::HashMap;
 
 /// English text → the system's language, from the interface's dictionary (src/i18n/fr.json).
@@ -50,6 +50,7 @@ pub const TRAY_STRINGS: &[&str] = &[
     "New reminder",
     "Settings",
     "Quit",
+    "New activity",
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -69,16 +70,20 @@ pub struct TraySummary {
     pub since: Option<DateTime<Utc>>,
     /// While a task is in progress and focus is on, only that task shows.
     pub focused: bool,
-    /// The one task in progress (id, title), when there is exactly one: the menu starts with it.
+    /// The one task in progress (id, `task_label`), when there is exactly one: the menu starts with it.
     pub task: Option<(String, String)>,
 }
 
 impl TraySummary {
-    pub fn of(inbox: &Inbox, now: DateTime<Utc>) -> Self {
+    pub fn of(inbox: &Inbox, now: DateTime<Utc>, t: &Translator) -> Self {
         let layout = inbox.layout(now, "");
         let running = layout.in_progress.len();
         let since = layout.in_progress.first().and_then(|i| inbox.states().get(&i.id)).and_then(|s| s.started_at);
-        let task = (running == 1).then(|| (layout.in_progress[0].id.clone(), layout.in_progress[0].title.clone()));
+        let task = (running == 1).then(|| {
+            let item = &layout.in_progress[0];
+            let hidden = inbox.effective_preferences().hides_content(&item.plugin_id);
+            (item.id.clone(), task_label(item, hidden, t))
+        });
         let (count, show_count) = match inbox.preferences().tray_count {
             TrayCount::WaitingOnMe => (layout.action_count(), true),
             TrayCount::Everything => (layout.my_turn_items().count() + layout.waiting_count(), true),
@@ -110,6 +115,23 @@ impl TraySummary {
         } else {
             TrayImage::Quiet
         }
+    }
+}
+
+/// What the menu calls the task in progress: its title, or where it's from ("Slack · #general") when that tool's
+/// content is hidden, as its notifications do (SEC-23).
+pub fn task_label(item: &InboxItem, hidden: bool, t: &Translator) -> String {
+    if !hidden {
+        return item.title.clone();
+    }
+    let tool = remora_plugins::registry::manifest(&item.plugin_id).map(|m| m.name);
+    // Only a reminder's context is stored in English: a repo or a channel may be called "Reminder".
+    let reminder = item.bundle == InboxBundle::reminders();
+    let context = Some(item.context.trim()).filter(|c| !c.is_empty()).map(|c| if reminder { t.t(c) } else { c.into() });
+    match (tool, context) {
+        (Some(tool), Some(context)) => format!("{tool} · {context}"),
+        (Some(where_from), None) | (None, Some(where_from)) => where_from,
+        (None, None) => t.t("New activity"),
     }
 }
 
@@ -249,7 +271,7 @@ mod tests {
     #[test]
     fn a_quiet_inbox() {
         let (inbox, _) = inbox_with_reminders(&[]);
-        let summary = TraySummary::of(&inbox, now());
+        let summary = TraySummary::of(&inbox, now(), &Translator::english());
         assert_eq!(summary.tooltip(now(), &Translator::english()), "Remora · Nothing needs you");
         assert_eq!(summary.icon(), TrayImage::Quiet);
         assert_eq!(summary.task, None);
@@ -258,12 +280,12 @@ mod tests {
     #[test]
     fn counts_what_needs_you_unless_hidden() {
         let (mut inbox, _) = inbox_with_reminders(&["Call the bank", "Book the room"]);
-        let summary = TraySummary::of(&inbox, now());
+        let summary = TraySummary::of(&inbox, now(), &Translator::english());
         assert_eq!(summary.tooltip(now(), &Translator::english()), "Remora · 2 need you");
         assert_eq!(summary.icon(), TrayImage::Attention);
 
         inbox.arrange().0.tray_count = TrayCount::Hidden;
-        let hidden = TraySummary::of(&inbox, now());
+        let hidden = TraySummary::of(&inbox, now(), &Translator::english());
         assert_eq!(hidden.tooltip(now(), &Translator::english()), "Remora");
         assert_eq!(hidden.icon(), TrayImage::Quiet);
     }
@@ -272,18 +294,45 @@ mod tests {
     fn one_task_in_progress_takes_over_while_focused() {
         let (mut inbox, ids) = inbox_with_reminders(&["Write the report", "Book the room"]);
         inbox.start(&ids[0], now() - Duration::minutes(125));
-        let summary = TraySummary::of(&inbox, now());
+        let summary = TraySummary::of(&inbox, now(), &Translator::english());
         assert_eq!(summary.task, Some((ids[0].clone(), "Write the report".into())));
         assert_eq!(summary.icon(), TrayImage::Focus);
         assert_eq!(summary.tooltip(now(), &Translator::english()), "Remora · 1 in progress (2 h 05)");
 
         inbox.arrange().0.focus_while_in_progress = false;
-        let unfocused = TraySummary::of(&inbox, now());
+        let unfocused = TraySummary::of(&inbox, now(), &Translator::english());
         assert_eq!(unfocused.icon(), TrayImage::Attention);
         assert_eq!(unfocused.tooltip(now(), &Translator::english()), "Remora · 1 in progress (2 h 05) · 1 need you");
 
         inbox.start(&ids[1], now());
-        assert_eq!(TraySummary::of(&inbox, now()).task, None, "the menu shows a task only when there's one");
+        assert_eq!(
+            TraySummary::of(&inbox, now(), &Translator::english()).task,
+            None,
+            "the menu shows a task only when there's one"
+        );
+    }
+
+    /// SEC-23: a tool in "hide message content" shows where the task is from in the menu, not what it says.
+    #[test]
+    fn a_hidden_tools_task_shows_where_it_is_from() {
+        let (mut inbox, ids) = inbox_with_reminders(&["Call the bank about the loan"]);
+        inbox.start(&ids[0], now());
+        inbox.arrange().0.hidden_content_plugins = vec!["reminders".into()];
+        let label = |inbox: &Inbox, t: &Translator| TraySummary::of(inbox, now(), t).task.map(|(_, label)| label);
+        assert_eq!(label(&inbox, &Translator::english()).as_deref(), Some("Reminder"));
+        assert_eq!(label(&inbox, &Translator::new(Some("fr-FR"), FRENCH)).as_deref(), Some("Rappel"));
+        inbox.arrange().0.hidden_content_plugins = vec![];
+        assert_eq!(label(&inbox, &Translator::english()).as_deref(), Some("Call the bank about the loan"));
+
+        let mut message = inbox.item(&ids[0]).unwrap();
+        (message.plugin_id, message.context, message.title) = ("slack".into(), "#payroll".into(), "Salaries".into());
+        let english = Translator::english();
+        assert_eq!(task_label(&message, true, &english), "Slack · #payroll");
+        assert_eq!(task_label(&message, false, &english), "Salaries");
+        message.context.clear();
+        assert_eq!(task_label(&message, true, &english), "Slack");
+        message.plugin_id = "unknown".into();
+        assert_eq!(task_label(&message, true, &english), "New activity");
     }
 
     #[test]

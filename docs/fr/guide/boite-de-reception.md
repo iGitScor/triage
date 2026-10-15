@@ -125,7 +125,8 @@ coupe chaque type. **Les regrouper à heures fixes** les garde jusqu’à la pro
 qui reviennent n’attendent pas.
 
 **Masquer le contenu des messages** liste vos outils connectés (et vos rappels) : pour ceux que vous cochez, les
-notifications disent toujours ce qui s’est passé et où (*Mentions · #general*), mais pas ce qui a été écrit.
+notifications disent toujours ce qui s’est passé et où (*Mentions · #general*), mais pas ce qui a été écrit, et une
+tâche en cours apparaît comme *Slack · #general* dans le menu de la barre des menus ou de la zone de notification.
 Pratique pour Slack pendant un partage d’écran.
 
 **Retrouver les éléments de la boîte dans Spotlight** (Mac, Réglages → Confidentialité, désactivé par défaut) vous

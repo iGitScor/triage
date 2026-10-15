@@ -62,7 +62,8 @@ sent: tokens, links, code, the rest of a message, notes, files.
 - With the Claude API, if the chosen model declines a brief or triage, Anthropic may answer with another of its
   models (server-side fallback). Remora asks for it only with Opus, Sonnet and Fable, and never when
   `AllowedAIModels` is set: the answer then always comes from an allowed model, or fails.
-- **Hide message content** (Settings → General → Notifications) applies to notifications only: it doesn’t keep that tool’s
+- **Hide message content** (Settings → General → Notifications) applies to notifications and the menu bar or tray
+  menu's task in progress only: it doesn’t keep that tool’s
   titles away from the assistant: that is *Send to the assistant*.
 - With Claude Code, Remora runs `claude` with no tools, no plugins, hooks or MCP servers, and nothing saved to the
   user’s session history, at low effort as with the API. The inbox content goes on its standard input, never on the command line, which other

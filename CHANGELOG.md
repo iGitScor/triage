@@ -47,6 +47,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
   too, not the weekday.
 - Windows: as on a Mac, Claude Code only runs if no one but you or the system can change it or its folder, and is
   only looked for on your PATH in your profile and Program Files.
+- A task in progress from a tool under *Hide message content* shows where it's from (*Slack · #general*) in the menu
+  bar or tray menu, not its title, as its notifications do.
 
 ## 0.9.0 (2026-10-13)
 

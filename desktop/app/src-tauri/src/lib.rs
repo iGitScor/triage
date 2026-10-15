@@ -554,7 +554,7 @@ pub async fn changed(app: &AppHandle) {
 /// that task shows, with the inverted icon.
 pub(crate) async fn update_tray(app: &AppHandle) {
     let now = chrono::Utc::now();
-    let summary = TraySummary::of(&*app.state::<AppState>().inbox.lock().await, now);
+    let summary = TraySummary::of(&*app.state::<AppState>().inbox.lock().await, now, i18n::translator());
     let Some(tray) = app.tray_by_id("main") else { return };
     let _ = tray.set_tooltip(Some(summary.tooltip(now, i18n::translator())));
     let kind = summary.icon();
