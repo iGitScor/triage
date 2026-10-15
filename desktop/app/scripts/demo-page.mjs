@@ -1,5 +1,5 @@
 // The built interface (dist/) served locally, with the Tauri API mocked by the demo data
-// (src/fixtures/demo.json, from `cargo run -p remora_app --example demo_view`).
+// (src/fixtures/demo.json, and demo.fr.json in French, from `make desktop-fixture`).
 // Shared by preview.mjs (every screen, for review) and screenshots.mjs (the website's captures).
 import { createReadStream, existsSync, readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
@@ -7,10 +7,13 @@ import { extname, join } from 'node:path'
 
 export const root = new URL('..', import.meta.url).pathname
 export const url = 'http://localhost:4174/'
-export const fixture = {
-  ...JSON.parse(readFileSync(join(root, 'src/fixtures/demo.json'), 'utf8')),
-  version: JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version,
-}
+const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version
+/** The demo data in a language: 'en' or 'fr'. */
+export const fixtureIn = (lang) => ({
+  ...JSON.parse(readFileSync(join(root, `src/fixtures/demo${lang === 'fr' ? '.fr' : ''}.json`), 'utf8')),
+  version,
+})
+export const fixture = fixtureIn('en')
 
 const types = {
   '.html': 'text/html',

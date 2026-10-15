@@ -75,7 +75,8 @@ impl Demo {
     }
 }
 
-pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
+/// `t` translates the titles and previews, as the interface's other text (English text → the system's language).
+pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
     let passing = || Badge::new("checks.passing", "Checks", Tone::Positive);
     let diff = |a: u32, d: u32| Badge::new("diff", &format!("+{a} −{d}"), Tone::Neutral);
     let mut demo = Demo { now, items: HashMap::new() };
@@ -83,7 +84,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         1,
         "github",
         InboxBundle::reviews(),
-        "Add passkeys to the sign-in page",
+        &t("Add passkeys to the sign-in page"),
         "acme/web #482",
         12,
         "erin",
@@ -95,7 +96,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         2,
         "gitlab",
         InboxBundle::reviews(),
-        "Move the image resizer to the new queue",
+        &t("Move the image resizer to the new queue"),
         "acme/platform !1290",
         95,
         "dave",
@@ -107,31 +108,31 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         3,
         "slack",
         InboxBundle::mentions(),
-        "Can you double check the rollout plan before Friday?",
+        &t("Can you double check the rollout plan before Friday?"),
         "#releases",
         30,
         "Bob",
         vec![],
         &[],
-        Some("@you the flag is at 20% in prod, metrics look good so far…"),
+        Some(&t("@you the flag is at 20% in prod, metrics look good so far…")),
     );
     demo.add(
         4,
         "slack",
         InboxBundle::direct_messages(),
-        "Lunch tomorrow? 🍜",
-        "Direct message",
+        &t("Lunch tomorrow? 🍜"),
+        &t("Direct message"),
         140,
         "Carol",
         vec![],
         &[],
-        Some("There’s a new ramen place near the office"),
+        Some(&t("There’s a new ramen place near the office")),
     );
     demo.add(
         5,
         "github",
         InboxBundle::authored(),
-        "Snooze reminders for review requests",
+        &t("Snooze reminders for review requests"),
         "acme/inbox #77",
         8,
         "you",
@@ -143,7 +144,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         6,
         "github",
         InboxBundle::authored(),
-        "Cache GraphQL responses per account",
+        &t("Cache GraphQL responses per account"),
         "acme/inbox #75",
         400,
         "you",
@@ -155,7 +156,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         7,
         "github",
         InboxBundle::authored(),
-        "WIP: Notion tasks bundle",
+        &t("WIP: Notion tasks bundle"),
         "acme/inbox #79",
         1_500,
         "you",
@@ -167,7 +168,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         8,
         "linear",
         InboxBundle::tasks(),
-        "Write Q4 hiring scorecard",
+        &t("Write Q4 hiring scorecard"),
         "ENG-31",
         2_000,
         "Linear",
@@ -179,7 +180,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         9,
         "github",
         InboxBundle::reviews(),
-        "WEB-42 retry failed uploads",
+        &t("WEB-42 retry failed uploads"),
         "acme/web #490",
         300,
         "erin",
@@ -191,7 +192,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         10,
         "github",
         InboxBundle::reviews(),
-        "WEB-42 alert on upload failures",
+        &t("WEB-42 alert on upload failures"),
         "acme/web #491",
         280,
         "frank",
@@ -203,7 +204,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         11,
         "github",
         InboxBundle::reviews(),
-        "Refactor the search service",
+        &t("Refactor the search service"),
         "acme/search #77",
         900,
         "dave",
@@ -215,7 +216,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         12,
         "linear",
         InboxBundle::tasks(),
-        "Update the onboarding checklist",
+        &t("Update the onboarding checklist"),
         "ENG-12",
         40_000,
         "Linear",
@@ -227,7 +228,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         13,
         "github",
         InboxBundle::authored(),
-        "Show snooze reasons in notifications",
+        &t("Show snooze reasons in notifications"),
         "acme/inbox #81",
         3_000,
         "you",
@@ -242,8 +243,8 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
         15,
         "slack",
         InboxBundle::awaiting(),
-        "Can someone proofread the new onboarding copy?",
-        "Thread in #design",
+        &t("Can someone proofread the new onboarding copy?"),
+        &t("Thread in %@").replace("%@", "#design"),
         55,
         "you",
         vec![],
@@ -281,9 +282,9 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>) {
 
 /// What the interface reads from the app, for the demo inbox: the preview's fixture
 /// (`app/src/fixtures/demo.json`, written by `make desktop-fixture`).
-pub fn fixture(now: DateTime<Utc>) -> serde_json::Value {
+pub fn fixture(now: DateTime<Utc>, t: &dyn Fn(&str) -> String) -> serde_json::Value {
     let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
-    load(&mut inbox, now);
+    load(&mut inbox, now, t);
     serde_json::json!({
         "inbox": crate::view::inbox_view(&inbox, "", true, &|key| key.to_string()),
         "sources": inbox.sources(),
@@ -308,7 +309,7 @@ mod tests {
     fn the_demo_fills_every_tab() {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
         let now = Utc::now();
-        load(&mut inbox, now);
+        load(&mut inbox, now, &|text| text.to_string());
         let layout = inbox.layout(now, "");
         assert!(layout.my_turn_items().count() >= 6);
         assert!(layout.waiting_count() >= 2);
@@ -333,16 +334,31 @@ mod tests {
     }
 
     #[test]
-    fn the_preview_fixture_has_every_field_the_app_sends() {
-        let fixture: serde_json::Value =
-            serde_json::from_str(include_str!("../../../app/src/fixtures/demo.json")).unwrap();
-        let (mut expected, mut found) = (BTreeSet::new(), BTreeSet::new());
-        paths(&super::fixture(Utc::now()), "", &mut expected);
-        paths(&fixture, "", &mut found);
-        assert_eq!(
-            expected.symmetric_difference(&found).collect::<Vec<_>>(),
-            Vec::<&String>::new(),
-            "app/src/fixtures/demo.json is stale: run `make desktop-fixture`"
-        );
+    fn the_preview_fixtures_have_every_field_the_app_sends() {
+        let mut expected = BTreeSet::new();
+        paths(&super::fixture(Utc::now(), &|text| text.to_string()), "", &mut expected);
+        for (name, json) in [
+            ("demo.json", include_str!("../../../app/src/fixtures/demo.json")),
+            ("demo.fr.json", include_str!("../../../app/src/fixtures/demo.fr.json")),
+        ] {
+            let mut found = BTreeSet::new();
+            paths(&serde_json::from_str(json).unwrap(), "", &mut found);
+            assert_eq!(
+                expected.symmetric_difference(&found).collect::<Vec<_>>(),
+                Vec::<&String>::new(),
+                "app/src/fixtures/{name} is stale: run `make desktop-fixture`"
+            );
+        }
+    }
+
+    #[test]
+    fn the_french_demo_reads_french() {
+        let french = crate::tray::Translator::new(Some("fr_FR"), include_str!("../../../app/src/i18n/fr.json"));
+        let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
+        load(&mut inbox, Utc::now(), &|text| french.t(text));
+        let layout = inbox.layout(Utc::now(), "");
+        let titles: Vec<_> = layout.my_turn_items().map(|i| i.title.as_str()).collect();
+        assert!(titles.contains(&"Ajouter les passkeys à la page de connexion"), "{titles:?}");
+        assert!(titles.contains(&"On déjeune ensemble demain ? 🍜"), "{titles:?}");
     }
 }

@@ -107,7 +107,7 @@ pub fn run() {
         Inbox::open(JsonStore::new(paths::data_dir()), vault.clone(), Managed::read())
     };
     if demo_mode {
-        demo::load(&mut inbox, chrono::Utc::now());
+        demo::load(&mut inbox, chrono::Utc::now(), &|text| i18n::translator().t(text));
     }
     let text_scale = inbox.preferences().text_size.scale();
     let state = AppState {

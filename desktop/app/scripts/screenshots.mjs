@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
-import { fixture, mock, root, serve, url } from './demo-page.mjs'
+import { fixtureIn, mock, root, serve, url } from './demo-page.mjs'
 
 const out = process.argv[2] ?? join(root, '../../site/public/site/screens/windows')
 mkdirSync(out, { recursive: true })
@@ -21,6 +21,7 @@ const tabs = {
 const browser = await chromium.launch()
 let failed = false
 for (const locale of ['en', 'fr']) {
+  const fixture = fixtureIn(locale)
   for (const scheme of ['light', 'dark']) {
     const context = await browser.newContext({
       viewport: { width: 460, height: 700 },

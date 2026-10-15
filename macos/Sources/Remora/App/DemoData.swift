@@ -1,7 +1,7 @@
 import Foundation
 import RemoraCore
 
-/// Sample items for `--demo`, so the app can be explored without connecting anything.
+/// Sample items for `--demo`, so the app can be explored without connecting anything. In the Mac’s language.
 enum DemoData {
     /// In the Mac's language, as Claude writes a real brief (the French screenshots show it).
     static let brief = Brief(
@@ -54,45 +54,46 @@ enum DemoData {
             })
         var items: [InboxItem] = [
             item(
-                1, .reviews, "Add passkeys to the sign-in page", "acme/web #482", minutes: 12,
+                1, .reviews, L("Add passkeys to the sign-in page"), "acme/web #482", minutes: 12,
                 author: "erin", badges: [passing, diff(214, 37)], people: [person("you"), person("frank")]),
             item(
-                2, .reviews, "Move the image resizer to the new queue", "acme/platform !1290", minutes: 95,
+                2, .reviews, L("Move the image resizer to the new queue"), "acme/platform !1290", minutes: 95,
                 author: "dave", badges: [failing, diff(88, 120)], people: [person("you")], plugin: "gitlab"),
             item(
-                3, .mentions, "Can you double check the rollout plan before Friday?", "#releases", minutes: 30,
-                author: "Bob", preview: "@you the flag is at 20% in prod, metrics look good so far…", plugin: "slack"),
+                3, .mentions, L("Can you double check the rollout plan before Friday?"), "#releases", minutes: 30,
+                author: "Bob", preview: L("@you the flag is at 20% in prod, metrics look good so far…"), plugin: "slack"
+            ),
             item(
-                4, .directMessages, "Lunch tomorrow? 🍜", L("Direct message"), minutes: 140,
-                author: "Carol", preview: "There’s a new ramen place near the office", plugin: "slack"),
+                4, .directMessages, L("Lunch tomorrow? 🍜"), L("Direct message"), minutes: 140,
+                author: "Carol", preview: L("There’s a new ramen place near the office"), plugin: "slack"),
             item(
-                5, .authored, "Snooze reminders for review requests", "acme/inbox #77", minutes: 8,
+                5, .authored, L("Snooze reminders for review requests"), "acme/inbox #77", minutes: 8,
                 author: "you", badges: [approved, passing, diff(320, 12)],
                 people: [person("erin", .accent), person("dave", .accent)]),
             item(
-                6, .authored, "Cache GraphQL responses per account", "acme/inbox #75", minutes: 400,
+                6, .authored, L("Cache GraphQL responses per account"), "acme/inbox #75", minutes: 400,
                 author: "you", badges: [changes, passing], people: [person("frank", .negative)]),
             item(
-                7, .authored, "WIP: Notion tasks bundle", "acme/inbox #79", minutes: 1_500,
+                7, .authored, L("WIP: Notion tasks bundle"), "acme/inbox #79", minutes: 1_500,
                 author: "you", badges: [draft]),
             item(
-                8, .tasks, "Write Q4 hiring scorecard", "Team tasks · Due Fri", minutes: 2_000,
+                8, .tasks, L("Write Q4 hiring scorecard"), L("Team tasks · Due Fri"), minutes: 2_000,
                 author: "Notion", plugin: "notion"),
             item(
-                9, .reviews, "WEB-42 retry failed uploads", "acme/web #490", minutes: 300,
+                9, .reviews, L("WEB-42 retry failed uploads"), "acme/web #490", minutes: 300,
                 author: "erin", badges: [passing, diff(64, 10)]),
-            item(10, .reviews, "WEB-42 alert on upload failures", "acme/web #491", minutes: 280, author: "frank"),
+            item(10, .reviews, L("WEB-42 alert on upload failures"), "acme/web #491", minutes: 280, author: "frank"),
             item(
-                11, .reviews, "Refactor the search service", "acme/search #77", minutes: 900, author: "dave",
+                11, .reviews, L("Refactor the search service"), "acme/search #77", minutes: 900, author: "dave",
                 badges: [diff(820, 410)]),
             item(
-                12, .tasks, "Update the onboarding checklist", "Team tasks", minutes: 40_000,
+                12, .tasks, L("Update the onboarding checklist"), L("Team tasks"), minutes: 40_000,
                 author: "Notion", plugin: "notion"),
             item(
-                13, .authored, "Show snooze reasons in notifications", "acme/inbox #81", minutes: 3_000,
+                13, .authored, L("Show snooze reasons in notifications"), "acme/inbox #81", minutes: 3_000,
                 author: "you", badges: [passing, diff(96, 14)], people: [person("erin"), person("bob")]),
             item(
-                14, .authored, "Group reminders by day", "acme/inbox #82", minutes: 90,
+                14, .authored, L("Group reminders by day"), "acme/inbox #82", minutes: 90,
                 author: "you", badges: [passing, diff(140, 22)]),
         ]
         items[13].suggestedPeople = [person("dave")]
@@ -100,7 +101,7 @@ enum DemoData {
         items[2].reactions = [Reaction(name: "eyes", count: 2, mine: false)]
         items[3].reactions = [Reaction(name: "+1", count: 2, mine: true)]
         var question = item(
-            15, .awaiting, "Can someone proofread the new onboarding copy?", L("Thread in %@", "#design"),
+            15, .awaiting, L("Can someone proofread the new onboarding copy?"), L("Thread in %@", "#design"),
             minutes: 55, author: "you", plugin: "slack")
         question.needsAction = false
         question.reactions = [Reaction(name: "+1", count: 1, mine: false)]

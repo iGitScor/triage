@@ -67,6 +67,7 @@
 "1 week" = "1 semaine";
 "10 more minutes" = "Encore 10 minutes";
 "5 min" = "5 min";
+"@you the flag is at 20% in prod, metrics look good so far…" = "@you le flag est à 20 % en prod, les métriques sont bonnes pour l’instant…";
 "A Notion database couldn’t be read (%@): %@" = "Impossible de lire une base Notion (%@) : %@";
 "A fine-grained token with read-only Pull requests and Issues, or a classic token with repo and read:org." = "Un jeton à granularité fine avec Pull requests et Issues en lecture seule, ou un jeton classique avec repo et read:org.";
 "A lighter model is enough for two sentences and uses less of your plan." = "Un modèle plus léger suffit pour deux phrases et consomme moins de votre abonnement.";
@@ -80,6 +81,7 @@
 "Add a note (optional)" = "Ajouter une note (facultatif)";
 "Add a source" = "Ajouter une source";
 "Add another" = "En ajouter un";
+"Add passkeys to the sign-in page" = "Ajouter les passkeys à la page de connexion";
 "Add reminder" = "Ajouter le rappel";
 "All done!" = "Tout est fait !";
 "All reviewed" = "Tout est relu";
@@ -121,7 +123,10 @@
 "Brief" = "Brief";
 "Bring snoozed items back early on new activity" = "Faire revenir les éléments reportés en cas de nouvelle activité";
 "Build status" = "l’état des builds";
+"Cache GraphQL responses per account" = "Mettre en cache les réponses GraphQL par compte";
 "Calendar invitations" = "les invitations du calendrier";
+"Can someone proofread the new onboarding copy?" = "Quelqu’un peut relire les nouveaux textes d’accueil ?";
+"Can you double check the rollout plan before Friday?" = "Tu peux revérifier le plan de déploiement avant vendredi ?";
 "Cancel" = "Annuler";
 "Can’t reach the server. Check the address, or your VPN if it needs one." = "Serveur injoignable. Vérifiez l’adresse, ou votre VPN s’il en faut un.";
 "Changes requested" = "Modifications demandées";
@@ -248,6 +253,7 @@
 "GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion or Microsoft 365. Remora only reads, and only talks to the tools you allow." = "GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion ou Microsoft 365. Remora ne fait que lire, et ne parle qu’aux outils autorisés.";
 "Got it" = "Compris";
 "Group message" = "Message de groupe";
+"Group reminders by day" = "Regrouper les rappels par jour";
 "Group them at set times" = "Les regrouper à heures fixes";
 "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %@. %@\n%@\nThanks!" = "Salut %@, petite relance sur « %@ » : en attente de relecture depuis %@. %@\n%@\nMerci !";
 "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %d day(s). %@\n%@\nThanks!" = "Salut %@, petite relance sur « %@ » : en attente de relecture depuis %d jour(s). %@\n%@\nMerci !";
@@ -301,6 +307,7 @@
 "Local program: %@" = "Programme local : %@";
 "Lockfile only" = "Lockfile seul";
 "Look back (days)" = "Remonter sur (jours)";
+"Lunch tomorrow? 🍜" = "On déjeune ensemble demain ? 🍜";
 "Managed by your organization" = "Géré par votre organisation";
 "Mark all as done" = "Tout marquer comme terminé";
 "Mark as done" = "Marquer comme terminé";
@@ -317,6 +324,7 @@
 "Model for the brief" = "Modèle pour le brief";
 "Model id from your provider" = "Identifiant du modèle chez votre fournisseur";
 "Move between items" = "Passer d’un élément à l’autre";
+"Move the image resizer to the new queue" = "Passer le redimensionnement des images sur la nouvelle file";
 "Move to %@" = "Déplacer à %@";
 "Move to inbox" = "Remettre dans la boîte";
 "My turn" = "À moi";
@@ -437,6 +445,7 @@
 "Ready to merge" = "Prêtes à fusionner";
 "Reconnect" = "Reconnecter";
 "Reconnect…" = "Reconnecter…";
+"Refactor the search service" = "Refondre le service de recherche";
 "Refresh" = "Actualiser";
 "Refresh now" = "Actualiser maintenant";
 "Remind me" = "Me le rappeler";
@@ -490,6 +499,7 @@
 "Show count of" = "Compteur";
 "Show in Finder" = "Afficher dans le Finder";
 "Show less" = "Afficher moins";
+"Show snooze reasons in notifications" = "Afficher la raison du report dans les notifications";
 "Sign in with %@" = "Se connecter avec %@";
 "Signs in with Microsoft, then reads your flagged and unread mail, unanswered invitations and unread Teams chats from Microsoft Graph." = "Se connecte avec Microsoft, puis lit vos courriels signalés et non lus, les invitations sans réponse et les conversations Teams non lues dans Microsoft Graph.";
 "Skip" = "Passer";
@@ -504,6 +514,7 @@
 "Snooze all" = "Tout reporter";
 "Snooze all…" = "Tout reporter…";
 "Snooze an item to make it come back later." = "Reportez un élément pour qu’il revienne plus tard.";
+"Snooze reminders for review requests" = "Reporter les rappels des demandes de relecture";
 "Snooze the rest" = "Reporter le reste";
 "Snooze until…" = "Reporter jusqu’à…";
 "Snoozed" = "Reportés";
@@ -535,6 +546,8 @@
 "System" = "Système";
 "Task databases" = "Bases de tâches";
 "Task overdue" = "Tâche en retard";
+"Team tasks" = "Tâches de l’équipe";
+"Team tasks · Due Fri" = "Tâches de l’équipe · Pour vendredi";
 "Teams chats" = "les conversations Teams";
 "Tells accounts apart, e.g. “Work” or “Side project”." = "Pour distinguer vos comptes, par ex. « Travail » ou « Perso ».";
 "Tenant" = "Tenant";
@@ -576,6 +589,7 @@
 "There is no program at %@. Run `where.exe claude` in a terminal and paste the path it shows." = "Aucun programme à %@. Lancez `where.exe claude` dans un terminal et collez le chemin affiché.";
 "There is no program at %@. Run `which claude` in Terminal and paste the path it shows." = "Aucun programme à %@. Lancez `which claude` dans le Terminal et collez le chemin indiqué.";
 "There is no program at %@. Run `which claude` in a terminal and paste the path it shows." = "Aucun programme à %@. Lancez `which claude` dans un terminal et collez le chemin affiché.";
+"There’s a new ramen place near the office" = "Il y a un nouveau restaurant de ramen près du bureau";
 "Third-party licences" = "Licences tierces";
 "This account is no longer connected." = "Ce compte n’est plus connecté.";
 "This brief is still fresh (Settings → General → Assistant)" = "Ce brief est encore récent (Réglages → Général → Assistant)";
@@ -611,6 +625,7 @@
 "Until" = "Jusqu’au";
 "Until there’s news" = "Jusqu’à du nouveau";
 "Untitled" = "Sans titre";
+"Update the onboarding checklist" = "Mettre à jour la checklist d’arrivée";
 "Update to Remora %@…" = "Mettre à jour vers Remora %@…";
 "Update token…" = "Mettre à jour le jeton…";
 "Updated %@" = "Mis à jour %@";
@@ -621,6 +636,9 @@
 "User OAuth token" = "Jeton OAuth utilisateur";
 "Usual" = "Habituel";
 "Version" = "Version";
+"WEB-42 alert on upload failures" = "WEB-42 alerter quand un envoi échoue";
+"WEB-42 retry failed uploads" = "WEB-42 relancer les envois échoués";
+"WIP: Notion tasks bundle" = "WIP : regrouper les tâches Notion";
 "Waiting" = "En attente";
 "Waiting for someone" = "En attente de quelqu’un";
 "Waiting for the browser…" = "En attente du navigateur…";
@@ -641,6 +659,7 @@
 "Work items" = "les éléments de travail";
 "Work, Client…" = "Boulot, Client…";
 "Workspace" = "Espace de travail";
+"Write Q4 hiring scorecard" = "Rédiger la grille d’évaluation des recrutements du T4";
 "Write a new brief" = "Écrire un nouveau brief";
 "Written %@" = "Écrit %@";
 "Written on this Mac. Remora doesn’t send it: paste it in Slack, GitHub or GitLab." = "Rédigé sur ce Mac. Remora ne l’envoie pas : collez-le dans Slack, GitHub ou GitLab.";

@@ -79,7 +79,8 @@ desktop-demo: ## The Windows and Linux tray app with sample data in a window (ru
 
 desktop-fixture: ## Regenerate the Windows and Linux preview's demo data (a test fails when it is stale)
 	cd desktop && cargo run -q -p remora_app --example demo_view > app/src/fixtures/demo.json
-	npx biome format --write desktop/app/src/fixtures/demo.json
+	cd desktop && cargo run -q -p remora_app --example demo_view fr > app/src/fixtures/demo.fr.json
+	npx biome format --write desktop/app/src/fixtures/demo.json desktop/app/src/fixtures/demo.fr.json
 
 desktop-bindings: ## Regenerate the Windows and Linux interface's types from the Rust structs (a test fails when stale)
 	cd desktop && REMORA_WRITE_BINDINGS=1 cargo test -q -p remora --lib bindings
