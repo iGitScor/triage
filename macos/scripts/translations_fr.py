@@ -633,6 +633,7 @@ FR = {
     "Reconnect…": "Reconnecter…",
     "Reconnect": "Reconnecter",
     "This account is no longer connected.": "Ce compte n’est plus connecté.",
+    "The saved tokens haven't been read yet.": "Les jetons enregistrés n’ont pas encore été lus.",
     "%@ Remove the account to delete its token.": "%@ Supprimez le compte pour effacer son jeton.",
     "Exact date": "Date précise",
     "%d day": "%d jour",

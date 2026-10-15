@@ -576,6 +576,7 @@
  "The download isn’t signed by Remora’s release key, so it wasn’t installed.": "Le téléchargement n’est pas signé par la clé de publication de Remora : il n’a pas été installé.",
  "The end is before the first reminder.": "La fin est avant le premier rappel.",
  "The people property that says who a task is for.": "La propriété Personnes qui indique à qui est la tâche.",
+ "The saved tokens haven't been read yet.": "Les jetons enregistrés n’ont pas encore été lus.",
  "The server couldn’t find what Remora asked for: check the address and what the token can see.": "Le serveur n’a pas trouvé ce que Remora demandait : vérifiez l’adresse et ce que le jeton peut voir.",
  "The server had a problem: Remora tries again at the next refresh.": "Le serveur a rencontré un problème : Remora réessaie à la prochaine actualisation.",
  "The server refused the request.": "Le serveur a refusé la demande.",

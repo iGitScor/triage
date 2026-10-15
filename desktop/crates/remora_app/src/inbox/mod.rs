@@ -1176,6 +1176,7 @@ mod tests {
         inbox.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
         inbox.managed = Managed { allowed_plugins: Some(vec!["slack".into()]), ..Managed::default() };
         assert!(inbox.all_items().is_empty(), "items of a refused tool disappear");
+        inbox.provide_secrets(Secrets::new());
         assert!(inbox.fetch_jobs(Arc::new(NoNetwork), now(), false).is_empty());
         assert_eq!(inbox.errors(), ["Not allowed by your privacy policy."]);
         let refused = inbox.prepare_connect("github", None, HashMap::new(), &HashMap::new(), Arc::new(NoNetwork));
@@ -1450,7 +1451,7 @@ mod tests {
         let mut inbox = Inbox::in_memory(vault.clone(), Managed::default());
         assert!(inbox.needs_secrets());
         saved!(inbox, |tokens, shared| async {
-            tokens.load_once(&shared).await;
+            tokens.load_once(&shared).await?;
             Ok::<_, Message>(())
         })
         .unwrap();
@@ -1505,10 +1506,10 @@ mod tests {
     fn failing_and_rate_limited_accounts_sit_refreshes_out() {
         let mut inbox = inbox();
         inbox.accounts_mut()[0].settings.insert("host".into(), "https://github.com".into());
-        inbox
-            .vault()
-            .save(&HashMap::from([("a1".to_string(), HashMap::from([("token".to_string(), "t".to_string())]))]))
-            .unwrap();
+        inbox.provide_secrets(HashMap::from([(
+            "a1".to_string(),
+            HashMap::from([("token".to_string(), "t".to_string())]),
+        )]));
         let jobs = |inbox: &mut Inbox, at: DateTime<Utc>, manual: bool| {
             inbox.fetch_jobs(Arc::new(NoNetwork), at, manual).len()
         };

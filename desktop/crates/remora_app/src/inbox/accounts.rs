@@ -14,11 +14,16 @@ use remora_plugins::{
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// The tokens were asked for before the vault could be read.
+pub const TOKENS_NOT_READ: &str = "The saved tokens haven't been read yet.";
+
 pub struct AccountsService {
     list: Vec<Account>,
     vault: Arc<dyn Vault>,
-    /// Every account's tokens, read from the vault once per launch (`Tokens::load_once`), or on first use.
+    /// Every account's tokens, read from the vault once per launch (`Tokens::load_once`).
     secrets: Option<Secrets>,
+    /// Why the last read failed, while nothing was read.
+    unreadable: Option<Message>,
     /// Per account, in memory: what a refresh may reuse from the last one (PERF-09).
     sessions: HashMap<String, AccountSession>,
     persistence: Persistence,
@@ -35,7 +40,7 @@ impl std::ops::Deref for AccountsService {
 
 impl AccountsService {
     pub(super) fn new(list: Vec<Account>, vault: Arc<dyn Vault>, persistence: Persistence) -> Self {
-        AccountsService { list, vault, secrets: None, sessions: HashMap::new(), persistence }
+        AccountsService { list, vault, secrets: None, unreadable: None, sessions: HashMap::new(), persistence }
     }
 
     pub fn find(&self, id: &str) -> Option<&Account> {
@@ -52,13 +57,15 @@ impl AccountsService {
 
     // MARK: Tokens
 
-    /// Every account's tokens: read from the vault if nothing read them yet.
-    pub fn secrets(&mut self) -> Result<&Secrets, Message> {
-        let secrets = match self.secrets.take() {
-            Some(secrets) => secrets,
-            None => self.vault.load()?,
-        };
-        Ok(self.secrets.insert(secrets))
+    /// Every account's tokens, once `Tokens::load_once` read them. Never read here: the vault can be slow, and this
+    /// runs under the inbox lock (CODE-07).
+    pub fn secrets(&self) -> Result<&Secrets, Message> {
+        self.secrets.as_ref().ok_or_else(|| self.unreadable.clone().unwrap_or_else(|| TOKENS_NOT_READ.into()))
+    }
+
+    /// Why the vault couldn't be read, said by whatever needs the tokens until a later read works.
+    pub fn secrets_unreadable(&mut self, error: Message) {
+        self.unreadable = Some(error);
     }
 
     /// The tokens haven't been read yet (once per launch).
@@ -68,6 +75,7 @@ impl AccountsService {
 
     /// Tokens read from the vault outside the lock; kept only if nothing read them meanwhile.
     pub fn provide_secrets(&mut self, secrets: Secrets) {
+        self.unreadable = None;
         self.secrets.get_or_insert(secrets);
     }
 
@@ -215,6 +223,14 @@ impl Inbox {
     /// Tokens read from the vault outside the lock; kept only if nothing read them meanwhile.
     pub(crate) fn provide_secrets(&mut self, secrets: Secrets) {
         self.accounts.provide_secrets(secrets);
+    }
+
+    /// The vault couldn't be read: every account says why until a later read works.
+    pub(crate) fn secrets_unreadable(&mut self, error: &Message) {
+        self.accounts.secrets_unreadable(error.clone());
+        for account in self.accounts.iter() {
+            self.sync.refused(&account.id, error.clone());
+        }
     }
 
     /// Secrets the plugins renewed during the last fetches (an OAuth refresh token rotated), for accounts still

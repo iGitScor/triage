@@ -68,18 +68,30 @@ impl Tokens {
         finish: impl FnOnce(&mut Inbox, Secrets) -> Result<T, Message>,
     ) -> Result<T, Message> {
         let _writes = self.writes.lock().await;
+        // A change before the first refresh read them: `change` starts from every account's tokens. A failed read
+        // stops only the changes that need them (`secrets_after`), not Erase.
+        let _ = self.load_once(inbox).await;
         let all = change(&mut *inbox.lock().await)?;
         self.vault.save(all.clone()).await?;
         finish(&mut *inbox.lock().await, all)
     }
 
-    /// Reads the tokens once per launch, without the inbox lock. Kept only if nothing read them meanwhile.
-    pub async fn load_once(&self, inbox: &Mutex<Inbox>) {
+    /// Reads the tokens once per launch, without the inbox lock. Kept only if nothing read them meanwhile. A failed
+    /// read is every account's error, and is tried again the next time (CODE-07).
+    pub async fn load_once(&self, inbox: &Mutex<Inbox>) -> Result<(), Message> {
         if !inbox.lock().await.needs_secrets() {
-            return;
+            return Ok(());
         }
-        if let Ok(secrets) = self.vault.load().await {
-            inbox.lock().await.provide_secrets(secrets);
+        match self.vault.load().await {
+            Ok(secrets) => {
+                inbox.lock().await.provide_secrets(secrets);
+                Ok(())
+            }
+            Err(error) => {
+                let error = Message::from(error);
+                inbox.lock().await.secrets_unreadable(&error);
+                Err(error)
+            }
         }
     }
 
@@ -333,15 +345,92 @@ mod tests {
         assert_eq!(inbox.secrets_after(|_| {}).unwrap().len(), 2);
     }
 
+    struct NoNetwork;
+
+    #[async_trait::async_trait]
+    impl remora_plugins::HttpClient for NoNetwork {
+        async fn send(
+            &self,
+            _: remora_plugins::Request,
+        ) -> Result<remora_plugins::Response, remora_plugins::PluginError> {
+            Err(remora_plugins::PluginError::Network("no network in tests".into()))
+        }
+    }
+
+    /// A vault that fails every read while `fails`, and counts them.
+    #[derive(Default)]
+    struct Flaky {
+        vault: MemoryVault,
+        fails: AtomicBool,
+        loads: std::sync::atomic::AtomicUsize,
+    }
+
+    impl Vault for Flaky {
+        fn load(&self) -> Result<Secrets, String> {
+            self.loads.fetch_add(1, Ordering::SeqCst);
+            if self.fails.load(Ordering::SeqCst) {
+                return Err("The credential store is locked.".into());
+            }
+            self.vault.load()
+        }
+
+        fn save(&self, secrets: &Secrets) -> Result<(), String> {
+            self.vault.save(secrets)
+        }
+    }
+
+    fn flaky() -> (Arc<Flaky>, Mutex<Inbox>, Tokens) {
+        let vault = Arc::new(Flaky { fails: AtomicBool::new(true), ..Default::default() });
+        vault.save(&Secrets::from([("a1".into(), token("t1")), ("a2".into(), token("t2"))])).unwrap();
+        let mut inbox = Inbox::in_memory(vault.clone(), Managed::default());
+        *inbox.accounts_mut() = vec![account("a1", "github"), account("a2", "linear")];
+        (vault.clone(), Mutex::new(inbox), Tokens::new(Arc::new(InPlace(vault))))
+    }
+
+    /// CODE-07: a failed read is every account's error, and nothing under the lock reads the vault again: no fetch
+    /// is built, and what needs the tokens says why it can't have them. The next read tries again.
+    #[test]
+    fn a_failed_read_is_each_accounts_error_and_not_repeated() {
+        let (vault, inbox, tokens) = flaky();
+        let error = block_on(tokens.load_once(&inbox)).unwrap_err();
+        assert_eq!(error.text, "The credential store is locked.");
+        {
+            let mut inbox = block_on(inbox.lock());
+            assert_eq!(inbox.errors(), [error.clone(), error.clone()]);
+            assert!(inbox.fetch_jobs(Arc::new(NoNetwork), Utc::now(), true).is_empty());
+            assert_eq!(inbox.secrets_after(|_| {}).unwrap_err(), error);
+        }
+        assert_eq!(vault.loads.load(Ordering::SeqCst), 1, "read once, outside the lock");
+
+        vault.fails.store(false, Ordering::SeqCst);
+        block_on(tokens.load_once(&inbox)).unwrap();
+        assert_eq!(block_on(inbox.lock()).secrets_after(|_| {}).unwrap().len(), 2);
+    }
+
+    /// A change made before the first refresh reads the tokens first, outside the lock; Erase works even when they
+    /// can't be read.
+    #[test]
+    fn a_change_reads_the_tokens_first() {
+        let (vault, inbox, tokens) = flaky();
+        assert_eq!(block_on(tokens.disconnect(&inbox, "a1")).unwrap_err().text, "The credential store is locked.");
+        block_on(tokens.erase(&inbox)).unwrap();
+        assert!(vault.vault.load().unwrap().is_empty());
+
+        let (vault, inbox, tokens) = flaky();
+        vault.fails.store(false, Ordering::SeqCst);
+        block_on(tokens.disconnect(&inbox, "a1")).unwrap();
+        assert_eq!(vault.vault.load().unwrap().keys().collect::<Vec<_>>(), ["a2"], "a2's token stays");
+    }
+
     /// The tokens are read once, and not over ones the inbox already has.
     #[test]
     fn the_tokens_are_read_once() {
         let vault = Arc::new(MemoryVault::default());
         let inbox = connected(vault.clone());
         let tokens = Tokens::new(Arc::new(InPlace(vault.clone())));
-        block_on(tokens.load_once(&inbox));
+        block_on(tokens.load_once(&inbox)).unwrap();
         vault.save(&Secrets::new()).unwrap();
-        block_on(tokens.load_once(&inbox));
+        block_on(tokens.load_once(&inbox)).unwrap();
         assert_eq!(block_on(inbox.lock()).secrets_after(|_| {}).unwrap().len(), 2);
     }
 }

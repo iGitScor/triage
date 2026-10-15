@@ -519,14 +519,22 @@ async fn background(app: AppHandle) {
 pub async fn refresh(app: &AppHandle, manual: bool) {
     let state = app.state::<AppState>();
     if !state.demo {
-        // The policy is read again each time: a change from Group Policy or Intune applies without a restart.
-        state.inbox.lock().await.set_managed(remora_app::Managed::read());
-        // The tokens are read once per launch, outside the lock.
-        state.tokens.load_once(&state.inbox).await;
-        let jobs = state.inbox.lock().await.fetch_jobs(state.http.clone(), chrono::Utc::now(), manual);
-        let results = remora_app::run(jobs).await;
-        let notices = state.inbox.lock().await.apply(results, chrono::Utc::now());
-        post(app, &notices);
+        // The policy is read again each time: a change from Group Policy or Intune applies without a restart. Read
+        // before taking the lock (CODE-07); a read that panicked keeps the last one.
+        if let Ok(managed) = tokio::task::spawn_blocking(remora_app::Managed::read).await {
+            state.inbox.lock().await.set_managed(managed);
+        }
+        // The tokens are read once per launch, outside the lock. A failed read is each account's error, and nothing
+        // is fetched until a later refresh reads them.
+        match state.tokens.load_once(&state.inbox).await {
+            Ok(()) => {
+                let jobs = state.inbox.lock().await.fetch_jobs(state.http.clone(), chrono::Utc::now(), manual);
+                let results = remora_app::run(jobs).await;
+                let notices = state.inbox.lock().await.apply(results, chrono::Utc::now());
+                post(app, &notices);
+            }
+            Err(error) => eprintln!("Remora: the saved tokens couldn't be read: {error}"),
+        }
         // What a plugin renewed (a Microsoft sign-in's refresh token) is saved as a connection's is. A failed save
         // keeps the old one, still valid.
         if let Err(error) = state.tokens.save_renewed(&state.inbox).await {

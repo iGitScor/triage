@@ -41,6 +41,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Windows and Linux: each account's tokens get their own Credential Manager or keyring entry, so about ten accounts
   no longer fill the single entry used until now, and one damaged entry loses only its account. The old entry is
   moved over at the first launch.
+- Windows and Linux: when the Credential Manager or keyring can't be read, each account says why, and the app no
+  longer freezes while the refresh tries again.
 - Windows and Linux: a snooze or reminder coming back the next day says *Tomorrow* on the night the clocks change
   too, not the weekday.
 
