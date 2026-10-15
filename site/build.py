@@ -1427,6 +1427,10 @@ def privacy(lang: str) -> str:
                     "What you handle fast or snooze",
                     "<code>learning.json</code>, used for ranking on this computer only",
                 ),
+                (
+                    "Spotlight, if you turn it on (Mac)",
+                    "Each item’s title and where it comes from, never previews or people; removed when you turn it off, disconnect a tool or erase",
+                ),
                 ("Review prep", "File paths and line counts only; code is never stored"),
                 ("Drafted messages", "Written from templates, copied to your clipboard, never sent"),
             ],
@@ -1592,6 +1596,10 @@ def privacy(lang: str) -> str:
                 (
                     "Ce que vous traitez vite ou reportez",
                     "<code>learning.json</code>, pour le classement sur cet ordinateur seulement",
+                ),
+                (
+                    "Spotlight, si vous l’activez (Mac)",
+                    "Le titre de chaque élément et sa provenance, jamais les aperçus ni les personnes ; retirés quand vous le désactivez, déconnectez un outil ou effacez tout",
                 ),
                 ("Préparation des relectures", "Chemins et nombre de lignes seulement ; le code n’est jamais stocké"),
                 ("Messages rédigés", "Écrits à partir de modèles, copiés dans le presse-papiers, jamais envoyés"),

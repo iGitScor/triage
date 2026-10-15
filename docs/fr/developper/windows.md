@@ -45,6 +45,7 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 | Taille du texte | Réglages → Général | Réglages → Général, en plus de la mise à l’échelle de Windows |
 | Nouveau rappel | Glisser le poisson de la barre des menus | Un raccourci global, Ctrl+Alt+R : on ne peut pas glisser une icône de la zone de notification |
 | Terminé, Reporter sur une ligne | Balayer, ou le clavier | Des boutons sur chaque ligne, ou le clavier |
+| Les éléments dans la recherche du système (sur demande) | Spotlight | Pas encore |
 
 ## Même modèle, équivalents Windows
 

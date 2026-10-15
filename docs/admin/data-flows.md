@@ -82,6 +82,7 @@ sent: tokens, links, code, the rest of a message, notes, files.
 | Preferences | `preferences.json` |
 | Tokens and API keys | One item in the login Keychain: service `fr.igitscor.remora`, account `secrets` |
 | Scheduled reminders and delivered notifications (titles) | macOS notifications (`UNUserNotificationCenter`) |
+| Only if the user turns on Settings → Privacy → **Find inbox items in Spotlight** (off by default): each item’s title and its tool and context, never previews, people or links; none from a tool whose content is hidden | The Spotlight index of this Mac (Core Spotlight) |
 
 The JSON files are in `~/Library/Application Support/Remora/`, a folder only the user can open (0700, files 0600);
 FileVault encrypts them with the rest of the disk. The inbox cache, briefs and summaries are left out of Time
@@ -90,9 +91,9 @@ code is never stored. Remora keeps **no HTTP cache**: requests aren’t written 
 versions left in `~/Library/Caches/fr.igitscor.remora` and `~/Library/HTTPStorages` is deleted at launch.
 
 Settings → Privacy → **Erase local data…** deletes all of the above: the JSON files, every Keychain item Remora
-(or its earlier name, Perch) stored, scheduled and delivered notifications, and the old HTTP cache. A file it can't
+(or its earlier name, Perch) stored, scheduled and delivered notifications, what it put in Spotlight, and the old HTTP cache. A file it can't
 delete is named, with its folder, rather than reported as erased. Disconnecting one account removes its token, its
-items and its notifications.
+items, its notifications and its Spotlight entries; so does a tool the policy blocks or whose content is hidden.
 
 ### Windows
 

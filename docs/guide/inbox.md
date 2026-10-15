@@ -118,6 +118,11 @@ when there are more than three; reminders and snoozes coming back don’t wait.
 still say what happened and where (*Mentions · #general*) but not what was written. Handy for Slack during a
 screen share.
 
+**Find inbox items in Spotlight** (Mac, Settings → Privacy, off by default) lets you search “that PR Erin asked
+about” from Spotlight: each item’s title and where it comes from go to this Mac’s index, never previews or people,
+and a hit opens the item. Tools whose content you hide stay out; turning it off, disconnecting a tool or erasing
+removes them.
+
 The first sync of a new account never notifies: connecting a tool doesn’t flood you.
 
 ## Settings → General

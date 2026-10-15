@@ -184,6 +184,7 @@ struct Harness {
     let outside = Outside()
     let updates = StandInUpdates()
     let network = StandInNetwork()
+    let spotlight = RecordingSpotlight()
     var managed = ManagedDictionary()
     var demo = false
 
@@ -209,7 +210,8 @@ struct Harness {
                 demo: demo,
                 removeURLCaches: { outside.cachesRemoved += 1 },
                 updates: updates,
-                network: network
+                network: network,
+                spotlight: spotlight
             ))
         outside.models.append(model)
         return model
@@ -269,4 +271,26 @@ final class StandInNetwork: NetworkStatus {
     private var change: (@MainActor (Bool) -> Void)?
     func observe(_ change: @escaping @MainActor (Bool) -> Void) { self.change = change }
     func set(online: Bool) { change?(online) }
+}
+
+/// This Mac's Spotlight index, in memory: what the inbox put there and what it asked to remove.
+@MainActor
+final class RecordingSpotlight: SpotlightIndexing {
+    private(set) var entries: [String: SpotlightEntry] = [:]
+    private(set) var deletedAll = 0
+    private(set) var deletedDomains: [String] = []
+
+    func apply(_ changes: SpotlightIndex.Changes) {
+        if changes.deleteAll {
+            entries = [:]
+            deletedAll += 1
+        }
+        for id in changes.delete { entries[id] = nil }
+        for entry in changes.index { entries[entry.id] = entry }
+    }
+
+    func delete(domain: String) {
+        deletedDomains.append(domain)
+        entries = entries.filter { $0.value.domain != domain }
+    }
 }

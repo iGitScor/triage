@@ -85,6 +85,14 @@ struct PrivacyPane: View {
                 Text(AppFolder.url.path).font(Myna.system(11)).textSelection(.enabled)
                 Text(L("Inbox cache, settings and snooze history. Tokens are in the Keychain.")).font(Myna.font(11))
                     .foregroundStyle(Myna.muted)
+                Toggle(L("Find inbox items in Spotlight"), isOn: $model.preferences.spotlight)
+                Text(
+                    L(
+                        "Puts each item’s title and where it comes from in this Mac’s Spotlight index, never previews or people. Tools whose content is hidden stay out. Turning this off, disconnecting a tool or erasing removes them."
+                    )
+                )
+                .font(Myna.font(11))
+                .foregroundStyle(Myna.muted)
                 // A file Remora couldn't read (kept aside, never overwritten) or save.
                 ForEach(model.storageIssues) { issue in
                     Label(issue.message, systemImage: "exclamationmark.triangle.fill")

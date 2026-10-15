@@ -85,6 +85,7 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 | Les préférences | `preferences.json` |
 | Jetons et clés d’API | Un seul élément du trousseau de session : service `fr.igitscor.remora`, compte `secrets` |
 | Rappels programmés et notifications reçues (titres) | Les notifications de macOS (`UNUserNotificationCenter`) |
+| Seulement si l’utilisateur active Réglages → Confidentialité → **Retrouver les éléments de la boîte dans Spotlight** (désactivé par défaut) : le titre de chaque élément, son outil et son contexte, jamais les aperçus, les personnes ni les liens ; rien d’un outil dont le contenu est masqué | L’index Spotlight de ce Mac (Core Spotlight) |
 
 Les fichiers JSON sont dans `~/Library/Application Support/Remora/`, un dossier que seul l’utilisateur peut ouvrir
 (0700, fichiers 0600) ; FileVault les chiffre avec le reste du disque. Le cache de la boîte, les briefs et les
@@ -95,8 +96,9 @@ HTTP** : les requêtes ne sont pas écrites sur le disque, et le cache laissé p
 
 Réglages → Confidentialité → **Effacer les données locales…** supprime tout cela : les fichiers JSON, tous les
 éléments du trousseau enregistrés par Remora (ou par son ancien nom, Perch), les notifications programmées et
-reçues, et l’ancien cache HTTP. Un fichier qu’il ne peut pas supprimer est nommé, avec son dossier, au lieu d’être
-compté comme effacé. Déconnecter un compte retire son jeton, ses éléments et ses notifications.
+reçues, ce qu’il a mis dans Spotlight, et l’ancien cache HTTP. Un fichier qu’il ne peut pas supprimer est nommé, avec son dossier, au lieu d’être
+compté comme effacé. Déconnecter un compte retire son jeton, ses éléments, ses notifications
+et ses entrées Spotlight ; de même pour un outil que la politique bloque ou dont le contenu est masqué.
 
 ### Windows
 

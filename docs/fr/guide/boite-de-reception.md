@@ -128,6 +128,11 @@ qui reviennent n’attendent pas.
 notifications disent toujours ce qui s’est passé et où (*Mentions · #general*), mais pas ce qui a été écrit.
 Pratique pour Slack pendant un partage d’écran.
 
+**Retrouver les éléments de la boîte dans Spotlight** (Mac, Réglages → Confidentialité, désactivé par défaut) vous
+permet de chercher « la PR dont Erin parlait » depuis Spotlight : le titre de chaque élément et sa provenance vont
+dans l’index de ce Mac, jamais les aperçus ni les personnes, et un résultat ouvre l’élément. Les outils dont vous
+masquez le contenu en restent exclus ; désactiver le réglage, déconnecter un outil ou tout effacer les retire.
+
 La première synchronisation d’un nouveau compte ne notifie jamais : connecter un outil ne vous noie pas.
 
 ## Réglages → Général

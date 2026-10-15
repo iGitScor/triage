@@ -19,6 +19,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - `remora://` links, on Mac, Windows and Linux: Shortcuts, Raycast, Alfred, a Stream Deck or a script can open the
   inbox (on a tab), open the reminder panel filled in for you to save, or refresh. Nothing is done to an item without
   you. See *Links and automation* in the guide.
+- Mac: inbox items in Spotlight, if you turn it on (Settings → Privacy → **Find inbox items in Spotlight**): titles
+  and where they come from, never previews; a hit opens the item. Tools whose content is hidden stay out, and
+  turning it off, disconnecting or Erase removes them.
 
 ## 0.9.0 (2026-10-13)
 

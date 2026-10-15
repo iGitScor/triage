@@ -43,6 +43,7 @@ GlobalShortcuts portal (KDE Plasma, GNOME 48+), or else a system shortcut runnin
 | Text size | Settings → General | Settings → General, on top of Windows’ scaling |
 | New reminder | Drag the menu bar fish down | A global shortcut, Ctrl+Alt+R: tray icons can’t be dragged |
 | Done, Snooze on a row | Swipe, or the keyboard | Buttons on each row, or the keyboard |
+| Inbox items in the system search (opt-in) | Spotlight | Not yet |
 
 ## Same model, Windows equivalents
 

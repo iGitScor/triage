@@ -464,6 +464,8 @@ FR = {
     "Local program on this Mac": "Programme local sur ce Mac",
     "Data on this Mac": "Données sur ce Mac",
     "Inbox cache, settings and snooze history. Tokens are in the Keychain.": "Cache de la boîte, réglages et historique des reports. Les jetons sont dans le trousseau.",
+    "Find inbox items in Spotlight": "Retrouver les éléments de la boîte dans Spotlight",
+    "Puts each item’s title and where it comes from in this Mac’s Spotlight index, never previews or people. Tools whose content is hidden stay out. Turning this off, disconnecting a tool or erasing removes them.": "Met le titre de chaque élément et sa provenance dans l’index Spotlight de ce Mac, jamais les aperçus ni les personnes. Les outils dont le contenu est masqué en restent exclus. Désactiver ce réglage, déconnecter un outil ou tout effacer les retire.",
     "Show in Finder": "Afficher dans le Finder",
     "Erase local data…": "Effacer les données locales…",
     "Erase all of Remora’s local data?": "Effacer toutes les données locales de Remora ?",

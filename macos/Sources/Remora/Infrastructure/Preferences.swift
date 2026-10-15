@@ -82,6 +82,8 @@ struct Preferences: Codable, Equatable {
     var allowExternalAI = false
     var allowRemoteImages = true
     var openInApps = true
+    /// Inbox titles and where they come from in Spotlight (IDEA-38). Off until the user turns it on.
+    var spotlight = false
     /// Off until the user turns it on; nothing calls home before.
     var checkForUpdates = false
 
@@ -123,6 +125,7 @@ struct Preferences: Codable, Equatable {
         allowRemoteImages =
             try container.decodeIfPresent(Bool.self, forKey: .allowRemoteImages) ?? defaults.allowRemoteImages
         openInApps = try container.decodeIfPresent(Bool.self, forKey: .openInApps) ?? defaults.openInApps
+        spotlight = try container.decodeIfPresent(Bool.self, forKey: .spotlight) ?? defaults.spotlight
         checkForUpdates = try container.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? defaults.checkForUpdates
     }
 }

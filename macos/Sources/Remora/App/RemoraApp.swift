@@ -1,4 +1,5 @@
 import AppKit
+import CoreSpotlight
 import RemoraCore
 import SwiftUI
 
@@ -53,17 +54,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch RemoraLink(url) {
         case .open(let tab):
             InboxModel.shared.requestedTab = tab
-            if let window {
-                window.makeKeyAndOrderFront(nil)
-                NSApp.activate(ignoringOtherApps: true)
-            } else {
-                NSApp.activate(ignoringOtherApps: true)
-                statusItem?.showInbox()
-            }
+            showInbox()
         case .remind(let text, let at): statusItem?.newReminder(text: text, at: at)
         case .refresh: Task { await InboxModel.shared.refresh(manual: true) }
         case nil: break
         }
+    }
+
+    @MainActor private func showInbox() {
+        if let window {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+            statusItem?.showInbox()
+        }
+    }
+
+    /// A Spotlight hit (IDEA-38): the item opens as a click in the inbox would; one gone since, the inbox.
+    func application(
+        _ application: NSApplication, continue userActivity: NSUserActivity,
+        restorationHandler: @escaping ([any NSUserActivityRestoring]) -> Void
+    ) -> Bool {
+        guard userActivity.activityType == CSSearchableItemActionType else { return false }
+        let id = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String
+        MainActor.assumeIsolated {
+            if let id, InboxModel.shared.openFromNotification(id) { return }
+            showInbox()
+        }
+        return true
     }
 
     /// Changes are saved a moment later, off the main thread: what's still pending is written before quitting.

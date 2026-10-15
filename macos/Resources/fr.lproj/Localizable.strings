@@ -225,6 +225,7 @@
 "Expanded" = "Déplié";
 "External AI" = "IA externe";
 "External AI is turned off in Privacy settings." = "L’IA externe est désactivée dans les réglages de confidentialité.";
+"Find inbox items in Spotlight" = "Retrouver les éléments de la boîte dans Spotlight";
 "Finished" = "Terminées";
 "Flagged" = "Signalé";
 "Found automatically" = "Trouvé automatiquement";
@@ -405,6 +406,7 @@
 "Preview: flagged mail and unread mail sent to you, invitations you haven’t answered, and unread Teams chats." = "Aperçu : les courriels signalés et les courriels non lus qui vous sont adressés, les invitations sans réponse et les conversations Teams non lues.";
 "Privacy" = "Confidentialité";
 "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise." = "Vos pull requests, les demandes de relecture et les tickets qui vous sont assignés. Compatible GitHub Enterprise.";
+"Puts each item’s title and where it comes from in this Mac’s Spotlight index, never previews or people. Tools whose content is hidden stay out. Turning this off, disconnecting a tool or erasing removes them." = "Met le titre de chaque élément et sa provenance dans l’index Spotlight de ce Mac, jamais les aperçus ni les personnes. Les outils dont le contenu est masqué en restent exclus. Désactiver ce réglage, déconnecter un outil ou tout effacer les retire.";
 "Quit" = "Quitter";
 "Quit Remora" = "Quitter Remora";
 "Reactions: %@" = "Réactions : %@";

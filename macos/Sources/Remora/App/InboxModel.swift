@@ -8,8 +8,18 @@ final class InboxModel {
     static let shared = InboxModel(environment: .live)
 
     private(set) var accounts: [Account]
-    private(set) var itemsByAccount: [UUID: [InboxItem]] { didSet { layoutChanged() } }
-    private(set) var reminders: [InboxItem] { didSet { layoutChanged() } }
+    private(set) var itemsByAccount: [UUID: [InboxItem]] {
+        didSet {
+            layoutChanged()
+            updateSpotlight()
+        }
+    }
+    private(set) var reminders: [InboxItem] {
+        didSet {
+            layoutChanged()
+            updateSpotlight()
+        }
+    }
     private(set) var states: [String: ItemState] { didSet { layoutChanged() } }
     /// Each failing account's last failure, by kind.
     private(set) var errors: [UUID: SourceFailure] = [:]
@@ -77,6 +87,11 @@ final class InboxModel {
                 startPolling()
             }
             if oldValue.checkForUpdates != preferences.checkForUpdates { scheduleUpdates() }
+            if oldValue.spotlight != preferences.spotlight
+                || oldValue.hiddenContentPlugins != preferences.hiddenContentPlugins
+            {
+                updateSpotlight()
+            }
         }
     }
 
@@ -117,6 +132,8 @@ final class InboxModel {
     /// Inside `batch`: insights and the ranker are worked out once, at the end.
     @ObservationIgnored private var batchDepth = 0
     @ObservationIgnored private var batchNeeds: (insights: Bool, ranker: Bool) = (false, false)
+    /// What this launch put in Spotlight; nil until the first update, which starts the index over (IDEA-38).
+    @ObservationIgnored private var spotlightIndexed: [String: SpotlightEntry]?
 
     init(environment: AppEnvironment) {
         let embeddings = EmbeddingIntentClassifier()
@@ -335,6 +352,28 @@ final class InboxModel {
             persist(bundleSummariesStore, bundleSummaries)
             triageSuggestions = []
         }
+        // A tool the organization now hides or blocks leaves Spotlight too.
+        updateSpotlight()
+    }
+
+    /// Spotlight holds the inbox's titles and where they come from only while the user wants it, and never a blocked
+    /// tool's or one whose content is hidden (IDEA-38). The diff with what this launch indexed is sent.
+    private func updateSpotlight() {
+        guard !isDemo else { return }
+        let preferences = effectivePreferences
+        var names = Dictionary(
+            PluginRegistry.manifests.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        names[SpotlightIndex.remindersDomain] = L("Reminder")
+        let items = allItems.filter { item in
+            item.pluginID == SpotlightIndex.remindersDomain
+                || account(item.accountID).map { refusal(for: $0) == nil } == true
+        }
+        let wanted = SpotlightIndex.entries(
+            items: items, enabled: preferences.spotlight, hiddenContent: preferences.hiddenContentPlugins,
+            sourceNames: names)
+        let changes = SpotlightIndex.changes(indexed: spotlightIndexed, wanted: wanted)
+        if !changes.isEmpty { environment.spotlight.apply(changes) }
+        spotlightIndexed = Dictionary(wanted.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     /// The only way to build a plugin: it must be allowed, and it can only reach its declared hosts. A refresh
@@ -526,6 +565,7 @@ final class InboxModel {
 
     func start() {
         enforcePolicy()
+        updateSpotlight()
         refreshInsights()
         recomputeLinks()
         if !isDemo {
@@ -1364,6 +1404,9 @@ final class InboxModel {
         insights = []
         syncedAccounts = []
         preferences = Preferences()
+        // Whatever an earlier launch put in Spotlight goes too.
+        if !isDemo { environment.spotlight.apply(SpotlightIndex.Changes(deleteAll: true)) }
+        spotlightIndexed = [:]
         // Nothing pending or in progress may land after the files are gone.
         writer.discard()
         let left = Self.removeContents(of: environment.folder)
@@ -1407,6 +1450,9 @@ final class InboxModel {
         undoPoint = nil
         accounts.removeAll { $0.id == account.id }
         sessions[account.id] = nil
+        // Its items leave Spotlight, whatever this launch knows of them.
+        if !isDemo { environment.spotlight.delete(domain: account.id.uuidString) }
+        spotlightIndexed = spotlightIndexed?.filter { $0.value.domain != account.id.uuidString }
         if PluginRegistry.isAssistant(account.pluginID) {
             store(nil)
             bundleSummaries = [:]

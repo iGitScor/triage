@@ -22,6 +22,8 @@ struct AppEnvironment {
     var updates: UpdateSystem
     /// Whether the Mac has a network.
     var network: NetworkStatus
+    /// This Mac's Spotlight index, when the user turns it on (IDEA-38).
+    var spotlight: SpotlightIndexing
 
     static var live: AppEnvironment {
         AppEnvironment(
@@ -35,7 +37,8 @@ struct AppEnvironment {
             demo: CommandLine.arguments.contains("--demo"),
             removeURLCaches: URLCaches.remove,
             updates: LiveUpdateSystem(),
-            network: NetworkMonitor()
+            network: NetworkMonitor(),
+            spotlight: LiveSpotlight()
         )
     }
 }
