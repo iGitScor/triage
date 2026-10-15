@@ -3,7 +3,7 @@
 # See CONTRIBUTING.md. On Windows without make, run the commands from desktop/README.md directly.
 
 .DEFAULT_GOAL := help
-.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture i18n i18n-check test-counts \
+.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture desktop-bindings i18n i18n-check test-counts \
 	policy-files docs docs-build docs-check a11y links site site-preview screenshots deploy clean
 
 help: ## List the targets
@@ -80,6 +80,9 @@ desktop-demo: ## The Windows and Linux tray app with sample data in a window (ru
 desktop-fixture: ## Regenerate the Windows and Linux preview's demo data (a test fails when it is stale)
 	cd desktop && cargo run -q -p remora_app --example demo_view > app/src/fixtures/demo.json
 	npx biome format --write desktop/app/src/fixtures/demo.json
+
+desktop-bindings: ## Regenerate the Windows and Linux interface's types from the Rust structs (a test fails when stale)
+	cd desktop && REMORA_WRITE_BINDINGS=1 cargo test -q -p remora --lib bindings
 
 i18n: ## Regenerate the French strings of both apps from the dictionary
 	python3 macos/scripts/make-strings.py

@@ -3,6 +3,7 @@
 //! shortcut, and the commands the interface (../src) calls.
 
 mod avatars;
+mod bindings;
 mod commands;
 mod i18n;
 mod linux;

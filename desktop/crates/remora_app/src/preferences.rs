@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub enum TrayCount {
     /// What needs you (My turn, without quiet items).
@@ -9,7 +10,7 @@ pub enum TrayCount {
     Hidden,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Appearance {
     System,
@@ -18,7 +19,7 @@ pub enum Appearance {
 }
 
 /// The text size, as on the Mac (A11Y-25): the window's content is zoomed by `scale`, and the window grows with it.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum TextSize {
     #[default]
@@ -39,7 +40,7 @@ impl TextSize {
 
 /// The user's settings, as in the macOS app. Missing keys keep their defaults, so adding one never
 /// resets the others.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Preferences {
     pub refresh_minutes: u32,

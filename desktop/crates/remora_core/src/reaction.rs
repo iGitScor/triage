@@ -1,9 +1,10 @@
 use crate::{emoji, InboxItem};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// An emoji reaction on the message an item comes from (Slack). Not part of the item's fingerprint: a new 👍
 /// neither brings a Done item back nor wakes a snooze. Same as macOS.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Reaction {
     /// The emoji's name as the tool writes it (`white_check_mark`), skin tone dropped.

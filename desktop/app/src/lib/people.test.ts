@@ -1,20 +1,23 @@
 import { describe as group, expect, it, vi } from 'vitest'
+import type { Person } from './api'
 
 vi.mock('@tauri-apps/api/core', () => ({
   convertFileSrc: (path: string, protocol: string) => `${protocol}://localhost/${encodeURIComponent(path)}`,
 }))
 const { describe, mark, shown, avatarSrc } = await import('./people')
 
+const person = (name: string, tone: Person['tone'] = null): Person => ({ name, avatarUrl: null, tone })
+
 group('reviewers on a row', () => {
   it('says each state in words, not only in colour', () => {
-    expect(describe({ name: 'erin', tone: 'accent' })).toBe('erin, approved')
-    expect(describe({ name: 'dave', tone: 'negative' })).toBe('dave, changes requested')
-    expect(describe({ name: 'frank' })).toBe('frank, waiting')
-    expect(mark({ name: 'frank', tone: null })).toBeNull()
+    expect(describe(person('erin', 'accent'))).toBe('erin, approved')
+    expect(describe(person('dave', 'negative'))).toBe('dave, changes requested')
+    expect(describe(person('frank'))).toBe('frank, waiting')
+    expect(mark(person('frank'))).toBeNull()
   })
 
   it('shows a few, and how many more', () => {
-    const people = ['a', 'b', 'c', 'd', 'e', 'f'].map((name) => ({ name }))
+    const people = ['a', 'b', 'c', 'd', 'e', 'f'].map((name) => person(name))
     expect(shown(people)).toEqual({ people: people.slice(0, 4), more: 2 })
     expect(shown(people.slice(0, 2)).more).toBe(0)
   })

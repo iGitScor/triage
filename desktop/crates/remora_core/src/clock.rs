@@ -1,8 +1,9 @@
 use chrono::{DateTime, Datelike, Duration, Local, NaiveTime, TimeZone, Timelike, Utc, Weekday};
 use serde::Serialize;
+use ts_rs::TS;
 
 /// A quick choice in the time picker. `label` is English, translated by the UI.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, TS)]
 pub struct Preset {
     pub label: &'static str,
     pub date: DateTime<Utc>,

@@ -12,6 +12,7 @@ function view(inProgress = 0): InboxView {
   return {
     layout: { inProgress: [], pinned: [], myTurn: [], waiting: [], snoozed: [], done: [] },
     counts: { inProgress, myTurn: 3, waiting: 2, snoozed: 0, done: 0 },
+    lastRefresh: null,
     errors: [],
     remarks: [],
     connected: true,
@@ -23,6 +24,7 @@ function view(inProgress = 0): InboxView {
     extras: {},
     insights: [],
     reviewPace: 1,
+    assistant: null,
   }
 }
 

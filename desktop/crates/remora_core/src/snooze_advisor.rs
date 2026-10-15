@@ -4,6 +4,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::{Arc, LazyLock};
+use ts_rs::TS;
 
 /// One snooze, kept locally to learn your habits.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -39,7 +40,7 @@ impl SnoozeRecord {
 }
 
 /// Something worth telling about the snoozed pile. Remora shows one at a time.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, TS)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum SnoozeInsight {
     /// The same item keeps coming back.

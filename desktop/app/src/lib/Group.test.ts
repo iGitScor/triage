@@ -16,10 +16,16 @@ const item = (id: string): Item => ({
   bundle,
   title: `Item ${id}`,
   context: 'ENG',
+  preview: null,
+  url: null,
+  appUrl: null,
+  author: null,
   participants: [],
   badges: [],
   date: '2027-01-15T08:00:00Z',
   needsAction: true,
+  priority: null,
+  due: null,
 })
 const group = (count: number): GroupData => ({ bundle, items: Array.from({ length: count }, (_, i) => item(`i${i}`)) })
 const menuButton = (container: HTMLElement) => container.querySelector('[aria-haspopup=menu]') as HTMLButtonElement

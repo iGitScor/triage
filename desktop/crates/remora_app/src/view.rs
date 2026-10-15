@@ -4,8 +4,9 @@ use remora_core::{host_matches, InboxItem, InboxLayout, ItemState, ReviewSize, S
 use remora_plugins::registry;
 use serde::Serialize;
 use std::collections::HashMap;
+use ts_rs::TS;
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Counts {
     pub in_progress: usize,
@@ -16,7 +17,7 @@ pub struct Counts {
 }
 
 /// What the inbox screen shows.
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct InboxView {
     pub layout: InboxLayout,
@@ -45,7 +46,7 @@ pub struct InboxView {
     pub assistant: Option<AssistantView>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct AssistantView {
     pub name: String,
@@ -60,28 +61,35 @@ pub struct AssistantView {
     pub triage: Vec<remora_core::TriageSuggestion>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
+#[ts(rename = "SnoozeInsight")]
 pub struct InsightView {
     pub id: String,
     /// For "You often put off…": a small way in (English key).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub nudge: Option<&'static str>,
     #[serde(flatten)]
     pub insight: SnoozeInsight,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct ItemExtras {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub prep: Option<PrepView>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub help: Option<HelpView>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<LinkedView>>", optional)]
     pub linked: Vec<LinkedView>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub ranking: Option<String>,
     #[serde(skip_serializing_if = "is_zero")]
+    #[ts(as = "Option<usize>", optional)]
     pub snoozed_times: usize,
 }
 
@@ -89,12 +97,13 @@ fn is_zero(n: &usize) -> bool {
     *n == 0
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct PrepView {
     pub minutes: u32,
     pub file_count: usize,
     pub lines: Option<u32>,
+    #[ts(type = "'tiny' | 'small' | 'medium' | 'large'")]
     pub size: &'static str,
     pub tests_touched: bool,
     /// English titles (the interface translates them) and a symbol name for its icons.
@@ -102,17 +111,18 @@ pub struct PrepView {
     pub top_files: Vec<remora_core::ChangedFile>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct HelpView {
-    /// "suggestReviewers" or "nudge".
+    #[ts(type = "'suggestReviewers' | 'nudge'")]
     pub kind: &'static str,
     pub people: Vec<remora_core::Person>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub days: Option<i64>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct LinkedView {
     pub id: String,

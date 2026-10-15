@@ -16,10 +16,16 @@ const item = (id: string): Item => ({
   bundle,
   title: `Item ${id}`,
   context: 'ENG',
+  preview: null,
+  url: null,
+  appUrl: null,
+  author: null,
   participants: [],
   badges: [],
   date: '2027-01-15T08:00:00Z',
   needsAction: false,
+  priority: null,
+  due: null,
 })
 
 describe('Insight card', () => {

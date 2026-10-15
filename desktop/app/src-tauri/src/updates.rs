@@ -9,10 +9,11 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::sync::{Mutex, Notify};
+use ts_rs::TS;
 
 const DAY: Duration = Duration::from_secs(24 * 60 * 60);
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, TS)]
 #[serde(rename_all = "camelCase", tag = "state")]
 pub enum UpdateStatus {
     #[default]

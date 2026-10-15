@@ -41,7 +41,8 @@ keep working; on Windows without `make`, run those directly.
   `desktop/rustfmt.toml` and `ruff.toml`, with `.editorconfig` for editors.
 - **Both apps follow the same rules.** A change to a rule, a verb or a source in `RemoraCore` / `RemoraPlugins`
   usually needs its Rust twin in `desktop/crates` (or a line in [the Windows page](docs/develop/windows.md) saying
-  it isn't there yet), with a test on each side using the same fixture.
+  it isn't there yet), with a test on each side using the same fixture. On Windows, the interface's types come from
+  the Rust structs: `make desktop-bindings` after changing what a command sends.
 - **Strings are English in the code.** Add the French to `macos/scripts/translations_fr.py`, then `make i18n`
   regenerates both apps' files. CI fails when a string the interface shows has no French: `L(…)` and SwiftUI texts
   on the Mac; `t(…)` calls (and objects marked `// t-keys`) and the Rust messages that reach the interface on

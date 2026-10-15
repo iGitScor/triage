@@ -5,8 +5,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use ts_rs::TS;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Message {
     pub code: String,

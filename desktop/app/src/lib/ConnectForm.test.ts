@@ -5,15 +5,27 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const invoke = vi.hoisted(() => vi.fn())
 vi.mock('@tauri-apps/api/core', () => ({ invoke }))
 
-import type { Account, Manifest } from './api'
+import demo from '../fixtures/demo.json'
+import type { Account, Field, Managed, Manifest } from './api'
 import ConnectForm from './ConnectForm.svelte'
 
-const openai: Manifest = {
+// What Rust sends with nothing set, filled in by each test.
+type Given<T, Empty extends keyof T> = Omit<T, Empty> & Partial<Pick<T, Empty>>
+const field = (given: Given<Field, 'help' | 'managedKey'>): Field => ({ help: null, managedKey: null, ...given })
+const source = (given: Given<Manifest, 'setupUrl' | 'logo' | 'signIn'>): Manifest => ({
+  setupUrl: null,
+  logo: null,
+  signIn: null,
+  ...given,
+})
+const policy = (given: Partial<Managed>): Managed => ({ ...demo.managed, ...given })
+
+const openai = source({
   id: 'openai',
   name: 'OpenAI-compatible',
   summary: '',
   fields: [
-    {
+    field({
       key: 'host',
       label: 'Server',
       placeholder: 'https://api.openai.com/v1',
@@ -21,45 +33,52 @@ const openai: Manifest = {
       isSecret: false,
       isOptional: false,
       help: 'The address',
-    },
+    }),
   ],
   setupSteps: [],
   setupLabel: '',
   egress: { hosts: [], description: '', externalAi: true },
-}
+})
 
-const gitlab: Manifest = {
+const gitlab = source({
   id: 'gitlab',
   name: 'GitLab',
   summary: '',
   fields: [
-    {
+    field({
       key: 'host',
       label: 'Server',
       placeholder: 'https://gitlab.com',
       defaultValue: 'https://gitlab.com',
       isSecret: false,
       isOptional: false,
-    },
-    { key: 'token', label: 'Token', placeholder: '', defaultValue: '', isSecret: true, isOptional: false },
+    }),
+    field({ key: 'token', label: 'Token', placeholder: '', defaultValue: '', isSecret: true, isOptional: false }),
   ],
   setupSteps: [],
   setupLabel: '',
   egress: { hosts: [], description: '', externalAi: false },
-}
+})
 
-const outlook: Manifest = {
+const outlook = source({
   id: 'microsoft',
   name: 'Microsoft 365',
   summary: '',
   fields: [
-    { key: 'tenant', label: 'Tenant', placeholder: '', defaultValue: 'acme.com', isSecret: false, isOptional: false },
+    field({
+      key: 'tenant',
+      label: 'Tenant',
+      placeholder: '',
+      defaultValue: 'acme.com',
+      isSecret: false,
+      isOptional: false,
+    }),
   ],
   setupSteps: [],
   setupLabel: '',
   egress: { hosts: [], description: '', externalAi: false },
   signIn: { authorizeUrl: '', tokenUrl: '', clientIdKey: 'clientId', scopes: [] },
-}
+})
 
 const inputs = (container: HTMLElement) => [...container.querySelectorAll('input')] as HTMLInputElement[]
 const submit = (container: HTMLElement) => container.querySelector('button[type=submit]') as HTMLButtonElement
@@ -162,7 +181,7 @@ describe('ConnectForm', () => {
     const { container } = render(ConnectForm, {
       props: {
         manifest: openai,
-        managed: { aiServer: 'https://acme.openai.azure.com/openai/v1', unreadable: [] },
+        managed: policy({ aiServer: 'https://acme.openai.azure.com/openai/v1' }),
         ondone: () => {},
       },
     })
@@ -180,7 +199,7 @@ describe('ConnectForm', () => {
     const { container } = render(ConnectForm, {
       props: {
         manifest: managedTenant,
-        managed: { settings: { MicrosoftTenant: 'acme.onmicrosoft.com' }, unreadable: [] },
+        managed: policy({ settings: { MicrosoftTenant: 'acme.onmicrosoft.com' } }),
         ondone: () => {},
       },
     })
@@ -192,7 +211,7 @@ describe('ConnectForm', () => {
 
   it('leaves it to the user otherwise', () => {
     const { container } = render(ConnectForm, {
-      props: { manifest: openai, managed: { unreadable: [] }, ondone: () => {} },
+      props: { manifest: openai, managed: policy({}), ondone: () => {} },
     })
     const host = container.querySelector('input') as HTMLInputElement
     expect(host.disabled).toBe(false)
@@ -207,7 +226,7 @@ describe('ConnectForm', () => {
       id: 'jira',
       fields: [
         ...gitlab.fields,
-        {
+        field({
           key: 'confluence',
           label: 'Mentions in Confluence',
           placeholder: '',
@@ -215,7 +234,7 @@ describe('ConnectForm', () => {
           isSecret: false,
           isOptional: true,
           isToggle: true,
-        },
+        }),
       ],
     }
     const ondone = vi.fn()

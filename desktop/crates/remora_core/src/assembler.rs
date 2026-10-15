@@ -2,6 +2,7 @@ use crate::{InboxBundle, InboxItem, ItemState, PersonalScore, Prioritizer, Snooz
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use std::collections::HashMap;
+use ts_rs::TS;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Placement {
@@ -12,15 +13,16 @@ pub enum Placement {
     Cleared,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, TS)]
 pub struct Group {
     pub bundle: InboxBundle,
     pub items: Vec<InboxItem>,
 }
 
 /// What the UI shows: what you're on, pinned items, your turn, waiting on others, snoozed, done.
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(rename = "Layout")]
 pub struct InboxLayout {
     /// Started by the user and not finished yet. Kept out of every other section.
     pub in_progress: Vec<InboxItem>,

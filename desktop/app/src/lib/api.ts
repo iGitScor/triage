@@ -1,308 +1,75 @@
-// Typed calls to the Rust commands (src-tauri/src/commands.rs). Field names follow serde's camelCase.
+// Typed calls to the Rust commands (src-tauri/src/commands.rs).
 import { invoke } from '@tauri-apps/api/core'
+import type {
+  Account,
+  InboxView,
+  Item,
+  Preferences,
+  Preset,
+  RecurrenceRule,
+  Settings,
+  SnoozeAdvice,
+  SnoozeMode,
+  SnoozeReason,
+  Source,
+  TriageSuggestion,
+  UpdateStatus,
+} from './bindings'
 import { CommandError, report } from './failures'
 import { type Message, say } from './i18n'
 
+// The types the commands send and take, generated from the Rust structs (bindings.ts).
+export type {
+  Account,
+  Appearance,
+  AssistantView,
+  Badge,
+  Brief,
+  Bundle,
+  ChangeSet,
+  ChangedFile,
+  CompliancePolicy,
+  Counts,
+  Egress,
+  FailureKind,
+  Field,
+  Focus,
+  Group,
+  HelpView,
+  InboxView,
+  Item,
+  ItemExtras,
+  ItemState,
+  Layout,
+  LinkedView,
+  Managed,
+  Manifest,
+  Mark,
+  Person,
+  Preferences,
+  PrepView,
+  Preset,
+  Priority,
+  Reaction,
+  Recurrence,
+  RecurrenceRule,
+  Settings,
+  SignIn,
+  Snooze,
+  SnoozeAdvice,
+  SnoozeInsight,
+  SnoozeMode,
+  SnoozeReason,
+  Source,
+  SourcesHealth,
+  TextSize,
+  Tone,
+  TrayCount,
+  TriageAction,
+  TriageSuggestion,
+  UpdateStatus,
+} from './bindings'
 export type { Message }
-
-export type Tone = 'neutral' | 'accent' | 'positive' | 'warning' | 'negative'
-export interface Person {
-  name: string
-  avatarUrl?: string | null
-  /** An on/off option, shown as a switch: "true" when on, empty when off. */
-  isToggle?: boolean
-  tone?: Tone | null
-}
-export interface Badge {
-  id: string
-  label: string
-  tone: Tone
-}
-export interface Bundle {
-  id: string
-  title: string
-  rank: number
-}
-/** An emoji reaction: Slack's name for it, how many reacted, whether you did, and a workspace emoji's picture. */
-export interface Reaction {
-  name: string
-  /** 👍, or `:name:` for a workspace's own emoji. */
-  emoji: string
-  count: number
-  mine: boolean
-  image?: string | null
-}
-
-export interface Item {
-  id: string
-  accountId: string
-  pluginId: string
-  bundle: Bundle
-  title: string
-  context: string
-  preview?: string | null
-  url?: string | null
-  author?: Person | null
-  participants: Person[]
-  badges: Badge[]
-  date: string
-  needsAction: boolean
-  priority?: string | null
-  due?: string | null
-  changes?: { files: ChangedFile[]; fileCount: number } | null
-  suggestedPeople?: Person[] | null
-  /** Reminders only. */
-  recurrence?: Recurrence | null
-  /** Emoji reactions on the message (Slack). */
-  reactions?: Reaction[] | null
-}
-export type RecurrenceRule = 'daily' | 'weekdays' | 'weekly'
-export interface Recurrence {
-  rule: RecurrenceRule
-  anchor: string
-  /** The last day, inclusive. */
-  until?: string | null
-}
-export interface Group {
-  bundle: Bundle
-  items: Item[]
-}
-export interface Layout {
-  inProgress: Item[]
-  pinned: Item[]
-  myTurn: Group[]
-  waiting: Group[]
-  snoozed: Item[]
-  done: Item[]
-}
-export interface InboxView {
-  layout: Layout
-  counts: { inProgress: number; myTurn: number; waiting: number; snoozed: number; done: number }
-  lastRefresh?: string | null
-  errors: Message[]
-  remarks: Message[]
-  connected: boolean
-  demo: boolean
-  accountNames: Record<string, string>
-  states: Record<string, ItemState>
-  /** What the footer says about the sources, and the accounts to reconnect by name. */
-  health: SourcesHealth
-  reconnectNames: string[]
-  /** Review prep, waiting help, links, ranking and snooze counts by item id; snooze insights; review pace. */
-  extras: Record<string, ItemExtras>
-  insights: SnoozeInsight[]
-  reviewPace: number
-  /** The assistant, when one is connected and allowed. */
-  assistant?: AssistantView | null
-}
-export interface Brief {
-  summary: string
-  focus: { id: string; reason: string }[]
-  createdAt: string
-}
-export type TriageAction = 'keep' | 'reschedule' | 'done' | 'now'
-export interface TriageSuggestion {
-  id: string
-  action: TriageAction
-  until?: string | null
-  reason: string
-}
-export interface AssistantView {
-  name: string
-  wholeInbox: boolean
-  brief?: Brief | null
-  briefFresh: boolean
-  summaries: Record<string, string>
-  triage: TriageSuggestion[]
-}
-export interface ChangedFile {
-  path: string
-  additions?: number | null
-  deletions?: number | null
-}
-export interface PrepView {
-  minutes: number
-  fileCount: number
-  lines?: number | null
-  size: 'tiny' | 'small' | 'medium' | 'large'
-  testsTouched: boolean
-  flags: [string, string][]
-  topFiles: ChangedFile[]
-}
-export interface HelpView {
-  kind: 'suggestReviewers' | 'nudge'
-  people: Person[]
-  days?: number
-}
-export interface LinkedView {
-  id: string
-  title: string
-  context: string
-  pluginId: string
-}
-export interface ItemExtras {
-  prep?: PrepView
-  help?: HelpView
-  linked?: LinkedView[]
-  ranking?: string
-  snoozedTimes?: number
-}
-export type SnoozeReason = 'waiting' | 'noTime' | 'focus' | 'notUrgent' | 'motivation'
-export type SnoozeInsight = { id: string; nudge?: string | null } & (
-  | { kind: 'loop'; item: Item; times: number }
-  | { kind: 'avoidance'; context: string; times: number; items: Item[] }
-  | { kind: 'pileUp'; at: string; items: Item[] }
-  | { kind: 'cluster'; items: Item[] }
-  | { kind: 'stale'; items: Item[] }
-)
-export interface SnoozeAdvice {
-  returns: Record<SnoozeReason, string>
-  usual?: SnoozeReason | null
-  nudge?: string | null
-}
-export type SourcesHealth =
-  | { state: 'fine' }
-  | { state: 'offline' }
-  | { state: 'reconnect'; accounts: string[] }
-  | { state: 'failing'; count: number }
-export type FailureKind = 'offline' | 'unreachable' | 'auth' | 'rateLimited' | 'other'
-export interface ItemState {
-  pinned?: boolean
-  done?: { at: string } | null
-  snooze?: { until: string; mode: SnoozeMode; reason?: SnoozeReason | null } | null
-  remindedAt?: string | null
-  startedAt?: string | null
-}
-export interface Field {
-  key: string
-  label: string
-  placeholder: string
-  defaultValue: string
-  isSecret: boolean
-  isOptional: boolean
-  help?: string | null
-  /** The policy value that sets this field for the organization (`MicrosoftTenant`), locking it. */
-  managedKey?: string | null
-  /** An on/off option, shown as a switch: "true" when on, empty when off. */
-  isToggle?: boolean
-}
-export interface Manifest {
-  id: string
-  name: string
-  summary: string
-  fields: Field[]
-  setupSteps: string[]
-  setupLabel: string
-  setupUrl?: string | null
-  egress: { hosts: string[]; description: string; externalAi: boolean }
-  logo?: string | null
-  /** Set when the account signs in through the browser instead of pasting a token. */
-  signIn?: { authorizeUrl: string; tokenUrl: string; clientIdKey: string; scopes: string[] } | null
-}
-export interface Source {
-  manifest: Manifest
-  refusal?: string | null
-  assistant: boolean
-}
-export interface Account {
-  id: string
-  pluginId: string
-  name?: string | null
-  identity?: string | null
-  settings: Record<string, string>
-  pluginName: string
-  hosts: string[]
-  egress: string
-  allowed: boolean
-  /** Why it's blocked, when it is. */
-  refusal?: string | null
-  error?: Message | null
-  errorKind?: FailureKind | null
-  remarks: Message[]
-}
-export type TrayCount = 'waitingOnMe' | 'everything' | 'hidden'
-export type Appearance = 'system' | 'light' | 'dark'
-export interface Preferences {
-  refreshMinutes: number
-  trayCount: TrayCount
-  focusWhileInProgress: boolean
-  notifyArrivals: boolean
-  notifyStatusChanges: boolean
-  /** IDEA-26: they wait for the next of `notificationTimes`, then come grouped. */
-  batchNotifications: boolean
-  notificationTimes: string
-  hiddenContentPlugins: string[]
-  wakeOnActivity: boolean
-  appearance: Appearance
-  /** Zooms the window's content (A11Y-25), as the Mac's Text size. */
-  textSize: 'standard' | 'large' | 'larger'
-  openInApps: boolean
-  allowedPlugins?: string[] | null
-  allowExternalAi: boolean
-  allowRemoteImages: boolean
-  checkForUpdates: boolean
-  wholeInboxBrief: boolean
-  briefCacheMinutes: number
-  assistantExcludedSources: string[]
-  /** The first-run tip was dismissed. */
-  welcomed: boolean
-}
-export interface Managed {
-  allowedPlugins?: string[] | null
-  allowExternalAi?: boolean | null
-  allowRemoteImages?: boolean | null
-  automaticUpdates?: boolean | null
-  /** AI-23: URL prefixes the OpenAI-compatible assistant may use. */
-  allowedAiServers?: string[] | null
-  /** AI-23: its server, set by the organization and locked in Settings. */
-  aiServer?: string | null
-  /** Sources' settings by policy name (`Field.managedKey`), locked in the connect form. */
-  settings?: Record<string, string>
-  allowLocalAi?: boolean | null
-  /** SEC-29: sources the organization keeps from the assistant, locked off in Settings. */
-  aiExcludedSources?: string[] | null
-  /** SEC-29: the models the assistant may use. */
-  allowedAiModels?: string[] | null
-  /** Sources whose notifications hide what was written, on top of the user's; `*` for every source. */
-  hiddenContentSources?: string[] | null
-  /** The refresh interval, 1 to 60 minutes. */
-  refreshMinutes?: number | null
-  openInApps?: boolean | null
-  /** Where Claude Code is, locked in Settings; empty when it can't be read. */
-  claudeCodePath?: string | null
-  /** Policy values present but unreadable, applied as "deny". */
-  unreadable: string[]
-}
-export interface Settings {
-  preferences: Preferences
-  managed: Managed
-  isManaged: boolean
-  autostart: boolean
-  version: string
-  dataDir: string
-  shortcut: string
-  /** False when another app holds the reminder shortcut. */
-  shortcutRegistered: boolean
-  /** A Wayland session (Linux): no app can listen for a shortcut everywhere. */
-  wayland: boolean
-  /** Windows won't show Remora's notifications: off for Remora, for every app, or by the organization. */
-  notificationsOff?: 'app' | 'all' | 'policy' | null
-}
-/** Updates, as `updates.rs` reports them. */
-export type UpdateStatus =
-  | { state: 'idle' }
-  | { state: 'checking' }
-  | { state: 'upToDate' }
-  | { state: 'available'; version: string; notes?: string | null }
-  | { state: 'installing'; version: string }
-  | { state: 'failed'; message: string }
-  | { state: 'managed' }
-  | { state: 'unsupported' }
-export interface Preset {
-  label: string
-  date: string
-}
-export type SnoozeMode = 'hide' | 'remind'
 
 /** Calls a Rust command. A failure is shown to the user (translated) unless `quiet`, then rethrown, marked as shown. */
 function isMessage(value: unknown): value is Message {

@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { selection } from './assistant'
 import type { TriageSuggestion } from './api'
 
-const s = (id: string, action: TriageSuggestion['action']): TriageSuggestion => ({ id, action, reason: '' })
+const s = (id: string, action: TriageSuggestion['action']): TriageSuggestion => ({
+  id,
+  action,
+  until: null,
+  reason: '',
+})
 
 describe('triage selection', () => {
   it('preselects reschedules only, and never applies Keep', () => {

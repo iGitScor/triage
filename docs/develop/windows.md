@@ -20,7 +20,7 @@ GlobalShortcuts portal (KDE Plasma, GNOME 48+), or else a system shortcut runnin
 | `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 127 |
 | `crates/remora_plugins` | GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 162 |
 | `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 98 |
-| `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 4 |
+| `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 5 |
 | `app/src` | The Svelte interface, in English and French | type-checked, 68 |
 
 ## What Windows has, and what it doesn’t yet
@@ -87,3 +87,7 @@ npm run tauri build                # the installer (on Windows)
 ```
 
 CI runs the type check, clippy with warnings as errors, every test and the installer build on `windows-latest`.
+
+The interface's types (`app/src/lib/bindings.ts`) are generated from the Rust structs with
+[ts-rs](https://github.com/Aleph-Alpha/ts-rs): after changing what a command sends, run `make desktop-bindings`. A test
+fails while the file is stale, and the type check also reads the preview's fixture (`make desktop-fixture`) against them.

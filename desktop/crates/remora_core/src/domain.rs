@@ -1,10 +1,12 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 /// Anything that deserves attention: a review request, a Slack mention, a Linear issue, a reminder.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(rename = "Item")]
 pub struct InboxItem {
     pub id: String,
     pub account_id: String,
@@ -51,7 +53,7 @@ pub struct InboxItem {
 }
 
 /// What a pull or merge request changes: paths and line counts only.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangeSet {
     pub files: Vec<ChangedFile>,
@@ -66,7 +68,7 @@ impl ChangeSet {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangedFile {
     pub path: String,
@@ -100,7 +102,7 @@ impl InboxItem {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Person {
     pub name: String,
@@ -117,7 +119,7 @@ impl Person {
 }
 
 /// A status chip. When `notify` is set, its first appearance on an item triggers a notification.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Badge {
     pub id: String,
@@ -139,7 +141,7 @@ impl Badge {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Tone {
     Accent,
@@ -149,7 +151,7 @@ pub enum Tone {
     Neutral,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Priority {
     Low,
@@ -160,7 +162,8 @@ pub enum Priority {
 
 /// Items are grouped by what they ask of you (verbs), not by where they come from.
 /// Plugins report a *kind*; `VerbClassifier` moves items to a *verb*.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(rename = "Bundle")]
 pub struct InboxBundle {
     pub id: String,
     pub title: String,
@@ -234,7 +237,7 @@ impl InboxBundle {
 }
 
 /// What the user decided about an item. Kept locally, never sent to the source.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ItemState {
     pub pinned: bool,
@@ -243,6 +246,7 @@ pub struct ItemState {
     pub reminded_at: Option<DateTime<Utc>>,
     /// Set while the user is working on it: the item leaves the inbox for the In progress view.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub started_at: Option<DateTime<Utc>>,
 }
 
@@ -256,7 +260,7 @@ impl ItemState {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Mark {
     pub at: DateTime<Utc>,
@@ -265,7 +269,7 @@ pub struct Mark {
     pub cleared_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Snooze {
     pub until: DateTime<Utc>,
@@ -280,14 +284,14 @@ pub struct Snooze {
     pub until_news: Option<bool>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum SnoozeMode {
     Hide,
     Remind,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub enum SnoozeReason {
     Waiting,
@@ -309,7 +313,7 @@ impl SnoozeReason {
 }
 
 /// One connected instance of a plugin. Secrets live in the credential store, never here.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
     pub id: String,
@@ -323,7 +327,7 @@ pub struct Account {
 }
 
 /// Where a plugin's data goes. Declared by every plugin and enforced by the guarded HTTP client.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Egress {
     pub hosts: Vec<String>,
@@ -331,8 +335,9 @@ pub struct Egress {
     pub external_ai: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(rename = "Field")]
 pub struct ConfigField {
     pub key: String,
     pub label: String,
@@ -395,8 +400,9 @@ impl ConfigField {
 }
 
 /// Describes a plugin and the settings it needs. The settings UI is generated from it.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(rename = "Manifest")]
 pub struct PluginManifest {
     pub id: String,
     pub name: String,
@@ -416,7 +422,7 @@ pub struct PluginManifest {
 
 /// Signing in through the browser: OAuth 2's authorization code with PKCE, for an app that keeps no secret, the
 /// answer coming back to this computer. `{key}` in the URLs is replaced by that setting of the account (a tenant).
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct SignIn {
     pub authorize_url: String,

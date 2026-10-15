@@ -2,6 +2,7 @@ use crate::Preferences;
 use remora_core::{AssistantPolicy, CompliancePolicy};
 use serde::Serialize;
 use std::collections::{BTreeMap, HashSet};
+use ts_rs::TS;
 
 /// The organization's policy, from `HKLM\SOFTWARE\Policies\Remora` (Group Policy or Intune), and
 /// `HKCU\SOFTWARE\Policies\Remora` for user-scoped policies: a value set in HKLM wins. On Linux, from
@@ -20,7 +21,7 @@ use std::collections::{BTreeMap, HashSet};
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
 /// plugin, no external AI, no remote images) and listed in `unreadable`, so Settings can say so. An admin who made a
 /// typing mistake gets a locked-down app and a message, never a silently open one.
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Managed {
     pub allowed_plugins: Option<Vec<String>>,

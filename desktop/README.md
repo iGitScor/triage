@@ -8,7 +8,7 @@ Windows and Linux: a Rust core, a Svelte interface on WebView2 (WebKitGTK on Lin
 | `crates/remora_core` | Domain and rules, ported from the macOS `RemoraCore`: verbs, My turn / Waiting, prioritizer, Done and snooze rules, notifications, snooze clock and advisor, review prep, waiting assistant, ranking, links, the assistant's policy, compliance policy | 127 |
 | `crates/remora_plugins` | GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365; the assistant through Claude Code, the Claude API or an OpenAI-compatible server; an HTTP client limited to each plugin's declared hosts | 162 |
 | `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\fr.igitscor.remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 98 |
-| `app/src-tauri` | The tray icon and its popup, notifications, start with Windows, the Ctrl+Alt+R reminder shortcut, the commands the interface calls | 4 |
+| `app/src-tauri` | The tray icon and its popup, notifications, start with Windows, the Ctrl+Alt+R reminder shortcut, the commands the interface calls | 5 |
 | `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked, 68 |
 
 Not yet on Windows: sorting by meaning (messages are sorted with keyword rules only; without one, a message goes
@@ -44,6 +44,8 @@ npx tauri build --bundles appimage,deb   # the AppImage and the .deb (on Linux)
 `cargo test --workspace` also builds the tray app: build the interface first (`npm run build` in `app/`).
 `src/fixtures/demo.json`, used by the preview, comes from `make desktop-fixture` (the demo inbox as the app sends it); a
 test fails when their fields differ.
+The interface's types (`app/src/lib/bindings.ts`) come from the Rust structs (ts-rs): `make desktop-bindings` writes
+them again after a change, and a test fails while they are stale.
 
 CI ([windows.yml](../.github/workflows/desktop.yml)) runs all of it on `windows-latest` and `ubuntu-24.04` and keeps the
 installer, the AppImage and the .deb as artifacts; [release.yml](../.github/workflows/release.yml) attaches

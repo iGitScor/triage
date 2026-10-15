@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_opener::OpenerExt;
+use ts_rs::TS;
 
 /// Errors reach the interface as a code and its values, translated there by code (`MESSAGES` in i18n.ts).
 type Result<T> = std::result::Result<T, Message>;
@@ -362,8 +363,9 @@ pub async fn disconnect(app: AppHandle, state: State<'_, AppState>, id: String) 
     Ok(())
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(rename = "Settings")]
 pub struct SettingsView {
     preferences: Preferences,
     managed: Managed,
@@ -378,6 +380,7 @@ pub struct SettingsView {
     /// A Wayland session: only the desktop's portal can bind a shortcut everywhere.
     wayland: bool,
     /// Windows won't show Remora's notifications: `app` (off for Remora), `all` (off for every app) or `policy`.
+    #[ts(type = "'app' | 'all' | 'policy' | null")]
     notifications_off: Option<&'static str>,
 }
 
@@ -474,10 +477,11 @@ pub fn quit(app: AppHandle) {
 
 // MARK: Snooze reasons and insights, review sessions, the waiting assistant
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct SnoozeAdvice {
     /// When to come back for each reason, from your habits.
+    #[ts(type = "Record<SnoozeReason, string>")]
     pub returns: HashMap<String, DateTime<Utc>>,
     /// The reason usually given in this repo or channel, preselected.
     pub usual: Option<SnoozeReason>,

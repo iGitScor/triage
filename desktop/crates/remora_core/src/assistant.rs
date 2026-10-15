@@ -5,9 +5,10 @@ use crate::{InboxItem, Snooze};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use ts_rs::TS;
 
 /// A daily-brief style triage of the inbox.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Brief {
     pub summary: String,
@@ -20,7 +21,7 @@ pub struct Brief {
 }
 
 /// One item to handle first, and why.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Focus {
     pub id: String,
@@ -95,7 +96,7 @@ pub struct SnoozedItem {
 }
 
 /// What the assistant proposes for one snoozed item.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct TriageSuggestion {
     pub id: String,
@@ -105,7 +106,7 @@ pub struct TriageSuggestion {
     pub reason: String,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum TriageAction {
     Keep,

@@ -2,6 +2,7 @@ use crate::PluginManifest;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
+use ts_rs::TS;
 
 /// The assistant whose server the user (or the organization) chooses: the OpenAI-compatible one.
 pub const AI_SERVER_PLUGIN: &str = "openai";
@@ -13,7 +14,7 @@ pub const SERVER_NOT_ALLOWED: &str = "Your organization doesn’t allow this AI 
 pub const LOCAL_AI_NOT_ALLOWED: &str = "Your organization doesn’t allow an AI server on this computer.";
 
 /// What may leave the computer. Set by the user, or locked by the organization (Group Policy).
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct CompliancePolicy {
     /// Plugins that may be connected. None means every plugin.

@@ -2,8 +2,9 @@
 //! macOS app (`SourceFailure.swift`).
 
 use serde::Serialize;
+use ts_rs::TS;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub enum FailureKind {
     /// No network at all: every source failed to connect in the same refresh.
@@ -39,7 +40,7 @@ impl Failure {
 }
 
 /// What the inbox footer says about the sources, most important first.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase", tag = "state")]
 pub enum SourcesHealth {
     Fine,

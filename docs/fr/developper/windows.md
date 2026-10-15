@@ -22,7 +22,7 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 | `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 127 |
 | `crates/remora_plugins` | GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365 ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 162 |
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 98 |
-| `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 4 |
+| `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 5 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 68 |
 
 ## Ce que Windows a, et ce qu’il n’a pas encore
@@ -89,3 +89,8 @@ npm run tauri build                # the installer (on Windows)
 
 La CI lance la vérification de types, clippy avec les avertissements traités comme des erreurs, tous les tests et
 la construction de l’installeur sur `windows-latest`.
+
+Les types de l’interface (`app/src/lib/bindings.ts`) sont générés depuis les structures Rust avec
+[ts-rs](https://github.com/Aleph-Alpha/ts-rs) : après avoir changé ce qu’envoie une commande, lancez
+`make desktop-bindings`. Un test échoue tant que le fichier n’est pas à jour, et la vérification de types confronte aussi
+la fixture de l’aperçu (`make desktop-fixture`) à ces types.

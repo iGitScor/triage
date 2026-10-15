@@ -1,6 +1,7 @@
 // English is the source language; French comes from macos/scripts/translations_fr.py (npm run i18n).
 // Keys keep the macOS placeholders: %@ for text, %d for numbers, filled in order.
 import fr from '../i18n/fr.json'
+import type { Message } from './bindings'
 
 /** The language the tray and notifications use, set by Rust before this runs; the browser's only outside the app. */
 const chosen = (globalThis as { __REMORA_LANG__?: string }).__REMORA_LANG__ ?? navigator.language ?? 'en'
@@ -23,7 +24,7 @@ export function t(key: string, ...args: (string | number)[]): string {
 }
 
 /** What Rust says to the user: a stable code and its values, with the English (`Message` in remora_core). */
-export type Message = { code: string; args: string[]; text: string }
+export type { Message }
 
 /**
  * Each code's English, the key its French is found by. Wording lives here, not in the Rust that raised it, so

@@ -16,6 +16,7 @@ use remora_plugins::{
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use ts_rs::TS;
 
 /// What a browser sign-in needs (`Inbox::prepare_sign_in`).
 pub struct SignInPlan {
@@ -58,8 +59,9 @@ pub async fn run(jobs: Vec<FetchJob>) -> Vec<FetchResult> {
 }
 
 /// A source as the Settings screen lists it: its manifest, and why it can't be used, if it can't.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(rename = "Source")]
 pub struct SourceInfo {
     pub manifest: PluginManifest,
     pub refusal: Option<String>,
@@ -73,8 +75,9 @@ fn any_manifest(id: &str) -> Option<PluginManifest> {
 }
 
 /// A connected account with what Settings → Privacy shows about it.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(rename = "Account")]
 pub struct AccountInfo {
     #[serde(flatten)]
     pub account: Account,
