@@ -162,7 +162,7 @@ fn extras(inbox: &Inbox, item: &InboxItem, now: DateTime<Utc>, tr: &dyn Fn(&str)
             })
             .collect(),
         ranking: inbox.ranking_reason(item, tr),
-        snoozed_times: if inbox.states.get(&item.id).and_then(|s| s.snooze.as_ref()).is_some() {
+        snoozed_times: if inbox.states().get(&item.id).and_then(|s| s.snooze.as_ref()).is_some() {
             inbox.snooze_count(&item.id, now)
         } else {
             0
@@ -206,11 +206,11 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
     layout.snoozed.iter_mut().chain(layout.done.iter_mut()).for_each(&strip);
 
     let mut per_plugin: HashMap<&str, usize> = HashMap::new();
-    for account in &inbox.accounts {
+    for account in inbox.accounts() {
         *per_plugin.entry(account.plugin_id.as_str()).or_default() += 1;
     }
     let account_names = inbox
-        .accounts
+        .accounts()
         .iter()
         .filter(|a| per_plugin[a.plugin_id.as_str()] > 1)
         .map(|a| (a.id.clone(), a.name.clone().or_else(|| a.identity.clone()).unwrap_or_else(|| a.plugin_id.clone())))
@@ -220,7 +220,7 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
     let reconnect_names = match &health {
         remora_core::SourcesHealth::Reconnect { accounts } => accounts
             .iter()
-            .filter_map(|id| inbox.accounts.iter().find(|a| &a.id == id))
+            .filter_map(|id| inbox.accounts().iter().find(|a| &a.id == id))
             .map(|a| {
                 a.name
                     .clone()
@@ -263,23 +263,23 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
                     .map(|m| m.name)
                     .unwrap_or_default()
             }),
-            whole_inbox: inbox.preferences.whole_inbox_brief,
-            brief: inbox.brief.clone(),
+            whole_inbox: inbox.preferences().whole_inbox_brief,
+            brief: inbox.brief().cloned(),
             brief_fresh: inbox.brief_is_fresh(now),
-            summaries: inbox.bundle_summaries.iter().map(|(id, s)| (id.clone(), s.text.clone())).collect(),
-            triage: inbox.triage.clone(),
+            summaries: inbox.bundle_summaries().iter().map(|(id, s)| (id.clone(), s.text.clone())).collect(),
+            triage: inbox.triage().to_vec(),
         }),
         layout,
         counts,
-        last_refresh: inbox.last_refresh,
+        last_refresh: inbox.last_refresh(),
         errors: inbox.errors(),
         health,
         reconnect_names,
         remarks: inbox.remarks(),
-        connected: !inbox.accounts.is_empty(),
+        connected: !inbox.accounts().is_empty(),
         demo,
         account_names,
-        states: inbox.states.clone(),
+        states: inbox.states().clone(),
     }
 }
 
@@ -289,7 +289,7 @@ fn image_hosts(inbox: &Inbox) -> HashMap<String, Vec<String>> {
         return HashMap::new();
     }
     inbox
-        .accounts
+        .accounts()
         .iter()
         .filter_map(|a| {
             let mut hosts = registry::allowed_hosts(a, &registry::manifest(&a.plugin_id)?);
@@ -336,7 +336,7 @@ mod tests {
     fn inbox(plugin: &str, settings: &[(&str, &str)]) -> Inbox {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
         let settings = settings.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
-        inbox.accounts =
+        *inbox.accounts_mut() =
             vec![Account { id: "a1".into(), plugin_id: plugin.into(), name: None, settings, identity: None }];
         inbox
     }
@@ -359,7 +359,7 @@ mod tests {
         assert!(!image_allowed(&github, "https://emoji.slack-edge.com/T1/approved/abc.png"));
 
         let mut off = gitlab;
-        off.preferences = Preferences { allow_remote_images: false, ..Preferences::default() };
+        *off.arrange().0 = Preferences { allow_remote_images: false, ..Preferences::default() };
         assert!(!image_allowed(&off, "https://gitlab.acme.io/a.png"), "nothing while images are off");
     }
 }

@@ -196,7 +196,7 @@ pub async fn connect(
             let inbox = state.inbox.lock().await;
             let (account, plugin) =
                 inbox.prepare_assistant_connect(&plugin_id, name, settings, &secrets, state.http.clone(), language)?;
-            (account, plugin, inbox.preferences.whole_inbox_brief, inbox.brief_items(Utc::now()))
+            (account, plugin, inbox.preferences().whole_inbox_brief, inbox.brief_items(Utc::now()))
         };
         let brief = if whole_inbox {
             Some(plugin.brief(&items, Utc::now()).await?)
@@ -228,7 +228,7 @@ pub async fn reconnect(
     let assistant = {
         let inbox = state.inbox.lock().await;
         let is_assistant =
-            inbox.accounts.iter().any(|a| a.id == account_id && remora_plugins::claude::is_assistant(&a.plugin_id));
+            inbox.accounts().iter().any(|a| a.id == account_id && remora_plugins::claude::is_assistant(&a.plugin_id));
         if is_assistant {
             let language = crate::i18n::translator().lang();
             Some(inbox.prepare_assistant_reconnect(&account_id, &secrets, state.http.clone(), language)?)
@@ -328,9 +328,9 @@ pub struct SettingsView {
 pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<SettingsView> {
     let inbox = state.inbox.lock().await;
     Ok(SettingsView {
-        preferences: inbox.preferences.clone(),
-        managed: inbox.managed.clone(),
-        is_managed: inbox.managed.is_managed(),
+        preferences: inbox.preferences().clone(),
+        managed: inbox.managed().clone(),
+        is_managed: inbox.managed().is_managed(),
         policy: inbox.policy(),
         autostart: app.autolaunch().is_enabled().unwrap_or(false),
         version: env!("CARGO_PKG_VERSION"),
@@ -353,9 +353,9 @@ pub async fn set_preferences(app: AppHandle, state: State<'_, AppState>, prefere
     }
     let (interval_changed, updates_turned_on) = {
         let mut inbox = state.inbox.lock().await;
-        let was = inbox.managed.checks_for_updates(&inbox.preferences);
+        let was = inbox.checks_for_updates();
         let interval_changed = inbox.set_preferences(preferences);
-        (interval_changed, !was && inbox.managed.checks_for_updates(&inbox.preferences))
+        (interval_changed, !was && inbox.checks_for_updates())
     };
     if interval_changed {
         state.refresh_now.notify_one();
@@ -505,7 +505,7 @@ pub async fn make_brief(app: AppHandle, state: State<'_, AppState>, force: bool)
     let language = crate::i18n::translator().lang();
     let (from, plugin, items) = {
         let mut inbox = state.inbox.lock().await;
-        if !inbox.preferences.whole_inbox_brief || (!force && inbox.brief_is_fresh(Utc::now())) {
+        if !inbox.preferences().whole_inbox_brief || (!force && inbox.brief_is_fresh(Utc::now())) {
             return Ok(());
         }
         let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
@@ -572,7 +572,7 @@ pub async fn apply_triage(
 
 #[tauri::command]
 pub async fn discard_triage(app: AppHandle, state: State<'_, AppState>) -> Result<()> {
-    state.inbox.lock().await.triage.clear();
+    state.inbox.lock().await.discard_triage();
     changed(&app).await;
     Ok(())
 }

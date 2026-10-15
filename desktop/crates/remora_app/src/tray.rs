@@ -77,14 +77,14 @@ impl TraySummary {
     pub fn of(inbox: &Inbox, now: DateTime<Utc>) -> Self {
         let layout = inbox.layout(now, "");
         let running = layout.in_progress.len();
-        let since = layout.in_progress.first().and_then(|i| inbox.states.get(&i.id)).and_then(|s| s.started_at);
+        let since = layout.in_progress.first().and_then(|i| inbox.states().get(&i.id)).and_then(|s| s.started_at);
         let task = (running == 1).then(|| (layout.in_progress[0].id.clone(), layout.in_progress[0].title.clone()));
-        let (count, show_count) = match inbox.preferences.tray_count {
+        let (count, show_count) = match inbox.preferences().tray_count {
             TrayCount::WaitingOnMe => (layout.action_count(), true),
             TrayCount::Everything => (layout.my_turn_items().count() + layout.waiting_count(), true),
             TrayCount::Hidden => (layout.action_count(), false),
         };
-        let focused = inbox.preferences.focus_while_in_progress && running > 0;
+        let focused = inbox.preferences().focus_while_in_progress && running > 0;
         TraySummary { count, show_count, running, since, focused, task }
     }
 
@@ -262,7 +262,7 @@ mod tests {
         assert_eq!(summary.tooltip(now(), &Translator::english()), "Remora · 2 need you");
         assert_eq!(summary.icon(), TrayImage::Attention);
 
-        inbox.preferences.tray_count = TrayCount::Hidden;
+        inbox.arrange().0.tray_count = TrayCount::Hidden;
         let hidden = TraySummary::of(&inbox, now());
         assert_eq!(hidden.tooltip(now(), &Translator::english()), "Remora");
         assert_eq!(hidden.icon(), TrayImage::Quiet);
@@ -277,7 +277,7 @@ mod tests {
         assert_eq!(summary.icon(), TrayImage::Focus);
         assert_eq!(summary.tooltip(now(), &Translator::english()), "Remora · 1 in progress (2 h 05)");
 
-        inbox.preferences.focus_while_in_progress = false;
+        inbox.arrange().0.focus_while_in_progress = false;
         let unfocused = TraySummary::of(&inbox, now());
         assert_eq!(unfocused.icon(), TrayImage::Attention);
         assert_eq!(unfocused.tooltip(now(), &Translator::english()), "Remora · 1 in progress (2 h 05) · 1 need you");

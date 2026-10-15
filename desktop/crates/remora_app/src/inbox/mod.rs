@@ -1,20 +1,39 @@
-use crate::session::AccountSession;
-use crate::{JsonStore, Managed, Preferences, Secrets, Vault};
+//! The inbox: one facade over the services it is made of, as on macOS (`InboxModel`).
+//!
+//! - `accounts.rs`, the accounts service: the accounts, their tokens and sessions; connecting, reconnecting,
+//!   disconnecting.
+//! - `sync.rs`, the sync engine: fetch jobs, applying their results, slow-downs, notifications.
+//! - `snoozes.rs`, the snooze service: the history, the advisor, insights.
+//! - `assistant.rs`, the assistant coordinator: the brief, summaries and triage.
+//! - `persistence.rs`, the persistence port: the files each of them saves.
+//!
+//! This file holds what they share (the items, their states, reminders, preferences and the policy), the actions on
+//! items, and Undo. Fields are private: a change goes through a method that saves it and applies the policy.
+
+mod accounts;
+mod assistant;
+mod persistence;
+mod snoozes;
+mod sync;
+
+pub use accounts::AccountsService;
+pub use assistant::AssistantCoordinator;
+pub use persistence::Persistence;
+pub use snoozes::SnoozeService;
+pub use sync::SyncEngine;
+
+use crate::{JsonStore, Managed, Preferences, Vault};
 use chrono::{DateTime, Utc};
+use persistence::{ACCOUNTS, BRIEF, CACHE, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES, SUMMARIES};
 use remora_core::{
-    grouped, host_matches, is_due, notices, parse_times, waits, while_closed, Account, ActionOutcome, ActionRecord,
-    AssistantPolicy, Backoff, Brief, BundleSummary, CompliancePolicy, Failure, FailureKind, InboxAssembler,
-    InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder, Mark, Message, Notice, NoticeKind, PersonalRanker,
-    PluginManifest, Recurrence, RecurrenceRule, ReviewPace, ReviewPrep, ReviewTiming, SignIn, Snooze, SnoozeAdvisor,
-    SnoozeInsight, SnoozeMode, SnoozeReason, SnoozeRecord, SnoozedItem, SourcesHealth, TriageAction, TriageSuggestion,
-    VerbClassifier, WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
+    Account, ActionOutcome, ActionRecord, CompliancePolicy, FailureKind, InboxAssembler, InboxBundle, InboxItem,
+    InboxLayout, ItemState, LinkFinder, Mark, Message, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule,
+    ReviewPace, ReviewPrep, ReviewTiming, SignIn, Snooze, SnoozeMode, SnoozeReason, SourcesHealth, VerbClassifier,
+    WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
 };
-use remora_plugins::{
-    claude, links, oauth, registry, AssistantPlugin, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError,
-    Request, SourcePlugin, SourceSnapshot,
-};
+use remora_plugins::{claude, links, registry, AssistantPlugin, HttpClient, PluginError, SourcePlugin, SourceSnapshot};
 use serde::Serialize;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use ts_rs::TS;
 
@@ -26,21 +45,6 @@ pub struct SignInPlan {
     /// Limited to the plugin's hosts.
     pub http: Arc<dyn HttpClient>,
 }
-
-const ACCOUNTS: &str = "accounts";
-const CACHE: &str = "cache";
-const STATES: &str = "states";
-const REMINDERS: &str = "reminders";
-const PREFERENCES: &str = "preferences";
-/// Every snooze, kept on this computer to learn habits and spot patterns.
-const HISTORY: &str = "snooze-history";
-/// What you handle quickly or put off, to rank by your habits.
-const LEARNING: &str = "learning";
-/// Timed reviews against their estimate, for review prep's pace.
-const REVIEW_TIMES: &str = "review-times";
-/// What the assistant wrote: fetched again when stale, deleted when AI is no longer allowed.
-const BRIEF: &str = "brief";
-const SUMMARIES: &str = "bundle-summaries";
 
 /// One account's fetch, built under the lock and run without it.
 pub struct FetchJob {
@@ -107,77 +111,50 @@ pub const CLAUDE_CODE_PATH_UNREADABLE: &str =
 
 /// Everything the inbox knows, and every action on it. Ported from the macOS app's `InboxModel`.
 pub struct Inbox {
-    store: Option<JsonStore>,
-    vault: Arc<dyn Vault>,
-    pub managed: Managed,
-    pub preferences: Preferences,
-    pub accounts: Vec<Account>,
+    persistence: Persistence,
+    managed: Managed,
+    preferences: Preferences,
+    accounts: AccountsService,
+    sync: SyncEngine,
+    snoozes: SnoozeService,
+    assistant: AssistantCoordinator,
     items: HashMap<String, Vec<InboxItem>>,
-    pub states: HashMap<String, ItemState>,
+    states: HashMap<String, ItemState>,
     reminders: Vec<InboxItem>,
-    /// Every snooze with its reason and, once done, when: the advisor's input.
-    snooze_history: Vec<SnoozeRecord>,
-    /// Insights the user set aside ("Not now"), by id, for this session.
-    dismissed_insights: HashSet<String>,
     action_records: Vec<ActionRecord>,
     ranker: PersonalRanker,
     review_timings: Vec<ReviewTiming>,
     /// Item id → items from other tools about the same thing, worked out when the items change.
     links: HashMap<String, Vec<String>>,
-    pub brief: Option<Brief>,
-    pub bundle_summaries: HashMap<String, BundleSummary>,
-    /// Claude's proposal for the snoozed pile, until applied or discarded.
-    pub triage: Vec<TriageSuggestion>,
-    /// Each failing account's last failure, by kind.
-    errors: HashMap<String, Failure>,
-    /// What each account's last fetch said besides its items.
-    remarks: HashMap<String, Vec<Message>>,
-    /// Accounts that failed lately, and when to ask them again.
-    backoff: HashMap<String, Backoff>,
-    synced: HashSet<String>,
-    /// Notifications waiting for the next set time (IDEA-26), and when the last batch went out.
-    waiting: Vec<Notice>,
-    batched_at: DateTime<Utc>,
-    secrets: Option<Secrets>,
-    pub last_refresh: Option<DateTime<Utc>>,
     /// The states and reminders before the last Done or Clear all, until the next one.
     undo_point: Option<(HashMap<String, ItemState>, Vec<InboxItem>)>,
-    /// Per account, in memory: what a refresh may reuse from the last one (PERF-09).
-    sessions: HashMap<String, AccountSession>,
 }
 
 impl Inbox {
     /// The real inbox, from its files and the credential store.
     pub fn open(store: JsonStore, vault: Arc<dyn Vault>, managed: Managed) -> Self {
+        let files = Persistence::new(Some(store));
         let mut inbox = Inbox {
-            preferences: store.load(PREFERENCES).unwrap_or_default(),
-            accounts: store.load(ACCOUNTS).unwrap_or_default(),
+            preferences: files.load(PREFERENCES).unwrap_or_default(),
+            accounts: AccountsService::new(files.load(ACCOUNTS).unwrap_or_default(), vault, files.clone()),
+            sync: SyncEngine::default(),
+            snoozes: SnoozeService::new(files.load(HISTORY).unwrap_or_default(), files.clone()),
+            assistant: AssistantCoordinator::new(
+                files.load(BRIEF).unwrap_or_default(),
+                files.load(SUMMARIES).unwrap_or_default(),
+                files.clone(),
+            ),
             // Cached items keep the verbs the refresh gave them (ML-16).
-            items: store.load(CACHE).unwrap_or_default(),
-            states: store.load(STATES).unwrap_or_default(),
-            reminders: store.load(REMINDERS).unwrap_or_default(),
-            snooze_history: store.load(HISTORY).unwrap_or_default(),
-            dismissed_insights: HashSet::new(),
-            ranker: PersonalRanker::new(&store.load::<Vec<ActionRecord>>(LEARNING).unwrap_or_default()),
-            action_records: store.load(LEARNING).unwrap_or_default(),
-            review_timings: store.load(REVIEW_TIMES).unwrap_or_default(),
+            items: files.load(CACHE).unwrap_or_default(),
+            states: files.load(STATES).unwrap_or_default(),
+            reminders: files.load(REMINDERS).unwrap_or_default(),
+            ranker: PersonalRanker::new(&files.load::<Vec<ActionRecord>>(LEARNING).unwrap_or_default()),
+            action_records: files.load(LEARNING).unwrap_or_default(),
+            review_timings: files.load(REVIEW_TIMES).unwrap_or_default(),
             links: HashMap::new(),
-            brief: store.load(BRIEF).unwrap_or_default(),
-            bundle_summaries: store.load(SUMMARIES).unwrap_or_default(),
-            triage: vec![],
-            store: Some(store),
-            vault,
-            managed,
-            errors: HashMap::new(),
-            remarks: HashMap::new(),
-            backoff: HashMap::new(),
-            synced: HashSet::new(),
-            waiting: vec![],
-            batched_at: Utc::now(),
-            secrets: None,
-            last_refresh: None,
             undo_point: None,
-            sessions: HashMap::new(),
+            managed,
+            persistence: files,
         };
         inbox.recompute_links();
         inbox
@@ -185,41 +162,61 @@ impl Inbox {
 
     /// An inbox that saves nothing: the demo, and tests.
     pub fn in_memory(vault: Arc<dyn Vault>, managed: Managed) -> Self {
+        Inbox::empty(Persistence::default(), vault, managed)
+    }
+
+    /// Nothing in it yet, saving to `persistence`.
+    fn empty(persistence: Persistence, vault: Arc<dyn Vault>, managed: Managed) -> Self {
         Inbox {
-            store: None,
-            vault,
+            accounts: AccountsService::new(vec![], vault, persistence.clone()),
+            sync: SyncEngine::default(),
+            snoozes: SnoozeService::new(vec![], persistence.clone()),
+            assistant: AssistantCoordinator::new(None, HashMap::new(), persistence.clone()),
             managed,
             preferences: Preferences::default(),
-            accounts: vec![],
             items: HashMap::new(),
             states: HashMap::new(),
             reminders: vec![],
-            snooze_history: vec![],
-            dismissed_insights: HashSet::new(),
             action_records: vec![],
             ranker: PersonalRanker::new(&[]),
             review_timings: vec![],
             links: HashMap::new(),
-            brief: None,
-            bundle_summaries: HashMap::new(),
-            triage: vec![],
-            errors: HashMap::new(),
-            remarks: HashMap::new(),
-            backoff: HashMap::new(),
-            synced: HashSet::new(),
-            waiting: vec![],
-            batched_at: Utc::now(),
-            secrets: None,
-            last_refresh: None,
             undo_point: None,
-            sessions: HashMap::new(),
+            persistence,
         }
     }
 
     // MARK: Reading
 
+    pub fn preferences(&self) -> &Preferences {
+        &self.preferences
+    }
+
+    /// What the organization set (Group Policy, Intune, /etc/remora).
+    pub fn managed(&self) -> &Managed {
+        &self.managed
+    }
+
+    pub fn accounts(&self) -> &[Account] {
+        &self.accounts
+    }
+
+    /// Done, pins, snoozes and reminders' marks, by item id.
+    pub fn states(&self) -> &HashMap<String, ItemState> {
+        &self.states
+    }
+
+    pub fn last_refresh(&self) -> Option<DateTime<Utc>> {
+        self.sync.last_refresh()
+    }
+
     pub fn policy(&self) -> CompliancePolicy {
         self.managed.policy(&self.preferences)
+    }
+
+    /// The organization allows update checks, and the user wants them (or the organization turned them on).
+    pub fn checks_for_updates(&self) -> bool {
+        self.managed.checks_for_updates(&self.preferences)
     }
 
     fn allows(&self, plugin_id: &str) -> bool {
@@ -284,15 +281,16 @@ impl Inbox {
                 let manifest = any_manifest(&account.plugin_id)?;
                 let account = &self.with_policy_settings(account);
                 let refusal = policy.account_refusal(&manifest, &account.settings);
+                let failure = self.sync.failure(&account.id);
                 Some(AccountInfo {
                     hosts: registry::allowed_hosts(account, &manifest),
                     egress: manifest.egress.description.clone(),
                     allowed: refusal.is_none(),
                     refusal: refusal.map(str::to_string),
                     plugin_name: manifest.name,
-                    error: self.errors.get(&account.id).map(|f| f.message.clone()),
-                    error_kind: self.errors.get(&account.id).map(|f| f.kind),
-                    remarks: self.remarks.get(&account.id).cloned().unwrap_or_default(),
+                    error: failure.map(|f| f.message.clone()),
+                    error_kind: failure.map(|f| f.kind),
+                    remarks: self.sync.remarks_of(&account.id),
                     account: account.clone(),
                 })
             })
@@ -300,286 +298,57 @@ impl Inbox {
     }
 
     pub fn errors(&self) -> Vec<Message> {
-        self.errors.values().map(|f| f.message.clone()).collect()
+        self.sync.errors()
     }
 
     /// What the footer says about the sources.
     pub fn health(&self) -> SourcesHealth {
-        SourcesHealth::of(&self.errors)
+        self.sync.health()
     }
 
     pub fn remarks(&self) -> Vec<Message> {
-        self.remarks.values().flatten().cloned().collect()
+        self.sync.remarks()
     }
 
-    // MARK: Refreshing
+    // MARK: Policy
 
-    fn secrets(&mut self) -> Result<&Secrets, Message> {
-        let secrets = match self.secrets.take() {
-            Some(secrets) => secrets,
-            None => self.vault.load()?,
-        };
-        Ok(self.secrets.insert(secrets))
-    }
-
-    // The credential store can be slow: the app reads and writes it without holding the inbox lock (PERF-07), through
-    // `Tokens` (tokens.rs): `needs_secrets` and `provide_secrets` for the read, then `secrets_after` (or a method built
-    // on it) and a `…_saved` method for each change.
-
-    pub fn vault(&self) -> Arc<dyn Vault> {
-        self.vault.clone()
-    }
-
-    /// The tokens haven't been read yet (once per launch).
-    pub fn needs_secrets(&self) -> bool {
-        self.secrets.is_none()
-    }
-
-    /// Tokens read from the vault outside the lock; kept only if nothing read them meanwhile.
-    pub fn provide_secrets(&mut self, secrets: Secrets) {
-        self.secrets.get_or_insert(secrets);
-    }
-
-    /// Secrets the plugins renewed during the last fetches (an OAuth refresh token rotated), for accounts still
-    /// here: `Tokens::save_renewed` saves them, outside the lock.
-    pub fn take_renewed_secrets(&mut self) -> Vec<(String, HashMap<String, String>)> {
-        AccountSession::take_renewed(&self.sessions)
-            .into_iter()
-            .filter(|(id, _)| self.accounts.iter().any(|a| &a.id == id))
-            .collect()
-    }
-
-    /// Every account's tokens with the renewed ones in, once saved.
-    pub fn renewed_saved(&mut self, saved: Secrets) {
-        self.secrets = Some(saved);
-    }
-
-    /// Every account's tokens after `change`, to save with `Vault::save`, then pass to a `…_saved` method.
-    pub fn secrets_after(&mut self, change: impl FnOnce(&mut Secrets)) -> Result<Secrets, Message> {
-        let mut all = self.secrets()?.clone();
-        change(&mut all);
-        Ok(all)
-    }
-
-    /// One plugin per allowed account, each with an HTTP client limited to its declared hosts.
-    /// Refused accounts get an error instead.
-    /// `manual`: asked for by the user, which doesn't wait out a slow-down (`Backoff`). An account that keeps failing,
-    /// or is rate-limited, sits this refresh out and keeps its items and its error.
-    pub fn fetch_jobs(&mut self, http: Arc<dyn HttpClient>, now: DateTime<Utc>, manual: bool) -> Vec<FetchJob> {
-        let secrets = match self.secrets() {
-            Ok(secrets) => secrets.clone(),
-            Err(error) => {
-                for account in &self.accounts {
-                    self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, error.clone()));
-                }
-                return vec![];
-            }
-        };
-        let policy = self.policy();
-        let mut jobs = vec![];
-        for account in self.accounts.clone() {
-            let account = self.with_policy_settings(&account);
-            if self.backoff.get(&account.id).is_some_and(|b| b.waits(now, manual)) {
-                continue;
-            }
-            let Some(manifest) = registry::manifest(&account.plugin_id) else { continue };
-            if let Some(refusal) = policy.refusal(&manifest) {
-                self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, refusal));
-                continue;
-            }
-            let account_secrets = secrets.get(&account.id).cloned().unwrap_or_default();
-            let (cache, etags) =
-                AccountSession::current(&mut self.sessions, &account.id, &account.settings, &account_secrets);
-            let conditional: Arc<dyn HttpClient> = Arc::new(ConditionalHttpClient::new(http.clone(), etags));
-            let guarded: Arc<dyn HttpClient> =
-                Arc::new(GuardedHttpClient::new(conditional, registry::allowed_hosts(&account, &manifest)));
-            match registry::make(&account, &account_secrets, guarded, cache) {
-                Ok(plugin) => jobs.push(FetchJob { account_id: account.id.clone(), plugin }),
-                Err(error) => {
-                    self.errors.insert(account.id.clone(), Failure::new(FailureKind::Other, error.message()));
-                }
+    /// An account with the organization's settings in place of its own: `AIServer` for the OpenAI-compatible
+    /// assistant, and each field's `managed_key` (`MicrosoftTenant`).
+    fn with_policy_settings(&self, account: &Account) -> Account {
+        let mut account = account.clone();
+        if account.plugin_id == AI_SERVER_PLUGIN {
+            if let Some(forced) = &self.policy().ai_server {
+                account.settings.insert("host".into(), forced.clone());
             }
         }
-        jobs
-    }
-
-    /// Stores what came back and says what deserves a notification. The first sync of an account is
-    /// silent; failed accounts keep their last items.
-    pub fn apply(&mut self, results: Vec<FetchResult>, now: DateTime<Utc>) -> Vec<Notice> {
-        // Fetches run without the lock: an account disconnected, or everything erased, while they ran must not come
-        // back. A reconnected account has a new id, so its old results are dropped too.
-        let results: Vec<FetchResult> =
-            results.into_iter().filter(|(id, _)| self.accounts.iter().any(|a| &a.id == id)).collect();
-        self.last_refresh = Some(now);
-        if results.is_empty() {
-            // Nothing to store: in particular, nothing written back after Erase.
-            return vec![];
-        }
-        let mut out = vec![];
-        let interval = chrono::Duration::minutes(i64::from(self.effective_preferences().refresh_minutes.max(1)));
-        // Every source failed to connect: that's the network, not the tools. Said once, and no slow-down for it. With a
-        // single source, an unreachable server and no network look the same: it says it can't reach the server.
-        let offline = results.len() > 1
-            && results.iter().all(|(_, result)| matches!(result, Err(e) if e.kind() == FailureKind::Unreachable));
-        for (account_id, result) in results {
-            match result {
-                Err(error) => {
-                    let kind = if offline { FailureKind::Offline } else { error.kind() };
-                    if kind == FailureKind::Offline {
-                        self.errors.insert(account_id, Failure::new(kind, error.message()));
-                        continue;
-                    }
-                    let resume = match error {
-                        // No reset time given: wait at least one refresh.
-                        PluginError::RateLimited(at) => {
-                            Some(at.and_then(|s| DateTime::from_timestamp(s, 0)).unwrap_or(now + interval))
-                        }
-                        _ => None,
-                    };
-                    self.backoff.entry(account_id.clone()).or_default().failed(now, interval, resume);
-                    self.errors.insert(account_id, Failure::new(kind, error.message()));
-                }
-                Ok(snapshot) => {
-                    self.backoff.remove(&account_id);
-                    self.errors.remove(&account_id);
-                    if snapshot.remarks.is_empty() {
-                        self.remarks.remove(&account_id);
-                    } else {
-                        self.remarks.insert(account_id.clone(), snapshot.remarks.clone());
-                    }
-                    let items: Vec<InboxItem> = snapshot.items.into_iter().map(VerbClassifier::classify).collect();
-                    // The first sync after launch compares with the saved copy, so what arrived while the app
-                    // was closed is announced; an account with no saved copy (just connected) stays silent.
-                    let first = !self.synced.contains(&account_id);
-                    let previous = if first {
-                        self.items.get(&account_id).cloned()
-                    } else {
-                        Some(self.items.get(&account_id).cloned().unwrap_or_default())
-                    };
-                    let account = self.accounts.iter().find(|a| a.id == account_id);
-                    let plugin_id = account.map(|a| a.plugin_id.clone());
-                    let wanted: Vec<Notice> = notices(previous.as_deref(), &items)
-                        .into_iter()
-                        .filter(|notice| {
-                            if notice.kind == NoticeKind::Arrival {
-                                self.preferences.notify_arrivals
-                            } else {
-                                self.preferences.notify_status_changes
-                            }
-                        })
-                        .map(|notice| self.respecting_privacy(notice, plugin_id.as_deref()))
-                        .collect();
-                    if first {
-                        let name = account
-                            .and_then(|a| a.name.clone().or_else(|| registry::manifest(&a.plugin_id).map(|m| m.name)))
-                            .unwrap_or_default();
-                        out.extend(while_closed(&account_id, &name, wanted));
-                    } else {
-                        out.extend(wanted);
-                    }
-                    self.wake_touched(&items);
-                    self.synced.insert(account_id.clone());
-                    if let Some(account) = self.accounts.iter_mut().find(|a| a.id == account_id) {
-                        account.identity = Some(snapshot.identity);
-                    }
-                    self.items.insert(account_id, items);
-                }
+        for field in any_manifest(&account.plugin_id).map(|m| m.fields).unwrap_or_default() {
+            if let Some(forced) = field.managed_key.and_then(|key| self.managed.settings.get(&key)) {
+                account.settings.insert(field.key, forced.clone());
             }
         }
-        self.prune();
-        self.recompute_links();
-        self.persist(ACCOUNTS, &self.accounts);
-        self.persist(CACHE, &self.items);
-        self.persist(STATES, &self.states);
-        self.held(out)
+        account
     }
 
-    /// With notifications grouped at set times, what arrived or changed waits for `tick`; the rest goes now.
-    fn held(&mut self, notices: Vec<Notice>) -> Vec<Notice> {
-        if !self.effective_preferences().batch_notifications {
-            return notices;
-        }
-        let (waiting, now): (Vec<Notice>, Vec<Notice>) = notices.into_iter().partition(waits);
-        self.waiting.extend(waiting);
-        now
+    /// The user's preferences with the organization's settings in place: what Remora acts on.
+    pub fn effective_preferences(&self) -> Preferences {
+        self.managed.effective(&self.preferences)
     }
 
-    /// What waited, at the first set time since the last batch, or at once when grouping was turned off.
-    fn batch(&mut self, now: DateTime<Utc>) -> Vec<Notice> {
-        let preferences = self.effective_preferences();
-        let due = !preferences.batch_notifications
-            || is_due(&parse_times(&preferences.notification_times), self.batched_at, now);
-        if !due {
-            return vec![];
-        }
-        self.batched_at = now;
-        grouped(std::mem::take(&mut self.waiting))
+    /// Saves the preferences. True when the refresh interval changed, so the next refresh is rescheduled.
+    pub fn set_preferences(&mut self, preferences: Preferences) -> bool {
+        let interval_changed = self.preferences.refresh_minutes != preferences.refresh_minutes;
+        self.preferences = preferences;
+        self.persistence.save(PREFERENCES, &self.preferences);
+        // Privacy settings may have just turned the assistant off: what it wrote goes too.
+        self.enforce_ai_policy();
+        interval_changed
     }
 
-    /// Hidden snoozes end early on new activity, when that preference is on.
-    fn wake_touched(&mut self, items: &[InboxItem]) {
-        if !self.preferences.wake_on_activity {
-            return;
-        }
-        for item in items {
-            if let Some(state) = self.states.get_mut(&item.id) {
-                if state
-                    .snooze
-                    .as_ref()
-                    .is_some_and(|s| s.mode == SnoozeMode::Hide && s.fingerprint != item.fingerprint())
-                {
-                    state.snooze = None;
-                }
-            }
-        }
-        self.states.retain(|_, state| !state.is_empty());
-    }
-
-    /// Ends snoozes whose time has come: the item comes back marked as a reminder, with a notification.
-    pub fn tick(&mut self, now: DateTime<Utc>) -> Vec<Notice> {
-        let items = self.all_items();
-        let preferences = self.effective_preferences();
-        let mut out = vec![];
-        for (id, state) in self.states.iter_mut() {
-            let Some(snooze) = state.snooze.clone().filter(|s| s.until <= now) else { continue };
-            state.snooze = None;
-            state.reminded_at = Some(now);
-            state.done = None;
-            if let Some(item) = items.iter().find(|i| &i.id == id) {
-                let reminder = item.bundle == InboxBundle::reminders();
-                let hidden = preferences.hides_content(&item.plugin_id);
-                let notice = Notice {
-                    kind: NoticeKind::Reminder,
-                    item_id: id.clone(),
-                    title: if reminder { "Reminder" } else { "Back in your inbox" }.into(),
-                    // A reminder's context is "Reminder" again: the title says it already.
-                    subtitle: if reminder { String::new() } else { item.context.clone() },
-                    body: [Some(item.title.clone()), snooze.note].into_iter().flatten().collect::<Vec<_>>().join("\n"),
-                    url: item.url.clone(),
-                    count: None,
-                };
-                out.push(if hidden { notice.redacted() } else { notice });
-            }
-        }
-        if !out.is_empty() {
-            self.persist(STATES, &self.states);
-        }
-        out.extend(self.batch(now));
-        out
-    }
-
-    /// Hides what was written when the user doesn't want that integration's content on screen.
-    fn respecting_privacy(&self, notice: Notice, plugin_id: Option<&str>) -> Notice {
-        match plugin_id {
-            Some(id) if self.effective_preferences().hides_content(id) => notice.redacted(),
-            _ => notice,
-        }
-    }
-
-    /// Forgets states of items that no longer exist, except snoozes (their item may come back).
-    fn prune(&mut self) {
-        let known: HashSet<String> = self.all_items().into_iter().map(|i| i.id).collect();
-        self.states.retain(|id, state| known.contains(id) || state.snooze.is_some());
+    /// The organization's policy, read again (a change from Group Policy or Intune applies without a restart): what
+    /// it no longer allows goes at once.
+    pub fn set_managed(&mut self, managed: Managed) {
+        self.managed = managed;
+        self.enforce_ai_policy();
     }
 
     // MARK: Actions
@@ -590,7 +359,7 @@ impl Inbox {
         if !state.is_empty() {
             self.states.insert(id.to_string(), state);
         }
-        self.persist(STATES, &self.states);
+        self.persistence.save(STATES, &self.states);
     }
 
     /// Opening an item clears its reminder chip.
@@ -614,8 +383,8 @@ impl Inbox {
             }
             self.reminders.retain(|r| r.id != id);
             self.states.remove(id);
-            self.persist(REMINDERS, &self.reminders);
-            self.persist(STATES, &self.states);
+            self.persistence.save(REMINDERS, &self.reminders);
+            self.persistence.save(STATES, &self.states);
             return None;
         }
         let fingerprint = item.fingerprint();
@@ -631,14 +400,8 @@ impl Inbox {
             if let Some(started) = started {
                 self.learn_review_time(&item, started, now);
             }
-        }
-        // The snooze that ended in Done: when you finally do things teaches your best hour.
-        if marking {
-            if let Some(record) = self.snooze_history.iter_mut().rev().find(|r| r.item_id == id && r.done_at.is_none())
-            {
-                record.done_at = Some(now);
-                self.persist(HISTORY, &self.snooze_history);
-            }
+            // The snooze that ended in Done: when you finally do things teaches your best hour.
+            self.snoozes.done(id, now);
         }
         None
     }
@@ -660,7 +423,7 @@ impl Inbox {
             let at = state.done.as_ref().map_or(now, |done| done.at);
             state.done = Some(Mark { at, fingerprint, cleared_at: Some(now) });
         }
-        self.persist(STATES, &self.states);
+        self.persistence.save(STATES, &self.states);
     }
 
     /// Marks the item as the one being worked on: it moves to the In progress tab and the tray says so.
@@ -726,10 +489,7 @@ impl Inbox {
         // Learned from, on this computer only; a reminder isn't a habit.
         if item.bundle != InboxBundle::reminders() {
             self.learn(ActionRecord::new(&item, ActionOutcome::Deferred, Utc::now()));
-            self.snooze_history.push(SnoozeRecord::new(&item, reason, Utc::now(), until));
-            let excess = self.snooze_history.len().saturating_sub(500);
-            self.snooze_history.drain(..excess);
-            self.persist(HISTORY, &self.snooze_history);
+            self.snoozes.record(&item, reason, Utc::now(), until);
         }
     }
 
@@ -745,7 +505,7 @@ impl Inbox {
         let excess = self.action_records.len().saturating_sub(1_000);
         self.action_records.drain(..excess);
         self.ranker = PersonalRanker::new(&self.action_records);
-        self.persist(LEARNING, &self.action_records);
+        self.persistence.save(LEARNING, &self.action_records);
     }
 
     /// A review started then done: its real duration against the plain estimate, the last 50 kept.
@@ -755,318 +515,7 @@ impl Inbox {
             .push(ReviewTiming { estimated: i64::from(prep.estimated_minutes), actual: (now - started).num_minutes() });
         let excess = self.review_timings.len().saturating_sub(50);
         self.review_timings.drain(..excess);
-        self.persist(REVIEW_TIMES, &self.review_timings);
-    }
-
-    // MARK: The assistant
-
-    /// The connected assistant, only when the privacy policy allows it.
-    pub fn assistant_account(&self) -> Option<Account> {
-        let policy = self.policy();
-        self.accounts
-            .iter()
-            .find(|a| {
-                let a = self.with_policy_settings(a);
-                claude::assistant_manifests()
-                    .iter()
-                    .any(|m| m.id == a.plugin_id && policy.account_refusal(m, &a.settings).is_none())
-            })
-            .cloned()
-    }
-
-    /// An account with the organization's settings in place of its own: `AIServer` for the OpenAI-compatible
-    /// assistant, and each field's `managed_key` (`MicrosoftTenant`).
-    fn with_policy_settings(&self, account: &Account) -> Account {
-        let mut account = account.clone();
-        if account.plugin_id == AI_SERVER_PLUGIN {
-            if let Some(forced) = &self.policy().ai_server {
-                account.settings.insert("host".into(), forced.clone());
-            }
-        }
-        for field in any_manifest(&account.plugin_id).map(|m| m.fields).unwrap_or_default() {
-            if let Some(forced) = field.managed_key.and_then(|key| self.managed.settings.get(&key)) {
-                account.settings.insert(field.key, forced.clone());
-            }
-        }
-        account
-    }
-
-    /// The user's preferences with the organization's settings in place: what Remora acts on.
-    pub fn effective_preferences(&self) -> Preferences {
-        self.managed.effective(&self.preferences)
-    }
-
-    /// The organization's Claude Code path wins over the account's, and still passes the plugin's own checks; one
-    /// that can't be read turns Claude Code off.
-    fn with_managed_claude_code_path(&self, account: &mut Account) -> Result<(), Message> {
-        if account.plugin_id != claude::code::ID {
-            return Ok(());
-        }
-        match self.managed.claude_code_path.as_deref() {
-            Some("") => Err(CLAUDE_CODE_PATH_UNREADABLE.into()),
-            Some(path) => {
-                account.settings.insert("path".into(), path.to_string());
-                Ok(())
-            }
-            None => Ok(()),
-        }
-    }
-
-    /// What the assistant may read and use: everything but the sources you or your organization keep from it, with the
-    /// organization's models.
-    pub fn assistant_policy(&self) -> AssistantPolicy {
-        self.managed.assistant_policy(&self.preferences)
-    }
-
-    /// The assistant for an account, through a client limited to its declared hosts.
-    fn assistant_for(
-        &mut self,
-        account: &Account,
-        http: Arc<dyn HttpClient>,
-        language: &str,
-    ) -> Result<Box<dyn AssistantPlugin>, Message> {
-        let secrets = self.secrets()?.get(&account.id).cloned().unwrap_or_default();
-        self.assistant_with(account, &secrets, http, language)
-    }
-
-    /// The assistant for an account with these secrets: allowed by the policy, limited to its declared hosts,
-    /// its models kept within the allowed ones.
-    fn assistant_with(
-        &self,
-        account: &Account,
-        secrets: &HashMap<String, String>,
-        http: Arc<dyn HttpClient>,
-        language: &str,
-    ) -> Result<Box<dyn AssistantPlugin>, Message> {
-        let manifest = claude::assistant_manifests()
-            .into_iter()
-            .find(|m| m.id == account.plugin_id)
-            .ok_or("Unknown assistant.")?;
-        let account = &self.with_policy_settings(account);
-        if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
-            return Err(refusal.into());
-        }
-        let guarded: Arc<dyn HttpClient> =
-            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
-        let defaults: HashMap<String, String> =
-            manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
-        let mut constrained = account.clone();
-        constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
-        self.with_managed_claude_code_path(&mut constrained)?;
-        claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.message())
-    }
-
-    /// The assistant to ask now, with its account's id for `keep_*`, or None when there is none or it isn't allowed.
-    pub fn assistant(&mut self, http: Arc<dyn HttpClient>, language: &str) -> Option<AssistantJob> {
-        let account = self.assistant_account()?;
-        let plugin = self.assistant_for(&account, http, language);
-        Some((account.id, plugin))
-    }
-
-    /// Whether an answer from this assistant account may still be kept. It is asked without the lock and can take a
-    /// minute or more: an answer that comes back after Erase, a disconnect or a policy that turns AI off is dropped.
-    fn still_answers(&self, account_id: &str) -> bool {
-        self.assistant_account().is_some_and(|a| a.id == account_id)
-    }
-
-    /// Keeps a brief, unless its assistant is gone or no longer allowed.
-    pub fn keep_brief(&mut self, from: &str, brief: Brief) {
-        if self.still_answers(from) {
-            self.store_brief(Some(brief));
-        }
-    }
-
-    /// The whole inbox as the assistant may see it, for a brief.
-    /// What a brief is written from: the task in progress (marked so), the pinned items and My turn, as the
-    /// assistant may see them (AI-20).
-    pub fn brief_items(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
-        let layout = self.layout(now, "");
-        let started = layout.in_progress.into_iter().map(|mut item| {
-            item.badges.push(remora_core::Badge::new("inProgress", "In progress", remora_core::Tone::Accent));
-            item
-        });
-        let items: Vec<InboxItem> =
-            started.chain(layout.pinned).chain(layout.my_turn.into_iter().flat_map(|g| g.items)).collect();
-        self.assistant_policy().items(&items)
-    }
-
-    pub fn brief_is_fresh(&self, now: DateTime<Utc>) -> bool {
-        self.brief
-            .as_ref()
-            .is_some_and(|b| b.is_fresh(&self.brief_items(now), self.preferences.brief_cache_minutes, now))
-    }
-
-    pub fn store_brief(&mut self, brief: Option<Brief>) {
-        self.brief = brief;
-        self.persist(BRIEF, &self.brief);
-    }
-
-    /// A group's items as the assistant may see them, and whether its summary is still fresh.
-    pub fn bundle_items(&self, bundle_id: &str, now: DateTime<Utc>) -> (Vec<InboxItem>, bool) {
-        let layout = self.layout(now, "");
-        let items: Vec<InboxItem> = layout
-            .my_turn
-            .into_iter()
-            .chain(layout.waiting)
-            .filter(|g| g.bundle.id == bundle_id)
-            .flat_map(|g| g.items)
-            .collect();
-        let items = self.assistant_policy().items(&items);
-        let fresh = self
-            .bundle_summaries
-            .get(bundle_id)
-            .is_some_and(|s| s.is_fresh(&items, self.preferences.brief_cache_minutes, now));
-        (items, fresh)
-    }
-
-    /// Keeps a group's summary, unless its assistant is gone or no longer allowed.
-    pub fn keep_summary(&mut self, from: &str, bundle_id: &str, summary: BundleSummary) {
-        if self.still_answers(from) {
-            self.bundle_summaries.insert(bundle_id.to_string(), summary);
-            self.persist(SUMMARIES, &self.bundle_summaries);
-        }
-    }
-
-    /// Keeps triage suggestions, unless their assistant is gone or no longer allowed.
-    pub fn keep_triage(&mut self, from: &str, suggestions: Vec<TriageSuggestion>) {
-        if self.still_answers(from) {
-            self.triage = suggestions;
-        }
-    }
-
-    /// The snoozed pile as the assistant may see it, with how often each was snoozed.
-    pub fn snoozed_for_triage(&self, now: DateTime<Utc>) -> Vec<SnoozedItem> {
-        let snoozed = self.assistant_policy().items(&self.layout(now, "").snoozed);
-        snoozed
-            .into_iter()
-            .filter_map(|item| {
-                let snooze = self.states.get(&item.id)?.snooze.clone()?;
-                let times = self.snooze_count(&item.id, now) as u32;
-                Some(SnoozedItem { item, snooze, times })
-            })
-            .collect()
-    }
-
-    /// Applies the ticked suggestions. Every "now" item comes back; only the first is opened, never a burst.
-    /// Returns the item to open, if any.
-    /// The ticked suggestions, undone together by one Undo (each Done would otherwise replace it).
-    pub fn apply_triage(&mut self, selected: &[TriageSuggestion], now: DateTime<Utc>) -> Option<String> {
-        let changes = selected.iter().any(|s| s.action != TriageAction::Keep);
-        if changes {
-            self.remember();
-        }
-        let undo = self.undo_point.clone();
-        let mut open = None;
-        for suggestion in selected {
-            if self.item(&suggestion.id).is_none() {
-                continue;
-            }
-            match suggestion.action {
-                TriageAction::Keep => {}
-                TriageAction::Reschedule => {
-                    if let Some(until) = suggestion.until {
-                        self.reschedule(&suggestion.id, until);
-                    }
-                }
-                TriageAction::Done => {
-                    self.toggle_done(&suggestion.id, now);
-                }
-                TriageAction::Now => {
-                    self.unsnooze(&suggestion.id);
-                    open.get_or_insert_with(|| suggestion.id.clone());
-                }
-            }
-        }
-        if changes {
-            self.undo_point = undo;
-        }
-        let applied: HashSet<&str> = selected.iter().map(|s| s.id.as_str()).collect();
-        self.triage.retain(|s| !applied.contains(s.id.as_str()));
-        open
-    }
-
-    /// Without an allowed assistant, nothing it wrote is kept or shown.
-    pub fn enforce_ai_policy(&mut self) {
-        if self.assistant_account().is_none()
-            && (self.brief.is_some() || !self.bundle_summaries.is_empty() || !self.triage.is_empty())
-        {
-            self.store_brief(None);
-            self.bundle_summaries.clear();
-            self.persist(SUMMARIES, &self.bundle_summaries);
-            self.triage.clear();
-        }
-    }
-
-    // MARK: Help on a row
-
-    /// Snoozes of this item in the last 30 days.
-    pub fn snooze_count(&self, id: &str, now: DateTime<Utc>) -> usize {
-        let since = now - chrono::Duration::days(30);
-        self.snooze_history.iter().filter(|r| r.item_id == id && r.at > since).count()
-    }
-
-    /// How your reviews compare with the estimate; 1 until five were timed.
-    pub fn review_pace(&self) -> f64 {
-        ReviewPace::factor(&self.review_timings)
-    }
-
-    pub fn review_prep(&self, item: &InboxItem) -> Option<ReviewPrep> {
-        (item.bundle == InboxBundle::reviews()).then(|| ReviewPrep::new(item, self.review_pace())).flatten()
-    }
-
-    /// Who could review your PR, or a nudge when its reviewers stay silent. Asked for every shown item: one that
-    /// isn't waiting on anyone returns at once, and the others read the inbox by reference, never copying it.
-    pub fn waiting_help(&self, item: &InboxItem, now: DateTime<Utc>) -> Option<WaitingHelp> {
-        if item.bundle != InboxBundle::awaiting() {
-            return None;
-        }
-        let me = self.accounts.iter().find(|a| a.id == item.account_id).and_then(|a| a.identity.as_deref());
-        let items: Vec<&InboxItem> = self
-            .accounts
-            .iter()
-            .filter(|a| self.allows(&a.plugin_id))
-            .flat_map(|a| self.items.get(&a.id).into_iter().flatten())
-            .collect();
-        WaitingAssistant::default().help(item, &items, me, now)
-    }
-
-    /// The message to paste for this help: who could review, or a kind nudge. Nothing is sent.
-    pub fn waiting_draft(&self, id: &str, now: DateTime<Utc>, tr: &dyn Fn(&str) -> String) -> Option<String> {
-        let item = self.item(id)?;
-        let help = self.waiting_help(&item, now)?;
-        Some(WaitingAssistant::default().draft(&help, &item, tr))
-    }
-
-    /// The reason usually given in this item's repo or channel, preselected in the snooze sheet.
-    pub fn usual_reason(&self, id: &str) -> Option<SnoozeReason> {
-        let item = self.item(id)?;
-        SnoozeAdvisor::new().usual_reason(&item, &self.snooze_history)
-    }
-
-    /// Reviews waiting for you, in session order: pressing first, then quick wins, then whoever waited longest.
-    pub fn review_queue(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
-        let reviews: Vec<InboxItem> = self
-            .layout(now, "")
-            .my_turn
-            .into_iter()
-            .filter(|g| g.bundle == InboxBundle::reviews())
-            .flat_map(|g| g.items)
-            .collect();
-        remora_core::ReviewQueue::order(&reviews, now)
-    }
-
-    /// Items from other tools about the same thing.
-    pub fn linked(&self, id: &str) -> Vec<InboxItem> {
-        self.links.get(id).map(|ids| ids.iter().filter_map(|id| self.item(id)).collect()).unwrap_or_default()
-    }
-
-    /// Why an item ranks higher than its priority alone would put it.
-    pub fn ranking_reason(&self, item: &InboxItem, tr: &dyn Fn(&str) -> String) -> Option<String> {
-        self.ranker.reason(item, tr)
-    }
-
-    fn recompute_links(&mut self) {
-        self.links = LinkFinder::default().links(&self.all_items());
+        self.persistence.save(REVIEW_TIMES, &self.review_timings);
     }
 
     /// Moves an existing snooze without counting a new one (spreading a pile-up, one time for a cluster).
@@ -1092,47 +541,6 @@ impl Inbox {
         self.remember();
         for id in ids {
             self.snooze(id, until, SnoozeMode::Hide, reason, until_news);
-        }
-    }
-
-    /// When to come back for this reason, from your habits. Weekends are skipped.
-    pub fn suggested_return(&self, reason: SnoozeReason, now: DateTime<Utc>) -> DateTime<Utc> {
-        SnoozeAdvisor::new().suggested_return(reason, &self.snooze_history, now)
-    }
-
-    /// Patterns in the snoozed pile, without the ones set aside.
-    pub fn insights(&self, now: DateTime<Utc>) -> Vec<SnoozeInsight> {
-        let snoozed = self.layout(now, "").snoozed;
-        SnoozeAdvisor::new()
-            .insights(&snoozed, &self.states, &self.snooze_history, now)
-            .into_iter()
-            .filter(|insight| !self.dismissed_insights.contains(&insight.id()))
-            .collect()
-    }
-
-    pub fn dismiss_insight(&mut self, id: &str) {
-        self.dismissed_insights.insert(id.to_string());
-    }
-
-    /// A pile-up, 30 minutes apart from its slot.
-    pub fn spread(&mut self, ids: &[String], from: DateTime<Utc>) {
-        self.remember();
-        let items: Vec<InboxItem> = ids.iter().filter_map(|id| self.item(id)).collect();
-        for (id, until) in SnoozeAdvisor::new().spread(&items, from) {
-            self.reschedule(&id, until);
-        }
-    }
-
-    /// Every item back at the earliest of their return times.
-    pub fn align_returns(&mut self, ids: &[String]) {
-        let Some(earliest) =
-            ids.iter().filter_map(|id| self.states.get(id).and_then(|s| s.snooze.as_ref()).map(|s| s.until)).min()
-        else {
-            return;
-        };
-        self.remember();
-        for id in ids {
-            self.reschedule(id, earliest);
         }
     }
 
@@ -1193,7 +601,7 @@ impl Inbox {
             recurrence,
             reactions: None,
         });
-        self.persist(REMINDERS, &self.reminders);
+        self.persistence.save(REMINDERS, &self.reminders);
         self.snooze(&id, at, SnoozeMode::Hide, None, false);
         Ok(id)
     }
@@ -1204,18 +612,8 @@ impl Inbox {
             return false;
         };
         reminder.recurrence = None;
-        self.persist(REMINDERS, &self.reminders);
+        self.persistence.save(REMINDERS, &self.reminders);
         true
-    }
-
-    /// Saves the preferences. True when the refresh interval changed, so the next refresh is rescheduled.
-    pub fn set_preferences(&mut self, preferences: Preferences) -> bool {
-        let interval_changed = self.preferences.refresh_minutes != preferences.refresh_minutes;
-        self.preferences = preferences;
-        self.persist(PREFERENCES, &self.preferences);
-        // Privacy settings may have just turned the assistant off: what it wrote goes too.
-        self.enforce_ai_policy();
-        interval_changed
     }
 
     /// What opening an item opens, as a click in the inbox or a notification does: the tool's app when the
@@ -1224,329 +622,74 @@ impl Inbox {
     pub fn open_plan(&mut self, id: &str, in_browser: bool) -> Result<OpenPlan, Message> {
         let item = self.item(id).ok_or("This item is gone.")?;
         self.opened(id);
-        let http_hosts = links::http_hosts(self.accounts.iter().find(|a| a.id == item.account_id));
+        let http_hosts = links::http_hosts(self.accounts.find(&item.account_id));
         let opens_apps = self.effective_preferences().open_in_apps;
         let app = item.app_url.filter(|url| !in_browser && opens_apps && links::is_app_link(url));
         let web = item.url.filter(|url| links::is_web_link(url, &http_hosts));
         Ok(OpenPlan { app, web })
     }
 
-    // MARK: Accounts
+    // MARK: Help on a row
 
-    /// Checks the settings by building the plugin; the caller fetches once, then `Tokens::connect` saves it.
-    pub fn prepare_connect(
-        &self,
-        plugin_id: &str,
-        name: Option<String>,
-        settings: HashMap<String, String>,
-        secrets: &HashMap<String, String>,
-        http: Arc<dyn HttpClient>,
-    ) -> Result<(Account, Box<dyn SourcePlugin>), Message> {
-        let manifest = registry::manifest(plugin_id).ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
-        if let Some(refusal) = self.policy().refusal(&manifest) {
-            return Err(refusal.into());
-        }
-        let account = self.with_policy_settings(&Account {
-            id: uuid::Uuid::new_v4().to_string(),
-            plugin_id: plugin_id.into(),
-            name: name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
-            settings,
-            identity: None,
-        });
-        let guarded: Arc<dyn HttpClient> =
-            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
-        let plugin = registry::make(&account, secrets, guarded, Default::default()).map_err(|e| e.message())?;
-        Ok((account, plugin))
+    /// How your reviews compare with the estimate; 1 until five were timed.
+    pub fn review_pace(&self) -> f64 {
+        ReviewPace::factor(&self.review_timings)
     }
 
-    /// What a browser sign-in needs: the plugin's `SignIn`, the settings it fills in (the account's own when signing
-    /// in again), and the HTTP client limited to the plugin's hosts. The page the browser opens must be one of them.
-    pub fn prepare_sign_in(
-        &self,
-        plugin_id: &str,
-        account_id: Option<&str>,
-        settings: HashMap<String, String>,
-        http: Arc<dyn HttpClient>,
-    ) -> Result<SignInPlan, Message> {
-        let manifest = registry::manifest(plugin_id).ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
-        let sign_in = manifest.sign_in.clone().ok_or_else(|| format!("{} has no sign-in.", manifest.name))?;
-        if let Some(refusal) = self.policy().refusal(&manifest) {
-            return Err(refusal.into());
-        }
-        let settings = match account_id {
-            Some(id) => self
-                .accounts
-                .iter()
-                .find(|a| a.id == id)
-                .ok_or("This account is no longer connected.")?
-                .settings
-                .clone(),
-            None => settings,
-        };
-        let account = self.with_policy_settings(&Account {
-            id: String::new(),
-            plugin_id: plugin_id.into(),
-            name: None,
-            settings,
-            identity: None,
-        });
-        let hosts = registry::allowed_hosts(&account, &manifest);
-        let page = oauth::fill(&sign_in.authorize_url, &account.settings).map_err(|e| e.message())?;
-        let host = Request::get(page).host();
-        if !host_matches(&host, &hosts) {
-            return Err(PluginError::BlockedHost(host).message());
-        }
-        Ok(SignInPlan { sign_in, settings: account.settings, http: Arc::new(GuardedHttpClient::new(http, hosts)) })
+    pub fn review_prep(&self, item: &InboxItem) -> Option<ReviewPrep> {
+        (item.bundle == InboxBundle::reviews()).then(|| ReviewPrep::new(item, self.review_pace())).flatten()
     }
 
-    /// Connecting an assistant: the caller tests it once with the plugin (a brief, or a made-up item
-    /// when the whole-inbox brief is off, so no inbox content leaves yet), then `Tokens::connect_assistant` saves it.
-    pub fn prepare_assistant_connect(
-        &self,
-        plugin_id: &str,
-        name: Option<String>,
-        settings: HashMap<String, String>,
-        secrets: &HashMap<String, String>,
-        http: Arc<dyn HttpClient>,
-        language: &str,
-    ) -> Result<(Account, Box<dyn AssistantPlugin>), Message> {
-        let manifest = claude::assistant_manifests()
-            .into_iter()
-            .find(|m| m.id == plugin_id)
-            .ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
-        let account = self.with_policy_settings(&Account {
-            id: uuid::Uuid::new_v4().to_string(),
-            plugin_id: plugin_id.into(),
-            name: name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
-            settings,
-            identity: None,
-        });
-        if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
-            return Err(refusal.into());
-        }
-        let guarded: Arc<dyn HttpClient> =
-            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
-        let defaults: HashMap<String, String> =
-            manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
-        let mut constrained = account.clone();
-        constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
-        self.with_managed_claude_code_path(&mut constrained)?;
-        let plugin = claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.message())?;
-        Ok((account, plugin))
-    }
-
-    /// The tokens with `account` as the only assistant.
-    pub fn assistant_secrets(
-        &mut self,
-        account: &Account,
-        secrets: HashMap<String, String>,
-    ) -> Result<Secrets, Message> {
-        let previous: Vec<String> =
-            self.accounts.iter().filter(|a| claude::is_assistant(&a.plugin_id)).map(|a| a.id.clone()).collect();
-        self.secrets_after(|all| {
-            for id in &previous {
-                all.remove(id);
-            }
-            all.insert(account.id.clone(), secrets);
-        })
-    }
-
-    /// One assistant at a time: a new one replaces the previous one, and its token.
-    pub fn finish_assistant_connect_saved(&mut self, account: Account, saved: Secrets) {
-        self.secrets = Some(saved);
-        self.accounts.retain(|a| !claude::is_assistant(&a.plugin_id));
-        self.accounts.push(account);
-        self.persist(ACCOUNTS, &self.accounts);
-    }
-
-    /// A made-up item to test an assistant with when the whole-inbox brief is off: nothing from the inbox.
-    pub fn connection_test(now: DateTime<Utc>) -> InboxItem {
-        InboxItem {
-            id: "remora/connection-test".into(),
-            account_id: "remora".into(),
-            plugin_id: "remora".into(),
-            bundle: InboxBundle::reminders(),
-            title: "Connection test".into(),
-            context: "Remora".into(),
-            preview: None,
-            url: None,
-            app_url: None,
-            author: None,
-            participants: vec![],
-            badges: vec![],
-            date: now,
-            needs_action: false,
-            priority: None,
-            due: None,
-            expires: None,
-            changes: None,
-            suggested_people: None,
-            recurrence: None,
-            reactions: None,
-        }
-    }
-
-    /// The account already connected for the same person on the same tool and server, as on macOS
-    /// (`isSame(as:identity:)`): connecting it again updates that one instead of adding a duplicate.
-    pub fn existing_account(&self, account: &Account, identity: &str) -> Option<&Account> {
-        if identity.is_empty() {
+    /// Who could review your PR, or a nudge when its reviewers stay silent. Asked for every shown item: one that
+    /// isn't waiting on anyone returns at once, and the others read the inbox by reference, never copying it.
+    pub fn waiting_help(&self, item: &InboxItem, now: DateTime<Utc>) -> Option<WaitingHelp> {
+        if item.bundle != InboxBundle::awaiting() {
             return None;
         }
-        // "gitlab.acme.io", "https://gitlab.acme.io/" and an empty field (the default host) compare by host, and the
-        // path: two Azure DevOps organizations share dev.azure.com.
-        let host = |account: &Account| {
-            let value = account.settings.get("host").map(|h| h.trim()).filter(|h| !h.is_empty())?;
-            let rest = value.split_once("://").map_or(value, |(_, rest)| rest);
-            let rest = rest.split(['?', '#']).next().unwrap_or_default().trim_end_matches('/');
-            let (host, path) = rest.split_once('/').unwrap_or((rest, ""));
-            let host = host.split(':').next().unwrap_or_default();
-            Some(format!("{host}/{path}").to_lowercase())
-        };
-        self.accounts.iter().find(|saved| {
-            saved.plugin_id == account.plugin_id
-                && saved.identity.as_deref().is_some_and(|known| known.eq_ignore_ascii_case(identity))
-                && host(saved) == host(account)
-        })
-    }
-
-    /// The id a newly connected account's token is kept under: the existing account's when it is the same one.
-    pub fn connected_id(&self, account: &Account, identity: &str) -> String {
-        self.existing_account(account, identity).map_or_else(|| account.id.clone(), |a| a.id.clone())
-    }
-
-    /// Saves an account whose first fetch worked. Its items arrive silently.
-    pub fn finish_connect_saved(
-        &mut self,
-        mut account: Account,
-        saved: Secrets,
-        snapshot: SourceSnapshot,
-        now: DateTime<Utc>,
-    ) {
-        self.secrets = Some(saved);
-        // The same account connected again: it keeps its id, so Done, snoozes and pins stay; a new name replaces
-        // the old one, and its items come under its id.
-        if let Some(existing) = self.existing_account(&account, &snapshot.identity).map(|a| a.id.clone()) {
-            let mut snapshot = snapshot;
-            for item in &mut snapshot.items {
-                item.account_id = existing.clone();
-                if let Some(rest) = item.id.strip_prefix(account.id.as_str()) {
-                    item.id = format!("{existing}{rest}");
-                }
-            }
-            if let (Some(name), Some(saved)) = (account.name, self.accounts.iter_mut().find(|a| a.id == existing)) {
-                saved.name = Some(name);
-                self.persist(ACCOUNTS, &self.accounts);
-            }
-            self.backoff.remove(&existing);
-            self.apply(vec![(existing, Ok(snapshot))], now);
-            return;
-        }
-        account.identity = Some(snapshot.identity.clone());
-        let id = account.id.clone();
-        self.accounts.push(account);
-        self.apply(vec![(id, Ok(snapshot))], now);
-    }
-
-    /// Reconnect: the same account with a new token, so its Done, snoozes and pins stay. The caller
-    /// fetches once with the plugin, then `Tokens::reconnect` saves it.
-    pub fn prepare_reconnect(
-        &self,
-        account_id: &str,
-        secrets: &HashMap<String, String>,
-        http: Arc<dyn HttpClient>,
-    ) -> Result<Box<dyn SourcePlugin>, Message> {
-        let account = &self.with_policy_settings(
-            self.accounts.iter().find(|a| a.id == account_id).ok_or("This account is no longer connected.")?,
-        );
-        let manifest =
-            registry::manifest(&account.plugin_id).ok_or_else(|| format!("Unknown plugin “{}”.", account.plugin_id))?;
-        if let Some(refusal) = self.policy().refusal(&manifest) {
-            return Err(refusal.into());
-        }
-        let guarded: Arc<dyn HttpClient> =
-            Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
-        registry::make(account, secrets, guarded, Default::default()).map_err(|e| e.message())
-    }
-
-    /// Saves the new token of an account whose fetch worked with it, and its items.
-    pub fn finish_reconnect_saved(
-        &mut self,
-        account_id: &str,
-        saved: Secrets,
-        snapshot: SourceSnapshot,
-        now: DateTime<Utc>,
-    ) -> Result<(), Message> {
-        if !self.accounts.iter().any(|a| a.id == account_id) {
-            return Err("This account is no longer connected.".into());
-        }
-        self.secrets = Some(saved);
-        self.backoff.remove(account_id);
-        self.apply(vec![(account_id.to_string(), Ok(snapshot))], now);
-        Ok(())
-    }
-
-    /// Reconnecting the assistant: the same account with a new key. The caller tests it once with a made-up item
-    /// (no inbox content), then `Tokens::reconnect` saves the key.
-    pub fn prepare_assistant_reconnect(
-        &self,
-        account_id: &str,
-        secrets: &HashMap<String, String>,
-        http: Arc<dyn HttpClient>,
-        language: &str,
-    ) -> Result<Box<dyn AssistantPlugin>, Message> {
-        let account = self
+        let me = self.accounts.find(&item.account_id).and_then(|a| a.identity.as_deref());
+        let items: Vec<&InboxItem> = self
             .accounts
             .iter()
-            .find(|a| a.id == account_id && claude::is_assistant(&a.plugin_id))
-            .ok_or("This account is no longer connected.")?;
-        self.assistant_with(account, secrets, http, language)
+            .filter(|a| self.allows(&a.plugin_id))
+            .flat_map(|a| self.items.get(&a.id).into_iter().flatten())
+            .collect();
+        WaitingAssistant::default().help(item, &items, me, now)
     }
 
-    /// The tokens are saved: an account reconnected without a fetch (the assistant) uses them from now on.
-    pub fn finish_reconnect_secrets(&mut self, account_id: &str, saved: Secrets) -> Result<(), Message> {
-        if !self.accounts.iter().any(|a| a.id == account_id) {
-            return Err("This account is no longer connected.".into());
-        }
-        self.secrets = Some(saved);
-        Ok(())
+    /// The message to paste for this help: who could review, or a kind nudge. Nothing is sent.
+    pub fn waiting_draft(&self, id: &str, now: DateTime<Utc>, tr: &dyn Fn(&str) -> String) -> Option<String> {
+        let item = self.item(id)?;
+        let help = self.waiting_help(&item, now)?;
+        Some(WaitingAssistant::default().draft(&help, &item, tr))
     }
 
-    pub fn rename(&mut self, account_id: &str, name: &str) {
-        if let Some(account) = self.accounts.iter_mut().find(|a| a.id == account_id) {
-            account.name = Some(name.trim().to_string()).filter(|n| !n.is_empty());
-        }
-        self.persist(ACCOUNTS, &self.accounts);
+    /// Reviews waiting for you, in session order: pressing first, then quick wins, then whoever waited longest.
+    pub fn review_queue(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
+        let reviews: Vec<InboxItem> = self
+            .layout(now, "")
+            .my_turn
+            .into_iter()
+            .filter(|g| g.bundle == InboxBundle::reviews())
+            .flat_map(|g| g.items)
+            .collect();
+        remora_core::ReviewQueue::order(&reviews, now)
     }
 
-    pub fn disconnect_saved(&mut self, account_id: &str, saved: Secrets) {
-        self.undo_point = None;
-        self.secrets = Some(saved);
-        self.accounts.retain(|a| a.id != account_id);
-        self.sessions.remove(account_id);
-        self.items.remove(account_id);
-        self.recompute_links();
-        self.errors.remove(account_id);
-        self.remarks.remove(account_id);
-        self.synced.remove(account_id);
-        self.prune();
-        self.persist(ACCOUNTS, &self.accounts);
-        self.persist(CACHE, &self.items);
-        self.persist(STATES, &self.states);
-        self.enforce_ai_policy();
+    /// Items from other tools about the same thing.
+    pub fn linked(&self, id: &str) -> Vec<InboxItem> {
+        self.links.get(id).map(|ids| ids.iter().filter_map(|id| self.item(id)).collect()).unwrap_or_default()
     }
 
-    /// Settings → Privacy → Erase local data, the tokens already deleted (`Tokens::erase`). The files go under the lock, so no save can bring one back.
-    pub fn erase_local_data_saved(&mut self) -> Result<(), Message> {
-        self.remarks.clear();
-        self.undo_point = None;
-        if let Some(store) = &self.store {
-            store.erase().map_err(|e| e.to_string())?;
-        }
-        let (vault, managed, store) = (self.vault.clone(), self.managed.clone(), self.store.take());
-        *self = Inbox::in_memory(vault, managed);
-        self.store = store;
-        Ok(())
+    /// Why an item ranks higher than its priority alone would put it.
+    pub fn ranking_reason(&self, item: &InboxItem, tr: &dyn Fn(&str) -> String) -> Option<String> {
+        self.ranker.reason(item, tr)
     }
+
+    fn recompute_links(&mut self) {
+        self.links = LinkFinder::default().links(&self.all_items());
+    }
+
+    // MARK: Undo
 
     fn remember(&mut self) {
         self.undo_point = Some((self.states.clone(), self.reminders.clone()));
@@ -1558,22 +701,27 @@ impl Inbox {
         let Some((states, reminders)) = self.undo_point.take() else { return false };
         self.states = states;
         self.reminders = reminders;
-        self.persist(STATES, &self.states);
-        self.persist(REMINDERS, &self.reminders);
+        self.persistence.save(STATES, &self.states);
+        self.persistence.save(REMINDERS, &self.reminders);
         true
     }
 
+    // MARK: Files
+
     /// The files, for the app to flush when it quits.
     pub fn store(&self) -> Option<JsonStore> {
-        self.store.clone()
+        self.persistence.store()
     }
 
-    fn persist<T: Serialize>(&self, name: &str, value: &T) {
-        if let Some(store) = &self.store {
-            if let Err(error) = store.save(name, value) {
-                eprintln!("Remora: could not save {name}: {error}");
-            }
-        }
+    /// Settings → Privacy → Erase local data, the tokens already deleted (`Tokens::erase`). The files go under the
+    /// lock, so no save can bring one back.
+    pub fn erase_local_data_saved(&mut self) -> Result<(), Message> {
+        self.sync.forget_remarks();
+        self.undo_point = None;
+        self.persistence.erase()?;
+        let (persistence, vault, managed) = (self.persistence.clone(), self.accounts.vault(), self.managed.clone());
+        *self = Inbox::empty(persistence, vault, managed);
+        Ok(())
     }
 
     /// Demo items, as if an account had synced: see `demo.rs`.
@@ -1583,14 +731,25 @@ impl Inbox {
         items: HashMap<String, Vec<InboxItem>>,
         states: HashMap<String, ItemState>,
     ) {
-        self.accounts = accounts;
+        self.accounts.replace_all(accounts);
         self.items = items
             .into_iter()
             .map(|(id, items)| (id, items.into_iter().map(VerbClassifier::classify).collect()))
             .collect();
-        self.synced = self.items.keys().cloned().collect();
+        self.sync.synced_all(self.items.keys().cloned(), Utc::now());
         self.states = states;
-        self.last_refresh = Some(Utc::now());
+    }
+
+    /// The accounts, for tests to arrange.
+    #[cfg(test)]
+    pub(crate) fn accounts_mut(&mut self) -> &mut Vec<Account> {
+        self.accounts.list_mut()
+    }
+
+    /// The preferences and the policy, for tests to arrange without saving or enforcing anything.
+    #[cfg(test)]
+    pub(crate) fn arrange(&mut self) -> (&mut Preferences, &mut Managed) {
+        (&mut self.preferences, &mut self.managed)
     }
 }
 
@@ -1598,9 +757,12 @@ impl Inbox {
 mod tests {
     use super::*;
     use crate::MemoryVault;
+    use crate::Secrets;
     use chrono::Duration;
+    use remora_core::{AssistantPolicy, Brief, BundleSummary, NoticeKind, TriageAction, TriageSuggestion};
     use remora_core::{Badge, EXTERNAL_AI_OFF, LOCAL_AI_NOT_ALLOWED, SERVER_NOT_ALLOWED};
     use remora_plugins::{Request, Response};
+    use std::collections::HashSet;
 
     /// Runs a token change as the app does, through `Tokens`, on an inbox the test owns:
     /// `saved!(inbox, |tokens, shared| tokens.disconnect(&shared, "a1"))`.
@@ -1657,7 +819,7 @@ mod tests {
 
     fn inbox() -> Inbox {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
-        inbox.accounts = vec![Account {
+        *inbox.accounts_mut() = vec![Account {
             id: "a1".into(),
             plugin_id: "github".into(),
             name: None,
@@ -1822,7 +984,7 @@ mod tests {
         let state = &inbox.states[&id];
         assert_eq!(state.snooze.as_ref().map(|s| s.until), Some(next));
         assert!(state.reminded_at.is_none() && state.done.is_none());
-        assert!(inbox.snooze_history.is_empty(), "a reminder isn't counted as a snooze");
+        assert!(inbox.snoozes.history().is_empty(), "a reminder isn't counted as a snooze");
 
         assert!(inbox.undo());
         assert!(inbox.states[&id].reminded_at.is_some() && inbox.states[&id].snooze.is_none());
@@ -1888,7 +1050,7 @@ mod tests {
         let at = |minutes: i64| now() + Duration::minutes(minutes);
         let next_time = (now() + Duration::hours(1)).with_timezone(&chrono::Local).format("%H:%M").to_string();
         inbox.preferences.notification_times = next_time;
-        inbox.batched_at = now();
+        inbox.sync.batched(now());
         inbox.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
         let arrived: Vec<InboxItem> = (1..=5).map(|i| item(&i.to_string(), InboxBundle::reviews())).collect();
         assert!(inbox.apply(snapshot(arrived), at(1)).is_empty(), "held until the set time");
@@ -2201,15 +1363,15 @@ mod tests {
         let snapshot = SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] };
         saved!(inbox, |tokens, shared| tokens.connect(&shared, account, secrets.clone(), snapshot, now())).unwrap();
         let settings = HashMap::new();
-        let (cache, _) = AccountSession::current(&mut inbox.sessions, &id, &settings, &secrets);
+        let (cache, _) = inbox.accounts.session(&id, &settings, &secrets);
         cache.renew("refreshToken", "r2".into());
-        let (gone, _) = AccountSession::current(&mut inbox.sessions, "gone", &settings, &secrets);
+        let (gone, _) = inbox.accounts.session("gone", &settings, &secrets);
         gone.renew("refreshToken", "x".into());
         saved!(inbox, |tokens, shared| tokens.save_renewed(&shared)).unwrap();
         let saved = vault.load().unwrap();
         assert_eq!(saved.keys().collect::<Vec<_>>(), [&id], "nothing for an account no longer here");
         assert_eq!((saved[&id]["token"].as_str(), saved[&id]["refreshToken"].as_str()), ("lin_k", "r2"));
-        assert_eq!(inbox.secrets().unwrap(), &saved, "the inbox uses them from now on");
+        assert_eq!(inbox.accounts.secrets().unwrap(), &saved, "the inbox uses them from now on");
     }
 
     /// Connecting the same account again (same person, tool and server) updates it: no second account, no
@@ -2264,7 +1426,7 @@ mod tests {
         let mut saved = account("gitlab.acme.io");
         saved.id = "saved".into();
         saved.identity = Some("alice".into());
-        inbox.accounts.push(saved);
+        inbox.accounts_mut().push(saved);
         assert!(inbox.existing_account(&account("https://gitlab.acme.io/"), "Alice").is_some());
         assert!(inbox.existing_account(&account("gitlab.other.io"), "alice").is_none());
         assert!(inbox.existing_account(&account("gitlab.acme.io"), "bob").is_none());
@@ -2274,7 +1436,7 @@ mod tests {
         let mut acme = org("https://dev.azure.com/acme/");
         acme.id = "acme".into();
         acme.identity = Some("alice".into());
-        inbox.accounts.push(acme);
+        inbox.accounts_mut().push(acme);
         assert!(inbox.existing_account(&org("dev.azure.com/Acme"), "alice").is_some());
         assert!(inbox.existing_account(&org("dev.azure.com/globex"), "alice").is_none());
     }
@@ -2286,7 +1448,7 @@ mod tests {
         let vault: Arc<dyn Vault> = Arc::new(MemoryVault::default());
         {
             let mut saved = Inbox::open(store.clone(), vault.clone(), Managed::default());
-            saved.accounts = inbox().accounts;
+            *saved.accounts_mut() = inbox().accounts().to_vec();
             saved.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
             saved.toggle_pin("1");
             saved.add_reminder("Stand-up notes", now() + Duration::hours(1), None, None, now()).unwrap();
@@ -2309,7 +1471,7 @@ mod tests {
         let folder = dir.path().join("Remora");
         let store = JsonStore::new(folder.clone());
         let mut inbox = Inbox::open(store.clone(), Arc::new(MemoryVault::default()), Managed::default());
-        inbox.accounts = self::inbox().accounts;
+        *inbox.accounts_mut() = self::inbox().accounts().to_vec();
         inbox.apply(snapshot(vec![item("1", InboxBundle::reviews())]), now());
         store.flush();
         for name in [ACCOUNTS, CACHE, STATES] {
@@ -2362,7 +1524,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let store = JsonStore::new(dir.path().join("Remora"));
         let mut inbox = Inbox::open(store.clone(), Arc::new(MemoryVault::default()), Managed::default());
-        inbox.accounts = self::inbox().accounts;
+        *inbox.accounts_mut() = self::inbox().accounts().to_vec();
         let in_flight = snapshot(vec![item("1", InboxBundle::reviews())]);
 
         saved!(inbox, |tokens, shared| tokens.erase(&shared)).unwrap();
@@ -2389,9 +1551,9 @@ mod tests {
     #[test]
     fn failing_and_rate_limited_accounts_sit_refreshes_out() {
         let mut inbox = inbox();
-        inbox.accounts[0].settings.insert("host".into(), "https://github.com".into());
+        inbox.accounts_mut()[0].settings.insert("host".into(), "https://github.com".into());
         inbox
-            .vault
+            .vault()
             .save(&HashMap::from([("a1".to_string(), HashMap::from([("token".to_string(), "t".to_string())]))]))
             .unwrap();
         let jobs = |inbox: &mut Inbox, at: DateTime<Utc>, manual: bool| {
@@ -2419,7 +1581,7 @@ mod tests {
 
     fn two_accounts() -> Inbox {
         let mut inbox = inbox();
-        inbox.accounts.push(Account {
+        inbox.accounts_mut().push(Account {
             id: "a2".into(),
             plugin_id: "linear".into(),
             name: None,
@@ -2436,7 +1598,7 @@ mod tests {
         let down = |id: &str| (id.to_string(), Err(PluginError::Network("connect".into())));
         inbox.apply(vec![down("a1"), down("a2")], now());
         assert_eq!(inbox.health(), SourcesHealth::Offline);
-        assert!(inbox.backoff.is_empty(), "no slow-down for being offline");
+        assert!(!inbox.sync.slows_down(), "no slow-down for being offline");
         assert_eq!(inbox.errors(), vec![remora_core::OFFLINE.to_string(); 2]);
 
         inbox.apply(snapshot(vec![]), now());
@@ -2462,7 +1624,7 @@ mod tests {
     #[test]
     fn a_rejected_token_is_reconnected_in_place() {
         let mut inbox = inbox();
-        inbox.accounts[0].settings.insert("host".into(), "https://github.com".into());
+        inbox.accounts_mut()[0].settings.insert("host".into(), "https://github.com".into());
         inbox.apply(snapshot(vec![item("x", InboxBundle::reviews())]), now());
         inbox.toggle_pin("x");
         inbox.apply(vec![("a1".into(), Err(PluginError::Unauthorized))], now());
@@ -2482,7 +1644,10 @@ mod tests {
         assert_eq!(inbox.accounts.len(), 1, "the same account");
         assert_eq!(inbox.health(), SourcesHealth::Fine);
         assert!(inbox.states.get("x").is_some_and(|s| s.pinned), "its states stay");
-        assert_eq!(inbox.secrets().unwrap().get("a1").and_then(|s| s.get("token")).map(String::as_str), Some("new"));
+        assert_eq!(
+            inbox.accounts.secrets().unwrap().get("a1").and_then(|s| s.get("token")).map(String::as_str),
+            Some("new")
+        );
         assert!(inbox.prepare_reconnect("gone", &HashMap::new(), Arc::new(NoNetwork)).is_err());
     }
 
@@ -2503,7 +1668,7 @@ mod tests {
         assert!(inbox.insights(Utc::now()).iter().all(|i| i.id() != id), "Not now");
         assert!(inbox.suggested_return(SnoozeReason::NoTime, Utc::now()) > Utc::now());
         inbox.toggle_done("x", Utc::now());
-        assert!(inbox.snooze_history.last().is_some_and(|r| r.done_at.is_some()), "Done closes the last snooze");
+        assert!(inbox.snoozes.history().last().is_some_and(|r| r.done_at.is_some()), "Done closes the last snooze");
     }
 
     /// A reminder isn't a habit: snoozing one teaches nothing.
@@ -2512,7 +1677,7 @@ mod tests {
         let mut inbox = inbox();
         let id = inbox.add_reminder("Call the bank", Utc::now() + Duration::hours(1), None, None, Utc::now()).unwrap();
         inbox.snooze(&id, Utc::now() + Duration::hours(2), SnoozeMode::Hide, None, false);
-        assert!(inbox.snooze_history.is_empty() && inbox.action_records.is_empty());
+        assert!(inbox.snoozes.history().is_empty() && inbox.action_records.is_empty());
     }
 
     /// A review started then done records how long it really took.
@@ -2552,7 +1717,7 @@ mod tests {
         assert!(inbox.prepare_assistant_reconnect("a1", &key, Arc::new(NoNetwork), "en").is_err(), "not an assistant");
         saved!(inbox, |tokens, shared| tokens.reconnect(&shared, &account.id, key.clone(), None, now())).unwrap();
         assert_eq!(inbox.assistant_account().map(|a| a.id), Some(account.id.clone()), "the same account");
-        assert_eq!(inbox.secrets().unwrap()[&account.id]["token"], "new");
+        assert_eq!(inbox.accounts.secrets().unwrap()[&account.id]["token"], "new");
         inbox.preferences.allow_external_ai = false;
         assert!(
             inbox.prepare_assistant_reconnect(&account.id, &key, Arc::new(NoNetwork), "en").is_err(),
@@ -2572,7 +1737,7 @@ mod tests {
         let account = connect_openai(&inbox, "https://evil.example/v1").unwrap();
         assert_eq!(account.settings["host"], "https://acme.openai.azure.com/openai/v1");
         inbox
-            .accounts
+            .accounts_mut()
             .push(Account { settings: HashMap::from([("host".into(), "https://evil.example/v1".into())]), ..account });
         let info = inbox.account_infos().into_iter().find(|a| a.account.plugin_id == "openai").unwrap();
         assert_eq!(info.hosts, ["acme.openai.azure.com"], "the user's old server is never reached");
@@ -2662,10 +1827,28 @@ mod tests {
     fn assistant_output_goes_without_an_assistant() {
         let mut inbox = inbox();
         inbox.store_brief(Some(Brief::new("Two reviews wait.", vec![], Utc::now())));
-        inbox.triage =
-            vec![TriageSuggestion { id: "x".into(), action: TriageAction::Done, until: None, reason: "old".into() }];
+        inbox.assistant.store_triage(vec![TriageSuggestion {
+            id: "x".into(),
+            action: TriageAction::Done,
+            until: None,
+            reason: "old".into(),
+        }]);
         inbox.enforce_ai_policy();
-        assert!(inbox.brief.is_none() && inbox.triage.is_empty());
+        assert!(inbox.brief().is_none() && inbox.triage().is_empty());
+    }
+
+    /// A policy read again goes through `set_managed`, which applies it at once: the shell has nothing to remember.
+    #[test]
+    fn a_new_policy_applies_at_once() {
+        let mut inbox = inbox();
+        inbox.preferences.allow_external_ai = true;
+        let account = connect_openai(&inbox, "https://api.openai.com/v1").unwrap();
+        inbox.accounts_mut().push(account);
+        inbox.store_brief(Some(Brief::new("Two reviews wait.", vec![], Utc::now())));
+        inbox.set_managed(Managed::default());
+        assert!(inbox.brief().is_some(), "still allowed");
+        inbox.set_managed(Managed { allow_external_ai: Some(false), ..Managed::default() });
+        assert!(inbox.brief().is_none(), "what the assistant wrote goes with it");
     }
 
     /// SEC-27: the assistant is asked without the lock; what it answers after Erase, a disconnect or AI being turned
@@ -2692,14 +1875,17 @@ mod tests {
         inbox.keep_brief(&from, brief());
         inbox.keep_summary(&from, "b", summary());
         inbox.keep_triage(&from, suggestions());
-        assert!(inbox.brief.is_some() && inbox.bundle_summaries.len() == 1 && inbox.triage.len() == 1, "still wanted");
+        assert!(
+            inbox.brief().is_some() && inbox.bundle_summaries().len() == 1 && inbox.triage().len() == 1,
+            "still wanted"
+        );
 
         let (mut inbox, from) = connected("erased");
         saved!(inbox, |tokens, shared| tokens.erase(&shared)).unwrap();
         inbox.keep_brief(&from, brief());
         inbox.keep_summary(&from, "b", summary());
         inbox.keep_triage(&from, suggestions());
-        assert!(inbox.brief.is_none() && inbox.bundle_summaries.is_empty() && inbox.triage.is_empty());
+        assert!(inbox.brief().is_none() && inbox.bundle_summaries().is_empty() && inbox.triage().is_empty());
         assert_eq!(
             crate::store::json_files(&dir.path().join("erased")).map(|files| files.count()).unwrap_or(0),
             0,
@@ -2709,12 +1895,12 @@ mod tests {
         let (mut inbox, from) = connected("disconnected");
         saved!(inbox, |tokens, shared| tokens.disconnect(&shared, &from)).unwrap();
         inbox.keep_summary(&from, "b", summary());
-        assert!(inbox.bundle_summaries.is_empty());
+        assert!(inbox.bundle_summaries().is_empty());
 
         let (mut inbox, from) = connected("ai-off");
         inbox.preferences.allow_external_ai = false;
         inbox.keep_brief(&from, brief());
-        assert!(inbox.brief.is_none());
+        assert!(inbox.brief().is_none());
     }
 
     /// Applying a triage: only what was ticked, and the first "now" item is the one to open.
@@ -2743,13 +1929,13 @@ mod tests {
             TriageSuggestion { id: "b".into(), action: TriageAction::Done, until: None, reason: String::new() },
             TriageSuggestion { id: "c".into(), action: TriageAction::Now, until: None, reason: String::new() },
         ];
-        inbox.triage = selected.clone();
+        inbox.assistant.store_triage(selected.clone());
         let open = inbox.apply_triage(&selected, Utc::now());
         assert_eq!(open.as_deref(), Some("c"));
         assert_eq!(inbox.states["a"].snooze.as_ref().map(|s| s.until), Some(later));
         assert!(inbox.states["b"].done.is_some());
         assert!(inbox.states.get("c").and_then(|s| s.snooze.as_ref()).is_none(), "back in the inbox");
-        assert!(inbox.triage.is_empty());
+        assert!(inbox.triage().is_empty());
 
         // One Undo puts the whole triage back, not just the last Done.
         assert!(inbox.undo());

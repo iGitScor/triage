@@ -288,8 +288,8 @@ pub fn fixture(now: DateTime<Utc>) -> serde_json::Value {
         "inbox": crate::view::inbox_view(&inbox, "", true, &|key| key.to_string()),
         "sources": inbox.sources(),
         "accounts": inbox.account_infos(),
-        "preferences": inbox.preferences,
-        "managed": inbox.managed,
+        "preferences": inbox.preferences(),
+        "managed": inbox.managed(),
         "policy": inbox.policy(),
         "snoozeReturns": SnoozeReason::ALL
             .iter()

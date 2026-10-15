@@ -109,7 +109,7 @@ pub fn run() {
     if demo_mode {
         demo::load(&mut inbox, chrono::Utc::now());
     }
-    let text_scale = inbox.preferences.text_size.scale();
+    let text_scale = inbox.preferences().text_size.scale();
     let state = AppState {
         store: inbox.store(),
         inbox: Mutex::new(inbox),
@@ -519,11 +519,7 @@ pub async fn refresh(app: &AppHandle, manual: bool) {
     let state = app.state::<AppState>();
     if !state.demo {
         // The policy is read again each time: a change from Group Policy or Intune applies without a restart.
-        {
-            let mut inbox = state.inbox.lock().await;
-            inbox.managed = remora_app::Managed::read();
-            inbox.enforce_ai_policy();
-        }
+        state.inbox.lock().await.set_managed(remora_app::Managed::read());
         // The tokens are read once per launch, outside the lock.
         state.tokens.load_once(&state.inbox).await;
         let jobs = state.inbox.lock().await.fetch_jobs(state.http.clone(), chrono::Utc::now(), manual);

@@ -70,7 +70,7 @@ pub async fn status(app: &AppHandle) -> UpdateStatus {
     if !supported(app) {
         return UpdateStatus::Unsupported;
     }
-    if !app.state::<AppState>().inbox.lock().await.managed.updates_allowed() {
+    if !app.state::<AppState>().inbox.lock().await.managed().updates_allowed() {
         return UpdateStatus::Managed;
     }
     app.state::<AppState>().updates.status.lock().await.clone()
@@ -88,7 +88,7 @@ pub async fn offered(app: &AppHandle) -> Option<String> {
 /// a check or an install is running.
 pub async fn check(app: &AppHandle) {
     let state = app.state::<AppState>();
-    if state.demo || !supported(app) || !state.inbox.lock().await.managed.updates_allowed() {
+    if state.demo || !supported(app) || !state.inbox.lock().await.managed().updates_allowed() {
         return;
     }
     if matches!(*state.updates.status.lock().await, UpdateStatus::Checking | UpdateStatus::Installing { .. }) {
@@ -141,7 +141,7 @@ pub async fn daily(app: AppHandle) {
         let automatic = {
             let state = app.state::<AppState>();
             let inbox = state.inbox.lock().await;
-            inbox.managed.checks_for_updates(&inbox.preferences)
+            inbox.checks_for_updates()
         };
         if automatic {
             check(&app).await;

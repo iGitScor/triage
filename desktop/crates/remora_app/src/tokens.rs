@@ -148,7 +148,7 @@ impl Tokens {
         self.change_secrets(
             inbox,
             |inbox| {
-                if !inbox.accounts.iter().any(|a| a.id == account_id) {
+                if !inbox.is_connected(account_id) {
                     return Err("This account is no longer connected.".into());
                 }
                 inbox.secrets_after(|all| {
@@ -228,7 +228,7 @@ mod tests {
     fn connected(vault: Arc<MemoryVault>) -> Mutex<Inbox> {
         vault.save(&Secrets::from([("a1".into(), token("t1")), ("a2".into(), token("t2"))])).unwrap();
         let mut inbox = Inbox::in_memory(vault, Managed::default());
-        inbox.accounts = vec![account("a1", "github"), account("a2", "linear")];
+        *inbox.accounts_mut() = vec![account("a1", "github"), account("a2", "linear")];
         Mutex::new(inbox)
     }
 
@@ -300,7 +300,7 @@ mod tests {
         );
         let mut inbox = block_on(inbox.lock());
         assert_eq!(inbox.secrets_after(|_| {}).unwrap(), expected, "the inbox holds what was saved");
-        assert_eq!(inbox.accounts.iter().map(|a| a.id.as_str()).collect::<Vec<_>>(), ["a2"]);
+        assert_eq!(inbox.accounts().iter().map(|a| a.id.as_str()).collect::<Vec<_>>(), ["a2"]);
     }
 
     /// An account disconnected before its reconnect is saved: nothing is written, a source or the assistant alike.
@@ -329,7 +329,7 @@ mod tests {
         assert!(block_on(tokens.disconnect(&inbox, "a1")).is_err());
         assert!(block_on(tokens.erase(&inbox)).is_err());
         let mut inbox = block_on(inbox.lock());
-        assert_eq!(inbox.accounts.len(), 2);
+        assert_eq!(inbox.accounts().len(), 2);
         assert_eq!(inbox.secrets_after(|_| {}).unwrap().len(), 2);
     }
 

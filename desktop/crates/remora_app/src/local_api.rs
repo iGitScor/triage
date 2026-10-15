@@ -349,7 +349,7 @@ mod tests {
         assert_eq!(serde_json::from_str::<Value>(&count).unwrap()["count"], 1);
         assert!(!changed);
 
-        inbox.managed.hidden_content_sources = Some(vec!["reminders".into()]);
+        inbox.arrange().1.hidden_content_sources = Some(vec!["reminders".into()]);
         let (list, _) = answer(&mut inbox, r#"{"command":"list"}"#, later);
         assert!(!list.contains("Call Erin"), "{list}");
     }
