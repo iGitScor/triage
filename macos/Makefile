@@ -1,10 +1,10 @@
 .PHONY: build test app run icon clean
 
 build:
-	swift build
+	swift build -Xswiftc -warnings-as-errors
 
 test:
-	swift test
+	swift test -Xswiftc -warnings-as-errors
 
 icon:
 	swiftc -o .build/make-icon scripts/icon/main.swift Sources/Remora/Presentation/Components/RemoraArt.swift

@@ -27,10 +27,13 @@ jobs:
         run: swift format lint --strict --parallel -r Sources Tests Package.swift
       - name: Every UI string has French, and Localizable.strings is up to date
         run: python3 scripts/make-strings.py --check
+      # Any compiler warning fails, in the tests and in the app, as clippy's -D warnings does on Windows.
       - name: Test
-        run: swift test
+        run: swift test -Xswiftc -warnings-as-errors
       - name: Build the app (signed ad hoc on CI)
         run: ./scripts/build-app.sh
+        env:
+          REMORA_STRICT: "1"
       - name: Package
         run: ditto -c -k --keepParent build/Remora.app build/Remora-macos.zip
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

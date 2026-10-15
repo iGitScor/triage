@@ -37,34 +37,17 @@ struct BackoffTests {
     }
 
     @Test func rateLimitsAreRecognisedWithTheirResetTime() async throws {
-        struct Answer: HTTPClient {
-            let status: Int
-            let headers: [String: String]
-            func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
-                (
-                    Data(),
-                    HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: headers)!
-                )
-            }
-        }
-        let request = URLRequest.get(URL(string: "https://api.github.com/user")!)
-        func error(_ status: Int, _ headers: [String: String]) async -> Error? {
-            do {
-                _ = try await Answer(status: status, headers: headers).decode([String: String].self, from: request)
-                return nil
-            } catch { return error }
-        }
         // GitHub's primary limit: a 403 with nothing left, and the reset in seconds since 1970.
         #expect(
-            await error(403, ["X-RateLimit-Remaining": "0", "X-RateLimit-Reset": "1800000600"]) as? HTTPError
+            await failure(403, ["X-RateLimit-Remaining": "0", "X-RateLimit-Reset": "1800000600"]) as? HTTPError
                 == .rateLimited(Date(timeIntervalSince1970: 1_800_000_600)))
         // GitLab's RateLimit-Reset, and a plain 429.
         #expect(
-            await error(429, ["RateLimit-Reset": "1800000900"]) as? HTTPError
+            await failure(429, ["RateLimit-Reset": "1800000900"]) as? HTTPError
                 == .rateLimited(Date(timeIntervalSince1970: 1_800_000_900)))
-        #expect(await error(429, [:]) as? HTTPError == .rateLimited(nil))
+        #expect(await failure(429, [:]) as? HTTPError == .rateLimited(nil))
         // GitHub's secondary limit: a 403 with requests left, and when to come back.
-        if case .rateLimited(let until?) = await error(403, ["X-RateLimit-Remaining": "4000", "Retry-After": "60"])
+        if case .rateLimited(let until?) = await failure(403, ["X-RateLimit-Remaining": "4000", "Retry-After": "60"])
             as? HTTPError
         {
             #expect(abs(until.timeIntervalSinceNow - 60) < 5)
@@ -72,12 +55,29 @@ struct BackoffTests {
             Issue.record("GitHub's secondary limit read as a refused token")
         }
         // A 403 with requests left is still a refused token.
-        #expect(await error(403, ["X-RateLimit-Remaining": "12"]) as? HTTPError == .unauthorized)
+        #expect(await failure(403, ["X-RateLimit-Remaining": "12"]) as? HTTPError == .unauthorized)
         // Retry-After in seconds.
-        if case .rateLimited(let until?) = await error(429, ["Retry-After": "120"]) as? HTTPError {
+        if case .rateLimited(let until?) = await failure(429, ["Retry-After": "120"]) as? HTTPError {
             #expect(abs(until.timeIntervalSinceNow - 120) < 5)
         } else {
             Issue.record("Retry-After was ignored")
         }
     }
+}
+
+/// An HTTP answer with a status and headers, and the error `decode` makes of it.
+private struct Answer: HTTPClient {
+    let status: Int
+    let headers: [String: String]
+    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        (Data(), HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: headers)!)
+    }
+}
+
+private func failure(_ status: Int, _ headers: [String: String]) async -> Error? {
+    let request = URLRequest.get(URL(string: "https://api.github.com/user")!)
+    do {
+        _ = try await Answer(status: status, headers: headers).decode([String: String].self, from: request)
+        return nil
+    } catch { return error }
 }

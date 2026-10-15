@@ -279,6 +279,7 @@ struct KeychainTests {
 }
 
 /// A reviewer's state is said in words, not only shown by a ring's colour.
+@MainActor
 struct ReviewerDescriptionTests {
     @Test func eachStateIsSpoken() {
         #expect(PeopleStack.describe(Person(name: "erin", tone: .accent)) == "erin, approved")

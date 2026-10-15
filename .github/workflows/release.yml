@@ -58,7 +58,7 @@ jobs:
       - name: Every UI string has French
         run: python3 scripts/make-strings.py --check
       - name: Test
-        run: swift test
+        run: swift test -Xswiftc -warnings-as-errors
       - name: Stamp the build number
         run: /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Resources/Info.plist
       # The same self-signed certificate for every release (from `scripts/make-signing-cert.sh --release`): the
@@ -89,7 +89,7 @@ jobs:
         env:
           REMORA_SIGN_IDENTITY: ${{ steps.signing.outputs.identity }}
         run: |
-          REMORA_UNIVERSAL=1 ./scripts/build-app.sh
+          REMORA_UNIVERSAL=1 REMORA_STRICT=1 ./scripts/build-app.sh
           codesign --verify --strict --verbose=2 build/Remora.app
           # What the Keychain recognizes: with the release certificate, the same in every release.
           codesign -d -r- build/Remora.app
