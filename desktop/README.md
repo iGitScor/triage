@@ -10,7 +10,6 @@ Windows and Linux: a Rust core, a Svelte interface on WebView2 (WebKitGTK on Lin
 | `crates/remora_app` | The application layer, no UI: JSON storage in `%LOCALAPPDATA%\fr.igitscor.remora`, tokens in the Credential Manager, the policy from `HKLM\SOFTWARE\Policies\Remora`, and the inbox service (refresh, Done, Pin, Snooze, reminders, accounts) | 104 |
 | `app/src-tauri` | The tray icon and its popup, notifications, start with Windows, the Ctrl+Alt+R reminder shortcut, the commands the interface calls | 5 |
 | `app/src` | The interface (Svelte 5): inbox, snooze and reminder pickers, Settings (Sources, General, Privacy), English and French | type-checked, 93 |
->>>>>>> de096c3 (refactor(desktop): Inbox becomes a facade over services, its fields private (ARCH-02, part))
 
 Not yet on Windows: sorting by meaning (messages are sorted with keyword rules only; without one, a message goes
 to *To reply*), links found by on-device embeddings (ticket keys and shared words only), notification buttons, a text
