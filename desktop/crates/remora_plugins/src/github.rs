@@ -419,7 +419,7 @@ impl PullRequest {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::*;
 
@@ -447,6 +447,14 @@ mod tests {
         "files": {"nodes": [{"path": "src/search/index.ts", "additions": 40, "deletions": 2}, {"path": "src/search/index.test.ts", "additions": 12, "deletions": 0}]}
       }]}
     }}"#;
+
+    /// The fetch `registry`'s egress test runs through the guard.
+    pub(crate) fn egress_fixture() -> EgressFixture {
+        EgressFixture {
+            settings: vec![("host", "github.com"), ("token", "t")],
+            http: Arc::new(StubHttp::paths(&[("/graphql", RESPONSE)])),
+        }
+    }
 
     /// A list past its 50 says so; one that fits doesn't. Same cases as macOS.
     #[tokio::test]

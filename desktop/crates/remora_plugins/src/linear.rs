@@ -316,7 +316,7 @@ impl Notification {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::*;
 
@@ -330,6 +330,16 @@ mod tests {
               {{"id": "i4", "identifier": "ENG-45", "title": "Patch CVE", "priority": 2, "updatedAt": "{recent}", "state": {{"name": "Backlog", "type": "backlog"}}}}
             ]}}}}}}}}"#
         )
+    }
+
+    /// The fetch `registry`'s egress test runs through the guard.
+    pub(crate) fn egress_fixture() -> EgressFixture {
+        let issues = issues(&(Utc::now() - Duration::hours(1)).to_rfc3339());
+        let none = r#"{"data": {"notifications": {"nodes": []}}}"#;
+        EgressFixture {
+            settings: vec![("token", "lin_api_key")],
+            http: Arc::new(StubHttp::bodies(&[("notifications", none), ("assignedIssues", &issues)])),
+        }
     }
 
     #[tokio::test]

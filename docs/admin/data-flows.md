@@ -131,7 +131,8 @@ finds an empty inbox.
 ## How it is enforced
 
 1. **Declared destinations.** Every plugin declares its egress (hosts, description, external AI or not) in its
-   manifest. A test checks that every plugin declares one.
+   manifest. A test checks that every plugin declares one, then runs each plugin's fetch through the guarded client
+   below and fails if it asks any other host.
 2. **One gate.** The app builds plugins in one place only. It refuses a plugin the policy doesn’t allow, and gives
    the plugin an HTTP client limited to its declared hosts plus the account’s own host. Any other host fails with
    “Blocked: … is not an allowed destination”, look-alike domains included (`api.linear.app.evil.com` is

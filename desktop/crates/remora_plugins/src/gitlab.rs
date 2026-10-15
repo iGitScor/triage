@@ -546,7 +546,7 @@ mod graphql {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::*;
 
@@ -640,9 +640,8 @@ mod tests {
         assert_eq!(http.paths().iter().filter(|p| p.ends_with("/user")).count(), 1);
     }
 
-    /// One GraphQL request instead of two REST calls per merge request.
-    #[tokio::test]
-    async fn details_come_from_one_graphql_request() {
+    /// The user, the lists, the To-Dos and one GraphQL request for the details.
+    fn graphql_stub() -> StubHttp {
         let list = format!("[{MR}]");
         let graphql = r#"{"data": {"currentUser": {
           "authored": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
@@ -650,13 +649,23 @@ mod tests {
           "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
             "approvedBy": {"nodes": [{"username": "erin"}]}, "headPipeline": {"status": "FAILED"},
             "diffStats": [{"path": "app/models/user.rb", "additions": 12, "deletions": 3}]}]}}}}"#;
-        let stub = StubHttp::paths(&[
+        StubHttp::paths(&[
             ("/api/v4/user", r#"{"username": "alice"}"#),
             ("/api/v4/merge_requests", &list),
             ("/api/graphql", graphql),
             ("/api/v4/todos", "[]"),
-        ]);
-        let http = Arc::new(Recording::new(stub));
+        ])
+    }
+
+    /// The fetch `registry`'s egress test runs through the guard: GitLab.com, a declared host.
+    pub(crate) fn egress_fixture() -> EgressFixture {
+        EgressFixture { settings: vec![("host", "gitlab.com"), ("token", "t")], http: Arc::new(graphql_stub()) }
+    }
+
+    /// One GraphQL request instead of two REST calls per merge request.
+    #[tokio::test]
+    async fn details_come_from_one_graphql_request() {
+        let http = Arc::new(Recording::new(graphql_stub()));
         let plugin = GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), http.clone()).unwrap();
         let snapshot = plugin.fetch().await.unwrap();
 

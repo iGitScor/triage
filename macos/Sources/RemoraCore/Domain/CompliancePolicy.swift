@@ -28,6 +28,15 @@ extension PluginManifest {
         let value = settings[key]?.trimmingCharacters(in: .whitespaces) ?? ""
         return value.isEmpty ? fields.first { $0.key == key }?.defaultValue : value
     }
+
+    /// The hosts an account of this plugin may reach: the declared ones, plus the account's own host (a self-hosted
+    /// tool) or AI server. What its `GuardedHTTPClient` allows.
+    public func allowedHosts(in settings: [String: String]) -> [String] {
+        let own = (settings["host"] ?? server(in: settings)).flatMap {
+            URL(string: $0.contains("://") ? $0 : "https://" + $0)?.host
+        }
+        return egress.hosts + [own].compactMap { $0 }
+    }
 }
 
 /// An `AllowedAIServers` entry: a URL prefix. Scheme, host (any case) and port (443 or 80 when left out) must be equal,

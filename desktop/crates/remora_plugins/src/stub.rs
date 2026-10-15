@@ -1,7 +1,8 @@
 //! Canned HTTP answers for plugin tests.
 use crate::{HttpClient, PluginConfig, PluginError, Request, Response};
 use async_trait::async_trait;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
+use std::sync::Arc;
 
 /// Answers by the end of the URL path, or by a word in the request body.
 pub struct StubHttp {
@@ -63,6 +64,37 @@ impl HttpClient for Recording {
     async fn send(&self, request: Request) -> Result<Response, PluginError> {
         let path = reqwest::Url::parse(&request.url).map(|u| u.path().to_string()).unwrap_or_default();
         self.paths.lock().unwrap().push(path);
+        self.base.send(request).await
+    }
+}
+
+/// What `registry`'s egress test runs for one plugin (TEST-03): an account's settings, and a stub answering its
+/// fetch with the plugin's own fixtures.
+pub struct EgressFixture {
+    pub settings: Vec<(&'static str, &'static str)>,
+    pub http: Arc<dyn HttpClient>,
+}
+
+/// Keeps the host of every request before the guard sees it, so a blocked one the plugin passes over still counts.
+pub struct HostRecording {
+    base: Arc<dyn HttpClient>,
+    hosts: std::sync::Mutex<BTreeSet<String>>,
+}
+
+impl HostRecording {
+    pub fn new(base: Arc<dyn HttpClient>) -> Self {
+        HostRecording { base, hosts: Default::default() }
+    }
+
+    pub fn hosts(&self) -> Vec<String> {
+        self.hosts.lock().unwrap().iter().cloned().collect()
+    }
+}
+
+#[async_trait]
+impl HttpClient for HostRecording {
+    async fn send(&self, request: Request) -> Result<Response, PluginError> {
+        self.hosts.lock().unwrap().insert(request.host());
         self.base.send(request).await
     }
 }

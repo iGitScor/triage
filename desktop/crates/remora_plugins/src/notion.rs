@@ -518,7 +518,7 @@ impl Page {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::*;
 
@@ -542,10 +542,10 @@ mod tests {
         )
     }
 
-    #[tokio::test]
-    async fn lists_open_tasks_only() {
+    /// Alice, one database and its open and finished tasks.
+    fn tasks_stub() -> StubHttp {
         let query = format!(r#"{{"results": [{}, {}]}}"#, page("a", "In progress"), page("b", "Done"));
-        let http = StubHttp::paths(&[
+        StubHttp::paths(&[
             (
                 "/users/me",
                 r#"{"id": "u1", "type": "person", "name": "Alice", "person": {"email": "alice@acme.example"}}"#,
@@ -559,10 +559,22 @@ mod tests {
                 r#"{"properties": {"Status": {"type": "status", "status": {"options": [{"id": "o1", "name": "Done"}], "groups": [{"name": "Complete", "option_ids": ["o1"]}]}}}}"#,
             ),
             ("/data_sources/ds1/query", &query),
-        ]);
+        ])
+    }
+
+    /// The fetch `registry`'s egress test runs through the guard.
+    pub(crate) fn egress_fixture() -> EgressFixture {
+        EgressFixture {
+            settings: vec![("token", "secret"), ("databases", ID), ("doneValues", "Done")],
+            http: Arc::new(tasks_stub()),
+        }
+    }
+
+    #[tokio::test]
+    async fn lists_open_tasks_only() {
         let plugin = NotionPlugin::new(
             &config(&[("token", "secret"), ("databases", ID), ("doneValues", "Done")]),
-            Arc::new(http),
+            Arc::new(tasks_stub()),
         )
         .unwrap();
         let snapshot = plugin.fetch().await.unwrap();

@@ -268,7 +268,7 @@ impl AssistantPlugin for OpenAIPlugin {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::claude::testing::{item, now, snoozed};
     use crate::stub::config;
@@ -314,6 +314,14 @@ mod tests {
 
     const BRIEF: &str =
         r#"{"summary":"One review waits.","focus":[{"id":"a","reason":"Blocks Frank"},{"id":"ghost","reason":"?"}]}"#;
+
+    /// The brief `registry`'s egress test asks through the guard: OpenAI's server, as the connect form fills it in.
+    pub(crate) fn egress_fixture() -> crate::stub::EgressFixture {
+        crate::stub::EgressFixture {
+            settings: vec![("token", "sk"), ("model", "gpt-x"), ("host", DEFAULT_AI_SERVER)],
+            http: Recorder::new(&[], &answer(BRIEF, "stop")),
+        }
+    }
 
     fn plugin(values: &[(&str, &str)], http: Arc<Recorder>) -> Result<OpenAIPlugin, PluginError> {
         OpenAIPlugin::new(&config(values), http, "en")

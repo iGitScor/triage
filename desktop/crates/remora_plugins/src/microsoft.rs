@@ -547,7 +547,7 @@ impl Chat {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::{config, Recording, StubHttp};
     use chrono::TimeZone;
@@ -693,6 +693,22 @@ mod tests {
                 MicrosoftPlugin::new(&config(&values), http.clone()).err(),
                 Some(PluginError::MissingField(missing.into()))
             );
+        }
+    }
+
+    /// The fetch `registry`'s egress test runs through the guard: the sign-in's token, then Graph.
+    pub(crate) fn egress_fixture() -> crate::stub::EgressFixture {
+        let tokens = r#"{"access_token": "a1", "refresh_token": "r2", "expires_in": 3600}"#;
+        crate::stub::EgressFixture {
+            settings: vec![("tenant", "acme.com"), ("clientId", "app-1"), ("refreshToken", "r1")],
+            http: Arc::new(StubHttp::paths(&[
+                ("/oauth2/v2.0/token", tokens),
+                ("/me", ME),
+                ("/me/messages", FLAGGED),
+                ("/inbox/messages", UNREAD),
+                ("/me/calendarView", EVENTS),
+                ("/me/chats", CHATS),
+            ])),
         }
     }
 

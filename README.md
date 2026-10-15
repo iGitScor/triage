@@ -173,8 +173,8 @@ Every flow, the MDM profile and deployment, for IT and compliance teams: [the ad
 
 | Suite | Tests | What it covers |
 |---|---|---|
-| macOS (Swift Testing) | 400 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
-| Windows (`cargo test`) | 413 | The same rules, the six source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry and Linux policy, storage, the inbox service, and what the tray shows |
+| macOS (Swift Testing) | 398 | Verbs and classification in both languages, placement and counts, Done and snooze rules, snooze clock and advice, review prep, links, waiting assistant, ranking; every plugin against fixtures; the compliance gate, link and redirect checks, https-only hosts; the assistant's requests and the `claude` runner; the app layer (connect, saving, erase, disconnect, notifications, MDM policy, the Keychain vault) on a temporary folder |
+| Windows (`cargo test`) | 412 | The same rules, the six source plugins against the same fixtures, the guarded client, link and redirect checks, https-only hosts, the registry and Linux policy, storage, the inbox service, and what the tray shows |
 
 CI runs each suite when its folder changes, and on demand.
 

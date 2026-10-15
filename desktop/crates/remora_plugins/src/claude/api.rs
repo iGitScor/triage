@@ -289,7 +289,7 @@ impl AssistantPlugin for ClaudePlugin {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::claude::testing::{item, now, snoozed};
     use crate::stub::{config, StubHttp};
@@ -327,6 +327,15 @@ mod tests {
 
     fn answer(text: &str, stop: &str) -> String {
         serde_json::json!({ "content": [{ "type": "thinking" }, { "type": "text", "text": text }], "stop_reason": stop }).to_string()
+    }
+
+    /// The brief `registry`'s egress test asks through the guard.
+    pub(crate) fn egress_fixture() -> crate::stub::EgressFixture {
+        let brief = answer(r#"{"summary": "One review waits.", "focus": []}"#, "end_turn");
+        crate::stub::EgressFixture {
+            settings: vec![("token", "k")],
+            http: Arc::new(StubHttp::paths(&[("/v1/messages", &brief)])),
+        }
     }
 
     #[test]

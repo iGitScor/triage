@@ -659,7 +659,7 @@ impl BuildStats {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::config;
     use crate::Response;
@@ -881,20 +881,16 @@ mod tests {
         assert!(is_cloud("https://bitbucket.org") && !is_cloud("https://bitbucket.acme.io"));
     }
 
-    #[tokio::test]
-    async fn uses_only_its_declared_hosts() {
-        let stub = BitbucketStub { routes: cloud_routes(), authorization: cloud_auth() };
-        let guarded = crate::GuardedHttpClient::new(Arc::new(stub), manifest().egress.hosts);
-        let plugin = BitbucketPlugin::new(
-            &config(&[
+    /// The fetch `registry`'s egress test runs through the guard.
+    pub(crate) fn egress_fixture() -> crate::stub::EgressFixture {
+        crate::stub::EgressFixture {
+            settings: vec![
                 ("host", "bitbucket.org"),
                 ("workspace", "acme"),
                 ("email", "alice@acme.com"),
                 ("token", "t0ken"),
-            ]),
-            Arc::new(guarded),
-        )
-        .unwrap();
-        assert_eq!(plugin.fetch().await.unwrap().items.len(), 2);
+            ],
+            http: Arc::new(BitbucketStub { routes: cloud_routes(), authorization: cloud_auth() }),
+        }
     }
 }

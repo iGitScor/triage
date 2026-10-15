@@ -185,18 +185,4 @@ struct JiraPluginTests {
         #expect(JiraPlugin.jiraDate("2026-10-12T09:14:03Z") != nil)
         #expect(JiraPlugin.jiraDate(nil) == nil)
     }
-
-    @Test func usesOnlyItsDeclaredHosts() async throws {
-        let guarded = GuardedHTTPClient(
-            JiraStub(
-                myself: cloudMe, assigned: assigned, watched: watched(mentioning: "alice-id"),
-                expectedAuthorization: cloudAuth),
-            allowing: JiraPlugin.manifest.egress.hosts)
-        let plugin = try JiraPlugin(
-            config: config([
-                "host": "acme.atlassian.net", "email": "alice@acme.com", "token": "t0ken", "confluence": "true",
-            ]), http: guarded)
-        let snapshot = try await plugin.fetch()
-        #expect(snapshot.items.count == 5 && snapshot.remarks.isEmpty, "Confluence is on the same site")
-    }
 }

@@ -623,7 +623,7 @@ fn confluence_excerpt(raw: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::config;
     use crate::Response;
@@ -820,9 +820,9 @@ mod tests {
         assert_eq!(items[0].preview.as_deref(), Some("@alice please check"));
     }
 
-    /// Only the declared hosts, plus the account's own: `acme.atlassian.net` falls under `atlassian.net`.
-    #[tokio::test]
-    async fn uses_only_its_declared_hosts() {
+    /// The fetch `registry`'s egress test runs through the guard: Jira Cloud with Confluence, on the same site under
+    /// `atlassian.net`.
+    pub(crate) fn egress_fixture() -> crate::stub::EgressFixture {
         let now = Utc::now();
         let (recent, old) = (jira(now - Duration::hours(1)), jira(now - Duration::days(10)));
         let stub = JiraStub {
@@ -831,19 +831,15 @@ mod tests {
             watched: watched(&recent, &old),
             authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
         };
-        let guarded = crate::GuardedHttpClient::new(Arc::new(stub), manifest().egress.hosts);
-        let plugin = JiraPlugin::new(
-            &config(&[
+        crate::stub::EgressFixture {
+            settings: vec![
                 ("host", "acme.atlassian.net"),
                 ("email", "alice@acme.com"),
                 ("token", "t0ken"),
                 ("confluence", "true"),
-            ]),
-            Arc::new(guarded),
-        )
-        .unwrap();
-        let snapshot = plugin.fetch().await.unwrap();
-        assert!(snapshot.items.len() == 5 && snapshot.remarks.is_empty(), "Confluence is on the same site");
+            ],
+            http: Arc::new(stub),
+        }
     }
 
     #[test]

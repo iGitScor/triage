@@ -592,7 +592,7 @@ impl WorkItem {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::*;
 
@@ -659,6 +659,14 @@ mod tests {
                 return Ok(crate::Response { status: 429, body: String::new(), etag: None, reset: None });
             }
             self.0.send(request).await
+        }
+    }
+
+    /// The fetch `registry`'s egress test runs through the guard.
+    pub(crate) fn egress_fixture() -> EgressFixture {
+        EgressFixture {
+            settings: vec![("host", "dev.azure.com/acme/"), ("token", "t")],
+            http: Arc::new(Stub(StubHttp::paths(&routes()), None)),
         }
     }
 

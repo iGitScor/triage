@@ -70,11 +70,7 @@ struct InboxPolicy {
     }
 
     func allowedHosts(for account: Account, manifest: PluginManifest) -> [String] {
-        let settings = effective(account).settings
-        let own = (settings["host"] ?? manifest.server(in: settings)).flatMap {
-            URL(string: $0.contains("://") ? $0 : "https://" + $0)?.host
-        }
-        return manifest.egress.hosts + [own].compactMap { $0 }
+        manifest.allowedHosts(in: effective(account).settings)
     }
 
     /// Avatars load only from the hosts of allowed, connected tools (`accounts`, the sources).

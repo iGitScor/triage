@@ -987,7 +987,7 @@ fn ago(elapsed: Duration, french: bool) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::stub::*;
 
@@ -1302,6 +1302,14 @@ mod tests {
             )
             .into_boxed_str(),
         )
+    }
+
+    /// The fetch `registry`'s egress test runs through the guard.
+    pub(crate) fn egress_fixture() -> EgressFixture {
+        EgressFixture {
+            settings: vec![("token", "xoxp")],
+            http: Arc::new(SlackStub { mine: YOUR_THREAD, replies: replies_with("[]"), ..Default::default() }),
+        }
     }
 
     async fn thread(reactions: &str, emoji: Option<&'static str>) -> Option<InboxItem> {

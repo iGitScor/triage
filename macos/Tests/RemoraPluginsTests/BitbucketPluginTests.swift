@@ -191,13 +191,4 @@ struct BitbucketPluginTests {
         #expect(BitbucketPlugin.checks(["SUCCESSFUL", "STOPPED"]) == .passing)
         #expect(BitbucketPlugin.checks([]) == .none)
     }
-
-    @Test func usesOnlyItsDeclaredHosts() async throws {
-        let guarded = GuardedHTTPClient(
-            BitbucketStub(routes: BitbucketFixtures.cloud(), authorization: cloudAuth),
-            allowing: BitbucketPlugin.manifest.egress.hosts)
-        let plugin = try BitbucketPlugin(
-            config: config(cloudConfig.merging(["host": "bitbucket.org"]) { $1 }), http: guarded)
-        #expect(try await plugin.fetch().items.count == 2)
-    }
 }
