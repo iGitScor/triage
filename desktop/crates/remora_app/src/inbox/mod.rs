@@ -31,7 +31,9 @@ pub use sync::SyncEngine;
 
 use crate::{JsonStore, Managed, Preferences, Vault};
 use chrono::{DateTime, Utc};
-use persistence::{ACCOUNTS, BRIEF, CACHE, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES, SUMMARIES};
+use persistence::{
+    ACCOUNTS, BRIEF, CACHE, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES, SUMMARIES, USAGE,
+};
 use remora_core::{
     Account, CompliancePolicy, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder,
     Mark, Message, PluginManifest, Recurrence, RecurrenceRule, SignIn, Snooze, SnoozeMode, SnoozeReason, SourcesHealth,
@@ -146,6 +148,7 @@ impl Inbox {
             assistant: AssistantCoordinator::new(
                 files.load(BRIEF).unwrap_or_default(),
                 files.load(SUMMARIES).unwrap_or_default(),
+                files.load(USAGE).unwrap_or_default(),
                 files.clone(),
             ),
             // Cached items keep the verbs the refresh gave them (ML-16).
@@ -177,7 +180,7 @@ impl Inbox {
             accounts: AccountsService::new(vec![], vault, persistence.clone()),
             sync: SyncEngine::default(),
             snoozes: SnoozeService::new(vec![], persistence.clone()),
-            assistant: AssistantCoordinator::new(None, HashMap::new(), persistence.clone()),
+            assistant: AssistantCoordinator::new(None, HashMap::new(), Default::default(), persistence.clone()),
             learning: LearningService::new(vec![], vec![], persistence.clone()),
             managed,
             preferences: Preferences::default(),
@@ -1855,6 +1858,40 @@ mod tests {
         inbox.preferences.allow_external_ai = false;
         inbox.keep_brief(&from, brief());
         assert!(inbox.brief().is_none());
+    }
+
+    /// AI-03: every request is counted with its tokens and kept on disk, the daily limit refuses the next one, and
+    /// Erase forgets it.
+    #[test]
+    fn the_assistants_usage_is_recorded_limited_and_erased() {
+        let dir = tempfile::tempdir().unwrap();
+        let open = || {
+            Inbox::open(JsonStore::new(dir.path().to_path_buf()), Arc::new(MemoryVault::default()), Managed::default())
+        };
+        let mut inbox = open();
+        inbox.preferences.allow_external_ai = true;
+        let account = connect_openai(&inbox, "https://api.openai.com/v1").unwrap();
+        let key = HashMap::from([("token".into(), "sk".into())]);
+        saved!(inbox, |tokens, shared| tokens.connect_assistant(&shared, account.clone(), key, None)).unwrap();
+
+        assert!(inbox.assistant(Arc::new(NoNetwork), "en").is_some_and(|(_, plugin)| plugin.is_ok()));
+        inbox.record_usage(Some(remora_core::TokenUsage { input: 120, output: 30 }), Utc::now());
+        inbox.record_usage(None, Utc::now());
+        let (today, month) = inbox.assistant_usage(Utc::now());
+        assert_eq!((today.requests, today.input_tokens, today.output_tokens), (2, 120, 30));
+        assert_eq!(month.tokens(), 150);
+
+        inbox.preferences.assistant_daily_limit = 2;
+        let refused = inbox.assistant(Arc::new(NoNetwork), "en").map(|(_, plugin)| plugin.err());
+        assert_eq!(refused, Some(Some(super::assistant::LIMIT_REACHED.into())));
+        inbox.preferences.assistant_daily_limit = 3;
+        assert!(inbox.assistant(Arc::new(NoNetwork), "en").is_some_and(|(_, plugin)| plugin.is_ok()));
+
+        inbox.persistence.store().unwrap().flush();
+        assert_eq!(open().assistant_usage(Utc::now()).0.requests, 2, "kept on disk");
+        saved!(inbox, |tokens, shared| tokens.erase(&shared)).unwrap();
+        assert_eq!(inbox.assistant_usage(Utc::now()).0.requests, 0);
+        assert_eq!(open().assistant_usage(Utc::now()).0.requests, 0, "nothing left on disk");
     }
 
     /// Applying a triage: only what was ticked, and the first "now" item is the one to open.

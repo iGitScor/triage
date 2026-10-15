@@ -237,8 +237,9 @@ export type LinkedView = { id: string, title: string, context: string, pluginId:
  * For every assistant, as on macOS: `AIExcludedSources` (REG_MULTI_SZ of plugin IDs, or `reminders`), added to the
  * user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs). And the Mac's other
  * settings: `HiddenContentSources` (REG_MULTI_SZ, added to the user's), `RefreshMinutes` (REG_DWORD, 1 to 60),
- * `OpenInApps` (REG_DWORD 0/1) and `ClaudeCodePath` (REG_SZ). A source's settings (REG_SZ, `SETTINGS`): what
- * the organization registered for Microsoft 365, `MicrosoftTenant` and `MicrosoftClientID`, locked in the form.
+ * `OpenInApps` (REG_DWORD 0/1), `ClaudeCodePath` (REG_SZ) and `AIDailyLimit` (REG_DWORD, assistant requests a day,
+ * 1 to 10000). A source's settings (REG_SZ, `SETTINGS`): what the organization registered for Microsoft 365,
+ * `MicrosoftTenant` and `MicrosoftClientID`, locked in the form.
  * A key that is set wins over the user's own choice.
  *
  * It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -275,6 +276,10 @@ refreshMinutes: number | null, openInApps: boolean | null,
  * Where Claude Code is, locked in Settings. Empty: unreadable, so Claude Code is refused.
  */
 claudeCodePath: string | null, 
+/**
+ * Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored (AI-03).
+ */
+aiDailyLimit: number | null, 
 /**
  * Sources' settings by policy name (`ConfigField::managed_key`), replacing what the user typed. Empty:
  * unreadable, so the source can't sign in.
@@ -347,6 +352,10 @@ checkForUpdates: boolean,
  */
 wholeInboxBrief: boolean, briefCacheMinutes: number, assistantExcludedSources: Array<string>, 
 /**
+ * Assistant requests a day; 0 is no limit (AI-03).
+ */
+assistantDailyLimit: number, 
+/**
  * The first-run tip (the tray, the reminder shortcut, start with Windows) was dismissed.
  */
 welcomed: boolean, };
@@ -410,7 +419,11 @@ wayland: boolean,
 /**
  * Windows won't show Remora's notifications: `app` (off for Remora), `all` (off for every app) or `policy`.
  */
-notificationsOff: 'app' | 'all' | 'policy' | null, };
+notificationsOff: 'app' | 'all' | 'policy' | null, 
+/**
+ * What the assistant used today and this month (AI-03).
+ */
+usageToday: UsageDay, usageMonth: UsageDay, };
 
 /**
  * Signing in through the browser: OAuth 2's authorization code with PKCE, for an app that keeps no secret, the
@@ -483,3 +496,12 @@ export type TriageAction = "keep" | "reschedule" | "done" | "now";
 export type TriageSuggestion = { id: string, action: TriageAction, until: string | null, reason: string, };
 
 export type UpdateStatus = { "state": "idle" } | { "state": "checking" } | { "state": "upToDate" } | { "state": "available", version: string, notes: string | null, } | { "state": "installing", version: string, } | { "state": "failed", message: string, } | { "state": "managed" } | { "state": "unsupported" };
+
+/**
+ * One local day's use, or a month's added up.
+ */
+export type UsageDay = { 
+/**
+ * "2026-10-15" (a month: "2026-10").
+ */
+day: string, requests: number, inputTokens: number, outputTokens: number, };

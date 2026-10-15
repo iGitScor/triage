@@ -284,13 +284,14 @@ public struct ClaudeCodePlugin: AssistantPlugin {
     }
 
     /// What `claude --print --output-format json` prints: the answer in `structured_output`, or an error with its
-    /// `subtype` and message in `result`.
+    /// `subtype` and message in `result`; what it used in `usage`, as the Messages API words it.
     struct Result: AssistantReply {
         var isError: Bool
         var subtype: String?
         var result: String?
         /// `structured_output` as JSON, for the shared decoding.
         var structuredOutput: Data?
+        var usage: TokenUsage?
 
         init?(_ data: Data) {
             guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -301,6 +302,13 @@ public struct ClaudeCodePlugin: AssistantPlugin {
             result = object["result"] as? String
             structuredOutput = object["structured_output"].flatMap { output in
                 output is NSNull ? nil : try? JSONSerialization.data(withJSONObject: output, options: .fragmentsAllowed)
+            }
+            usage = (object["usage"] as? [String: Any]).map { usage in
+                func count(_ key: String) -> Int { (usage[key] as? NSNumber)?.intValue ?? 0 }
+                return TokenUsage(
+                    input: count("input_tokens") + count("cache_creation_input_tokens")
+                        + count("cache_read_input_tokens"),
+                    output: count("output_tokens"))
             }
         }
 

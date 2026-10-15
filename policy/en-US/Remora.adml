@@ -23,6 +23,8 @@
       <string id="AIServer_Help">The server the OpenAI-compatible assistant uses, filled in and locked in Settings.</string>
       <string id="AllowLocalAI">Allow an AI server on this computer</string>
       <string id="AllowLocalAI_Help">A server on this computer (localhost): allowed even with external AI off, or refused.</string>
+      <string id="AIDailyLimit">Assistant requests a day</string>
+      <string id="AIDailyLimit_Help">The most requests the assistant may send each day (a brief, a summary or a triage is one), from 1 to 10000. Past it, the assistant waits until the next day. Locked in Settings.</string>
       <string id="HiddenContentSources">Hide message content</string>
       <string id="HiddenContentSources_Help">Tools whose notifications say where something happened, not what was written; reminders for the user's own reminders. Added to the user's choice.</string>
       <string id="RefreshMinutes">Refresh interval</string>
@@ -44,6 +46,7 @@
       <presentation id="AllowedAIModels"><multiTextBox refId="AllowedAIModels">One value per line</multiTextBox></presentation>
       <presentation id="AllowedAIServers"><multiTextBox refId="AllowedAIServers">One value per line</multiTextBox></presentation>
       <presentation id="AIServer"><textBox refId="AIServer"><label>AI server</label></textBox></presentation>
+      <presentation id="AIDailyLimit"><decimalTextBox refId="AIDailyLimit" defaultValue="100">Requests</decimalTextBox></presentation>
       <presentation id="HiddenContentSources"><multiTextBox refId="HiddenContentSources">One value per line</multiTextBox></presentation>
       <presentation id="RefreshMinutes"><decimalTextBox refId="RefreshMinutes" defaultValue="5">Minutes</decimalTextBox></presentation>
       <presentation id="ClaudeCodePath"><textBox refId="ClaudeCodePath"><label>Claude Code path</label></textBox></presentation>

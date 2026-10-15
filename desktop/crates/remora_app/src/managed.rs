@@ -14,8 +14,9 @@ use ts_rs::TS;
 /// For every assistant, as on macOS: `AIExcludedSources` (REG_MULTI_SZ of plugin IDs, or `reminders`), added to the
 /// user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs). And the Mac's other
 /// settings: `HiddenContentSources` (REG_MULTI_SZ, added to the user's), `RefreshMinutes` (REG_DWORD, 1 to 60),
-/// `OpenInApps` (REG_DWORD 0/1) and `ClaudeCodePath` (REG_SZ). A source's settings (REG_SZ, `SETTINGS`): what
-/// the organization registered for Microsoft 365, `MicrosoftTenant` and `MicrosoftClientID`, locked in the form.
+/// `OpenInApps` (REG_DWORD 0/1), `ClaudeCodePath` (REG_SZ) and `AIDailyLimit` (REG_DWORD, assistant requests a day,
+/// 1 to 10000). A source's settings (REG_SZ, `SETTINGS`): what the organization registered for Microsoft 365,
+/// `MicrosoftTenant` and `MicrosoftClientID`, locked in the form.
 /// A key that is set wins over the user's own choice.
 ///
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -45,6 +46,8 @@ pub struct Managed {
     pub open_in_apps: Option<bool>,
     /// Where Claude Code is, locked in Settings. Empty: unreadable, so Claude Code is refused.
     pub claude_code_path: Option<String>,
+    /// Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored (AI-03).
+    pub ai_daily_limit: Option<u32>,
     /// Sources' settings by policy name (`ConfigField::managed_key`), replacing what the user typed. Empty:
     /// unreadable, so the source can't sign in.
     pub settings: BTreeMap<String, String>,
@@ -57,7 +60,7 @@ pub const POLICY_KEY: &str = r"SOFTWARE\Policies\Remora";
 pub const POLICY_FILE: &str = "/etc/remora/policy.json";
 /// The sources' settings an organization may set (`ConfigField::managed_key`).
 pub const SETTINGS: [&str; 2] = ["MicrosoftTenant", "MicrosoftClientID"];
-pub const VALUES: [&str; 15] = [
+pub const VALUES: [&str; 16] = [
     "AllowedPlugins",
     "AllowExternalAI",
     "AllowRemoteImages",
@@ -71,9 +74,13 @@ pub const VALUES: [&str; 15] = [
     "RefreshMinutes",
     "OpenInApps",
     "ClaudeCodePath",
+    "AIDailyLimit",
     "MicrosoftTenant",
     "MicrosoftClientID",
 ];
+
+/// The daily limits an organization may set, as on macOS.
+const AI_DAILY_LIMITS: std::ops::RangeInclusive<u32> = 1..=10_000;
 
 /// A registry value as found, before interpretation.
 #[derive(Clone, Debug, PartialEq)]
@@ -274,15 +281,17 @@ impl Managed {
             unreadable.push("HiddenContentSources".to_string());
             Some(vec!["*".to_string()])
         });
-        let refresh_minutes = match value("RefreshMinutes") {
+        let mut number = |name: &str, range: std::ops::RangeInclusive<u32>| match value(name) {
             RawValue::Missing => None,
-            RawValue::Number(n) => u32::try_from(n).ok().filter(|n| (1..=60).contains(n)),
-            RawValue::String(text) => text.trim().parse().ok().filter(|n| (1..=60).contains(n)),
+            RawValue::Number(n) => u32::try_from(n).ok().filter(|n| range.contains(n)),
+            RawValue::String(text) => text.trim().parse().ok().filter(|n| range.contains(n)),
             RawValue::MultiString(_) | RawValue::Other => {
-                unreadable.push("RefreshMinutes".to_string());
+                unreadable.push(name.to_string());
                 None
             }
         };
+        let refresh_minutes = number("RefreshMinutes", 1..=60);
+        let ai_daily_limit = number("AIDailyLimit", AI_DAILY_LIMITS);
         let claude_code_path = text(value("ClaudeCodePath")).unwrap_or_else(|()| {
             unreadable.push("ClaudeCodePath".to_string());
             Some(String::new())
@@ -327,6 +336,7 @@ impl Managed {
             refresh_minutes,
             open_in_apps,
             claude_code_path,
+            ai_daily_limit,
             settings,
             unreadable,
         }
@@ -372,6 +382,7 @@ impl Managed {
         }
         effective.refresh_minutes = self.refresh_minutes.unwrap_or(effective.refresh_minutes);
         effective.open_in_apps = self.open_in_apps.unwrap_or(effective.open_in_apps);
+        effective.assistant_daily_limit = self.ai_daily_limit.unwrap_or(effective.assistant_daily_limit);
         effective
     }
 
@@ -670,6 +681,24 @@ mod tests {
         let odd = Managed::from_values(values(&[("RefreshMinutes", RawValue::Number(0))]));
         assert_eq!(odd.effective(&Preferences::default()).refresh_minutes, 5, "out of range: ignored");
         assert!(odd.unreadable.is_empty());
+    }
+
+    /// AI-03: the organization's daily limit wins over the user's; a number out of range is ignored.
+    #[test]
+    fn the_organization_can_set_the_assistants_daily_limit() {
+        let user = Preferences { assistant_daily_limit: 50, ..Preferences::default() };
+        assert_eq!(Preferences::default().assistant_daily_limit, 0, "no limit by default");
+        let limited = Managed::from_values(values(&[("AIDailyLimit", RawValue::Number(20))]));
+        assert_eq!(limited.effective(&user).assistant_daily_limit, 20);
+        assert!(!limited.is_managed(), "the Privacy settings stay the user's");
+        for odd in [RawValue::Number(0), RawValue::Number(20_000), RawValue::String("many".into())] {
+            assert_eq!(
+                Managed::from_values(values(&[("AIDailyLimit", odd)])).effective(&user).assistant_daily_limit,
+                50
+            );
+        }
+        let broken = Managed::from_values(values(&[("AIDailyLimit", RawValue::Other)]));
+        assert_eq!(broken.unreadable, ["AIDailyLimit"]);
     }
 
     #[test]

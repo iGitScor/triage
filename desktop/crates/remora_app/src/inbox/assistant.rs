@@ -2,11 +2,12 @@
 //! pile), whether it is still fresh, and its files. The inbox decides who may be asked and whether an answer may
 //! still be kept (`Inbox::still_answers`). Ported from the macOS app's `AssistantCoordinator`.
 
-use super::persistence::{Persistence, BRIEF, SUMMARIES};
+use super::persistence::{Persistence, BRIEF, SUMMARIES, USAGE};
 use super::{AssistantJob, Inbox};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, NaiveDate, Utc};
 use remora_core::{
-    Account, AssistantPolicy, Brief, BundleSummary, InboxItem, Message, SnoozedItem, TriageAction, TriageSuggestion,
+    Account, AssistantPolicy, AssistantUsage, Brief, BundleSummary, InboxItem, Message, SnoozedItem, TokenUsage,
+    TriageAction, TriageSuggestion, UsageDay,
 };
 use remora_plugins::{claude, registry, AssistantPlugin, GuardedHttpClient, HttpClient};
 use std::collections::{HashMap, HashSet};
@@ -17,16 +18,29 @@ pub struct AssistantCoordinator {
     summaries: HashMap<String, BundleSummary>,
     /// Claude's proposal for the snoozed pile, until applied or discarded.
     triage: Vec<TriageSuggestion>,
+    /// What the assistant used, per day (AI-03).
+    usage: AssistantUsage,
     persistence: Persistence,
 }
+
+/// Said when today's limit is reached. Same text on macOS.
+pub const LIMIT_REACHED: &str =
+    "Today’s assistant limit is reached. It starts again tomorrow, or raise it in Settings.";
 
 impl AssistantCoordinator {
     pub(super) fn new(
         brief: Option<Brief>,
         summaries: HashMap<String, BundleSummary>,
+        usage: AssistantUsage,
         persistence: Persistence,
     ) -> Self {
-        AssistantCoordinator { brief, summaries, triage: vec![], persistence }
+        AssistantCoordinator { brief, summaries, triage: vec![], usage, persistence }
+    }
+
+    /// One request sent, with the tokens its answers reported.
+    pub fn record(&mut self, tokens: Option<TokenUsage>, today: NaiveDate) {
+        self.usage.record(tokens, today);
+        self.persistence.save(USAGE, &self.usage);
     }
 
     pub fn brief(&self) -> Option<&Brief> {
@@ -89,6 +103,11 @@ impl AssistantCoordinator {
             self.triage.clear();
         }
     }
+}
+
+/// The day on this computer's clock: a new one starts at local midnight.
+fn local_day(now: DateTime<Utc>) -> NaiveDate {
+    now.with_timezone(&Local).date_naive()
 }
 
 // MARK: The inbox's assistant
@@ -164,10 +183,26 @@ impl Inbox {
     }
 
     /// The assistant to ask now, with its account's id for `keep_*`, or None when there is none or it isn't allowed.
+    /// Past today's limit, it refuses (AI-03). The request is then measured (`AssistantMeter`) and `record_usage`d.
     pub fn assistant(&mut self, http: Arc<dyn HttpClient>, language: &str) -> Option<AssistantJob> {
         let account = self.assistant_account()?;
+        let limit = self.effective_preferences().assistant_daily_limit;
+        if !self.assistant.usage.allows(limit, local_day(Utc::now())) {
+            return Some((account.id, Err(LIMIT_REACHED.into())));
+        }
         let plugin = self.assistant_for(&account, http, language);
         Some((account.id, plugin))
+    }
+
+    /// One request sent to the assistant, answered or not, with the tokens it reported.
+    pub fn record_usage(&mut self, tokens: Option<TokenUsage>, now: DateTime<Utc>) {
+        self.assistant.record(tokens, local_day(now));
+    }
+
+    /// What the assistant used today and this month, for Settings.
+    pub fn assistant_usage(&self, now: DateTime<Utc>) -> (UsageDay, UsageDay) {
+        let today = local_day(now);
+        (self.assistant.usage.today(today), self.assistant.usage.this_month(today))
     }
 
     /// Whether an answer from this assistant account may still be kept. It is asked without the lock and can take a

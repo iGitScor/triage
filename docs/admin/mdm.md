@@ -23,6 +23,7 @@ the policy.
 | `AllowedAIModels` | Array of strings | The models the assistant may use, by any provider’s ids. A model that isn’t listed (or the default, when it isn’t) is replaced by the first one | Any |
 | `AllowedAIServers` | Array of strings | The servers the OpenAI-compatible assistant may use, as URL prefixes: scheme, host, port and path must match, the path on a `/` boundary (`https://acme.openai.azure.com/openai/` allows `…/openai/v1`, not other resources). Any other server is refused with “Your organization doesn’t allow this AI server.” | Any https server |
 | `AIServer` | String | The server the OpenAI-compatible assistant uses, filled in and locked in Settings, also for accounts already connected. Refused if `AllowedAIServers` doesn’t allow it | Set by the user |
+| `AIDailyLimit` | Integer | The most requests the assistant may send a day (a brief, a summary or a triage is one), from 1 to 10000 (another value is ignored). Past it, the assistant waits until the next day. Locked in Settings | No limit; the user decides |
 | `AllowLocalAI` | Boolean | A server on this computer (`localhost`, `127.0.0.1`, `::1`, the only addresses that may use http). `true`: allowed even with external AI off. `false`: refused. Not set: allowed unless `AllowExternalAI` is managed `false`, since a local server could forward to the cloud | See meaning |
 | `HiddenContentSources` | Array of strings | Tools whose notifications say where something happened, not what was written; `reminders` for the user’s own reminders. Added to the user’s own choice and locked in Settings | None |
 | `RefreshMinutes` | Integer | How often tools are checked, from 1 to 60 minutes (another value is ignored). Locked in Settings | 5 |
@@ -143,6 +144,7 @@ then from `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` for user-scoped policies 
 | `AllowedAIServers` | `REG_MULTI_SZ` | The allowed OpenAI-compatible servers, one URL prefix per line |
 | `AIServer` | `REG_SZ` | The OpenAI-compatible server, set and locked |
 | `AllowLocalAI` | `REG_DWORD` | `1` to allow a server on this computer, `0` to refuse it |
+| `AIDailyLimit` | `REG_DWORD` | The assistant's requests a day, 1 to 10000; locked in Settings |
 | `AIExcludedSources` | `REG_MULTI_SZ` | Tools whose items never reach the assistant, one ID per line (`reminders` for reminders); locked in Settings |
 | `AllowedAIModels` | `REG_MULTI_SZ` | The models the assistant may use, one ID per line |
 | `HiddenContentSources` | `REG_MULTI_SZ` | Tools whose notifications don’t show what was written, one ID per line |

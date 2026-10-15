@@ -88,10 +88,19 @@
       "property_order": 40,
       "type": "boolean"
     },
+    "AIDailyLimit": {
+      "title": "Assistant requests a day",
+      "description": "The most requests the assistant may send each day (a brief, a summary or a triage is one), from 1 to 10000. Past it, the assistant waits until the next day. Locked in Settings.",
+      "property_order": 45,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000,
+      "default": 100
+    },
     "HiddenContentSources": {
       "title": "Hide message content",
       "description": "Tools whose notifications say where something happened, not what was written; reminders for the user's own reminders. Added to the user's choice.",
-      "property_order": 45,
+      "property_order": 50,
       "type": "array",
       "items": {
         "type": "string",
@@ -112,7 +121,7 @@
     "RefreshMinutes": {
       "title": "Refresh interval",
       "description": "How often tools are checked, from 1 to 60 minutes. Locked in Settings.",
-      "property_order": 50,
+      "property_order": 55,
       "type": "integer",
       "minimum": 1,
       "maximum": 60,
@@ -121,31 +130,31 @@
     "OpenInApps": {
       "title": "Open in desktop apps",
       "description": "Open Slack and Linear items in their desktop app when installed; disabled always opens the web page.",
-      "property_order": 55,
+      "property_order": 60,
       "type": "boolean"
     },
     "ClaudeCodePath": {
       "title": "Claude Code path",
       "description": "The claude program Remora runs, instead of the one found or entered. It must still be named claude and pass Remora's checks.",
-      "property_order": 60,
+      "property_order": 65,
       "type": "string"
     },
     "MicrosoftTenant": {
       "title": "Microsoft 365 tenant",
       "description": "The organization's Microsoft Entra tenant, by domain or ID, for signing in to Microsoft 365. Filled in and locked in the connect form.",
-      "property_order": 65,
+      "property_order": 70,
       "type": "string"
     },
     "MicrosoftClientID": {
       "title": "Microsoft 365 client ID",
       "description": "The application (client) ID of the app the organization registered in Microsoft Entra for Remora. Filled in and locked in the connect form.",
-      "property_order": 70,
+      "property_order": 75,
       "type": "string"
     },
     "AutomaticUpdates": {
       "title": "Automatic updates",
       "description": "Enabled: check for a new version once a day, locked on. Disabled: no update check at all.",
-      "property_order": 75,
+      "property_order": 80,
       "type": "boolean"
     }
   }

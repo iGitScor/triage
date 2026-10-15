@@ -41,7 +41,7 @@ SOURCES = [
     "reminders",
 ]
 
-# name, type (list, bool, string, minutes), English title and help, French title and help.
+# name, type (list, bool, string, minutes, count), English title and help, French title and help.
 KEYS = [
     (
         "AllowedPlugins",
@@ -106,6 +106,14 @@ KEYS = [
         "A server on this computer (localhost): allowed even with external AI off, or refused.",
         "Autoriser un serveur d’IA sur cet ordinateur",
         "Un serveur sur cet ordinateur (localhost) : autorisé même sans IA externe, ou refusé.",
+    ),
+    (
+        "AIDailyLimit",
+        "count",
+        "Assistant requests a day",
+        "The most requests the assistant may send each day (a brief, a summary or a triage is one), from 1 to 10000. Past it, the assistant waits until the next day. Locked in Settings.",
+        "Requêtes de l’assistant par jour",
+        "Le nombre maximal de requêtes que l’assistant peut envoyer chaque jour (un brief, un résumé ou un tri en est une), de 1 à 10000. Au-delà, l’assistant attend le lendemain. Verrouillé dans les Réglages.",
     ),
     (
         "HiddenContentSources",
@@ -250,6 +258,7 @@ def admx() -> str:
             "list": f'<multiText id="{name}" valueName="{name}" />',
             "string": f'<text id="{name}" valueName="{name}" />',
             "minutes": f'<decimal id="{name}" valueName="{name}" minValue="1" maxValue="60" />',
+            "count": f'<decimal id="{name}" valueName="{name}" minValue="1" maxValue="10000" />',
         }[kind]
         policies.append(
             f'{head} presentation="$(presentation.{name})">\n{refs}'
@@ -295,6 +304,9 @@ def adml(french: bool) -> str:
             box = f'<textBox refId="{name}"><label>{escape(title_fr if french else title_en)}</label></textBox>'
         elif kind == "minutes":
             box = f'<decimalTextBox refId="{name}" defaultValue="5">Minutes</decimalTextBox>'
+        elif kind == "count":
+            label = "Requêtes" if french else "Requests"
+            box = f'<decimalTextBox refId="{name}" defaultValue="100">{label}</decimalTextBox>'
         else:
             continue
         presentations.append(f'      <presentation id="{name}">{box}</presentation>')
@@ -329,6 +341,8 @@ def jamf() -> str:
             prop["type"] = "boolean"
         elif kind == "minutes":
             prop.update(type="integer", minimum=1, maximum=60, default=5)
+        elif kind == "count":
+            prop.update(type="integer", minimum=1, maximum=10000, default=100)
         elif kind == "string":
             prop["type"] = "string"
         else:

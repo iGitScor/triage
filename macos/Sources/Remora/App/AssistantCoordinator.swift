@@ -17,13 +17,41 @@ final class AssistantCoordinator {
     private(set) var triageSuggestions: [TriageSuggestion] = []
     private(set) var triageError: String?
     private(set) var isTriaging = false
+    /// What the assistant used, per day (AI-03).
+    private(set) var usage: AssistantUsage
+    /// Assistant requests a day, 0 for no limit: the user's or the organization's (`AIDailyLimit`).
+    @ObservationIgnored var dailyLimit: () -> Int = { 0 }
     @ObservationIgnored private var triageKey: (ids: [String], at: Date)?
     @ObservationIgnored private let persistence: Persistence
 
-    init(brief: Brief?, bundleSummaries: [String: BundleSummary], persistence: Persistence) {
+    init(
+        brief: Brief?, bundleSummaries: [String: BundleSummary], usage: AssistantUsage = AssistantUsage(),
+        persistence: Persistence
+    ) {
         self.brief = brief
         self.bundleSummaries = bundleSummaries
+        self.usage = usage
         self.persistence = persistence
+    }
+
+    static let limitReached = L(
+        "Today’s assistant limit is reached. It starts again tomorrow, or raise it in Settings.")
+
+    /// One request to the assistant, within today's limit, counted with the tokens it reports whether it answers or
+    /// fails (AI-03). Same on Windows (`Inbox::assistant`, `record_usage`).
+    private func ask<Answer>(
+        _ assistant: () throws -> any AssistantPlugin, _ request: (any AssistantPlugin) async throws -> Answer
+    ) async throws -> Answer {
+        guard usage.allows(limit: dailyLimit()) else { throw HTTPError.api(Self.limitReached) }
+        let plugin = try assistant()
+        let meter = AssistantMeter()
+        defer { record(meter.tokens) }
+        return try await AssistantMeter.$current.withValue(meter) { try await request(plugin) }
+    }
+
+    private func record(_ tokens: TokenUsage?) {
+        usage.record(tokens)
+        persistence.save(usage, to: persistence.assistantUsage)
     }
 
     func isBriefFresh(for items: [InboxItem], cacheMinutes: Int) -> Bool {
@@ -40,7 +68,7 @@ final class AssistantCoordinator {
         briefError = nil
         defer { isBriefing = false }
         do {
-            let brief = try await assistant().brief(items, now: .now).writtenFrom(items)
+            let brief = try await ask(assistant) { try await $0.brief(items, now: .now) }.writtenFrom(items)
             guard stillAnswers() else { return }
             store(brief)
         } catch {
@@ -59,7 +87,7 @@ final class AssistantCoordinator {
         bundleSummaryErrors[key] = nil
         defer { summarizing.remove(key) }
         do {
-            let text = try await assistant().digest(items, topic: topic, now: .now)
+            let text = try await ask(assistant) { try await $0.digest(items, topic: topic, now: .now) }
             guard stillAnswers() else { return }
             bundleSummaries[key] = BundleSummary(text: text, items: items)
             saveSummaries()
@@ -84,7 +112,7 @@ final class AssistantCoordinator {
         triageError = nil
         defer { isTriaging = false }
         do {
-            let suggestions = try await assistant().triage(items, now: .now)
+            let suggestions = try await ask(assistant) { try await $0.triage(items, now: .now) }
             guard stillAnswers() else { return }
             triageSuggestions = suggestions
             triageKey = (ids, .now)
@@ -125,11 +153,12 @@ final class AssistantCoordinator {
         saveSummaries()
     }
 
-    /// Erase: nothing is left, and nothing is saved (the files go).
+    /// Erase: nothing is left, and nothing is saved (the files go), what it used included.
     func reset() {
         brief = nil
         bundleSummaries = [:]
         triageSuggestions = []
+        usage = AssistantUsage()
     }
 
     private func saveSummaries() {

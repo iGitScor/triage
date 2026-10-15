@@ -12,6 +12,7 @@
 "%@ isn’t Claude Code. Run `which claude` in a terminal and paste the path it shows." = "%@ n’est pas Claude Code. Lancez `which claude` dans un terminal et collez le chemin affiché.";
 "%@ needs reconnecting" = "%@ doit être reconnecté";
 "%@ on your message in %@" = "%@ sur votre message dans %@";
+"%@ tokens" = "%@ jetons";
 "%@ · new one possible in %d min" = "%@ · nouveau possible dans %d min";
 "%@ · soon" = "%@ · bientôt";
 "%@, approved" = "%@, approuvé";
@@ -39,6 +40,8 @@
 "%d new while Remora was closed" = "%d nouveaux éléments pendant que Remora était fermée";
 "%d of %d · ~%d min left" = "%d sur %d · ~%d min restantes";
 "%d overdue or due today" = "%d en retard ou pour aujourd’hui";
+"%d request" = "%d requête";
+"%d requests" = "%d requêtes";
 "%d return moved" = "%d retour déplacé";
 "%d returns moved" = "%d retours déplacés";
 "%d snoozed item went quiet" = "%d élément reporté sans nouvelles";
@@ -59,6 +62,8 @@
 "%lld items snoozed" = "%lld éléments reportés";
 "%lld marked as done" = "%lld marqués comme terminés";
 "%lld min" = "%lld min";
+"%lld request" = "%lld requête";
+"%lld requests" = "%lld requêtes";
 "%lld return moved" = "%lld retour déplacé";
 "%lld returns moved" = "%lld retours déplacés";
 "(no subject)" = "(sans objet)";
@@ -197,6 +202,7 @@
 "Create an API key with your provider, or start the server on this computer." = "Créez une clé API chez votre fournisseur, ou lancez le serveur sur cet ordinateur.";
 "Create the Slack app" = "Créer l’app Slack";
 "Ctrl+Alt+R is used by another app: use + Reminder in the inbox instead." = "Ctrl+Alt+R est utilisé par une autre app : utilisez + Rappel dans la boîte à la place.";
+"Daily limit" = "Limite par jour";
 "Dark" = "Sombre";
 "Data Center: in Jira, open your profile → Personal Access Tokens, create one, and leave the e-mail empty." = "Data Center : dans Jira, ouvrez votre profil → Jetons d’accès personnels, créez-en un, et laissez l’e-mail vide.";
 "Data Center: set your Bitbucket host, then in Bitbucket open your profile → Manage account → HTTP access tokens, create a read token, and leave the workspace and e-mail empty." = "Data Center : indiquez votre hôte Bitbucket, puis dans Bitbucket ouvrez votre profil → Gérer le compte → Jetons d’accès HTTP, créez un jeton en lecture, et laissez vides l’espace de travail et l’e-mail.";
@@ -224,6 +230,7 @@
 "Draft a nudge" = "Rédiger une relance";
 "Due today" = "Pour aujourd’hui";
 "E-mail" = "E-mail";
+"Each brief, summary or triage is one request. Past the limit, the assistant waits until tomorrow." = "Chaque brief, résumé ou tri compte pour une requête. Au-delà de la limite, l’assistant attend le lendemain.";
 "Enter to save · Esc to cancel" = "Entrée pour valider · Échap pour annuler";
 "Enter your workspace and the e-mail of your Atlassian account too." = "Indiquez aussi votre espace de travail et l’e-mail de votre compte Atlassian.";
 "Erase" = "Effacer";
@@ -346,6 +353,7 @@
 "No Notion user with the email %@." = "Aucun utilisateur Notion avec l’e-mail %@.";
 "No end" = "Sans fin";
 "No keyring is running: Remora keeps tokens in the system keyring (GNOME Keyring, KWallet or KeePassXC). Start or install one, then open Remora again." = "Aucun trousseau ne tourne : Remora garde les jetons dans le trousseau du système (GNOME Keyring, KWallet ou KeePassXC). Démarrez-en ou installez-en un, puis rouvrez Remora.";
+"No limit" = "Aucune limite";
 "No reviewer yet" = "Pas encore de relecteur";
 "No setup page for this tool." = "Pas de page de configuration pour cet outil.";
 "No snoozed items" = "Aucun élément reporté";
@@ -372,6 +380,7 @@
 "Nothing snoozed." = "Rien de reporté.";
 "Nothing to undo." = "Rien à annuler.";
 "Nothing waiting" = "Rien en attente";
+"Nothing yet" = "Rien pour l’instant";
 "Notifications" = "Notifications";
 "Notifications are off for Remora in System Settings: these choices apply once you allow them." = "Les notifications de Remora sont désactivées dans Réglages Système : ces choix s’appliqueront une fois autorisées.";
 "Notifications still say where something happened (mention, channel, repository), not what was written." = "Les notifications indiquent toujours où cela s’est passé (mention, canal, dépôt), pas ce qui a été écrit.";
@@ -598,6 +607,7 @@
 "This copy of Remora doesn’t update itself: download new versions from the releases page." = "Cette copie de Remora ne se met pas à jour : téléchargez les nouvelles versions sur la page des versions.";
 "This evening" = "Ce soir";
 "This item is gone." = "Cet élément n’existe plus.";
+"This month" = "Ce mois-ci";
 "Thread in %@" = "Fil dans %@";
 "To do" = "À faire";
 "To fix" = "À corriger";
@@ -606,6 +616,7 @@
 "To review" = "À relire";
 "To-Dos" = "les To-Dos";
 "Today" = "Aujourd’hui";
+"Today’s assistant limit is reached. It starts again tomorrow, or raise it in Settings." = "La limite du jour de l’assistant est atteinte. Elle repart demain, ou augmentez-la dans les Réglages.";
 "Token with the read_api scope." = "Jeton avec la permission read_api.";
 "Tomorrow" = "Demain";
 "Tomorrow 9:00" = "Demain 9:00";
@@ -634,6 +645,7 @@
 "Updates" = "Mises à jour";
 "Urgent" = "Urgent";
 "Urgent issue" = "Ticket urgent";
+"Used today" = "Utilisé aujourd’hui";
 "User OAuth token" = "Jeton OAuth utilisateur";
 "Usual" = "Habituel";
 "Version" = "Version";

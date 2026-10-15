@@ -5,7 +5,10 @@
 //! A port of the macOS `AssistantReply.swift`.
 
 use crate::PluginError;
+use remora_core::TokenUsage;
 use serde::de::DeserializeOwned;
+use std::future::Future;
+use std::sync::{Arc, Mutex};
 
 /// Why an assistant gave no usable answer, provider-neutral. The English is the key the interface translates.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -58,6 +61,41 @@ impl From<AssistantFailure> for PluginError {
 /// A provider's raw reply: its answer as JSON, or why there is none.
 pub trait AssistantReply {
     fn answer(self) -> Result<serde_json::Value, AssistantFailure>;
+    /// The tokens it used, when the provider says (AI-03).
+    fn usage(&self) -> Option<TokenUsage> {
+        None
+    }
+}
+
+tokio::task_local! {
+    static METER: AssistantMeter;
+}
+
+/// Adds up the tokens the answers within one request report (a retry, Claude Code's older-version rerun). The app
+/// measures each request with one; a plugin reports through `decode_reply`, outside of one it's dropped. As the
+/// macOS `AssistantMeter`.
+#[derive(Clone, Default)]
+pub struct AssistantMeter(Arc<Mutex<Option<TokenUsage>>>);
+
+impl AssistantMeter {
+    /// Runs one request with this meter counting.
+    pub async fn measure<F: Future>(&self, request: F) -> F::Output {
+        METER.scope(self.clone(), request).await
+    }
+
+    /// None when no answer said what it used.
+    pub fn tokens(&self) -> Option<TokenUsage> {
+        *self.0.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    pub fn report(usage: Option<TokenUsage>) {
+        let Some(usage) = usage else { return };
+        let _ = METER.try_with(|meter| {
+            let mut counted = meter.0.lock().unwrap_or_else(|e| e.into_inner());
+            let total = counted.unwrap_or_default();
+            *counted = Some(TokenUsage { input: total.input + usage.input, output: total.output + usage.output });
+        });
+    }
 }
 
 /// Reads the JSON text an assistant wrote (the Claude API's text block, an OpenAI message's content).
@@ -65,8 +103,10 @@ pub fn json_text(text: Option<String>) -> Result<serde_json::Value, AssistantFai
     text.and_then(|t| serde_json::from_str(&t).ok()).ok_or(AssistantFailure::UnexpectedAnswer)
 }
 
-/// The brief, a summary or triage from any assistant's reply: an answer that doesn't fit `T` is unexpected.
+/// The brief, a summary or triage from any assistant's reply: an answer that doesn't fit `T` is unexpected. What it
+/// used is counted either way: a cut-off answer was still paid for.
 pub fn decode_reply<T: DeserializeOwned>(reply: impl AssistantReply) -> Result<T, AssistantFailure> {
+    AssistantMeter::report(reply.usage());
     serde_json::from_value(reply.answer()?).map_err(|_| AssistantFailure::UnexpectedAnswer)
 }
 
@@ -97,6 +137,22 @@ mod tests {
         assert_eq!(decode_reply::<Output>(Reply(Err(AssistantFailure::CutOff))), Err(AssistantFailure::CutOff));
         assert_eq!(json_text(Some("not json".into())), Err(AssistantFailure::UnexpectedAnswer));
         assert_eq!(json_text(None), Err(AssistantFailure::UnexpectedAnswer));
+    }
+
+    /// AI-03: what every answer within a request reports adds up; outside of a request it's dropped.
+    #[tokio::test]
+    async fn the_meter_adds_up_what_its_request_reports() {
+        let meter = AssistantMeter::default();
+        meter
+            .measure(async {
+                AssistantMeter::report(Some(TokenUsage { input: 10, output: 2 }));
+                AssistantMeter::report(None);
+                AssistantMeter::report(Some(TokenUsage { input: 5, output: 1 }));
+            })
+            .await;
+        AssistantMeter::report(Some(TokenUsage { input: 99, output: 99 }));
+        assert_eq!(meter.tokens(), Some(TokenUsage { input: 15, output: 3 }));
+        assert_eq!(AssistantMeter::default().tokens(), None, "nothing reported");
     }
 
     #[test]

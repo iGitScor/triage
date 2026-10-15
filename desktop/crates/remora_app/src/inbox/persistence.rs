@@ -19,6 +19,8 @@ pub(super) const REVIEW_TIMES: &str = "review-times";
 /// What the assistant wrote: fetched again when stale, deleted when AI is no longer allowed.
 pub(super) const BRIEF: &str = "brief";
 pub(super) const SUMMARIES: &str = "bundle-summaries";
+/// What the assistant used, per day (AI-03).
+pub(super) const USAGE: &str = "assistant-usage";
 
 /// A folder of JSON files, or nowhere: the demo and tests save nothing.
 #[derive(Clone, Default)]

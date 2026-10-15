@@ -337,6 +337,35 @@ struct AssistantInFlightTests {
         #expect(!harness.writtenText().contains("Two reviews wait."))
     }
 
+    /// AI-03: every request is counted with its tokens, and the daily limit refuses the next one without sending it.
+    @Test func usageIsRecordedAndLimited() async throws {
+        let harness = Harness()
+        let (model, _) = try connected(harness)
+        await model.makeBrief()
+        let today = model.assistant.usage.today()
+        #expect(today.requests == 1 && today.inputTokens == 120 && today.outputTokens == 30)
+
+        model.preferences.assistantDailyLimit = 1
+        let requests = harness.server.requests
+        await model.summarize(key: "k", topic: "Reviews", items: [item])
+        #expect(model.assistant.bundleSummaryErrors["k"] == AssistantCoordinator.limitReached)
+        #expect(harness.server.requests == requests, "nothing sent")
+        model.preferences.assistantDailyLimit = 2
+        await model.summarize(key: "k", topic: "Reviews", items: [item])
+        #expect(model.assistant.bundleSummaries["k"] != nil)
+        #expect(model.assistant.usage.thisMonth().requests == 2)
+        #expect(harness.writtenText().contains("inputTokens"), "saved")
+    }
+
+    @Test func eraseForgetsTheUsage() async throws {
+        let harness = Harness()
+        let (model, _) = try connected(harness)
+        await model.makeBrief()
+        try model.eraseLocalData()
+        #expect(model.assistant.usage == AssistantUsage())
+        #expect(!harness.writtenText().contains("inputTokens"))
+    }
+
     @Test func anAnswerThatComesBackOnceAIIsTurnedOffIsDropped() async throws {
         let harness = Harness()
         let (model, _) = try connected(harness)

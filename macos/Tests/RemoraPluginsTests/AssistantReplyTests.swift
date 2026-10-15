@@ -62,6 +62,30 @@ struct AssistantReplyTests {
         #expect(try answer.decode(BriefPrompt.DigestOutput.self).summary == "s")
     }
 
+    /// AI-03: each provider's `usage`, cached prompt tokens counted as input; reported even for an answer cut off.
+    @Test func usageIsReadFromEveryProvider() throws {
+        let claude = try claudeAPI(
+            #"{"content": [], "stop_reason": "max_tokens", "usage": {"input_tokens": 100, "cache_creation_input_tokens": 20, "cache_read_input_tokens": 3, "output_tokens": 50}}"#
+        )
+        #expect(claude.usage == TokenUsage(input: 123, output: 50))
+        #expect(try claudeAPI(#"{"content": []}"#).usage == nil)
+        let code = try claudeCode(
+            #"{"is_error": false, "structured_output": {"summary": "s"}, "usage": {"input_tokens": 7, "cache_read_input_tokens": 1000, "output_tokens": 30}}"#
+        )
+        #expect(code.usage == TokenUsage(input: 1_007, output: 30))
+        #expect(try claudeCode(#"{"is_error": false}"#).usage == nil)
+        let compatible = try openAI(#"{"choices": [], "usage": {"prompt_tokens": 40, "completion_tokens": 9}}"#)
+        #expect(compatible.usage == TokenUsage(input: 40, output: 9))
+        #expect(try openAI(#"{"choices": []}"#).usage == nil, "a local server may say nothing")
+
+        let meter = AssistantMeter()
+        AssistantMeter.$current.withValue(meter) {
+            _ = try? claude.decode(BriefPrompt.DigestOutput.self)
+            _ = try? code.decode(BriefPrompt.DigestOutput.self)
+        }
+        #expect(meter.tokens == TokenUsage(input: 1_130, output: 80), "the cut-off answer counts too")
+    }
+
     @Test func anAnswerThatIsntTheExpectedJSONIsUnexpected() throws {
         let answer = try openAI(#"{"choices": [{"message": {"content": "not json"}}]}"#)
         #expect(throws: HTTPError.api(AssistantFailure.unexpectedAnswer.message)) {

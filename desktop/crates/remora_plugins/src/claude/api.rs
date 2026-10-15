@@ -7,7 +7,7 @@ use crate::{decode, AssistantPlugin, HttpClient, PluginConfig, PluginError, Requ
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use remora_core::{
-    AssistantPolicy, Brief, ConfigField, Egress, InboxItem, PluginManifest, SnoozedItem, TriageSuggestion,
+    AssistantPolicy, Brief, ConfigField, Egress, InboxItem, PluginManifest, SnoozedItem, TokenUsage, TriageSuggestion,
 };
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -137,6 +137,26 @@ pub fn fallbacks(model: &str, models_managed: bool) -> Option<&'static str> {
 pub struct ApiResponse {
     pub content: Vec<Block>,
     pub stop_reason: Option<String>,
+    pub usage: Option<ApiUsage>,
+}
+
+/// The Messages API's `usage`: the prompt's tokens are split between new and cached ones. Claude Code reports the same.
+#[derive(Deserialize, Default)]
+#[serde(default)]
+pub struct ApiUsage {
+    pub input_tokens: u64,
+    pub cache_creation_input_tokens: u64,
+    pub cache_read_input_tokens: u64,
+    pub output_tokens: u64,
+}
+
+impl ApiUsage {
+    pub fn tokens(&self) -> TokenUsage {
+        TokenUsage {
+            input: self.input_tokens + self.cache_creation_input_tokens + self.cache_read_input_tokens,
+            output: self.output_tokens,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -248,6 +268,10 @@ impl AssistantReply for ApiResponse {
             _ => {}
         }
         json_text(self.content.into_iter().find(|b| b.kind == "text").and_then(|b| b.text))
+    }
+
+    fn usage(&self) -> Option<TokenUsage> {
+        self.usage.as_ref().map(ApiUsage::tokens)
     }
 }
 
@@ -374,6 +398,20 @@ pub(crate) mod tests {
         let request = recorder.request();
         assert!(!request.body.as_deref().unwrap().contains("fallbacks"));
         assert!(!request.headers.iter().any(|(k, _)| k == "anthropic-beta"));
+    }
+
+    /// AI-03: `usage` is read, cached prompt tokens counted as input, even from an answer cut off.
+    #[tokio::test]
+    async fn the_tokens_used_are_reported() {
+        let body = r#"{"content": [], "stop_reason": "max_tokens", "usage": {"input_tokens": 100, "cache_creation_input_tokens": 20, "cache_read_input_tokens": 3, "output_tokens": 50}}"#;
+        let meter = crate::assistant::AssistantMeter::default();
+        let result = meter.measure(plugin(StubHttp::paths(&[("/v1/messages", body)])).brief(&[item("a")], now())).await;
+        assert_eq!(result.err(), Some(AssistantFailure::CutOff.into()));
+        assert_eq!(meter.tokens(), Some(TokenUsage { input: 123, output: 50 }));
+        let silent = crate::assistant::AssistantMeter::default();
+        let http = StubHttp::paths(&[("/v1/messages", &answer(r#"{"summary": "s", "focus": []}"#, "end_turn"))]);
+        silent.measure(plugin(http).brief(&[item("a")], now())).await.unwrap();
+        assert_eq!(silent.tokens(), None);
     }
 
     #[tokio::test]

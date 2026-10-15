@@ -106,7 +106,7 @@ final class LinearServer: HTTPClient, @unchecked Sendable {
     private(set) var gitLabIdentityCalls = 0
     /// The OpenAI-compatible assistant's answer, and what happens while it is being written.
     static let assistantAnswer =
-        #"{"choices": [{"message": {"content": "{\"summary\": \"Two reviews wait.\", \"focus\": []}", "refusal": null}, "finish_reason": "stop"}]}"#
+        #"{"choices": [{"message": {"content": "{\"summary\": \"Two reviews wait.\", \"focus\": []}", "refusal": null}, "finish_reason": "stop"}], "usage": {"prompt_tokens": 120, "completion_tokens": 30}}"#
     var whileAnswering: (@Sendable () async -> Void)?
     /// What happens while a tool's request is answered, once.
     var whileFetching: (@Sendable () async -> Void)?

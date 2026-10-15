@@ -71,6 +71,8 @@ pub struct Preferences {
     pub whole_inbox_brief: bool,
     pub brief_cache_minutes: i64,
     pub assistant_excluded_sources: Vec<String>,
+    /// Assistant requests a day; 0 is no limit (AI-03).
+    pub assistant_daily_limit: u32,
     /// The first-run tip (the tray, the reminder shortcut, start with Windows) was dismissed.
     pub welcomed: bool,
 }
@@ -105,6 +107,7 @@ impl Default for Preferences {
             whole_inbox_brief: true,
             brief_cache_minutes: 30,
             assistant_excluded_sources: vec![],
+            assistant_daily_limit: 0,
             welcomed: false,
         }
     }

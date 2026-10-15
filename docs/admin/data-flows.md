@@ -81,7 +81,7 @@ sent: tokens, links, code, the rest of a message, notes, files.
 | Done, Pin, snoozes and their notes, reminders | `states.json`, `reminders.json`, `snooze-history.json` |
 | What the user handles quickly or snoozes, for ranking on this Mac only (titles’ words and authors) | `learning.json` |
 | How long timed reviews took against their estimate (two numbers each, no names or titles) | `review-times.json` |
-| The last brief and bundle summaries | `brief.json`, `bundle-summaries.json` |
+| The last brief and bundle summaries; the assistant’s requests and tokens per day, for 31 days | `brief.json`, `bundle-summaries.json`, `assistant-usage.json` |
 | Preferences | `preferences.json` |
 | Tokens and API keys | One item in the login Keychain: service `fr.igitscor.remora`, account `secrets` |
 | Scheduled reminders and delivered notifications (titles) | macOS notifications (`UNUserNotificationCenter`) |
@@ -102,7 +102,7 @@ items, its notifications and its Spotlight entries; so does a tool the policy bl
 
 | Data | Where |
 |---|---|
-| The same data as on macOS: accounts, the last copy of each tool’s items (Slack message text included), item states, reminders, snooze history, what the user handles quickly, review times, the last brief and summaries, preferences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `snooze-history.json`, `learning.json`, `review-times.json`, `brief.json`, `bundle-summaries.json`, `preferences.json` in `%LOCALAPPDATA%\fr.igitscor.remora` |
+| The same data as on macOS: accounts, the last copy of each tool’s items (Slack message text included), item states, reminders, snooze history, what the user handles quickly, review times, the last brief and summaries, the assistant’s use per day, preferences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `snooze-history.json`, `learning.json`, `review-times.json`, `brief.json`, `bundle-summaries.json`, `assistant-usage.json`, `preferences.json` in `%LOCALAPPDATA%\fr.igitscor.remora` |
 | Tokens | One Credential Manager entry per account: `fr.igitscor.remora`, user the account’s id, and an index of the ids (user `accounts`) |
 
 The files are plain JSON, readable by the user’s Windows account (and administrators); BitLocker encrypts them with

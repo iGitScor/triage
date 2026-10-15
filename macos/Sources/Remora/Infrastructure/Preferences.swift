@@ -77,6 +77,8 @@ struct Preferences: Codable, Equatable {
     var openShortcut = OpenShortcut.controlOptionR
     var briefCacheMinutes = 30
     var wholeInboxBrief = true
+    /// Assistant requests a day; 0 is no limit (AI-03).
+    var assistantDailyLimit = 0
     /// Privacy: plugins allowed to connect (nil = all), external AI (off by default), avatars.
     var allowedPlugins: [String]?
     var allowExternalAI = false
@@ -120,6 +122,8 @@ struct Preferences: Codable, Equatable {
         briefCacheMinutes =
             try container.decodeIfPresent(Int.self, forKey: .briefCacheMinutes) ?? defaults.briefCacheMinutes
         wholeInboxBrief = try container.decodeIfPresent(Bool.self, forKey: .wholeInboxBrief) ?? defaults.wholeInboxBrief
+        assistantDailyLimit =
+            try container.decodeIfPresent(Int.self, forKey: .assistantDailyLimit) ?? defaults.assistantDailyLimit
         allowedPlugins = try container.decodeIfPresent([String].self, forKey: .allowedPlugins)
         allowExternalAI = try container.decodeIfPresent(Bool.self, forKey: .allowExternalAI) ?? defaults.allowExternalAI
         allowRemoteImages =

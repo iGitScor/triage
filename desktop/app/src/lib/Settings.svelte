@@ -2,10 +2,11 @@
 import { listen } from '@tauri-apps/api/event'
 import { onMount } from 'svelte'
 import { api, type Account, type Preferences, type Settings, type Source, type UpdateStatus } from './api'
+import type { UsageDay } from './bindings'
 import ConnectForm from './ConnectForm.svelte'
 import Icon from './Icon.svelte'
 import Logo from './Logo.svelte'
-import { linux, say, t, translateMessage } from './i18n'
+import { lang, linux, say, t, translateMessage } from './i18n'
 
 /** What a system shortcut runs on a Wayland desktop with no GlobalShortcuts portal, where Remora can't bind one. */
 const REMINDER_COMMAND = 'remora --reminder'
@@ -76,6 +77,16 @@ const notifying = $derived([
     .map((s) => ({ id: s.manifest.id, name: s.manifest.name })),
   { id: 'reminders', name: t('Reminders') },
 ])
+
+/** The daily limits offered, as on the Mac; the managed key allows any value from 1 to 10000 (AI-03). */
+const DAILY_LIMITS = [0, 20, 50, 100, 200, 500]
+const limitLabel = (limit: number) => (limit === 0 ? t('No limit') : t('%d requests', limit))
+/** Requests and tokens, tokens only as the providers reported them. */
+function usageLabel(day: UsageDay): string {
+  if (day.requests === 0) return t('Nothing yet')
+  const requests = day.requests === 1 ? t('%d request', 1) : t('%d requests', day.requests)
+  return `${requests} · ${t('%@ tokens', (day.inputTokens + day.outputTokens).toLocaleString(lang))}`
+}
 
 /// The assistant's settings show once one is connected.
 const firstAssistant = $derived(sources.findIndex((s) => s.assistant))
@@ -249,6 +260,21 @@ onMount(() => {
           </select>
         </label>
         <p class="help">{t('While fresh, Remora shows it again instead of asking the assistant.')}</p>
+        <!-- AI-03: what the assistant used, and an optional cap on it. -->
+        <label class="row line">
+          {t('Daily limit')}
+          <span class="spacer"></span>
+          {#if settings.managed.aiDailyLimit != null}
+            <select class="field small" value={settings.managed.aiDailyLimit} disabled title={t('Managed by your organization')} aria-describedby="limit-help"><option value={settings.managed.aiDailyLimit}>{limitLabel(settings.managed.aiDailyLimit)}</option></select>
+          {:else}
+            <select class="field small" value={p.assistantDailyLimit} aria-describedby="limit-help" onchange={(e) => save({ assistantDailyLimit: Number(e.currentTarget.value) })}>
+              {#each DAILY_LIMITS as limit}<option value={limit}>{limitLabel(limit)}</option>{/each}
+            </select>
+          {/if}
+        </label>
+        <p class="help" id="limit-help">{t('Each brief, summary or triage is one request. Past the limit, the assistant waits until tomorrow.')}</p>
+        <p class="row line">{t('Used today')}<span class="spacer"></span><span class="muted">{usageLabel(settings.usageToday)}</span></p>
+        <p class="row line">{t('This month')}<span class="spacer"></span><span class="muted">{usageLabel(settings.usageMonth)}</span></p>
         <h3 class="subsection" id="send-assistant-title">{t('Send to the assistant')}</h3>
         <div role="group" aria-labelledby="send-assistant-title" aria-describedby="send-assistant-help">
           {#each notifying as source (source.id)}

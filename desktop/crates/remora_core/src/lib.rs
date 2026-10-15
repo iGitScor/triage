@@ -23,6 +23,7 @@ pub mod recurrence;
 pub mod review_prep;
 pub mod snooze_advisor;
 pub mod text;
+pub mod usage;
 pub mod waiting;
 
 pub use assembler::*;
@@ -45,6 +46,7 @@ pub use reaction::*;
 pub use recurrence::*;
 pub use review_prep::*;
 pub use snooze_advisor::*;
+pub use usage::*;
 pub use waiting::*;
 
 #[cfg(test)]

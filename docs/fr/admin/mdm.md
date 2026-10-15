@@ -23,6 +23,7 @@ peut plus modifier la politique.
 | `AllowedAIModels` | Tableau de chaînes | Les modèles que l’assistant peut utiliser, avec les identifiants de n’importe quel fournisseur. Un modèle absent de la liste (ou celui par défaut, s’il n’y est pas) est remplacé par le premier | Tous |
 | `AllowedAIServers` | Tableau de chaînes | Les serveurs que l’assistant OpenAI-compatible peut utiliser, en préfixes d’URL : schéma, hôte, port et chemin doivent correspondre, le chemin sur une limite de `/` (`https://acme.openai.azure.com/openai/` autorise `…/openai/v1`, pas d’autres ressources). Tout autre serveur est refusé avec « Votre organisation n’autorise pas ce serveur d’IA. » | Tout serveur https |
 | `AIServer` | Chaîne | Le serveur qu’utilise l’assistant OpenAI-compatible, rempli et verrouillé dans les Réglages, y compris pour les comptes déjà connectés. Refusé si `AllowedAIServers` ne l’autorise pas | Choisi par l’utilisateur |
+| `AIDailyLimit` | Entier | Le nombre maximal de requêtes que l’assistant peut envoyer par jour (un brief, un résumé ou un tri en est une), de 1 à 10000 (une autre valeur est ignorée). Au-delà, l’assistant attend le lendemain. Verrouillé dans les Réglages | Aucune limite ; l’utilisateur décide |
 | `AllowLocalAI` | Booléen | Un serveur sur cet ordinateur (`localhost`, `127.0.0.1`, `::1`, seules adresses qui peuvent utiliser http). `true` : autorisé même avec l’IA externe désactivée. `false` : refusé. Non défini : autorisé sauf si `AllowExternalAI` est géré à `false`, car un serveur local pourrait relayer vers le cloud | Voir le sens |
 | `HiddenContentSources` | Tableau de chaînes | Les outils dont les notifications disent où quelque chose s’est passé, pas ce qui a été écrit ; `reminders` pour les rappels de l’utilisateur. S’ajoute au choix de l’utilisateur et le verrouille dans les Réglages | Aucun |
 | `RefreshMinutes` | Entier | La fréquence de vérification des outils, de 1 à 60 minutes (une autre valeur est ignorée). Verrouillé dans les Réglages | 5 |
@@ -146,6 +147,7 @@ puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par 
 | `AllowedAIServers` | `REG_MULTI_SZ` | Les serveurs OpenAI-compatibles autorisés, un préfixe d’URL par ligne |
 | `AIServer` | `REG_SZ` | Le serveur OpenAI-compatible, réglé et verrouillé |
 | `AllowLocalAI` | `REG_DWORD` | `1` pour autoriser un serveur sur cet ordinateur, `0` pour le refuser |
+| `AIDailyLimit` | `REG_DWORD` | Les requêtes de l’assistant par jour, de 1 à 10000 ; verrouillé dans les Réglages |
 | `AIExcludedSources` | `REG_MULTI_SZ` | Les outils dont les éléments ne parviennent jamais à l’assistant, un identifiant par ligne (`reminders` pour les rappels) ; verrouillé dans les Réglages |
 | `AllowedAIModels` | `REG_MULTI_SZ` | Les modèles que l’assistant peut utiliser, un identifiant par ligne |
 | `HiddenContentSources` | `REG_MULTI_SZ` | Les outils dont les notifications ne montrent pas ce qui a été écrit, un identifiant par ligne |

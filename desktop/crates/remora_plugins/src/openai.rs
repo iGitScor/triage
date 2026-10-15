@@ -9,8 +9,8 @@ use crate::{decode, AssistantPlugin, HttpClient, PluginConfig, PluginError, Requ
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use remora_core::{
-    is_loopback, Brief, ConfigField, Egress, InboxItem, PluginManifest, ServerUrl, SnoozedItem, TriageSuggestion,
-    AI_SERVER_PLUGIN, DEFAULT_AI_SERVER,
+    is_loopback, Brief, ConfigField, Egress, InboxItem, PluginManifest, ServerUrl, SnoozedItem, TokenUsage,
+    TriageSuggestion, AI_SERVER_PLUGIN, DEFAULT_AI_SERVER,
 };
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -145,6 +145,16 @@ impl ApiRequest {
 pub struct ApiResponse {
     #[serde(default)]
     pub choices: Vec<Choice>,
+    /// A local server may leave it out.
+    pub usage: Option<ApiUsage>,
+}
+
+/// Chat Completions' `usage`.
+#[derive(Deserialize, Default)]
+#[serde(default)]
+pub struct ApiUsage {
+    pub prompt_tokens: u64,
+    pub completion_tokens: u64,
 }
 
 #[derive(Deserialize)]
@@ -228,6 +238,10 @@ impl AssistantReply for ApiResponse {
             return Err(AssistantFailure::CutOff);
         }
         json_text(choice.message.and_then(|m| m.content))
+    }
+
+    fn usage(&self) -> Option<TokenUsage> {
+        self.usage.as_ref().map(|u| TokenUsage { input: u.prompt_tokens, output: u.completion_tokens })
     }
 }
 
@@ -355,6 +369,22 @@ pub(crate) mod tests {
         assert_eq!(body["response_format"]["json_schema"]["strict"], true);
         assert_eq!(body["response_format"]["json_schema"]["schema"]["additionalProperties"], false);
         assert!(body.get("max_tokens").is_none() && body.get("max_completion_tokens").is_none());
+    }
+
+    /// AI-03: Chat Completions' `usage`; a server that leaves it out reports nothing.
+    #[tokio::test]
+    async fn the_tokens_used_are_reported() {
+        let mut body: serde_json::Value = serde_json::from_str(&answer(r#"{"summary":"s"}"#, "stop")).unwrap();
+        body["usage"] = serde_json::json!({ "prompt_tokens": 40, "completion_tokens": 9 });
+        let values = [("token", "sk"), ("model", "gpt-x")];
+        let meter = crate::assistant::AssistantMeter::default();
+        let http = Recorder::new(&[], &body.to_string());
+        meter.measure(plugin(&values, http).unwrap().digest(&[item("a")], "t", now())).await.unwrap();
+        assert_eq!(meter.tokens(), Some(TokenUsage { input: 40, output: 9 }));
+        let silent = crate::assistant::AssistantMeter::default();
+        let http = Recorder::new(&[], &answer(r#"{"summary":"s"}"#, "stop"));
+        silent.measure(plugin(&values, http).unwrap().digest(&[item("a")], "t", now())).await.unwrap();
+        assert_eq!(silent.tokens(), None);
     }
 
     #[tokio::test]

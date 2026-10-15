@@ -68,6 +68,13 @@
       <enabledValue><decimal value="1" /></enabledValue>
       <disabledValue><decimal value="0" /></disabledValue>
     </policy>
+    <policy name="AIDailyLimit" class="Both" displayName="$(string.AIDailyLimit)" explainText="$(string.AIDailyLimit_Help)" key="Software\Policies\Remora" presentation="$(presentation.AIDailyLimit)">
+      <parentCategory ref="Remora" />
+      <supportedOn ref="SUPPORTED_Remora" />
+      <elements>
+        <decimal id="AIDailyLimit" valueName="AIDailyLimit" minValue="1" maxValue="10000" />
+      </elements>
+    </policy>
     <policy name="HiddenContentSources" class="Both" displayName="$(string.HiddenContentSources)" explainText="$(string.HiddenContentSources_Help)" key="Software\Policies\Remora" presentation="$(presentation.HiddenContentSources)">
       <parentCategory ref="Remora" />
       <supportedOn ref="SUPPORTED_Remora" />

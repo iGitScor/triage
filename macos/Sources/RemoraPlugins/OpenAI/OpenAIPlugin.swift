@@ -162,6 +162,27 @@ extension OpenAIPlugin {
             }
         }
         var choices: [Choice]
+        var tokens: Usage?
+
+        enum CodingKeys: String, CodingKey {
+            case choices
+            case tokens = "usage"
+        }
+
+        /// Chat Completions' `usage`; a local server may leave it out.
+        struct Usage: Decodable {
+            var promptTokens: Int?
+            var completionTokens: Int?
+
+            enum CodingKeys: String, CodingKey {
+                case promptTokens = "prompt_tokens"
+                case completionTokens = "completion_tokens"
+            }
+        }
+
+        var usage: TokenUsage? {
+            tokens.map { TokenUsage(input: $0.promptTokens ?? 0, output: $0.completionTokens ?? 0) }
+        }
 
         /// The first choice's content: a refusal or a stop at the length limit is named, not decoded.
         func answer() throws(AssistantFailure) -> Data {

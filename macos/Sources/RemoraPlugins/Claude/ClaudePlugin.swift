@@ -162,11 +162,36 @@ extension ClaudePlugin {
         }
         var content: [Block]
         var stopReason: String?
+        var tokens: Usage?
 
         enum CodingKeys: String, CodingKey {
             case content
             case stopReason = "stop_reason"
+            case tokens = "usage"
         }
+
+        /// The Messages API's `usage`: the prompt's tokens are split between new and cached ones.
+        struct Usage: Decodable {
+            var inputTokens: Int?
+            var cacheCreationInputTokens: Int?
+            var cacheReadInputTokens: Int?
+            var outputTokens: Int?
+
+            enum CodingKeys: String, CodingKey {
+                case inputTokens = "input_tokens"
+                case cacheCreationInputTokens = "cache_creation_input_tokens"
+                case cacheReadInputTokens = "cache_read_input_tokens"
+                case outputTokens = "output_tokens"
+            }
+
+            var tokens: TokenUsage {
+                TokenUsage(
+                    input: (inputTokens ?? 0) + (cacheCreationInputTokens ?? 0) + (cacheReadInputTokens ?? 0),
+                    output: outputTokens ?? 0)
+            }
+        }
+
+        var usage: TokenUsage? { tokens?.tokens }
 
         /// The JSON text block. Thinking counts toward max_tokens: a long one can leave the answer cut off, and half
         /// a JSON is unusable.

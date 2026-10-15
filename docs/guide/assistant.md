@@ -50,3 +50,9 @@ no plugins and nothing saved to your session history. The exact list is in
   (`claude-haiku-5-5` by default with Claude).
 - Nothing is generated until you click ✦, apart from a first brief when you connect the assistant (with the whole-inbox
   brief off, the test uses one made-up item instead).
+- Settings → General → Assistant shows what the assistant used **today** and **this month**: requests, and tokens as
+  Claude, Claude Code or the server reported them (a server that reports none counts requests only). It stays on this
+  computer, for the last 31 days, and **Erase local data** removes it. No price: Remora doesn't know what your plan
+  charges.
+- **Daily limit** (off by default) caps the requests a day; a brief, a summary or a triage is one. Past it, the
+  assistant says so and waits until the next day. Your organization can set it (`AIDailyLimit`).

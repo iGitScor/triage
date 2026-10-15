@@ -7,7 +7,7 @@ use crate::assistant::{decode_reply, AssistantFailure, AssistantReply};
 use crate::{AssistantPlugin, PluginConfig, PluginError};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use remora_core::{Brief, ConfigField, Egress, InboxItem, PluginManifest, SnoozedItem, TriageSuggestion};
+use remora_core::{Brief, ConfigField, Egress, InboxItem, PluginManifest, SnoozedItem, TokenUsage, TriageSuggestion};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -628,6 +628,8 @@ struct CliResult {
     subtype: Option<String>,
     result: Option<String>,
     structured_output: Option<serde_json::Value>,
+    /// What it used, as the Messages API words it.
+    usage: Option<super::api::ApiUsage>,
 }
 
 /// Claude Code's reply: its structured output, or the kind of error it reports.
@@ -642,6 +644,10 @@ impl AssistantReply for CliResult {
             Some("error_max_budget_usd") => AssistantFailure::SpendingLimit,
             _ => failure(self.result.as_deref().unwrap_or_default()),
         })
+    }
+
+    fn usage(&self) -> Option<TokenUsage> {
+        self.usage.as_ref().map(super::api::ApiUsage::tokens)
     }
 }
 
@@ -922,6 +928,17 @@ mod tests {
         assert!(message.contains(r#""timesSnoozed":3"#) && message.contains(r#""reason":"motivation""#), "{message}");
         assert!(after(&runner.arguments(), "--json-schema").contains(r#""enum":["keep","reschedule","done","now"]"#));
         assert_eq!(items[0].snooze.reason, Some(SnoozeReason::Motivation));
+    }
+
+    /// AI-03: Claude Code's `usage`, as the Messages API words it.
+    #[tokio::test]
+    async fn the_tokens_used_are_reported() {
+        let runner = RecordingRunner::new(
+            r#"{"is_error": false, "structured_output": {"summary": "ok"}, "usage": {"input_tokens": 7, "cache_read_input_tokens": 1000, "output_tokens": 30}}"#,
+        );
+        let meter = crate::assistant::AssistantMeter::default();
+        meter.measure(plugin(&fake_claude(), &runner).digest(&[item("a")], "x", now())).await.unwrap();
+        assert_eq!(meter.tokens(), Some(TokenUsage { input: 1_007, output: 30 }));
     }
 
     // Finding and running claude.

@@ -9,7 +9,8 @@ import RemoraCore
 /// `AllowedAIServers` (array of URL prefixes), `AllowLocalAI` (Bool). `AIServer` (String URL) sets and locks the
 /// OpenAI-compatible assistant's server.
 /// Settings: `HiddenContentSources` (array of plugin IDs, or "reminders", added to the user's),
-/// `RefreshMinutes` (Int, 1 to 60), `OpenInApps` (Bool), `ClaudeCodePath` (String).
+/// `RefreshMinutes` (Int, 1 to 60), `OpenInApps` (Bool), `ClaudeCodePath` (String), `AIDailyLimit` (Int, assistant
+/// requests a day, 1 to 10000).
 /// Updates: `AutomaticUpdates` (Bool). True checks every day, locked on; false turns updating off entirely,
 /// Check now included, for fleets that deploy each version themselves.
 enum ManagedPolicy {
@@ -26,9 +27,12 @@ enum ManagedPolicy {
     static let aiServerKey = "AIServer"
     static let allowLocalAIKey = "AllowLocalAI"
     static let automaticUpdatesKey = "AutomaticUpdates"
+    static let aiDailyLimitKey = "AIDailyLimit"
+    static let aiDailyLimitRange = 1...10_000
 
     /// What Remora acts on: your preferences with the organization's settings in place. Hiding message content can only
-    /// be added to; a refresh interval outside 1 to 60 minutes, or not a number, is ignored.
+    /// be added to; a refresh interval outside 1 to 60 minutes, or a daily limit outside 1 to 10000, or not a number,
+    /// is ignored.
     static func effective(_ preferences: Preferences, managed: ManagedValues = ManagedDefaults()) -> Preferences {
         var effective = preferences
         if let value = managed.forced(hiddenContentKey) {
@@ -39,6 +43,9 @@ enum ManagedPolicy {
         }
         if let value = managed.forced(openInAppsKey) {
             effective.openInApps = bool(value)
+        }
+        if let value = managed.forced(aiDailyLimitKey), let limit = int(value), aiDailyLimitRange.contains(limit) {
+            effective.assistantDailyLimit = limit
         }
         if let value = managed.forced(automaticUpdatesKey) {
             effective.checkForUpdates = bool(value)

@@ -190,6 +190,20 @@ struct ManagedPolicyTests {
                 .refreshMinutes == 30)
     }
 
+    /// AI-03: the organization's daily limit wins over the user's; a value out of range is ignored.
+    @Test func theOrganizationCanSetTheAssistantsDailyLimit() {
+        var preferences = Preferences()
+        #expect(preferences.assistantDailyLimit == 0, "no limit by default")
+        preferences.assistantDailyLimit = 50
+        let limited = ManagedPolicy.effective(preferences, managed: ManagedDictionary(values: ["AIDailyLimit": 20]))
+        #expect(limited.assistantDailyLimit == 20)
+        let odd: [Any] = [0, 20_000, "many"]
+        for value in odd {
+            let kept = ManagedPolicy.effective(preferences, managed: ManagedDictionary(values: ["AIDailyLimit": value]))
+            #expect(kept.assistantDailyLimit == 50)
+        }
+    }
+
     @Test func assistantExclusionsAddUpAndModelsComeFromTheOrganization() {
         var preferences = Preferences()
         preferences.assistantExcludedSources = ["slack"]

@@ -15,6 +15,7 @@ final class Persistence {
     let learning: JSONStore<[ActionRecord]>
     let reviewTimes: JSONStore<[ReviewTiming]>
     let bundleSummaries: JSONStore<[String: BundleSummary]>
+    let assistantUsage: JSONStore<AssistantUsage>
     /// Saves the files off the main thread, each once per burst of changes.
     let writer = DiskWriter()
     private let isDemo: Bool
@@ -31,6 +32,7 @@ final class Persistence {
         learning = JSONStore("learning", in: folder)
         reviewTimes = JSONStore("review-times", in: folder)
         bundleSummaries = JSONStore("bundle-summaries", in: folder, backedUp: false)
+        assistantUsage = JSONStore("assistant-usage", in: folder, backedUp: false)
     }
 
     func save<Value: Sendable>(_ value: Value, to store: JSONStore<Value>) {

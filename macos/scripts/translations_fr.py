@@ -749,4 +749,17 @@ FR = {
     "Show snooze reasons in notifications": "Afficher la raison du report dans les notifications",
     "Group reminders by day": "Regrouper les rappels par jour",
     "Can someone proofread the new onboarding copy?": "Quelqu’un peut relire les nouveaux textes d’accueil ?",
+    # AI-03: what the assistant used, and its daily limit.
+    "Today’s assistant limit is reached. It starts again tomorrow, or raise it in Settings.": "La limite du jour de l’assistant est atteinte. Elle repart demain, ou augmentez-la dans les Réglages.",
+    "Daily limit": "Limite par jour",
+    "No limit": "Aucune limite",
+    "Each brief, summary or triage is one request. Past the limit, the assistant waits until tomorrow.": "Chaque brief, résumé ou tri compte pour une requête. Au-delà de la limite, l’assistant attend le lendemain.",
+    "Used today": "Utilisé aujourd’hui",
+    "This month": "Ce mois-ci",
+    "Nothing yet": "Rien pour l’instant",
+    "%lld request": "%lld requête",
+    "%lld requests": "%lld requêtes",
+    "%d request": "%d requête",
+    "%d requests": "%d requêtes",
+    "%@ tokens": "%@ jetons",
 }

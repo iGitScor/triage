@@ -19,6 +19,8 @@ const unmanaged = {
   shortcut: 'CommandOrControl+Alt+R',
   shortcutRegistered: true,
   wayland: false,
+  usageToday: { day: '2026-10-15', requests: 0, inputTokens: 0, outputTokens: 0 },
+  usageMonth: { day: '2026-10', requests: 0, inputTokens: 0, outputTokens: 0 },
 }
 const replies: Record<string, unknown> = {
   sources: demo.sources,
@@ -172,5 +174,46 @@ describe('Settings the organization set', () => {
     expect(invoke).toHaveBeenCalledWith('set_preferences', {
       preferences: { ...demo.preferences, allowExternalAi: true },
     })
+  })
+})
+
+describe('Settings, what the assistant used (AI-03)', () => {
+  const withAssistant = {
+    ...unmanaged,
+    usageToday: { day: '2026-10-15', requests: 1, inputTokens: 1200, outputTokens: 34 },
+    usageMonth: { day: '2026-10', requests: 12, inputTokens: 15000, outputTokens: 400 },
+  }
+
+  afterEach(() => {
+    cleanup()
+    invoke.mockClear()
+    replies.accounts = demo.accounts
+    replies.settings = unmanaged
+  })
+
+  function connectAssistant(settings: unknown) {
+    replies.accounts = [...demo.accounts, { ...demo.accounts[0], id: 'a', pluginId: 'claude-code' }]
+    replies.settings = settings
+  }
+
+  it('shows today’s and this month’s use, and saves a daily limit', async () => {
+    connectAssistant(withAssistant)
+    const { getByRole, getByText } = await open('General')
+    expect(getByText('1 request · 1,234 tokens')).toBeTruthy()
+    expect(getByText('12 requests · 15,400 tokens')).toBeTruthy()
+    const limit = getByRole('combobox', { name: /Daily limit/ }) as HTMLSelectElement
+    expect(limit.value).toBe('0')
+    await fireEvent.change(limit, { target: { value: '50' } })
+    expect(invoke).toHaveBeenCalledWith('set_preferences', {
+      preferences: { ...demo.preferences, assistantDailyLimit: 50 },
+    })
+  })
+
+  it('locks the limit the organization set', async () => {
+    connectAssistant({ ...withAssistant, managed: { ...demo.managed, aiDailyLimit: 30 } })
+    const { getByRole } = await open('General')
+    const limit = getByRole('combobox', { name: /Daily limit/ }) as HTMLSelectElement
+    expect(limit).toMatchObject({ value: '30', disabled: true })
+    expect(limit.textContent).toContain('30 requests')
   })
 })

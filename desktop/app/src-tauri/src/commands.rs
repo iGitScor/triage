@@ -4,7 +4,8 @@ use crate::{changed, AppState, REMINDER_SHORTCUT};
 use chrono::{DateTime, Local, NaiveDate, TimeZone, Utc};
 use remora_app::view::{inbox_view, InboxView};
 use remora_app::{paths, AccountInfo, Managed, Preferences, SourceInfo};
-use remora_core::{CompliancePolicy, Message, Preset, RecurrenceRule, SnoozeClock, SnoozeMode, SnoozeReason};
+use remora_core::{CompliancePolicy, Message, Preset, RecurrenceRule, SnoozeClock, SnoozeMode, SnoozeReason, UsageDay};
+use remora_plugins::assistant::AssistantMeter;
 use remora_plugins::{links, oauth, registry, PluginError};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -322,11 +323,15 @@ pub struct SettingsView {
     /// Windows won't show Remora's notifications: `app` (off for Remora), `all` (off for every app) or `policy`.
     #[ts(type = "'app' | 'all' | 'policy' | null")]
     notifications_off: Option<&'static str>,
+    /// What the assistant used today and this month (AI-03).
+    usage_today: UsageDay,
+    usage_month: UsageDay,
 }
 
 #[tauri::command]
 pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<SettingsView> {
     let inbox = state.inbox.lock().await;
+    let (usage_today, usage_month) = inbox.assistant_usage(Utc::now());
     Ok(SettingsView {
         preferences: inbox.preferences().clone(),
         managed: inbox.managed().clone(),
@@ -343,6 +348,8 @@ pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<Sett
         shortcut_registered: crate::SHORTCUT_REGISTERED.load(std::sync::atomic::Ordering::Relaxed),
         wayland: crate::linux::wayland(),
         notifications_off: crate::notifications_off(&app),
+        usage_today,
+        usage_month,
     })
 }
 
@@ -499,6 +506,17 @@ pub async fn review_queue(state: State<'_, AppState>) -> Result<Vec<remora_core:
 
 // MARK: The assistant: brief, summaries, triage
 
+/// One request to the assistant, counted with the tokens it reports whether it answers or fails (AI-03).
+async fn measured<T>(
+    state: &AppState,
+    request: impl std::future::Future<Output = std::result::Result<T, PluginError>>,
+) -> std::result::Result<T, PluginError> {
+    let meter = AssistantMeter::default();
+    let result = meter.measure(request).await;
+    state.inbox.lock().await.record_usage(meter.tokens(), Utc::now());
+    result
+}
+
 /// A brief of the whole inbox. Skipped while the last one is fresh, unless asked for (`force`).
 #[tauri::command]
 pub async fn make_brief(app: AppHandle, state: State<'_, AppState>, force: bool) -> Result<()> {
@@ -513,7 +531,7 @@ pub async fn make_brief(app: AppHandle, state: State<'_, AppState>, force: bool)
         let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
         (from, plugin?, inbox.brief_items(Utc::now()))
     };
-    let brief = plugin.brief(&items, Utc::now()).await?;
+    let brief = measured(&state, plugin.brief(&items, Utc::now())).await?;
     state.inbox.lock().await.keep_brief(&from, brief.written_from(&items));
     changed(&app).await;
     Ok(())
@@ -534,7 +552,7 @@ pub async fn summarize(app: AppHandle, state: State<'_, AppState>, bundle_id: St
         let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
         (from, plugin?, items)
     };
-    let text = plugin.digest(&items, &topic, Utc::now()).await?;
+    let text = measured(&state, plugin.digest(&items, &topic, Utc::now())).await?;
     state.inbox.lock().await.keep_summary(&from, &bundle_id, remora_core::BundleSummary::new(text, &items, Utc::now()));
     changed(&app).await;
     Ok(())
@@ -555,7 +573,7 @@ pub async fn triage(app: AppHandle, state: State<'_, AppState>) -> Result<()> {
         let Some((from, plugin)) = inbox.assistant(state.http.clone(), language) else { return Ok(()) };
         (from, plugin?, snoozed)
     };
-    let suggestions = plugin.triage(&snoozed, Utc::now()).await?;
+    let suggestions = measured(&state, plugin.triage(&snoozed, Utc::now())).await?;
     state.inbox.lock().await.keep_triage(&from, suggestions);
     changed(&app).await;
     Ok(())

@@ -151,7 +151,7 @@ final class InboxModel {
             states = read(files.states) ?? [:]
             assistant = AssistantCoordinator(
                 brief: files.brief.load() ?? nil, bundleSummaries: files.bundleSummaries.load() ?? [:],
-                persistence: files)
+                usage: files.assistantUsage.load() ?? AssistantUsage(), persistence: files)
             snoozes = SnoozeService(history: read(files.history) ?? [], persistence: files)
             learning = LearningService(
                 records: read(files.learning) ?? [], reviewTimings: read(files.reviewTimes) ?? [], persistence: files)
@@ -160,6 +160,7 @@ final class InboxModel {
         storageIssues = issues
         writer.onResult = { [weak self] file, failure in self?.recordWrite(file, failure: failure) }
         learning.rankerChanged = { [weak self] in self?.layoutChanged() }
+        assistant.dailyLimit = { [weak self] in self?.effectivePreferences.assistantDailyLimit ?? 0 }
     }
 
     // MARK: Reading

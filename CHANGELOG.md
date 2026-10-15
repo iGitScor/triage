@@ -14,6 +14,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- The assistant's use, on Mac, Windows and Linux: Settings → General → Assistant shows today's and this month's
+  requests and tokens, as Claude, Claude Code or the OpenAI-compatible server reported them, and an optional **Daily
+  limit** stops further requests until the next day. Kept on this computer for 31 days; Erase removes it. An
+  organization can set the limit (`AIDailyLimit`).
 - Jira Cloud: **Mentions in Confluence**, an option that also brings the Confluence pages and comments that mention
   you, with the same token, sorted like any mention.
 - Bitbucket, on Mac, Windows and Linux: your open pull requests and those waiting for your review, with approvals,

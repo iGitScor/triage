@@ -54,3 +54,9 @@ l’historique de vos sessions. La liste exacte est dans
   un modèle plus léger (`claude-haiku-5-5` par défaut avec Claude).
 - Rien n’est généré avant que vous cliquiez sur ✦, à part un premier brief quand vous connectez l’assistant (si le brief
   de toute la boîte est désactivé, le test utilise un seul élément fictif).
+- Réglages → Général → Assistant montre ce que l’assistant a consommé **aujourd’hui** et **ce mois-ci** : les requêtes,
+  et les jetons tels que Claude, Claude Code ou le serveur les ont indiqués (un serveur qui n’en indique pas ne compte
+  que les requêtes). Ce relevé reste sur cet ordinateur, pour les 31 derniers jours, et **Effacer les données
+  locales** le supprime. Aucun prix : Remora ne sait pas ce que facture votre offre.
+- **Limite par jour** (désactivée par défaut) plafonne les requêtes quotidiennes ; un brief, un résumé ou un tri en est
+  une. Au-delà, l’assistant le dit et attend le lendemain. Votre organisation peut la fixer (`AIDailyLimit`).

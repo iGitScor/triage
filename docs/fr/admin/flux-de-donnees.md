@@ -84,7 +84,7 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 | Terminé, Épingler, les reports et leurs notes, les rappels | `states.json`, `reminders.json`, `snooze-history.json` |
 | Ce que l’utilisateur traite vite ou reporte, pour le classement sur ce Mac seulement (mots des titres, auteurs) | `learning.json` |
 | La durée des relectures chronométrées face à leur estimation (deux nombres chacune, ni nom ni titre) | `review-times.json` |
-| Le dernier brief et les résumés de groupes | `brief.json`, `bundle-summaries.json` |
+| Le dernier brief et les résumés de groupes ; les requêtes et jetons de l’assistant par jour, sur 31 jours | `brief.json`, `bundle-summaries.json`, `assistant-usage.json` |
 | Les préférences | `preferences.json` |
 | Jetons et clés d’API | Un seul élément du trousseau de session : service `fr.igitscor.remora`, compte `secrets` |
 | Rappels programmés et notifications reçues (titres) | Les notifications de macOS (`UNUserNotificationCenter`) |
@@ -107,7 +107,7 @@ et ses entrées Spotlight ; de même pour un outil que la politique bloque ou do
 
 | Données | Emplacement |
 |---|---|
-| Les mêmes données que sur macOS : les comptes, la dernière copie des éléments de chaque outil (texte des messages Slack compris), les états, les rappels, l’historique des reports, ce que l’utilisateur traite vite, la durée des relectures, le dernier brief et les résumés, les préférences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `snooze-history.json`, `learning.json`, `review-times.json`, `brief.json`, `bundle-summaries.json`, `preferences.json` dans `%LOCALAPPDATA%\fr.igitscor.remora` |
+| Les mêmes données que sur macOS : les comptes, la dernière copie des éléments de chaque outil (texte des messages Slack compris), les états, les rappels, l’historique des reports, ce que l’utilisateur traite vite, la durée des relectures, le dernier brief et les résumés, la consommation de l’assistant par jour, les préférences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `snooze-history.json`, `learning.json`, `review-times.json`, `brief.json`, `bundle-summaries.json`, `assistant-usage.json`, `preferences.json` dans `%LOCALAPPDATA%\fr.igitscor.remora` |
 | Jetons | Une entrée du Gestionnaire d’identification par compte : `fr.igitscor.remora`, utilisateur l’identifiant du compte, et un index des identifiants (utilisateur `accounts`) |
 
 Les fichiers sont du JSON en clair, lisibles par le compte Windows de l’utilisateur (et les administrateurs) ;

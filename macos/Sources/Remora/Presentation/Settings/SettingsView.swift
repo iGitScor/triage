@@ -447,6 +447,19 @@ private struct GeneralPane: View {
     /// The user turned notifications off for Remora in System Settings.
     @State private var notificationsDenied = false
 
+    /// The same choices as on Windows; the managed key allows any value from 1 to 10000.
+    static let dailyLimits = [0, 20, 50, 100, 200, 500]
+
+    private func limitLabel(_ limit: Int) -> String {
+        limit == 0 ? L("No limit") : L("%lld requests", limit)
+    }
+
+    /// Requests and tokens, tokens only as the providers reported them.
+    private func usageLabel(_ day: AssistantUsage.Day) -> String {
+        guard day.requests > 0 else { return L("Nothing yet") }
+        return L("%lld request", plural: "%lld requests", day.requests) + " · " + L("%@ tokens", day.tokens.formatted())
+    }
+
     var body: some View {
         @Bindable var model = model
         Form {
@@ -553,6 +566,22 @@ private struct GeneralPane: View {
                 Text("While fresh, Remora shows it again instead of asking the assistant.")
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
+                // AI-03: what the assistant used, and an optional cap on it.
+                if ManagedPolicy.isForced(ManagedPolicy.aiDailyLimitKey) {
+                    LabeledContent(L("Daily limit"), value: limitLabel(model.effectivePreferences.assistantDailyLimit))
+                        .help(L("Managed by your organization"))
+                } else {
+                    Picker("Daily limit", selection: $model.preferences.assistantDailyLimit) {
+                        ForEach(Self.dailyLimits, id: \.self) { Text(limitLabel($0)).tag($0) }
+                    }
+                }
+                Text(
+                    "Each brief, summary or triage is one request. Past the limit, the assistant waits until tomorrow."
+                )
+                .font(Myna.font(11.5))
+                .foregroundStyle(Myna.muted)
+                LabeledContent(L("Used today"), value: usageLabel(model.assistant.usage.today()))
+                LabeledContent(L("This month"), value: usageLabel(model.assistant.usage.thisMonth()))
             }
             Section {
                 ForEach(notifyingSources, id: \.id) { source in

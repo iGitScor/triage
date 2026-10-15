@@ -32,11 +32,15 @@ public enum AssistantFailure: Error, Equatable, Sendable {
 /// `decode` turns the answer into a brief, a digest or triage suggestions the same way for all of them.
 protocol AssistantReply {
     func answer() throws(AssistantFailure) -> Data
+    /// The tokens it used, when the provider says (AI-03).
+    var usage: TokenUsage? { get }
 }
 
 extension AssistantReply {
-    /// The answer as `Output`; a failure is shown like any other API error, with its cause's message.
+    /// The answer as `Output`; a failure is shown like any other API error, with its cause's message. What it used
+    /// is counted either way: a cut-off answer was still paid for.
     func decode<Output: Decodable>(_: Output.Type = Output.self) throws -> Output {
+        AssistantMeter.report(usage)
         do throws(AssistantFailure) {
             let data = try answer()
             guard let output = try? JSONDecoder().decode(Output.self, from: data) else {
