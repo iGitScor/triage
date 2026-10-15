@@ -246,7 +246,7 @@ impl Inbox {
         if let Some(refusal) = self.policy().refusal(&manifest) {
             return Err(refusal.into());
         }
-        let account = self.with_policy_settings(&Account {
+        let account = self.privacy().with_policy_settings(&Account {
             id: uuid::Uuid::new_v4().to_string(),
             plugin_id: plugin_id.into(),
             name: name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
@@ -277,7 +277,7 @@ impl Inbox {
             Some(id) => self.accounts.find(id).ok_or("This account is no longer connected.")?.settings.clone(),
             None => settings,
         };
-        let account = self.with_policy_settings(&Account {
+        let account = self.privacy().with_policy_settings(&Account {
             id: String::new(),
             plugin_id: plugin_id.into(),
             name: None,
@@ -308,23 +308,20 @@ impl Inbox {
             .into_iter()
             .find(|m| m.id == plugin_id)
             .ok_or_else(|| format!("Unknown plugin “{plugin_id}”."))?;
-        let account = self.with_policy_settings(&Account {
+        let privacy = self.privacy();
+        let account = privacy.with_policy_settings(&Account {
             id: uuid::Uuid::new_v4().to_string(),
             plugin_id: plugin_id.into(),
             name: name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
             settings,
             identity: None,
         });
-        if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
+        if let Some(refusal) = privacy.compliance().account_refusal(&manifest, &account.settings) {
             return Err(refusal.into());
         }
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(&account, &manifest)));
-        let defaults: HashMap<String, String> =
-            manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
-        let mut constrained = account.clone();
-        constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
-        self.with_managed_claude_code_path(&mut constrained)?;
+        let constrained = privacy.constrained(&account, &manifest)?;
         let plugin = claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.message())?;
         Ok((account, plugin))
     }
@@ -421,8 +418,9 @@ impl Inbox {
         secrets: &HashMap<String, String>,
         http: Arc<dyn HttpClient>,
     ) -> Result<Box<dyn SourcePlugin>, Message> {
-        let account =
-            &self.with_policy_settings(self.accounts.find(account_id).ok_or("This account is no longer connected.")?);
+        let account = &self
+            .privacy()
+            .with_policy_settings(self.accounts.find(account_id).ok_or("This account is no longer connected.")?);
         let manifest =
             registry::manifest(&account.plugin_id).ok_or_else(|| format!("Unknown plugin “{}”.", account.plugin_id))?;
         if let Some(refusal) = self.policy().refusal(&manifest) {

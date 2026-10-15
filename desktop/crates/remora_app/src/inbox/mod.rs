@@ -5,20 +5,27 @@
 //! - `sync.rs`, the sync engine: fetch jobs, applying their results, slow-downs, notifications.
 //! - `snoozes.rs`, the snooze service: the history, the advisor, insights.
 //! - `assistant.rs`, the assistant coordinator: the brief, summaries and triage.
+//! - `learning.rs`, the learning service: the ranker and review times, learned from your actions.
 //! - `persistence.rs`, the persistence port: the files each of them saves.
+//! - `policy.rs`, the privacy policy: the preferences with the organization's settings in place.
 //!
-//! This file holds what they share (the items, their states, reminders, preferences and the policy), the actions on
-//! items, and Undo. Fields are private: a change goes through a method that saves it and applies the policy.
+//! This file holds what they share (the items, their states, reminders, preferences and the organization's settings),
+//! the actions on items, and Undo. Fields are private: a change goes through a method that saves it and applies the
+//! policy.
 
 mod accounts;
 mod assistant;
+mod learning;
 mod persistence;
+mod policy;
 mod snoozes;
 mod sync;
 
 pub use accounts::AccountsService;
 pub use assistant::AssistantCoordinator;
+pub use learning::LearningService;
 pub use persistence::Persistence;
+pub use policy::InboxPolicy;
 pub use snoozes::SnoozeService;
 pub use sync::SyncEngine;
 
@@ -26,10 +33,9 @@ use crate::{JsonStore, Managed, Preferences, Vault};
 use chrono::{DateTime, Utc};
 use persistence::{ACCOUNTS, BRIEF, CACHE, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES, SUMMARIES};
 use remora_core::{
-    Account, ActionOutcome, ActionRecord, CompliancePolicy, FailureKind, InboxAssembler, InboxBundle, InboxItem,
-    InboxLayout, ItemState, LinkFinder, Mark, Message, PersonalRanker, PluginManifest, Recurrence, RecurrenceRule,
-    ReviewPace, ReviewPrep, ReviewTiming, SignIn, Snooze, SnoozeMode, SnoozeReason, SourcesHealth, VerbClassifier,
-    WaitingAssistant, WaitingHelp, AI_SERVER_PLUGIN,
+    Account, CompliancePolicy, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder,
+    Mark, Message, PluginManifest, Recurrence, RecurrenceRule, SignIn, Snooze, SnoozeMode, SnoozeReason, SourcesHealth,
+    VerbClassifier, WaitingAssistant, WaitingHelp,
 };
 use remora_plugins::{claude, links, registry, AssistantPlugin, HttpClient, PluginError, SourcePlugin, SourceSnapshot};
 use serde::Serialize;
@@ -118,12 +124,10 @@ pub struct Inbox {
     sync: SyncEngine,
     snoozes: SnoozeService,
     assistant: AssistantCoordinator,
+    learning: LearningService,
     items: HashMap<String, Vec<InboxItem>>,
     states: HashMap<String, ItemState>,
     reminders: Vec<InboxItem>,
-    action_records: Vec<ActionRecord>,
-    ranker: PersonalRanker,
-    review_timings: Vec<ReviewTiming>,
     /// Item id → items from other tools about the same thing, worked out when the items change.
     links: HashMap<String, Vec<String>>,
     /// The states and reminders before the last Done or Clear all, until the next one.
@@ -148,9 +152,11 @@ impl Inbox {
             items: files.load(CACHE).unwrap_or_default(),
             states: files.load(STATES).unwrap_or_default(),
             reminders: files.load(REMINDERS).unwrap_or_default(),
-            ranker: PersonalRanker::new(&files.load::<Vec<ActionRecord>>(LEARNING).unwrap_or_default()),
-            action_records: files.load(LEARNING).unwrap_or_default(),
-            review_timings: files.load(REVIEW_TIMES).unwrap_or_default(),
+            learning: LearningService::new(
+                files.load(LEARNING).unwrap_or_default(),
+                files.load(REVIEW_TIMES).unwrap_or_default(),
+                files.clone(),
+            ),
             links: HashMap::new(),
             undo_point: None,
             managed,
@@ -172,14 +178,12 @@ impl Inbox {
             sync: SyncEngine::default(),
             snoozes: SnoozeService::new(vec![], persistence.clone()),
             assistant: AssistantCoordinator::new(None, HashMap::new(), persistence.clone()),
+            learning: LearningService::new(vec![], vec![], persistence.clone()),
             managed,
             preferences: Preferences::default(),
             items: HashMap::new(),
             states: HashMap::new(),
             reminders: vec![],
-            action_records: vec![],
-            ranker: PersonalRanker::new(&[]),
-            review_timings: vec![],
             links: HashMap::new(),
             undo_point: None,
             persistence,
@@ -211,16 +215,16 @@ impl Inbox {
     }
 
     pub fn policy(&self) -> CompliancePolicy {
-        self.managed.policy(&self.preferences)
+        self.privacy().compliance()
     }
 
     /// The organization allows update checks, and the user wants them (or the organization turned them on).
     pub fn checks_for_updates(&self) -> bool {
-        self.managed.checks_for_updates(&self.preferences)
+        self.privacy().checks_for_updates()
     }
 
     fn allows(&self, plugin_id: &str) -> bool {
-        registry::manifest(plugin_id).is_some_and(|m| self.policy().allows(&m))
+        self.privacy().allows(plugin_id)
     }
 
     /// Items of allowed accounts, plus reminders.
@@ -249,7 +253,7 @@ impl Inbox {
 
     pub fn layout(&self, now: DateTime<Utc>, query: &str) -> InboxLayout {
         // Your habits break ties inside each group, once there are enough of them.
-        let score = |item: &InboxItem| self.ranker.score(item);
+        let score = |item: &InboxItem| self.learning.score(item);
         InboxAssembler { wake_on_activity: self.preferences.wake_on_activity }.layout_ranked(
             &self.all_items(),
             &self.states,
@@ -279,7 +283,7 @@ impl Inbox {
             .iter()
             .filter_map(|account| {
                 let manifest = any_manifest(&account.plugin_id)?;
-                let account = &self.with_policy_settings(account);
+                let account = &self.privacy().with_policy_settings(account);
                 let refusal = policy.account_refusal(&manifest, &account.settings);
                 let failure = self.sync.failure(&account.id);
                 Some(AccountInfo {
@@ -312,26 +316,14 @@ impl Inbox {
 
     // MARK: Policy
 
-    /// An account with the organization's settings in place of its own: `AIServer` for the OpenAI-compatible
-    /// assistant, and each field's `managed_key` (`MicrosoftTenant`).
-    fn with_policy_settings(&self, account: &Account) -> Account {
-        let mut account = account.clone();
-        if account.plugin_id == AI_SERVER_PLUGIN {
-            if let Some(forced) = &self.policy().ai_server {
-                account.settings.insert("host".into(), forced.clone());
-            }
-        }
-        for field in any_manifest(&account.plugin_id).map(|m| m.fields).unwrap_or_default() {
-            if let Some(forced) = field.managed_key.and_then(|key| self.managed.settings.get(&key)) {
-                account.settings.insert(field.key, forced.clone());
-            }
-        }
-        account
+    /// The privacy policy, from the preferences as they are now (`policy.rs`).
+    pub fn privacy(&self) -> InboxPolicy<'_> {
+        InboxPolicy::new(&self.preferences, &self.managed)
     }
 
     /// The user's preferences with the organization's settings in place: what Remora acts on.
     pub fn effective_preferences(&self) -> Preferences {
-        self.managed.effective(&self.preferences)
+        self.privacy().effective_preferences()
     }
 
     /// Saves the preferences. True when the refresh interval changed, so the next refresh is rescheduled.
@@ -366,7 +358,7 @@ impl Inbox {
     pub fn opened(&mut self, id: &str) {
         self.update(id, |s| s.reminded_at = None);
         if let Some(item) = self.item(id) {
-            self.learn_handled(&item, Utc::now());
+            self.learning.handled(&item, Utc::now());
         }
     }
 
@@ -396,9 +388,9 @@ impl Inbox {
             s.started_at = None;
         });
         if marking {
-            self.learn_handled(&item, now);
+            self.learning.handled(&item, now);
             if let Some(started) = started {
-                self.learn_review_time(&item, started, now);
+                self.learning.reviewed(&item, started, now);
             }
             // The snooze that ended in Done: when you finally do things teaches your best hour.
             self.snoozes.done(id, now);
@@ -488,34 +480,9 @@ impl Inbox {
         });
         // Learned from, on this computer only; a reminder isn't a habit.
         if item.bundle != InboxBundle::reminders() {
-            self.learn(ActionRecord::new(&item, ActionOutcome::Deferred, Utc::now()));
+            self.learning.deferred(&item, Utc::now());
             self.snoozes.record(&item, reason, Utc::now(), until);
         }
-    }
-
-    /// Opened or finished within a day of its last activity: something you handle quickly.
-    fn learn_handled(&mut self, item: &InboxItem, now: DateTime<Utc>) {
-        if item.bundle != InboxBundle::reminders() && now - item.date < chrono::Duration::days(1) {
-            self.learn(ActionRecord::new(item, ActionOutcome::Quick, now));
-        }
-    }
-
-    fn learn(&mut self, record: ActionRecord) {
-        self.action_records.push(record);
-        let excess = self.action_records.len().saturating_sub(1_000);
-        self.action_records.drain(..excess);
-        self.ranker = PersonalRanker::new(&self.action_records);
-        self.persistence.save(LEARNING, &self.action_records);
-    }
-
-    /// A review started then done: its real duration against the plain estimate, the last 50 kept.
-    fn learn_review_time(&mut self, item: &InboxItem, started: DateTime<Utc>, now: DateTime<Utc>) {
-        let Some(prep) = ReviewPrep::new(item, 1.0) else { return };
-        self.review_timings
-            .push(ReviewTiming { estimated: i64::from(prep.estimated_minutes), actual: (now - started).num_minutes() });
-        let excess = self.review_timings.len().saturating_sub(50);
-        self.review_timings.drain(..excess);
-        self.persistence.save(REVIEW_TIMES, &self.review_timings);
     }
 
     /// Moves an existing snooze without counting a new one (spreading a pile-up, one time for a cluster).
@@ -631,15 +598,6 @@ impl Inbox {
 
     // MARK: Help on a row
 
-    /// How your reviews compare with the estimate; 1 until five were timed.
-    pub fn review_pace(&self) -> f64 {
-        ReviewPace::factor(&self.review_timings)
-    }
-
-    pub fn review_prep(&self, item: &InboxItem) -> Option<ReviewPrep> {
-        (item.bundle == InboxBundle::reviews()).then(|| ReviewPrep::new(item, self.review_pace())).flatten()
-    }
-
     /// Who could review your PR, or a nudge when its reviewers stay silent. Asked for every shown item: one that
     /// isn't waiting on anyone returns at once, and the others read the inbox by reference, never copying it.
     pub fn waiting_help(&self, item: &InboxItem, now: DateTime<Utc>) -> Option<WaitingHelp> {
@@ -678,11 +636,6 @@ impl Inbox {
     /// Items from other tools about the same thing.
     pub fn linked(&self, id: &str) -> Vec<InboxItem> {
         self.links.get(id).map(|ids| ids.iter().filter_map(|id| self.item(id)).collect()).unwrap_or_default()
-    }
-
-    /// Why an item ranks higher than its priority alone would put it.
-    pub fn ranking_reason(&self, item: &InboxItem, tr: &dyn Fn(&str) -> String) -> Option<String> {
-        self.ranker.reason(item, tr)
     }
 
     fn recompute_links(&mut self) {
@@ -1677,7 +1630,7 @@ mod tests {
         let mut inbox = inbox();
         let id = inbox.add_reminder("Call the bank", Utc::now() + Duration::hours(1), None, None, Utc::now()).unwrap();
         inbox.snooze(&id, Utc::now() + Duration::hours(2), SnoozeMode::Hide, None, false);
-        assert!(inbox.snoozes.history().is_empty() && inbox.action_records.is_empty());
+        assert!(inbox.snoozes.history().is_empty() && inbox.learning.records().is_empty());
     }
 
     /// A review started then done records how long it really took.
@@ -1693,8 +1646,8 @@ mod tests {
         assert!(inbox.review_prep(&inbox.item("r").unwrap()).is_some());
         inbox.start("r", Utc::now() - Duration::minutes(12));
         inbox.toggle_done("r", Utc::now());
-        assert_eq!(inbox.review_timings.len(), 1);
-        assert_eq!(inbox.review_timings[0].actual, 12);
+        assert_eq!(inbox.learning.review_timings().len(), 1);
+        assert_eq!(inbox.learning.review_timings()[0].actual, 12);
         assert_eq!(inbox.review_pace(), 1.0, "not before five");
     }
 

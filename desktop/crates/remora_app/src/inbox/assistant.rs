@@ -3,7 +3,7 @@
 //! still be kept (`Inbox::still_answers`). Ported from the macOS app's `AssistantCoordinator`.
 
 use super::persistence::{Persistence, BRIEF, SUMMARIES};
-use super::{AssistantJob, Inbox, CLAUDE_CODE_PATH_UNREADABLE};
+use super::{AssistantJob, Inbox};
 use chrono::{DateTime, Utc};
 use remora_core::{
     Account, AssistantPolicy, Brief, BundleSummary, InboxItem, Message, SnoozedItem, TriageAction, TriageSuggestion,
@@ -109,11 +109,12 @@ impl Inbox {
 
     /// The connected assistant, only when the privacy policy allows it.
     pub fn assistant_account(&self) -> Option<Account> {
-        let policy = self.policy();
+        let privacy = self.privacy();
+        let policy = privacy.compliance();
         self.accounts
             .iter()
             .find(|a| {
-                let a = self.with_policy_settings(a);
+                let a = privacy.with_policy_settings(a);
                 claude::assistant_manifests()
                     .iter()
                     .any(|m| m.id == a.plugin_id && policy.account_refusal(m, &a.settings).is_none())
@@ -121,26 +122,10 @@ impl Inbox {
             .cloned()
     }
 
-    /// The organization's Claude Code path wins over the account's, and still passes the plugin's own checks; one
-    /// that can't be read turns Claude Code off.
-    pub(super) fn with_managed_claude_code_path(&self, account: &mut Account) -> Result<(), Message> {
-        if account.plugin_id != claude::code::ID {
-            return Ok(());
-        }
-        match self.managed.claude_code_path.as_deref() {
-            Some("") => Err(CLAUDE_CODE_PATH_UNREADABLE.into()),
-            Some(path) => {
-                account.settings.insert("path".into(), path.to_string());
-                Ok(())
-            }
-            None => Ok(()),
-        }
-    }
-
     /// What the assistant may read and use: everything but the sources you or your organization keep from it, with the
     /// organization's models.
     pub fn assistant_policy(&self) -> AssistantPolicy {
-        self.managed.assistant_policy(&self.preferences)
+        self.privacy().assistant_policy()
     }
 
     /// The assistant for an account, through a client limited to its declared hosts.
@@ -167,17 +152,14 @@ impl Inbox {
             .into_iter()
             .find(|m| m.id == account.plugin_id)
             .ok_or("Unknown assistant.")?;
-        let account = &self.with_policy_settings(account);
-        if let Some(refusal) = self.policy().account_refusal(&manifest, &account.settings) {
+        let privacy = self.privacy();
+        let account = &privacy.with_policy_settings(account);
+        if let Some(refusal) = privacy.compliance().account_refusal(&manifest, &account.settings) {
             return Err(refusal.into());
         }
         let guarded: Arc<dyn HttpClient> =
             Arc::new(GuardedHttpClient::new(http, registry::allowed_hosts(account, &manifest)));
-        let defaults: HashMap<String, String> =
-            manifest.fields.iter().map(|f| (f.key.clone(), f.default_value.clone())).collect();
-        let mut constrained = account.clone();
-        constrained.settings = self.assistant_policy().constrained(&account.settings, &defaults);
-        self.with_managed_claude_code_path(&mut constrained)?;
+        let constrained = privacy.constrained(account, &manifest)?;
         claude::make_assistant(&constrained, secrets, guarded, language).map_err(|e| e.message())
     }
 

@@ -1,15 +1,17 @@
-//! The sync engine's bookkeeping: what each account's last fetch said, which accounts wait before being asked again,
-//! and the notifications held for the next set time. Ported from the macOS app's `SyncEngine`.
+//! The sync engine: the refresh (a fetch per account due, then sorting what came back), what each account's last
+//! fetch said, which accounts wait before being asked again, and the notifications held for the next set time. The
+//! inbox stores the items. Ported from the macOS app's `SyncEngine`.
 
+use super::accounts::AccountsService;
 use super::persistence::{CACHE, STATES};
-use super::{FetchJob, FetchResult, Inbox};
+use super::{FetchJob, FetchResult, Inbox, InboxPolicy};
 use crate::Preferences;
 use chrono::{DateTime, Utc};
 use remora_core::{
     grouped, is_due, notices, parse_times, waits, while_closed, Backoff, Failure, FailureKind, InboxBundle, InboxItem,
     Message, Notice, NoticeKind, SnoozeMode, SourcesHealth, VerbClassifier,
 };
-use remora_plugins::{registry, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError};
+use remora_plugins::{registry, ConditionalHttpClient, GuardedHttpClient, HttpClient, PluginError, SourceSnapshot};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -76,11 +78,81 @@ impl SyncEngine {
         self.backoff.get(account_id).is_some_and(|b| b.waits(now, manual))
     }
 
-    // MARK: Results
+    // MARK: Refreshing
 
-    pub fn refreshed(&mut self, now: DateTime<Utc>) {
-        self.last_refresh = Some(now);
+    /// One plugin per allowed account, each with an HTTP client limited to its declared hosts. Refused accounts get an
+    /// error instead. `manual`: asked for by the user, which doesn't wait out a slow-down (`Backoff`). An account that
+    /// keeps failing, or is rate-limited, sits this refresh out and keeps its items and its error.
+    pub fn jobs(
+        &mut self,
+        accounts: &mut AccountsService,
+        policy: &InboxPolicy,
+        http: Arc<dyn HttpClient>,
+        now: DateTime<Utc>,
+        manual: bool,
+    ) -> Vec<FetchJob> {
+        let secrets = match accounts.secrets() {
+            Ok(secrets) => secrets.clone(),
+            Err(error) => {
+                for account in accounts.iter() {
+                    self.refused(&account.id, error.clone());
+                }
+                return vec![];
+            }
+        };
+        let compliance = policy.compliance();
+        let mut jobs = vec![];
+        // A copy: each account's session is updated on the way.
+        for account in &accounts.to_vec() {
+            let account = policy.with_policy_settings(account);
+            if self.waits(&account.id, now, manual) {
+                continue;
+            }
+            let Some(manifest) = registry::manifest(&account.plugin_id) else { continue };
+            if let Some(refusal) = compliance.refusal(&manifest) {
+                self.refused(&account.id, refusal);
+                continue;
+            }
+            let account_secrets = secrets.get(&account.id).cloned().unwrap_or_default();
+            let (cache, etags) = accounts.session(&account.id, &account.settings, &account_secrets);
+            let conditional: Arc<dyn HttpClient> = Arc::new(ConditionalHttpClient::new(http.clone(), etags));
+            let guarded: Arc<dyn HttpClient> =
+                Arc::new(GuardedHttpClient::new(conditional, registry::allowed_hosts(&account, &manifest)));
+            match registry::make(&account, &account_secrets, guarded, cache) {
+                Ok(plugin) => jobs.push(FetchJob { account_id: account.id.clone(), plugin }),
+                Err(error) => self.refused(&account.id, error.message()),
+            }
+        }
+        jobs
     }
+
+    /// What came back, its failures noted: the fetches that worked, each with whether it is its account's first since
+    /// launch. `results` holds only accounts still connected.
+    pub fn received(
+        &mut self,
+        results: Vec<FetchResult>,
+        now: DateTime<Utc>,
+        interval: chrono::Duration,
+    ) -> Vec<(String, SourceSnapshot, bool)> {
+        self.last_refresh = Some(now);
+        // Every source failed to connect: that's the network, not the tools. Said once, and no slow-down for it. With a
+        // single source, an unreachable server and no network look the same: it says it can't reach the server.
+        let offline = results.len() > 1
+            && results.iter().all(|(_, result)| matches!(result, Err(e) if e.kind() == FailureKind::Unreachable));
+        let mut fetched = vec![];
+        for (account_id, result) in results {
+            match result {
+                Err(error) => self.failed(account_id, error, offline, now, interval),
+                Ok(snapshot) => {
+                    let first = self.succeeded(&account_id, snapshot.remarks.clone());
+                    fetched.push((account_id, snapshot, first));
+                }
+            }
+        }
+        fetched
+    }
+
+    // MARK: Results
 
     /// An account that couldn't even be asked: refused by the policy, or its plugin couldn't be built.
     pub fn refused(&mut self, account_id: &str, message: impl Into<Message>) {
@@ -89,7 +161,7 @@ impl SyncEngine {
 
     /// A failed fetch. `offline`: every source failed to connect, which is the network, not the tools: said once,
     /// and no slow-down for it. Otherwise the account is asked less often, and a rate limit is waited out.
-    pub fn failed(
+    fn failed(
         &mut self,
         account_id: String,
         error: PluginError,
@@ -113,7 +185,7 @@ impl SyncEngine {
 
     /// A fetch that worked: the account's failure and slow-down end, its remarks are the new ones. True when it is
     /// the account's first since launch.
-    pub fn succeeded(&mut self, account_id: &str, remarks: Vec<Message>) -> bool {
+    fn succeeded(&mut self, account_id: &str, remarks: Vec<Message>) -> bool {
         self.backoff.remove(account_id);
         self.errors.remove(account_id);
         if remarks.is_empty() {
@@ -183,45 +255,10 @@ impl SyncEngine {
 // MARK: The inbox's refresh
 
 impl Inbox {
-    /// One plugin per allowed account, each with an HTTP client limited to its declared hosts.
-    /// Refused accounts get an error instead.
-    /// `manual`: asked for by the user, which doesn't wait out a slow-down (`Backoff`). An account that keeps failing,
-    /// or is rate-limited, sits this refresh out and keeps its items and its error.
+    /// The fetches to run, without the lock (`SyncEngine::jobs`).
     pub fn fetch_jobs(&mut self, http: Arc<dyn HttpClient>, now: DateTime<Utc>, manual: bool) -> Vec<FetchJob> {
-        let secrets = match self.accounts.secrets() {
-            Ok(secrets) => secrets.clone(),
-            Err(error) => {
-                for account in self.accounts.iter() {
-                    self.sync.refused(&account.id, error.clone());
-                }
-                return vec![];
-            }
-        };
-        let policy = self.policy();
-        let mut jobs = vec![];
-        // A copy: each account's session is updated on the way.
-        let accounts = self.accounts.to_vec();
-        for account in &accounts {
-            let account = self.with_policy_settings(account);
-            if self.sync.waits(&account.id, now, manual) {
-                continue;
-            }
-            let Some(manifest) = registry::manifest(&account.plugin_id) else { continue };
-            if let Some(refusal) = policy.refusal(&manifest) {
-                self.sync.refused(&account.id, refusal);
-                continue;
-            }
-            let account_secrets = secrets.get(&account.id).cloned().unwrap_or_default();
-            let (cache, etags) = self.accounts.session(&account.id, &account.settings, &account_secrets);
-            let conditional: Arc<dyn HttpClient> = Arc::new(ConditionalHttpClient::new(http.clone(), etags));
-            let guarded: Arc<dyn HttpClient> =
-                Arc::new(GuardedHttpClient::new(conditional, registry::allowed_hosts(&account, &manifest)));
-            match registry::make(&account, &account_secrets, guarded, cache) {
-                Ok(plugin) => jobs.push(FetchJob { account_id: account.id.clone(), plugin }),
-                Err(error) => self.sync.refused(&account.id, error.message()),
-            }
-        }
-        jobs
+        let policy = InboxPolicy::new(&self.preferences, &self.managed);
+        self.sync.jobs(&mut self.accounts, &policy, http, now, manual)
     }
 
     /// Stores what came back and says what deserves a notification. The first sync of an account is
@@ -230,56 +267,47 @@ impl Inbox {
         // Fetches run without the lock: an account disconnected, or everything erased, while they ran must not come
         // back. A reconnected account has a new id, so its old results are dropped too.
         let results: Vec<FetchResult> = results.into_iter().filter(|(id, _)| self.accounts.contains(id)).collect();
-        self.sync.refreshed(now);
-        if results.is_empty() {
+        let empty = results.is_empty();
+        let interval = chrono::Duration::minutes(i64::from(self.effective_preferences().refresh_minutes.max(1)));
+        let fetched = self.sync.received(results, now, interval);
+        if empty {
             // Nothing to store: in particular, nothing written back after Erase.
             return vec![];
         }
         let mut out = vec![];
-        let interval = chrono::Duration::minutes(i64::from(self.effective_preferences().refresh_minutes.max(1)));
-        // Every source failed to connect: that's the network, not the tools. Said once, and no slow-down for it. With a
-        // single source, an unreachable server and no network look the same: it says it can't reach the server.
-        let offline = results.len() > 1
-            && results.iter().all(|(_, result)| matches!(result, Err(e) if e.kind() == FailureKind::Unreachable));
-        for (account_id, result) in results {
-            match result {
-                Err(error) => self.sync.failed(account_id, error, offline, now, interval),
-                Ok(snapshot) => {
-                    let first = self.sync.succeeded(&account_id, snapshot.remarks.clone());
-                    let items: Vec<InboxItem> = snapshot.items.into_iter().map(VerbClassifier::classify).collect();
-                    // The first sync after launch compares with the saved copy, so what arrived while the app
-                    // was closed is announced; an account with no saved copy (just connected) stays silent.
-                    let previous = if first {
-                        self.items.get(&account_id).cloned()
+        for (account_id, snapshot, first) in fetched {
+            let items: Vec<InboxItem> = snapshot.items.into_iter().map(VerbClassifier::classify).collect();
+            // The first sync after launch compares with the saved copy, so what arrived while the app
+            // was closed is announced; an account with no saved copy (just connected) stays silent.
+            let previous = if first {
+                self.items.get(&account_id).cloned()
+            } else {
+                Some(self.items.get(&account_id).cloned().unwrap_or_default())
+            };
+            let account = self.accounts.find(&account_id);
+            let plugin_id = account.map(|a| a.plugin_id.clone());
+            let wanted: Vec<Notice> = notices(previous.as_deref(), &items)
+                .into_iter()
+                .filter(|notice| {
+                    if notice.kind == NoticeKind::Arrival {
+                        self.preferences.notify_arrivals
                     } else {
-                        Some(self.items.get(&account_id).cloned().unwrap_or_default())
-                    };
-                    let account = self.accounts.find(&account_id);
-                    let plugin_id = account.map(|a| a.plugin_id.clone());
-                    let wanted: Vec<Notice> = notices(previous.as_deref(), &items)
-                        .into_iter()
-                        .filter(|notice| {
-                            if notice.kind == NoticeKind::Arrival {
-                                self.preferences.notify_arrivals
-                            } else {
-                                self.preferences.notify_status_changes
-                            }
-                        })
-                        .map(|notice| self.respecting_privacy(notice, plugin_id.as_deref()))
-                        .collect();
-                    if first {
-                        let name = account
-                            .and_then(|a| a.name.clone().or_else(|| registry::manifest(&a.plugin_id).map(|m| m.name)))
-                            .unwrap_or_default();
-                        out.extend(while_closed(&account_id, &name, wanted));
-                    } else {
-                        out.extend(wanted);
+                        self.preferences.notify_status_changes
                     }
-                    self.wake_touched(&items);
-                    self.accounts.set_identity(&account_id, snapshot.identity);
-                    self.items.insert(account_id, items);
-                }
+                })
+                .map(|notice| self.respecting_privacy(notice, plugin_id.as_deref()))
+                .collect();
+            if first {
+                let name = account
+                    .and_then(|a| a.name.clone().or_else(|| registry::manifest(&a.plugin_id).map(|m| m.name)))
+                    .unwrap_or_default();
+                out.extend(while_closed(&account_id, &name, wanted));
+            } else {
+                out.extend(wanted);
             }
+            self.wake_touched(&items);
+            self.accounts.set_identity(&account_id, snapshot.identity);
+            self.items.insert(account_id, items);
         }
         self.prune();
         self.recompute_links();
