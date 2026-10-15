@@ -109,7 +109,10 @@ rappel sont programmées auprès du système : elles arrivent même si Remora n�
 
 ## App
 
-- `App/InboxModel` : le seul store observable ; les actions (terminer, épingler, reporter, connecter…).
+- `App/InboxModel` : ce qu’observent les vues, et les actions (terminer, épingler, reporter, connecter…). Une
+  façade sur `AccountsService` (comptes, jetons, sessions), `SyncEngine` (échecs, ralentissements, notifications
+  retenues), `SnoozeService` (historique, conseiller, constats), `AssistantCoordinator` (résumé, synthèses, tri) et
+  `Persistence` (les fichiers) ; Windows a les mêmes services (`remora_app/src/inbox/`).
 - `Infrastructure/` : `JSONStore` (fichiers d’Application Support), `Keychain`, `ManagedPolicy`, `Notifier`,
   `Fonts`. `InboxModel` y accède, comme au réseau et à l’ouverture des liens, via `AppEnvironment` : ainsi
   `Tests/RemoraTests` le fait tourner dans un dossier temporaire avec des stand-ins, jamais sur vos données, vos

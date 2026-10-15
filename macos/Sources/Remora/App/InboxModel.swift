@@ -3,11 +3,26 @@ import Observation
 import RemoraCore
 import RemoraPlugins
 
+/// The inbox, as the views see it: a facade over the services it is made of, with the same names on Windows
+/// (`inbox/`).
+/// - `AccountsService`: the accounts, their tokens and sessions.
+/// - `SyncEngine`: failures, slow-downs, the network, notifications held for later.
+/// - `SnoozeService`: the history, the advisor, insights.
+/// - `AssistantCoordinator`: the brief, summaries and triage.
+/// - `Persistence`: the files each of them saves.
+/// This class holds what they share (the items, their states, reminders, preferences and the policy), the refresh,
+/// the actions on items, Undo and Spotlight.
 @MainActor @Observable
 final class InboxModel {
     static let shared = InboxModel(environment: .live)
 
-    private(set) var accounts: [Account]
+    @ObservationIgnored let accountsService: AccountsService
+    @ObservationIgnored let sync: SyncEngine
+    @ObservationIgnored let snoozes: SnoozeService
+    @ObservationIgnored let assistant: AssistantCoordinator
+    @ObservationIgnored let persistence: Persistence
+
+    var accounts: [Account] { accountsService.accounts }
     private(set) var itemsByAccount: [UUID: [InboxItem]] {
         didSet {
             layoutChanged()
@@ -22,7 +37,7 @@ final class InboxModel {
     }
     private(set) var states: [String: ItemState] { didSet { layoutChanged() } }
     /// Each failing account's last failure, by kind.
-    private(set) var errors: [UUID: SourceFailure] = [:]
+    var errors: [UUID: SourceFailure] { sync.errors }
     struct StorageIssue: Equatable, Identifiable {
         var file: String
         /// Read and kept aside at launch, rather than failing to save.
@@ -34,27 +49,27 @@ final class InboxModel {
     /// Files that couldn't be read (kept aside) or saved, for Settings → Privacy.
     private(set) var storageIssues: [StorageIssue] = []
     /// No network: refreshes wait for it, and the footer says so once instead of every source failing.
-    private(set) var isOffline = false
+    var isOffline: Bool { sync.isOffline }
     /// What the last fetch of each account said besides its items: a list cut at its limit, a missing permission.
-    private(set) var remarks: [UUID: [String]] = [:]
-    private(set) var isRefreshing = false
-    private(set) var lastRefresh: Date?
+    var remarks: [UUID: [String]] { sync.remarks }
+    var isRefreshing: Bool { sync.isRefreshing }
+    var lastRefresh: Date? { sync.lastRefresh }
     /// When the passing of time changed the layout: it moves only when an item expires or a new day starts
     /// (what's due today). Snoozes ending change `states` instead. The layout itself is computed at the real time.
     private(set) var now = Date.now { didSet { layoutChanged() } }
-    private(set) var brief: Brief?
-    private(set) var briefError: String?
-    private(set) var isBriefing = false
-    private(set) var bundleSummaries: [String: BundleSummary] = [:]
-    private(set) var bundleSummaryErrors: [String: String] = [:]
-    private(set) var summarizing: Set<String> = []
-    private(set) var snoozeHistory: [SnoozeRecord] = [] { didSet { cachedSnoozeCounts = nil } }
+    var brief: Brief? { assistant.brief }
+    var briefError: String? { assistant.briefError }
+    var isBriefing: Bool { assistant.isBriefing }
+    var bundleSummaries: [String: BundleSummary] { assistant.bundleSummaries }
+    var bundleSummaryErrors: [String: String] { assistant.bundleSummaryErrors }
+    var summarizing: Set<String> { assistant.summarizing }
+    var snoozeHistory: [SnoozeRecord] { snoozes.history }
     /// Patterns in the snoozed pile; recomputed when snoozes change, shown one at a time.
-    private(set) var insights: [SnoozeInsight] = []
-    private(set) var dismissedInsights: Set<String> = []
-    private(set) var triageSuggestions: [TriageSuggestion] = []
-    private(set) var triageError: String?
-    private(set) var isTriaging = false
+    var insights: [SnoozeInsight] { snoozes.insights }
+    var dismissedInsights: Set<String> { snoozes.dismissed }
+    var triageSuggestions: [TriageSuggestion] { assistant.triageSuggestions }
+    var triageError: String? { assistant.triageError }
+    var isTriaging: Bool { assistant.isTriaging }
     /// Item ID → items from other tools about the same thing. Computed in the background after each refresh.
     private(set) var links: [String: [String]] = [:] { didSet { layoutChanged() } }
     /// Learned from your actions on this Mac; silent until it has enough of them.
@@ -73,7 +88,7 @@ final class InboxModel {
     var requestedTab: String?
     var preferences: Preferences {
         didSet {
-            persist(preferencesStore, preferences)
+            persistence.save(preferences, to: persistence.preferences)
             if oldValue.wakeOnActivity != preferences.wakeOnActivity { layoutChanged() }
             Myna.textScale = preferences.textSize.scale
             if oldValue.allowedPlugins != preferences.allowedPlugins
@@ -100,35 +115,18 @@ final class InboxModel {
     @ObservationIgnored private let http: HTTPClient
     /// Keywords, then on-device sentence embeddings. Slow on first sight of a message, so it runs off the main thread.
     @ObservationIgnored private let classifier: VerbClassifier
-    @ObservationIgnored private let accountsStore: JSONStore<[Account]>
-    @ObservationIgnored private let statesStore: JSONStore<[String: ItemState]>
-    @ObservationIgnored private let cacheStore: JSONStore<[UUID: [InboxItem]]>
-    @ObservationIgnored private let remindersStore: JSONStore<[InboxItem]>
-    @ObservationIgnored private let preferencesStore: JSONStore<Preferences>
-    @ObservationIgnored private let briefStore: JSONStore<Brief?>
-    @ObservationIgnored private let historyStore: JSONStore<[SnoozeRecord]>
-    @ObservationIgnored private let learningStore: JSONStore<[ActionRecord]>
-    @ObservationIgnored private let reviewTimesStore: JSONStore<[ReviewTiming]>
-    @ObservationIgnored let advisor = SnoozeAdvisor(similarity: [KeywordSimilarity(), EmbeddingSimilarity()])
-    /// Per account, in memory: what a refresh may reuse from the last one (PERF-09).
-    @ObservationIgnored private var sessions: [UUID: AccountSession] = [:]
-    @ObservationIgnored private var triageKey: (ids: [String], at: Date)?
+    var advisor: SnoozeAdvisor { snoozes.advisor }
     @ObservationIgnored private let linkFinder = LinkFinder(
         similarity: [
             KeywordSimilarity(), RareTokenSimilarity(),
             EmbeddingSimilarity(threshold: EmbeddingSimilarity.linkThreshold),
         ]
     )
-    @ObservationIgnored private let bundleSummariesStore: JSONStore<[String: BundleSummary]>
     @ObservationIgnored private var polling: Task<Void, Never>?
     @ObservationIgnored private var ticking: Task<Void, Never>?
-    @ObservationIgnored private var syncedAccounts: Set<UUID> = []
-    /// Notifications waiting for the next set time (IDEA-26), and when the last batch went out.
-    @ObservationIgnored private var waitingNotices: [Notice] = []
-    @ObservationIgnored private var batchedAt = Date.now
     @ObservationIgnored private let isDemo: Bool
     /// Saves the files off the main thread, each once per burst of changes.
-    @ObservationIgnored let writer = DiskWriter()
+    var writer: DiskWriter { persistence.writer }
     /// Inside `batch`: insights and the ranker are worked out once, at the end.
     @ObservationIgnored private var batchDepth = 0
     @ObservationIgnored private var batchNeeds: (insights: Bool, ranker: Bool) = (false, false)
@@ -144,17 +142,8 @@ final class InboxModel {
         http = environment.http
         updater = Updater(system: environment.updates)
         isDemo = environment.demo
-        let folder = environment.folder
-        accountsStore = JSONStore("accounts", in: folder)
-        statesStore = JSONStore("states", in: folder)
-        cacheStore = JSONStore("cache", in: folder, backedUp: false)
-        remindersStore = JSONStore("reminders", in: folder)
-        preferencesStore = JSONStore("preferences", in: folder)
-        briefStore = JSONStore("brief", in: folder, backedUp: false)
-        historyStore = JSONStore("snooze-history", in: folder)
-        learningStore = JSONStore("learning", in: folder)
-        reviewTimesStore = JSONStore("review-times", in: folder)
-        bundleSummariesStore = JSONStore("bundle-summaries", in: folder, backedUp: false)
+        let files = Persistence(folder: environment.folder, demo: environment.demo)
+        persistence = files
         // A file that can't be read is kept aside and named in Settings → Privacy, never overwritten.
         var issues: [StorageIssue] = []
         func read<Value>(_ store: JSONStore<Value>) -> Value? {
@@ -166,30 +155,33 @@ final class InboxModel {
                 return nil
             }
         }
-        let preferences = read(preferencesStore) ?? Preferences()
+        let preferences = read(files.preferences) ?? Preferences()
         self.preferences = preferences
         Myna.textScale = preferences.textSize.scale
+        sync = SyncEngine()
         if isDemo {
-            accounts = []
+            accountsService = AccountsService(accounts: [], secrets: environment.secrets, persistence: files)
             let demoItems = DemoData.items().mapValues { $0.map(VerbClassifier().classify) }
             itemsByAccount = demoItems
-            brief = DemoData.brief
+            assistant = AssistantCoordinator(brief: DemoData.brief, bundleSummaries: [:], persistence: files)
             reminders = []
             let demo = DemoData.snoozes(items: demoItems.values.flatMap { $0 })
             states = demo.states
-            snoozeHistory = demo.history
+            snoozes = SnoozeService(history: demo.history, persistence: files)
         } else {
-            accounts = read(accountsStore) ?? []
+            accountsService = AccountsService(
+                accounts: read(files.accounts) ?? [], secrets: environment.secrets, persistence: files)
             // Fetched again at the next refresh: a broken cache or brief is just started again. Cached items keep
             // the verbs the refresh gave them, with the full classifier (ML-16).
-            itemsByAccount = cacheStore.load() ?? [:]
-            reminders = read(remindersStore) ?? []
-            states = read(statesStore) ?? [:]
-            brief = briefStore.load() ?? nil
-            bundleSummaries = bundleSummariesStore.load() ?? [:]
-            snoozeHistory = read(historyStore) ?? []
-            actionRecords = read(learningStore) ?? []
-            reviewTimings = read(reviewTimesStore) ?? []
+            itemsByAccount = files.cache.load() ?? [:]
+            reminders = read(files.reminders) ?? []
+            states = read(files.states) ?? [:]
+            assistant = AssistantCoordinator(
+                brief: files.brief.load() ?? nil, bundleSummaries: files.bundleSummaries.load() ?? [:],
+                persistence: files)
+            snoozes = SnoozeService(history: read(files.history) ?? [], persistence: files)
+            actionRecords = read(files.learning) ?? []
+            reviewTimings = read(files.reviewTimes) ?? []
             ranker = PersonalRanker(records: actionRecords)
             environment.removeURLCaches()
         }
@@ -270,12 +262,10 @@ final class InboxModel {
 
     func state(of item: InboxItem) -> ItemState { states[item.id] ?? ItemState() }
 
-    func account(_ id: UUID) -> Account? { accounts.first { $0.id == id } }
+    func account(_ id: UUID) -> Account? { accountsService.account(id) }
 
     func rename(_ account: Account, to name: String) {
-        guard let index = accounts.firstIndex(where: { $0.id == account.id }) else { return }
-        accounts[index].name = name.trimmingCharacters(in: .whitespaces).nilIfEmpty
-        persist(accountsStore, accounts)
+        accountsService.rename(account.id, to: name.trimmingCharacters(in: .whitespaces).nilIfEmpty)
     }
 
     /// The account's name, shown on items only when several accounts of the same plugin are connected.
@@ -286,7 +276,7 @@ final class InboxModel {
         return account.name ?? account.identity
     }
 
-    var sourceAccounts: [Account] { accounts.filter { !PluginRegistry.isAssistant($0.pluginID) } }
+    var sourceAccounts: [Account] { accountsService.sourceAccounts }
 
     /// The connected assistant, only when the privacy policy allows it, its AI server included.
     var assistantAccount: Account? {
@@ -336,22 +326,19 @@ final class InboxModel {
         var dropped = false
         for account in accounts {
             guard let refusal = refusal(for: account) else { continue }
-            errors[account.id] = SourceFailure(
-                kind: .other, message: L("%@ Remove the account to delete its token.", refusal))
+            sync.setFailure(
+                SourceFailure(kind: .other, message: L("%@ Remove the account to delete its token.", refusal)),
+                for: account.id)
             if itemsByAccount[account.id] != nil {
                 itemsByAccount[account.id] = nil
-                syncedAccounts.remove(account.id)
+                sync.unsynced(account.id)
                 environment.notifications.remove(itemsWithPrefix: "\(account.id.uuidString)/")
                 dropped = true
             }
         }
-        if dropped { persist(cacheStore, itemsByAccount) }
-        if assistantAccount == nil || dropped, brief != nil || !bundleSummaries.isEmpty || !triageSuggestions.isEmpty {
-            if assistantAccount == nil { store(nil) }
-            bundleSummaries = [:]
-            persist(bundleSummariesStore, bundleSummaries)
-            triageSuggestions = []
-        }
+        if dropped { persistence.save(itemsByAccount, to: persistence.cache) }
+        let noAssistant = assistantAccount == nil
+        if noAssistant || dropped { assistant.forget(brief: noAssistant) }
         // A tool the organization now hides or blocks leaves Spotlight too.
         updateSpotlight()
     }
@@ -385,32 +372,11 @@ final class InboxModel {
         guard remembering else {
             return try PluginRegistry.make(account, secrets: secrets, http: guardedClient(for: account))
         }
-        let session = session(for: account, secrets: secrets)
+        let session = accountsService.session(for: account, secrets: secrets)
         return try PluginRegistry.make(
             account, secrets: secrets,
             http: guardedClient(for: account, through: ConditionalHTTPClient(http, store: session.etags)),
             cache: session.cache)
-    }
-
-    /// Secrets the account's plugin renewed during the fetch (a Microsoft sign-in's refresh token) go to the
-    /// Keychain, as a connection's do. A failed save keeps the old one, still valid.
-    private func saveRenewed(for account: Account) async {
-        guard let session = sessions[account.id] else { return }
-        let renewed = await session.cache.takeRenewed()
-        guard !renewed.isEmpty, self.account(account.id) != nil else { return }
-        // The old one stays valid for a while, and a Keychain that refuses shows at the next connection.
-        // Nothing read (a Keychain that refuses) must not become an entry holding only the renewed secret.
-        let current = environment.secrets.secrets(for: account.id)
-        guard !current.isEmpty else { return }
-        try? environment.secrets.save(current.merging(renewed) { _, new in new }, for: account.id)
-    }
-
-    private func session(for account: Account, secrets: [String: String]) -> AccountSession {
-        let fingerprint = AccountSession.fingerprint(settings: account.settings, secrets: secrets)
-        if let session = sessions[account.id], session.fingerprint == fingerprint { return session }
-        let session = AccountSession(fingerprint: fingerprint)
-        sessions[account.id] = session
-        return session
     }
 
     /// Built with its model fields kept within the organization's allowed models, if any.
@@ -479,39 +445,22 @@ final class InboxModel {
     /// Writes a new brief, unless the current one is still fresh (Settings → General → Assistant).
     func makeBrief() async {
         guard preferences.wholeInboxBrief, let account = assistantAccount, !isBriefing, !isBriefFresh else { return }
-        isBriefing = true
-        briefError = nil
-        defer { isBriefing = false }
-        let items = briefItems
-        do {
-            let assistant = try assistantPlugin(account, secrets: environment.secrets.secrets(for: account.id))
-            let brief = try await assistant.brief(items, now: .now).writtenFrom(items)
-            guard stillAnswers(account) else { return }
-            store(brief)
-        } catch {
-            briefError = error.localizedDescription
-        }
+        await assistant.makeBrief(
+            from: briefItems, assistant: { try assistantPlugin(for: account) }, stillAnswers: { stillAnswers(account) })
     }
 
     /// Summarizes one bundle with the assistant's lighter model, reusing a fresh summary of the same items.
     func summarize(key: String, topic: String, items: [InboxItem]) async {
         let items = assistantPolicy.items(items)
-        guard let account = assistantAccount, !items.isEmpty, !summarizing.contains(key) else { return }
-        if bundleSummaries[key]?.isFresh(for: items, cacheMinutes: preferences.briefCacheMinutes, now: .now) == true {
-            return
-        }
-        summarizing.insert(key)
-        bundleSummaryErrors[key] = nil
-        defer { summarizing.remove(key) }
-        do {
-            let assistant = try assistantPlugin(account, secrets: environment.secrets.secrets(for: account.id))
-            let text = try await assistant.digest(items, topic: topic, now: .now)
-            guard stillAnswers(account) else { return }
-            bundleSummaries[key] = BundleSummary(text: text, items: items)
-            persist(bundleSummariesStore, bundleSummaries)
-        } catch {
-            bundleSummaryErrors[key] = error.localizedDescription
-        }
+        guard let account = assistantAccount, !items.isEmpty else { return }
+        await assistant.summarize(
+            key: key, topic: topic, items: items, cacheMinutes: preferences.briefCacheMinutes,
+            assistant: { try assistantPlugin(for: account) }, stillAnswers: { stillAnswers(account) })
+    }
+
+    /// The assistant for its account, with its token.
+    private func assistantPlugin(for account: Account) throws -> any AssistantPlugin {
+        try assistantPlugin(account, secrets: accountsService.secrets(for: account.id))
     }
 
     /// Whether an answer from this account may still be kept. The assistant can take a minute or more: an answer that
@@ -533,12 +482,7 @@ final class InboxModel {
     }
 
     var isBriefFresh: Bool {
-        brief?.isFresh(for: briefItems, cacheMinutes: preferences.briefCacheMinutes, now: .now) ?? false
-    }
-
-    private func store(_ brief: Brief?) {
-        self.brief = brief
-        persist(briefStore, brief)
+        assistant.isBriefFresh(for: briefItems, cacheMinutes: preferences.briefCacheMinutes)
     }
 
     func item(_ id: String) -> InboxItem? { itemIndex.byID[id] }
@@ -584,15 +528,12 @@ final class InboxModel {
     }
 
     /// What the footer says about the sources.
-    var sourcesHealth: SourcesHealth { SourcesHealth(failures: errors, offline: isOffline) }
+    var sourcesHealth: SourcesHealth { sync.health }
 
     /// The network came and went: offline, nothing is refreshed; back online, everything is, at once. Failures that
     /// were only the missing network go.
     func networkChanged(online: Bool) {
-        let wasOffline = isOffline
-        isOffline = !online
-        if online, wasOffline {
-            errors = errors.filter { $0.value.kind != .offline }
+        if sync.networkChanged(online: online) {
             Task { await refresh(manual: true) }
         }
     }
@@ -610,9 +551,6 @@ final class InboxModel {
         guard updatesAllowed, !isDemo else { return }
         await updater.check()
     }
-
-    /// Accounts that failed lately, and when to ask them again.
-    @ObservationIgnored private var backoff: [UUID: Backoff] = [:]
 
     private func startPolling() {
         polling?.cancel()
@@ -632,9 +570,8 @@ final class InboxModel {
 
     /// `manual`: asked for by the user (the button, ⌘R, the menu), which doesn't wait out a slow-down (`Backoff`).
     func refresh(manual: Bool = false) async {
-        guard !isRefreshing else { return }
-        isRefreshing = true
-        defer { isRefreshing = false }
+        guard sync.begin() else { return }
+        defer { sync.end() }
 
         let classifier = classifier
         let now = Date.now
@@ -646,9 +583,9 @@ final class InboxModel {
         let policy = policy
         let due = sourceAccounts.filter { account in
             PluginRegistry.manifest(account.pluginID).map(policy.allows) == true
-        }.filter { !(backoff[$0.id]?.waits(at: now, manual: manual) ?? false) }
+        }.filter { !sync.waits($0.id, at: now, manual: manual) }
         let jobs = due.map { account in
-            (account.id, Result { try sourcePlugin(account, secrets: environment.secrets.secrets(for: account.id)) })
+            (account.id, Result { try sourcePlugin(account, secrets: accountsService.secrets(for: account.id)) })
         }
         var kept = 0
         await withTaskGroup(of: (UUID, Result<SourceSnapshot, Error>).self) { group in
@@ -671,30 +608,18 @@ final class InboxModel {
                 kept += 1
                 switch result {
                 case .success(let snapshot):
-                    backoff[id] = nil
+                    sync.retry(id)
                     apply(snapshot, to: id)
-                    await saveRenewed(for: account)
+                    await accountsService.saveRenewed(for: account)
                 case .failure(let error):
-                    let failure = SourceFailure(error)
-                    errors[id] = failure
-                    // Being offline isn't the tool's fault: no slow-down for it.
-                    if failure.kind == .offline { continue }
-                    var next = backoff[id] ?? Backoff()
-                    if case HTTPError.rateLimited(let until) = error {
-                        next.failed(
-                            at: .now, interval: interval,
-                            rateLimitedUntil: until ?? Date.now.addingTimeInterval(interval))
-                    } else {
-                        next.failed(at: .now, interval: interval)
-                    }
-                    backoff[id] = next
+                    sync.failed(id, error: error, interval: interval)
                 }
             }
         }
-        lastRefresh = .now
+        sync.refreshed(at: .now)
         // Nothing to store: in particular, nothing written back after Erase.
         guard kept > 0 else { return }
-        persist(cacheStore, itemsByAccount)
+        persistence.save(itemsByAccount, to: persistence.cache)
         pruneStates()
         refreshInsights()
         recomputeLinks()
@@ -702,18 +627,10 @@ final class InboxModel {
 
     private func apply(_ snapshot: SourceSnapshot, to accountID: UUID) {
         // The first sync after launch compares with the cache, if there is one: what arrived while Remora was closed.
-        let firstSync = !syncedAccounts.contains(accountID)
         let previous = itemsByAccount[accountID]
-        syncedAccounts.insert(accountID)
-        errors[accountID] = nil
-        remarks[accountID] = snapshot.remarks.isEmpty ? nil : snapshot.remarks
+        let firstSync = sync.succeeded(accountID, remarks: snapshot.remarks)
         itemsByAccount[accountID] = snapshot.items
-
-        if let index = accounts.firstIndex(where: { $0.id == accountID }), accounts[index].identity != snapshot.identity
-        {
-            accounts[index].identity = snapshot.identity
-            persist(accountsStore, accounts)
-        }
+        accountsService.setIdentity(snapshot.identity, for: accountID)
 
         let pluginID = account(accountID)?.pluginID
         var notices = ChangeDetector.notices(previous: previous, current: snapshot.items).filter { notice in
@@ -726,9 +643,9 @@ final class InboxModel {
         }
         let shown = notices.map { notice in notice.isSummary ? notice : respectingPrivacy(notice, from: pluginID) }
         // Grouped at set times: what arrived or changed waits for `tick` (IDEA-26).
-        let held = effectivePreferences.batchNotifications ? shown.filter(NotificationBatch.waits) : []
-        waitingNotices += held
-        for notice in shown where !held.contains(notice) { environment.notifications.post(notice) }
+        for notice in sync.hold(shown, batching: effectivePreferences.batchNotifications) {
+            environment.notifications.post(notice)
+        }
         wakeSnoozedItems(touchedIn: snapshot.items)
     }
 
@@ -755,23 +672,13 @@ final class InboxModel {
             changed = true
         }
         if changed {
-            persist(statesStore, states)
+            persistence.save(states, to: persistence.states)
             refreshInsights()
         }
-        releaseWaitingNotices(at: clock)
-    }
-
-    /// What waited, at the first set time since the last batch, or at once when grouping was turned off.
-    private func releaseWaitingNotices(at clock: Date) {
-        let preferences = effectivePreferences
-        let due =
-            !preferences.batchNotifications
-            || NotificationBatch.isDue(
-                NotificationBatch.times(preferences.notificationTimes), since: batchedAt, now: clock)
-        guard due else { return }
-        batchedAt = clock
-        for notice in NotificationBatch.grouped(waitingNotices) { environment.notifications.post(notice) }
-        waitingNotices = []
+        // What waited, at the first set time since the last batch, or at once when grouping was turned off.
+        for notice in sync.release(at: clock, preferences: effectivePreferences) {
+            environment.notifications.post(notice)
+        }
     }
 
     /// Whether moving the layout's time from `old` to `new` changes the layout: an item expired in between (a Slack
@@ -787,7 +694,7 @@ final class InboxModel {
         let known = Set(allItems.map(\.id))
         let before = states.count
         states = states.filter { known.contains($0.key) || $0.value.snooze != nil }
-        if states.count != before { persist(statesStore, states) }
+        if states.count != before { persistence.save(states, to: persistence.states) }
     }
 
     // MARK: Actions
@@ -841,7 +748,7 @@ final class InboxModel {
         } else {
             ranker = PersonalRanker(records: actionRecords)
         }
-        persist(learningStore, actionRecords)
+        persistence.save(actionRecords, to: persistence.learning)
     }
 
     /// What the last Done, Mark all as done or Clear changed, for its Undo: shown a few seconds, ⌘Z.
@@ -873,13 +780,12 @@ final class InboxModel {
         }
         states = point.states
         reminders = point.reminders
-        snoozeHistory = point.history
+        snoozes.restore(point.history)
         actionRecords = point.records
         ranker = PersonalRanker(records: actionRecords)
-        persist(statesStore, states)
-        persist(remindersStore, reminders)
-        persist(historyStore, snoozeHistory)
-        persist(learningStore, actionRecords)
+        persistence.save(states, to: persistence.states)
+        persistence.save(reminders, to: persistence.reminders)
+        persistence.save(actionRecords, to: persistence.learning)
         for (id, state) in cancelled {
             if let snooze = state.snooze, snooze.until > .now, let item = item(id) {
                 scheduleReturn(of: item, at: snooze.until, note: snooze.note)
@@ -939,10 +845,7 @@ final class InboxModel {
         }
         environment.notifications.cancel(item.id)
         if markingDone { learnHandled(item) }
-        if markingDone, let index = snoozeHistory.lastIndex(where: { $0.itemID == item.id && $0.doneAt == nil }) {
-            snoozeHistory[index].doneAt = .now
-            persist(historyStore, snoozeHistory)
-        }
+        if markingDone { snoozes.done(item) }
         refreshInsights()
     }
 
@@ -951,7 +854,7 @@ final class InboxModel {
         guard let estimate = ReviewPrep(item)?.estimatedMinutes else { return }
         let actual = Int((Date.now.timeIntervalSince(startedAt) / 60).rounded())
         reviewTimings = Array((reviewTimings + [ReviewTiming(estimated: estimate, actual: actual)]).suffix(50))
-        persist(reviewTimesStore, reviewTimings)
+        persistence.save(reviewTimings, to: persistence.reviewTimes)
     }
 
     func clear(_ items: [InboxItem]) {
@@ -1017,9 +920,7 @@ final class InboxModel {
         }
         if item.bundle != .reminders {
             learn(ActionRecord(item: item, outcome: .deferred))
-            snoozeHistory.append(SnoozeRecord(item: item, reason: reason, at: .now, until: date))
-            snoozeHistory = Array(snoozeHistory.suffix(500))
-            persist(historyStore, snoozeHistory)
+            snoozes.record(item, reason: reason, until: date)
         }
         scheduleReturn(of: item, at: date, note: note)
         refreshInsights()
@@ -1077,33 +978,15 @@ final class InboxModel {
 
     /// Times this item was snoozed in the last 30 days.
     /// Snoozes of each item in the last 30 days, counted once per change of the history and once a day.
-    func snoozeCount(_ item: InboxItem) -> Int {
-        let history = snoozeHistory
-        let today = Calendar.current.startOfDay(for: .now)
-        if let cachedSnoozeCounts, cachedSnoozeCounts.day == today { return cachedSnoozeCounts.counts[item.id] ?? 0 }
-        let since = Date.now.addingTimeInterval(-30 * .day)
-        let counts = Dictionary(history.filter { $0.at > since }.map { ($0.itemID, 1) }, uniquingKeysWith: +)
-        cachedSnoozeCounts = (today, counts)
-        return counts[item.id] ?? 0
-    }
+    func snoozeCount(_ item: InboxItem) -> Int { snoozes.count(item) }
 
-    @ObservationIgnored private var cachedSnoozeCounts: (day: Date, counts: [String: Int])?
+    func suggestedReturn(for reason: SnoozeReason) -> Date { snoozes.suggestedReturn(for: reason) }
 
-    func suggestedReturn(for reason: SnoozeReason) -> Date {
-        advisor.suggestedReturn(for: reason, history: snoozeHistory)
-    }
+    func usualReason(for item: InboxItem) -> SnoozeReason? { snoozes.usualReason(for: item) }
 
-    func usualReason(for item: InboxItem) -> SnoozeReason? {
-        advisor.usualReason(for: item, history: snoozeHistory)
-    }
+    func usualReturn(for item: InboxItem) -> Date? { snoozes.usualReturn(for: item) }
 
-    func usualReturn(for item: InboxItem) -> Date? {
-        advisor.usualReturn(for: item, history: snoozeHistory)
-    }
-
-    var visibleInsights: [SnoozeInsight] {
-        insights.filter { !dismissedInsights.contains($0.id) }
-    }
+    var visibleInsights: [SnoozeInsight] { snoozes.visibleInsights }
 
     /// Patterns in the snoozed pile, worked out off the main thread: clustering compares every pair of titles.
     /// A newer request wins over a slower, older one.
@@ -1112,19 +995,8 @@ final class InboxModel {
             batchNeeds.insights = true
             return
         }
-        let (advisor, snoozed, states, history) = (advisor, layout.snoozed, states, snoozeHistory)
-        insightsGeneration &+= 1
-        let generation = insightsGeneration
-        insightsTask = Task {
-            let insights = await Task.detached {
-                advisor.insights(snoozed: snoozed, states: states, history: history, now: .now)
-            }.value
-            guard generation == self.insightsGeneration else { return }
-            self.insights = insights
-        }
+        snoozes.refreshInsights(snoozed: layout.snoozed, states: states)
     }
-
-    @ObservationIgnored private var insightsGeneration = 0
 
     /// Several actions as one (Mark all as done, Snooze all): insights and the ranker are worked out once, after.
     private func batch(_ actions: () -> Void) {
@@ -1138,10 +1010,10 @@ final class InboxModel {
         if needs.insights { refreshInsights() }
     }
     /// The latest computation, for tests to wait on.
-    @ObservationIgnored private(set) var insightsTask: Task<Void, Never>?
+    var insightsTask: Task<Void, Never>? { snoozes.insightsTask }
 
     func dismiss(_ insight: SnoozeInsight) {
-        dismissedInsights.insert(insight.id)
+        snoozes.dismiss(insight)
     }
 
     /// Spreads a pile-up 30 minutes apart from its slot.
@@ -1167,27 +1039,15 @@ final class InboxModel {
     func triage() async {
         guard let account = assistantAccount, !isTriaging else { return }
         let snoozed = layout.snoozed
-        let ids = snoozed.map(\.id).sorted()
-        if let key = triageKey, key.ids == ids,
-            key.at.addingTimeInterval(Double(preferences.briefCacheMinutes) * 60) > .now, !triageSuggestions.isEmpty
-        {
-            return
-        }
-        let items = assistantPolicy.items(snoozed).compactMap { item in
-            state(of: item).snooze.map { SnoozedItem(item: item, snooze: $0, times: snoozeCount(item)) }
-        }
-        isTriaging = true
-        triageError = nil
-        defer { isTriaging = false }
-        do {
-            let assistant = try assistantPlugin(account, secrets: environment.secrets.secrets(for: account.id))
-            let suggestions = try await assistant.triage(items, now: .now)
-            guard stillAnswers(account) else { return }
-            triageSuggestions = suggestions
-            triageKey = (ids, .now)
-        } catch {
-            triageError = error.localizedDescription
-        }
+        await assistant.triage(
+            ids: snoozed.map(\.id).sorted(),
+            items: {
+                assistantPolicy.items(snoozed).compactMap { item in
+                    state(of: item).snooze.map { SnoozedItem(item: item, snooze: $0, times: snoozeCount(item)) }
+                }
+            },
+            cacheMinutes: preferences.briefCacheMinutes,
+            assistant: { try assistantPlugin(for: account) }, stillAnswers: { stillAnswers(account) })
     }
 
     /// The ticked suggestions, undone together by one Undo.
@@ -1210,13 +1070,11 @@ final class InboxModel {
                 }
             }
         }
-        let applied = Set(suggestions.map(\.id))
-        triageSuggestions.removeAll { applied.contains($0.id) }
+        assistant.applied(Set(suggestions.map(\.id)))
     }
 
     func discardTriage() {
-        triageSuggestions = []
-        triageKey = nil
+        assistant.discardTriage()
     }
 
     /// A notification was clicked: open its item like a click in the inbox.
@@ -1268,7 +1126,7 @@ final class InboxModel {
             item.recurrence = recurrence
         }
         reminders.append(item)
-        persist(remindersStore, reminders)
+        persistence.save(reminders, to: persistence.reminders)
         snooze(item, until: date, mode: .hide, note: nil)
         return item.id
     }
@@ -1277,14 +1135,14 @@ final class InboxModel {
     func stopRepeating(_ item: InboxItem) {
         guard let index = reminders.firstIndex(where: { $0.id == item.id }) else { return }
         reminders[index].recurrence = nil
-        persist(remindersStore, reminders)
+        persistence.save(reminders, to: persistence.reminders)
     }
 
     private func removeReminder(_ item: InboxItem) {
         reminders.removeAll { $0.id == item.id }
         states[item.id] = nil
-        persist(remindersStore, reminders)
-        persist(statesStore, states)
+        persistence.save(reminders, to: persistence.reminders)
+        persistence.save(states, to: persistence.states)
         environment.notifications.cancel(item.id)
     }
 
@@ -1292,7 +1150,7 @@ final class InboxModel {
         var state = states[item.id] ?? ItemState()
         change(&state)
         states[item.id] = state.isEmpty ? nil : state
-        persist(statesStore, states)
+        persistence.save(states, to: persistence.states)
     }
 
     // MARK: Accounts
@@ -1343,15 +1201,13 @@ final class InboxModel {
             let assistant = try assistantPlugin(account, secrets: secrets)
             if preferences.wholeInboxBrief {
                 // The first brief doubles as the connection test.
-                store(try await assistant.brief(briefItems, now: .now))
+                self.assistant.store(try await assistant.brief(briefItems, now: .now))
             } else {
                 // The brief is off: test with one made-up item, so no inbox content leaves the Mac yet.
                 _ = try await assistant.digest([Self.connectionTest], topic: "Test", now: .now)
             }
-            try environment.secrets.save(secrets, for: account.id)
-            accounts.removeAll { PluginRegistry.isAssistant($0.pluginID) }
-            accounts.append(account)
-            persist(accountsStore, accounts)
+            try accountsService.saveSecrets(secrets, for: account.id)
+            accountsService.replaceAssistant(with: account)
             return
         }
         let plugin = try sourcePlugin(account, secrets: secrets, remembering: false)
@@ -1360,23 +1216,19 @@ final class InboxModel {
         snapshot.items = await Task.detached { fetched.map(classifier.classify) }.value
         // The same person on the same tool and host, connected again: that account takes the new token and
         // keeps its id, so Done, snoozes and pins stay. A new name replaces the old one.
-        if let existing = accounts.first(where: { $0.isSame(as: account, identity: snapshot.identity) }) {
+        if let existing = accountsService.existing(sameAs: account, identity: snapshot.identity) {
             snapshot.items = snapshot.items.map { $0.moved(from: account.id, to: existing.id) }
-            try environment.secrets.save(secrets, for: existing.id)
-            if let name, let index = accounts.firstIndex(where: { $0.id == existing.id }) {
-                accounts[index].name = name
-                persist(accountsStore, accounts)
-            }
-            backoff[existing.id] = nil
+            try accountsService.saveSecrets(secrets, for: existing.id)
+            if let name { accountsService.rename(existing.id, to: name) }
+            sync.retry(existing.id)
             apply(snapshot, to: existing.id)
-            persist(cacheStore, itemsByAccount)
+            persistence.save(itemsByAccount, to: persistence.cache)
             return
         }
-        try environment.secrets.save(secrets, for: account.id)
-        accounts.append(account)
-        persist(accountsStore, accounts)
+        try accountsService.saveSecrets(secrets, for: account.id)
+        accountsService.add(account)
         apply(snapshot, to: account.id)
-        persist(cacheStore, itemsByAccount)
+        persistence.save(itemsByAccount, to: persistence.cache)
     }
 
     /// What connecting an assistant sends when the whole-inbox brief is off: nothing from the inbox.
@@ -1391,25 +1243,19 @@ final class InboxModel {
         undoPoint = nil
         storageIssues = []
         updater.forget()
-        let keychain = Result { try environment.secrets.deleteAll() }
+        let keychain = Result { try accountsService.deleteAllSecrets() }
         environment.notifications.removeAll()
-        accounts = []
-        sessions = [:]
+        accountsService.reset()
         itemsByAccount = [:]
         reminders = []
         states = [:]
-        errors = [:]
-        remarks = [:]
-        brief = nil
-        bundleSummaries = [:]
-        snoozeHistory = []
+        sync.reset()
+        assistant.reset()
+        snoozes.reset()
         actionRecords = []
         reviewTimings = []
         ranker = PersonalRanker(records: [])
         links = [:]
-        triageSuggestions = []
-        insights = []
-        syncedAccounts = []
         preferences = Preferences()
         // Whatever an earlier launch put in Spotlight goes too.
         if !isDemo { environment.spotlight.apply(SpotlightIndex.Changes(deleteAll: true)) }
@@ -1449,39 +1295,26 @@ final class InboxModel {
     /// The token goes first: when the Keychain refuses, the account stays, with the reason under it.
     func disconnect(_ account: Account) {
         do {
-            try environment.secrets.delete(account.id)
+            try accountsService.deleteSecrets(for: account.id)
         } catch {
-            errors[account.id] = SourceFailure(kind: .other, message: error.localizedDescription)
+            sync.setFailure(SourceFailure(kind: .other, message: error.localizedDescription), for: account.id)
             return
         }
         undoPoint = nil
-        accounts.removeAll { $0.id == account.id }
-        sessions[account.id] = nil
+        accountsService.remove(account.id)
         // Its items leave Spotlight, whatever this launch knows of them.
         if !isDemo { environment.spotlight.delete(domain: account.id.uuidString) }
         spotlightIndexed = spotlightIndexed?.filter { $0.value.domain != account.id.uuidString }
-        if PluginRegistry.isAssistant(account.pluginID) {
-            store(nil)
-            bundleSummaries = [:]
-            persist(bundleSummariesStore, bundleSummaries)
-        }
+        if PluginRegistry.isAssistant(account.pluginID) { assistant.disconnected() }
         itemsByAccount[account.id] = nil
-        errors[account.id] = nil
-        remarks[account.id] = nil
-        syncedAccounts.remove(account.id)
+        sync.forget(account.id)
         environment.notifications.remove(itemsWithPrefix: "\(account.id.uuidString)/")
-        persist(accountsStore, accounts)
-        persist(cacheStore, itemsByAccount)
+        persistence.save(itemsByAccount, to: persistence.cache)
         pruneStates()
     }
 }
 
 extension InboxModel {
-    fileprivate func persist<Value: Sendable>(_ store: JSONStore<Value>, _ value: Value) {
-        guard !isDemo else { return }
-        writer.save(value, to: store)
-    }
-
     /// A failed write is said in Settings → Privacy, once per file, and cleared when it works again.
     fileprivate func recordWrite(_ file: String, failure: String?) {
         storageIssues.removeAll { $0.file == file && !$0.corrupt }

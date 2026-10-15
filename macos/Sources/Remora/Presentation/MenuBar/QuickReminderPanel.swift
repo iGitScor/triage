@@ -22,7 +22,9 @@ final class QuickReminderPanel {
     /// `text`: what a `remora://remind` link filled in, for the user to save (IDEA-06).
     func show(at point: NSPoint, date: Date, text: String = "") {
         panel.host(
-            QuickReminderView(date: date, title: text) { [weak self] title, rule, until in
+            QuickReminderView(
+                date: date, title: text, colorScheme: model.preferences.appearance.colorScheme
+            ) { [weak self] title, rule, until in
                 self?.model.addReminder(title, at: date, repeating: rule, until: until)
                 self?.close()
             } cancel: { [weak self] in
@@ -47,14 +49,17 @@ final class QuickReminderPanel {
 
 private struct QuickReminderView: View {
     let date: Date
+    /// The appearance chosen in Settings, read from the model that shows the panel.
+    let colorScheme: ColorScheme?
     let save: (String, Recurrence.Rule?, Date?) -> Void
     let cancel: () -> Void
 
     init(
-        date: Date, title: String = "", save: @escaping (String, Recurrence.Rule?, Date?) -> Void,
-        cancel: @escaping () -> Void
+        date: Date, title: String = "", colorScheme: ColorScheme?,
+        save: @escaping (String, Recurrence.Rule?, Date?) -> Void, cancel: @escaping () -> Void
     ) {
         self.date = date
+        self.colorScheme = colorScheme
         self.save = save
         self.cancel = cancel
         _title = State(initialValue: title)
@@ -89,7 +94,7 @@ private struct QuickReminderView: View {
         .frame(width: 300, alignment: .leading)
         .background(Myna.surface, in: RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous).strokeBorder(Myna.border))
-        .preferredColorScheme(InboxModel.shared.preferences.appearance.colorScheme)
+        .preferredColorScheme(colorScheme)
         .onAppear { focused = true }
     }
 

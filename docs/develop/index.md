@@ -98,7 +98,10 @@ notifications are scheduled with the system, so they fire even if Remora isn't r
 
 ## App
 
-- `App/InboxModel`: the single observable store; actions (done, pin, snooze, connect…).
+- `App/InboxModel`: what the views observe, and the actions (done, pin, snooze, connect…). A facade over
+  `AccountsService` (accounts, tokens, sessions), `SyncEngine` (failures, slow-downs, held notifications),
+  `SnoozeService` (history, advisor, insights), `AssistantCoordinator` (brief, summaries, triage) and `Persistence`
+  (the files); Windows has the same services (`remora_app/src/inbox/`).
 - `Infrastructure/`: `JSONStore` (Application Support files), `Keychain`, `ManagedPolicy`, `Notifier`, `Fonts`.
   `InboxModel` reaches all of them, the network and link opening through `AppEnvironment`, so `Tests/RemoraTests`
   runs it on a temporary folder with stand-ins: never your data, tokens or notifications.
