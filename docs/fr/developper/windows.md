@@ -76,9 +76,10 @@ de la même façon : chaque changement (connexion, reconnexion, déconnexion, ef
 `Tokens` dans `remora_app`, un à la fois, le coffre écrit sans le verrou.
 
 `Inbox` (`remora_app/src/inbox/`) est une façade sur les mêmes services que l’`InboxModel` du Mac : `AccountsService`
-(comptes, jetons, sessions), `SyncEngine` (résultats des actualisations, ralentissements, notifications retenues),
-`SnoozeService` (historique, conseiller), `AssistantCoordinator` (résumé, synthèses, tri) et `Persistence` (les
-fichiers). Ses champs sont privés : un changement passe par une méthode qui l’enregistre et applique la politique
+(comptes, jetons, sessions), `SyncEngine` (tâches et résultats des actualisations, ralentissements, notifications
+retenues), `SnoozeService` (historique, conseiller), `AssistantCoordinator` (résumé, synthèses, tri),
+`LearningService` (classement, durées des revues) et `Persistence` (les fichiers), avec `InboxPolicy` pour la
+politique de confidentialité. Ses champs sont privés : un changement passe par une méthode qui l’enregistre et applique la politique
 (`set_preferences`, `set_managed`).
 
 ## Construire et tester

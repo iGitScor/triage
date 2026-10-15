@@ -73,8 +73,9 @@ interface never waits on a slow tool. Tokens are saved the same way: every chang
 erase, a renewed sign-in) goes through `Tokens` in `remora_app`, one at a time, the vault written without the lock.
 
 `Inbox` (`remora_app/src/inbox/`) is a facade over the same services as the Mac's `InboxModel`: `AccountsService`
-(accounts, tokens, sessions), `SyncEngine` (fetch results, slow-downs, held notifications), `SnoozeService` (history,
-advisor), `AssistantCoordinator` (brief, summaries, triage) and `Persistence` (the files). Its fields are private: a
+(accounts, tokens, sessions), `SyncEngine` (fetch jobs and results, slow-downs, held notifications), `SnoozeService`
+(history, advisor), `AssistantCoordinator` (brief, summaries, triage), `LearningService` (ranker, review times) and
+`Persistence` (the files), with `InboxPolicy` for the privacy policy. Its fields are private: a
 change goes through a method that saves it and applies the policy (`set_preferences`, `set_managed`).
 
 ## Build and test
