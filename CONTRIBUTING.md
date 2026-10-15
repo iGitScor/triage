@@ -32,8 +32,9 @@ keep working; on Windows without `make`, run those directly.
 
 ## Before you open a pull request
 
-- **`make check`** runs what CI runs: formatting, the tests, the Windows type-check and build, clippy with warnings
-  as errors, and the translation check.
+- **`make check`** runs what CI runs: formatting, the tests (compiler warnings fail, on both apps), the Windows
+  type-check and build, clippy, the translation and policy-file checks, and the docs build with its CSP and links.
+  Only the accessibility pass is apart (`make a11y`).
 - **Formatting is automatic.** The pre-commit hook formats what you commit: Biome for TypeScript, Svelte, CSS and
   JSON, `swift format`, `rustfmt` and ruff (through [uv](https://docs.astral.sh/uv/)). `make format` formats
   everything. Lines go up to 120 columns; the configs are `biome.json`, `macos/.swift-format`,

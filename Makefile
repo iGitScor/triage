@@ -4,7 +4,7 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture i18n i18n-check test-counts \
-	policy-files docs docs-build a11y links site site-preview screenshots deploy clean
+	policy-files docs docs-build docs-check a11y links site site-preview screenshots deploy clean
 
 help: ## List the targets
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-13s %s\n", $$1, $$2}'
@@ -18,7 +18,8 @@ setup: ## Install the Node packages (tooling, Windows interface, docs) and the p
 
 test: mac-test desktop-test ## Run every test suite
 
-check: format-check test desktop-check i18n-check ## Formatting, tests, lint, type-check, translations and versions, as CI runs them
+check: format-check test desktop-check i18n-check docs-check ## Formatting, tests, lint, type-check, translations, policy files, docs and versions, as CI runs them
+	python3 scripts/make-policy-files.py --check
 	python3 scripts/version.py
 
 # Formatting: biome.json (web), macos/.swift-format, desktop/rustfmt.toml, ruff.toml (Python). Needs `make setup` and uv.
@@ -47,7 +48,8 @@ deps-check: ## Known vulnerabilities and licences, as the Dependencies workflow 
 	@command -v cargo-deny >/dev/null || { echo "Needs cargo-deny: cargo install cargo-deny --locked"; exit 1; }
 	cd desktop && cargo deny check advisories licenses sources bans
 	cd desktop/app && npm audit --omit=dev --audit-level=high
-	cd docs && npm audit --audit-level=critical
+	cd docs && npm audit --audit-level=high
+	npm audit --audit-level=critical
 
 # macOS (macos/): Swift 6 package, macOS 14+, Xcode 16.
 
@@ -63,8 +65,8 @@ mac-demo: ## Build the macOS app and open it with sample data in a window, nothi
 
 # Windows (desktop/): Rust workspace and a Tauri 2 app with a Svelte interface; Rust and Node 22.
 
-desktop-test: ## Windows and Linux library crates' tests (any OS, no Node needed)
-	cd desktop && cargo test -p remora_core -p remora_plugins -p remora_app
+desktop-test: ## Windows and Linux tests: the crates and the Tauri shell (any OS)
+	cd desktop && cargo test --workspace
 
 desktop-check: ## Type-check, test and build the Windows and Linux interface, then clippy on the whole workspace
 	cd desktop/app && npm run check && npm test && npm run build
@@ -102,6 +104,11 @@ docs: ## The documentation with live reload
 docs-build: ## Build the documentation into site/public/docs
 	npm --prefix docs run build
 	python3 site/csp.py
+
+docs-check: ## Build the docs and fail if their CSP or an internal link is out of date (as CI does)
+	npm --prefix docs run build
+	python3 site/csp.py --check
+	python3 scripts/check-links.py
 
 a11y: docs-build ## Check every page of the website and docs with axe (WCAG 2.1 AA, light and dark)
 	node scripts/a11y.mjs
