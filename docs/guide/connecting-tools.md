@@ -167,7 +167,8 @@ server on your computer excepted). See [The assistant](./assistant).
   Settings → Sources, under *Assistant* → Claude Code → **Connect**. Anthropic's installer is the simplest: it
   doesn't need Node.js. On a Mac, installs through Homebrew, npm (nvm, volta), bun, mise or asdf are found too, and
   Settings → Privacy shows which `claude` Remora runs. Otherwise, paste the output of `which claude` (`where.exe
-  claude` on Windows) into *Path to claude*.
+  claude` on Windows) into *Path to claude*. Remora only runs a `claude` that only you or the system can change; on
+  Windows it looks on your PATH only in your profile and Program Files.
 - **Claude API**: an API key from the Claude Console. Settings → Sources, under *Assistant* → Claude API.
 - **OpenAI-compatible**: OpenAI, Azure OpenAI, Mistral, or a server on your computer such as Ollama or LM Studio.
   Settings → Sources, under *Assistant* → OpenAI-compatible: the server address up to `/v1`, the API key and the

@@ -79,7 +79,7 @@ mod wording {
         "Only if Claude Code is installed somewhere unusual (run `where.exe claude` in a terminal).";
     pub const COULDNT_FIND: &str = "Couldn’t find Claude Code. Install it with Anthropic’s installer, or enter the path to claude (run `where.exe claude` in a terminal).";
     pub const NOT_TRUSTED: &str =
-        "Remora only runs a program named claude.exe or claude.cmd from a folder on this computer, which %@ isn’t.";
+        "Remora only runs a program named claude.exe or claude.cmd that only you or the system can change, which %@ isn’t.";
     pub const NO_PROGRAM: &str =
         "There is no program at %@. Run `where.exe claude` in a terminal and paste the path it shows.";
     pub const NOT_CLAUDE_CODE: &str =
@@ -118,6 +118,7 @@ pub struct SearchEnv {
     pub app_data: Option<PathBuf>,
     pub local_app_data: Option<PathBuf>,
     pub program_files: Option<PathBuf>,
+    pub program_files_x86: Option<PathBuf>,
     /// nvm-windows' link to the active Node.js.
     pub nvm_symlink: Option<PathBuf>,
     pub path: Option<OsString>,
@@ -131,6 +132,7 @@ impl SearchEnv {
             app_data: var("APPDATA").map(PathBuf::from),
             local_app_data: var("LOCALAPPDATA").map(PathBuf::from),
             program_files: var("ProgramFiles").map(PathBuf::from),
+            program_files_x86: var("ProgramFiles(x86)").map(PathBuf::from),
             nvm_symlink: var("NVM_SYMLINK").map(PathBuf::from),
             path: var("PATH"),
         }
@@ -138,7 +140,8 @@ impl SearchEnv {
 
     /// Where Windows installs put `claude`, in order: Anthropic's installer (recommended) and its older local
     /// install, npm's global folder, Volta, Bun, Scoop and mise, the Node.js that nvm-windows or Node's own installer
-    /// made active, then the user's PATH (a tray app gets the full one, unlike a Mac app opened from the Dock).
+    /// made active, then the user's PATH (a tray app gets the full one, unlike a Mac app opened from the Dock), only its
+    /// folders in your profile or Program Files (SEC-30).
     pub fn windows_folders(&self) -> Vec<PathBuf> {
         let under = |base: &Option<PathBuf>, path: &str| {
             base.as_ref().map(|b| path.split('/').fold(b.clone(), |p, part| p.join(part)))
@@ -158,9 +161,18 @@ impl SearchEnv {
         .flatten()
         .collect();
         if let Some(path) = &self.path {
-            folders.extend(std::env::split_paths(path).filter(|p| p.is_absolute()));
+            folders.extend(std::env::split_paths(path).filter(|p| p.is_absolute() && self.may_search(p)));
         }
         folders
+    }
+
+    /// A PATH folder Windows searches: in your profile or Program Files, which other users can't write to by default,
+    /// unlike `C:\tools` or some all-users installs.
+    pub fn may_search(&self, folder: &Path) -> bool {
+        [&self.home, &self.program_files, &self.program_files_x86]
+            .into_iter()
+            .flatten()
+            .any(|base| is_inside(folder, base))
     }
 
     /// The macOS app's list, for running the tests and the app on a Mac or Linux: Anthropic's installer and its
@@ -226,6 +238,23 @@ pub fn nvm_folders(home: &Path) -> Vec<PathBuf> {
     versions.into_iter().map(|v| root.join(v).join("bin")).collect()
 }
 
+/// `folder` is `base` or inside it, ignoring case as Windows does; a `..` is refused rather than resolved.
+pub fn is_inside(folder: &Path, base: &Path) -> bool {
+    let parts = |p: &Path| -> Option<Vec<String>> {
+        p.components()
+            .filter(|c| !matches!(c, Component::CurDir))
+            .map(|c| match c {
+                Component::ParentDir => None,
+                c => Some(c.as_os_str().to_string_lossy().to_lowercase()),
+            })
+            .collect()
+    };
+    match (parts(folder), parts(base)) {
+        (Some(folder), Some(base)) => !base.is_empty() && folder.starts_with(&base),
+        _ => false,
+    }
+}
+
 /// "~/bin/claude" → the home folder's; quotes from Explorer's "Copy as path" dropped.
 fn expand(configured: &str, home: Option<&Path>) -> PathBuf {
     let raw = configured.trim().trim_matches('"');
@@ -288,14 +317,174 @@ fn only_you_can_change(path: &Path) -> bool {
     safe(Some(&real)) && safe(real.parent()) && safe(path.parent())
 }
 
-/// On Windows, owners and modes don't say who may change a file: that is the folder's access list, which the
-/// standard library can't read. The default ones protect what Remora looks for (your profile, Program Files), so it
-/// refuses what they don't cover: a program on a network share, which others may replace. The `--version` check
-/// then runs as on macOS.
-#[cfg(not(unix))]
+/// On Windows, owners and modes don't say who may change a file: access lists do. As on macOS, the program, its
+/// folder and, through a link, the real file and its folder must be owned by and writable only by you or the system
+/// (SEC-30), and not on a network share. The `--version` check then runs as on macOS.
+#[cfg(windows)]
 fn only_you_can_change(path: &Path) -> bool {
-    let real = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
-    !is_network_path(path) && !is_network_path(&real)
+    let Ok(real) = std::fs::canonicalize(path).map(plain) else { return false };
+    if is_network_path(path) || is_network_path(&real) {
+        return false;
+    }
+    let Some(me) = acl::current_user() else { return false };
+    let safe = |p: Option<&Path>| {
+        p.and_then(acl::read).is_some_and(|(owner, entries)| only_trusted_can_write(&owner, &entries, &me))
+    };
+    safe(Some(&real)) && safe(real.parent()) && safe(path.parent())
+}
+
+/// SYSTEM, Administrators and TrustedInstaller, which own and change what Windows and installers put in Program Files.
+const SYSTEM_SIDS: &[&str] =
+    &["S-1-5-18", "S-1-5-32-544", "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464"];
+
+/// The rights that let someone replace a program or put another next to it: write or append data (in a folder, add a
+/// file or a folder), delete it or what the folder holds, change its access list or owner, and the generic ones.
+pub const WRITE_RIGHTS: u32 =
+    0x0000_0002 | 0x0000_0004 | 0x0000_0040 | 0x0001_0000 | 0x0004_0000 | 0x0008_0000 | 0x1000_0000 | 0x4000_0000;
+
+/// One entry of an access list: whom it names (a SID such as "S-1-5-32-545"), whether it allows or denies, the rights,
+/// and whether it only applies to what is created inside (CREATOR OWNER's, for one).
+#[derive(Clone, Debug, PartialEq)]
+pub struct AccessEntry {
+    pub sid: String,
+    pub allows: bool,
+    pub mask: u32,
+    pub inherit_only: bool,
+}
+
+/// You, SYSTEM, Administrators or TrustedInstaller.
+pub fn is_you_or_the_system(sid: &str, me: &str) -> bool {
+    sid.eq_ignore_ascii_case(me) || SYSTEM_SIDS.iter().any(|s| sid.eq_ignore_ascii_case(s))
+}
+
+/// The owner, who may always change the access list, and everyone an entry lets write are you or the system.
+/// Denials are ignored, which can only refuse more.
+pub fn only_trusted_can_write(owner: &str, entries: &[AccessEntry], me: &str) -> bool {
+    is_you_or_the_system(owner, me)
+        && entries
+            .iter()
+            .filter(|e| e.allows && !e.inherit_only && e.mask & WRITE_RIGHTS != 0)
+            .all(|e| is_you_or_the_system(&e.sid, me))
+}
+
+/// Reading the access lists, which only Windows has.
+#[cfg(windows)]
+mod acl {
+    use super::AccessEntry;
+    use std::os::windows::ffi::OsStrExt;
+    use std::path::Path;
+    use windows_sys::Win32::Foundation::{CloseHandle, LocalFree, ERROR_SUCCESS, HANDLE};
+    use windows_sys::Win32::Security::Authorization::{ConvertSidToStringSidW, GetNamedSecurityInfoW, SE_FILE_OBJECT};
+    use windows_sys::Win32::Security::{
+        AclSizeInformation, GetAce, GetAclInformation, GetTokenInformation, TokenUser, ACCESS_ALLOWED_ACE, ACE_HEADER,
+        ACL, ACL_SIZE_INFORMATION, DACL_SECURITY_INFORMATION, INHERIT_ONLY_ACE, OWNER_SECURITY_INFORMATION,
+        PSECURITY_DESCRIPTOR, PSID, TOKEN_QUERY, TOKEN_USER,
+    };
+    use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
+
+    const ALLOWED: u8 = 0;
+    /// Denied, denied object, denied callback and denied callback object entries.
+    const DENIED: [u8; 4] = [1, 6, 10, 12];
+
+    /// "S-1-5-21-…".
+    ///
+    /// SAFETY: `sid` points to a valid SID.
+    unsafe fn sid_string(sid: PSID) -> Option<String> {
+        let mut text: *mut u16 = std::ptr::null_mut();
+        // SAFETY: Windows allocates `text`, freed below.
+        if unsafe { ConvertSidToStringSidW(sid, &mut text) } == 0 || text.is_null() {
+            return None;
+        }
+        // SAFETY: a nul-terminated string.
+        let length = (0..).take_while(|&i| unsafe { *text.add(i) } != 0).count();
+        let result = String::from_utf16(unsafe { std::slice::from_raw_parts(text, length) }).ok();
+        unsafe { LocalFree(text.cast()) };
+        result
+    }
+
+    /// The SID of the user Remora runs as.
+    pub fn current_user() -> Option<String> {
+        let mut token: HANDLE = std::ptr::null_mut();
+        // SAFETY: this process's pseudo handle; the token is closed below.
+        if unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) } == 0 {
+            return None;
+        }
+        let mut size = 0u32;
+        // SAFETY: the first call asks for the size, the second fills a buffer that big, aligned for TOKEN_USER.
+        unsafe { GetTokenInformation(token, TokenUser, std::ptr::null_mut(), 0, &mut size) };
+        let mut buffer = vec![0u64; (size as usize).div_ceil(8).max(1)];
+        let filled = unsafe { GetTokenInformation(token, TokenUser, buffer.as_mut_ptr().cast(), size, &mut size) };
+        let sid = (filled != 0).then(|| unsafe { sid_string((*buffer.as_ptr().cast::<TOKEN_USER>()).User.Sid) });
+        unsafe { CloseHandle(token) };
+        sid.flatten()
+    }
+
+    /// The owner and the entries of the access list; nothing if it can't be read, or if there is no list, which lets
+    /// everyone in.
+    pub fn read(path: &Path) -> Option<(String, Vec<AccessEntry>)> {
+        let wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+        let mut owner: PSID = std::ptr::null_mut();
+        let mut dacl: *mut ACL = std::ptr::null_mut();
+        let mut descriptor: PSECURITY_DESCRIPTOR = std::ptr::null_mut();
+        // SAFETY: a nul-terminated path; `owner` and `dacl` point into `descriptor`, freed below.
+        let status = unsafe {
+            GetNamedSecurityInfoW(
+                wide.as_ptr(),
+                SE_FILE_OBJECT,
+                OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                &mut owner,
+                std::ptr::null_mut(),
+                &mut dacl,
+                std::ptr::null_mut(),
+                &mut descriptor,
+            )
+        };
+        if status != ERROR_SUCCESS {
+            return None;
+        }
+        // SAFETY: both stay valid until the descriptor is freed.
+        let result = unsafe { entries(owner, dacl) };
+        unsafe { LocalFree(descriptor.cast()) };
+        result
+    }
+
+    /// SAFETY: `owner` is a valid SID or null, `dacl` a valid access list or null.
+    unsafe fn entries(owner: PSID, dacl: *const ACL) -> Option<(String, Vec<AccessEntry>)> {
+        if owner.is_null() || dacl.is_null() {
+            return None;
+        }
+        let owner = unsafe { sid_string(owner) }?;
+        let mut info: ACL_SIZE_INFORMATION = unsafe { std::mem::zeroed() };
+        let size = std::mem::size_of::<ACL_SIZE_INFORMATION>() as u32;
+        let info_ptr = (&mut info as *mut ACL_SIZE_INFORMATION).cast();
+        if unsafe { GetAclInformation(dacl, info_ptr, size, AclSizeInformation) } == 0 {
+            return None;
+        }
+        let mut entries = Vec::new();
+        for index in 0..info.AceCount {
+            let mut ace: *mut core::ffi::c_void = std::ptr::null_mut();
+            if unsafe { GetAce(dacl, index, &mut ace) } == 0 {
+                return None;
+            }
+            let header = unsafe { &*ace.cast::<ACE_HEADER>() };
+            let inherit_only = u32::from(header.AceFlags) & INHERIT_ONLY_ACE != 0;
+            if header.AceType == ALLOWED || header.AceType == DENIED[0] {
+                // Allowed and denied entries share a layout: the header, the rights, then the SID.
+                let entry = ace.cast::<ACCESS_ALLOWED_ACE>();
+                let sid = unsafe { std::ptr::addr_of_mut!((*entry).SidStart) }.cast();
+                entries.push(AccessEntry {
+                    sid: unsafe { sid_string(sid) }?,
+                    allows: header.AceType == ALLOWED,
+                    mask: unsafe { (*entry).Mask },
+                    inherit_only,
+                });
+            } else if !inherit_only && !DENIED.contains(&header.AceType) {
+                // Another kind of entry that allows something (object, callback, compound): not used on files.
+                return None;
+            }
+        }
+        Some((owner, entries))
+    }
 }
 
 /// `\\server\share\…`, in either spelling.
@@ -801,22 +990,68 @@ mod tests {
 
     #[test]
     fn windows_installs_are_searched_installer_first_then_path() {
-        // Absolute on every OS: "/tools" has no drive letter, so Windows reads it as relative.
-        let tools = std::env::temp_dir().join("tools");
+        // Absolute on every OS: "/U" has no drive letter, so Windows reads it as relative.
+        let root = std::env::temp_dir();
+        let (home, program_files) = (root.join("U").join("ada"), root.join("PF"));
+        let git = program_files.join("Git").join("cmd");
         let env = SearchEnv {
-            home: Some(PathBuf::from("/U/ada")),
-            app_data: Some(PathBuf::from("/U/ada/AppData/Roaming")),
-            local_app_data: Some(PathBuf::from("/U/ada/AppData/Local")),
-            program_files: Some(PathBuf::from("/PF")),
+            home: Some(home.clone()),
+            app_data: Some(home.join("AppData").join("Roaming")),
+            local_app_data: Some(home.join("AppData").join("Local")),
+            program_files: Some(program_files.clone()),
+            program_files_x86: None,
             nvm_symlink: None,
-            path: Some(std::env::join_paths([tools.clone(), PathBuf::from("relative")]).unwrap()),
+            path: Some(std::env::join_paths([git.clone(), root.join("tools"), PathBuf::from("relative")]).unwrap()),
         };
         let folders = env.windows_folders();
-        assert_eq!(folders[0], Path::new("/U/ada").join(".local").join("bin"), "Anthropic's installer first");
-        assert!(folders.contains(&Path::new("/U/ada/AppData/Roaming").join("npm")));
-        assert!(folders.contains(&Path::new("/PF").join("nodejs")));
-        assert_eq!(folders.last(), Some(&tools), "PATH last, relative folders left out");
+        assert_eq!(folders[0], home.join(".local").join("bin"), "Anthropic's installer first");
+        assert!(folders.contains(&home.join("AppData").join("Roaming").join("npm")));
+        assert!(folders.contains(&program_files.join("nodejs")));
+        assert_eq!(folders.last(), Some(&git), "PATH last, relative folders left out");
+        assert!(!folders.contains(&root.join("tools")), "SEC-30: not outside your profile and Program Files");
         assert!(SearchEnv::default().windows_folders().is_empty());
+    }
+
+    #[test]
+    fn only_folders_inside_your_profile_or_program_files_are_searched() {
+        let env = SearchEnv {
+            home: Some(PathBuf::from("/C:/Users/Ada")),
+            program_files: Some(PathBuf::from("/C:/Program Files")),
+            program_files_x86: Some(PathBuf::from("/C:/Program Files (x86)")),
+            ..SearchEnv::default()
+        };
+        assert!(env.may_search(Path::new("/C:/Users/Ada/.local/bin")));
+        assert!(env.may_search(Path::new("/c:/users/ada/scoop/shims")), "case doesn't matter");
+        assert!(env.may_search(Path::new("/C:/Program Files (x86)/nodejs")));
+        assert!(!env.may_search(Path::new("/C:/tools")));
+        assert!(!env.may_search(Path::new("/C:/Users/Adam/bin")), "a whole folder name");
+        assert!(!env.may_search(Path::new("/C:/Users/Ada/../Public/bin")), "no way out");
+        assert!(!SearchEnv::default().may_search(Path::new("/C:/Users/Ada")));
+    }
+
+    #[test]
+    fn only_you_or_the_system_may_write_to_claude() {
+        const ME: &str = "S-1-5-21-1-2-3-1001";
+        let entry = |sid: &str, mask: u32| AccessEntry { sid: sid.into(), allows: true, mask, inherit_only: false };
+        let (full, read) = (0x001F_01FF, 0x0012_00A9);
+        // Program Files' defaults: TrustedInstaller, SYSTEM and Administrators change it, Users and app packages read.
+        let program_files = [
+            entry(SYSTEM_SIDS[2], full),
+            entry("S-1-5-18", full),
+            entry("S-1-5-32-544", full),
+            entry("S-1-5-32-545", read),
+            entry("S-1-15-2-1", read),
+            AccessEntry { inherit_only: true, ..entry("S-1-3-0", 0x1000_0000) },
+        ];
+        assert!(only_trusted_can_write(SYSTEM_SIDS[2], &program_files, ME));
+        assert!(only_trusted_can_write(ME, &[entry(ME, full), entry("s-1-5-18", full)], ME), "your profile");
+        let users_write = [entry("S-1-5-32-545", 0x0012_0116)];
+        assert!(!only_trusted_can_write(ME, &users_write, ME), "Users may add files, as in C:\\tools");
+        assert!(!only_trusted_can_write(ME, &[entry("S-1-1-0", 0x0001_0000)], ME), "Everyone may delete it");
+        assert!(!only_trusted_can_write(ME, &[entry("S-1-5-11", 0x0004_0000)], ME), "may change the access list");
+        assert!(!only_trusted_can_write("S-1-5-21-1-2-3-1002", &[entry(ME, full)], ME), "someone else owns it");
+        let denied = AccessEntry { allows: false, ..entry("S-1-1-0", full) };
+        assert!(only_trusted_can_write(ME, &[denied, entry(ME, full)], ME), "a denial refuses nothing more");
     }
 
     #[test]

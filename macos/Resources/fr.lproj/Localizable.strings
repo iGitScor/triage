@@ -463,7 +463,7 @@
 "Remora lives in the system tray: open it from the fish’s menu." = "Remora vit dans la zone de notification : ouvrez-la depuis le menu du poisson.";
 "Remora only runs a program named claude that only you can change, which %@ isn’t." = "Remora n’exécute qu’un programme nommé claude que vous seul pouvez modifier, ce que %@ n’est pas.";
 "Remora only runs a program named claude that you or the system own, from a folder on this computer, which %@ isn’t." = "Remora n’exécute qu’un programme nommé claude qui vous appartient ou appartient au système, depuis un dossier de cet ordinateur, ce que %@ n’est pas.";
-"Remora only runs a program named claude.exe or claude.cmd from a folder on this computer, which %@ isn’t." = "Remora ne lance qu’un programme nommé claude.exe ou claude.cmd, depuis un dossier de cet ordinateur, ce que %@ n’est pas.";
+"Remora only runs a program named claude.exe or claude.cmd that only you or the system can change, which %@ isn’t." = "Remora ne lance qu’un programme nommé claude.exe ou claude.cmd que seuls vous ou le système pouvez modifier, ce que %@ n’est pas.";
 "Remora only talks to the tools you allow. No analytics, no telemetry." = "Remora ne communique qu’avec les outils autorisés. Aucune statistique, aucune télémétrie.";
 "Remove" = "Retirer";
 "Remove %@?" = "Retirer %@ ?";

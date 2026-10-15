@@ -183,7 +183,9 @@ Réglages → Confidentialité ou par votre organisation (sauf un serveur sur vo
   abonnement Claude. Réglages → Sources, section *Assistant* → Claude Code → **Connecter**. L’installeur d’Anthropic
   est le plus simple : il n’a pas besoin de Node.js. Sur Mac, les installations par Homebrew, npm (nvm, volta), bun,
   mise ou asdf sont trouvées aussi, et Réglages → Confidentialité indique quel `claude` Remora lance. Sinon, collez le
-  résultat de `which claude` (`where.exe claude` sous Windows) dans *Chemin de claude*.
+  résultat de `which claude` (`where.exe claude` sous Windows) dans *Chemin de claude*. Remora ne lance qu’un
+  `claude` que seuls vous ou le système pouvez modifier ; sous Windows, il ne cherche dans votre PATH que dans votre
+  profil et Program Files.
 - **API Claude** : une clé d’API de la Claude Console. Réglages → Sources, section *Assistant* → Claude API.
 - **OpenAI-compatible** : OpenAI, Azure OpenAI, Mistral, ou un serveur sur votre ordinateur comme Ollama ou
   LM Studio. Réglages → Sources, section *Assistant* → OpenAI-compatible : l’adresse du serveur jusqu’à `/v1`, la

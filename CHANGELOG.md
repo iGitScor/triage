@@ -45,6 +45,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
   longer freezes while the refresh tries again.
 - Windows and Linux: a snooze or reminder coming back the next day says *Tomorrow* on the night the clocks change
   too, not the weekday.
+- Windows: as on a Mac, Claude Code only runs if no one but you or the system can change it or its folder, and is
+  only looked for on your PATH in your profile and Program Files.
 
 ## 0.9.0 (2026-10-13)
 

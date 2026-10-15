@@ -24,5 +24,14 @@ tokio = { version = "1.53.2", features = ["process", "io-util", "time", "rt", "m
 # Who owns the `claude` Remora runs; only checked where ownership means the same as on macOS.
 libc = "0.2.190"
 
+[target.'cfg(windows)'.dependencies]
+# Who may change the `claude` Remora runs, from its access list; the version the rest of the app already uses.
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_System_Threading",
+] }
+
 [dev-dependencies]
 tokio = { version = "1.53.2", features = ["macros", "rt-multi-thread", "net", "io-util", "test-util"] }
