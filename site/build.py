@@ -612,6 +612,31 @@ def home(lang: str) -> str:
                 ("notion", "Notion", "Tasks assigned to you in the databases you pick."),
             ],
             soon={},
+            why_eyebrow="Why Remora",
+            why_title='Why not just <span class="mark">use what you have?</span>',
+            why_lead="Fair question: your tools already have inboxes. Here is what changes when they become one.",
+            why=[
+                (
+                    "globe",
+                    "Each tool’s own inbox",
+                    "GitHub notifications, Linear’s inbox, Jira: each is the best place to act on its own items, and each has its own badge to check. Remora lists what needs you from all of them, then opens each item in its tool.",
+                ),
+                (
+                    "reply",
+                    "Slack’s Later",
+                    "Good for messages you chose to keep. It only holds Slack, and only what you saved by hand. Remora picks up mentions and direct messages itself, and files the question under To reply, next to the review waiting on you.",
+                ),
+                (
+                    "menu",
+                    "A menu bar app for code reviews",
+                    "gitbar, which inspired Remora, keeps your merge requests in the menu bar, and does it well. Remora keeps the idea for every tool you connect, and sorts by verb: To review, To reply, To fix.",
+                ),
+                (
+                    "lock",
+                    "A hosted unified inbox",
+                    "It follows you on every device, which Remora doesn’t. But your tokens and messages go through its servers. Remora has no server: it talks to each tool from your computer, and sorts there.",
+                ),
+            ],
             privacy_eyebrow="Privacy & compliance",
             privacy_title="Built for teams with rules.",
             privacy_lead="No data leaves your computer except to the tools you allow. Enforced in code, checked by tests, lockable by your IT.",
@@ -805,6 +830,31 @@ def home(lang: str) -> str:
                 ("notion", "Notion", "Les tâches qui vous sont assignées dans les bases choisies."),
             ],
             soon={},
+            why_eyebrow="Pourquoi Remora",
+            why_title='Pourquoi pas <span class="mark">ce que vous avez déjà ?</span>',
+            why_lead="Bonne question : vos outils ont déjà leur boîte. Voici ce qui change quand elles n’en font qu’une.",
+            why=[
+                (
+                    "globe",
+                    "La boîte de chaque outil",
+                    "Les notifications GitHub, la boîte de Linear, Jira : chacune est le meilleur endroit pour agir sur ses propres éléments, et chacune a son badge à surveiller. Remora réunit ce qui a besoin de vous, puis ouvre chaque élément dans son outil.",
+                ),
+                (
+                    "reply",
+                    "« Plus tard » dans Slack",
+                    "Pratique pour les messages que vous avez choisi de garder. Il ne contient que Slack, et seulement ce que vous avez mis de côté à la main. Remora relève elle-même mentions et messages directs, et range la question dans À répondre, à côté de la relecture qui vous attend.",
+                ),
+                (
+                    "menu",
+                    "Une app de barre des menus pour le code",
+                    "gitbar, qui a inspiré Remora, garde vos merge requests dans la barre des menus, et le fait bien. Remora garde l’idée pour chaque outil connecté, et range par verbe : À relire, À répondre, À corriger.",
+                ),
+                (
+                    "lock",
+                    "Une boîte unifiée hébergée",
+                    "Elle vous suit sur tous vos appareils, ce que Remora ne fait pas. Mais vos jetons et vos messages passent par ses serveurs. Remora n’a pas de serveur : elle parle à chaque outil depuis votre ordinateur, et trie sur place.",
+                ),
+            ],
             privacy_eyebrow="Confidentialité et conformité",
             privacy_title="Pensé pour les équipes qui ont des règles.",
             privacy_lead="Aucune donnée ne quitte votre ordinateur, sauf vers les outils autorisés. Appliqué dans le code, vérifié par des tests, verrouillable par votre DSI.",
@@ -978,6 +1028,13 @@ def home(lang: str) -> str:
         <div class="wrap">
           {section_head(c["sources_eyebrow"], c["sources_title"], c["sources_lead"], ident="sources-title")}
           <div class="sources">{sources}</div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="why-title">
+        <div class="wrap">
+          {section_head(c["why_eyebrow"], c["why_title"], c["why_lead"], ident="why-title")}
+          <div class="grid grid-2">{cards(c["why"])}</div>
         </div>
       </section>
 
