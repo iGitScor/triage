@@ -6,12 +6,15 @@ license.workspace = true
 description = "Remora's application layer for Windows and Linux: storage, credentials, policy and the inbox service. No UI."
 
 [dependencies]
+async-trait = "0.1.92"
 chrono = { version = "0.4.45", features = ["serde"] }
 futures = "0.3.34"
 remora_core = { version = "0.9.0", path = "../remora_core" }
 remora_plugins = { version = "0.9.0", path = "../remora_plugins" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
+# The tokens' write lock, and the vault reached off the async runtime (tokens.rs).
+tokio = { version = "1.53.2", features = ["sync", "rt"] }
 dirs = "7"
 uuid = { version = "1", features = ["v4"] }
 ts-rs = { version = "12.0.1", features = ["chrono-impl", "no-serde-warnings"] }
@@ -39,6 +42,5 @@ keyring = { version = "3", features = ["apple-native"] }
 keyring = { version = "3", features = ["linux-native-sync-persistent", "crypto-rust"] }
 
 [dev-dependencies]
-async-trait = "0.1.92"
 tempfile = "3"
 tokio = { version = "1.53.2", features = ["macros", "rt-multi-thread"] }

@@ -1,6 +1,6 @@
 //! What the interface may ask. Each command locks the inbox briefly; network calls run without the lock.
 
-use crate::{changed, save_secrets, AppState, REMINDER_SHORTCUT};
+use crate::{changed, AppState, REMINDER_SHORTCUT};
 use chrono::{DateTime, Local, NaiveDate, TimeZone, Utc};
 use remora_app::view::{inbox_view, InboxView};
 use remora_app::{paths, AccountInfo, Managed, Preferences, SourceInfo};
@@ -204,38 +204,14 @@ pub async fn connect(
             plugin.digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now()).await?;
             None
         };
-        let _writes = state.vault_writes.lock().await;
-        let (vault, all) = {
-            let mut inbox = state.inbox.lock().await;
-            (inbox.vault(), inbox.assistant_secrets(&account, secrets)?)
-        };
-        save_secrets(vault, all.clone()).await?;
-        let mut inbox = state.inbox.lock().await;
-        inbox.finish_assistant_connect_saved(account, all);
-        if brief.is_some() {
-            inbox.store_brief(brief);
-        }
-        drop(inbox);
+        state.tokens.connect_assistant(&state.inbox, account, secrets, brief).await?;
         changed(&app).await;
         return Ok(());
     }
     let (account, plugin) =
         state.inbox.lock().await.prepare_connect(&plugin_id, name, settings, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await?;
-    let _writes = state.vault_writes.lock().await;
-    let (vault, all) = {
-        let mut inbox = state.inbox.lock().await;
-        let inbox_key = inbox.connected_id(&account, &snapshot.identity);
-        (
-            inbox.vault(),
-            // Connected again (same person, tool and server): the token goes to the existing account.
-            inbox.secrets_after(|all| {
-                all.insert(inbox_key, secrets);
-            })?,
-        )
-    };
-    save_secrets(vault, all.clone()).await?;
-    state.inbox.lock().await.finish_connect_saved(account, all, snapshot, Utc::now());
+    state.tokens.connect(&state.inbox, account, secrets, snapshot, Utc::now()).await?;
     changed(&app).await;
     Ok(())
 }
@@ -262,38 +238,13 @@ pub async fn reconnect(
     };
     if let Some(plugin) = assistant {
         plugin.digest(&[remora_app::Inbox::connection_test(Utc::now())], "Test", Utc::now()).await?;
-        let _writes = state.vault_writes.lock().await;
-        let (vault, all) = {
-            let mut inbox = state.inbox.lock().await;
-            (
-                inbox.vault(),
-                inbox.secrets_after(|all| {
-                    all.insert(account_id.clone(), secrets);
-                })?,
-            )
-        };
-        save_secrets(vault, all.clone()).await?;
-        state.inbox.lock().await.finish_reconnect_secrets(&account_id, all)?;
+        state.tokens.reconnect(&state.inbox, &account_id, secrets, None, Utc::now()).await?;
         changed(&app).await;
         return Ok(());
     }
     let plugin = state.inbox.lock().await.prepare_reconnect(&account_id, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await?;
-    let _writes = state.vault_writes.lock().await;
-    let (vault, all) = {
-        let mut inbox = state.inbox.lock().await;
-        if !inbox.accounts.iter().any(|a| a.id == account_id) {
-            return Err("This account is no longer connected.".into());
-        }
-        (
-            inbox.vault(),
-            inbox.secrets_after(|all| {
-                all.insert(account_id.clone(), secrets);
-            })?,
-        )
-    };
-    save_secrets(vault, all.clone()).await?;
-    state.inbox.lock().await.finish_reconnect_saved(&account_id, all, snapshot, Utc::now())?;
+    state.tokens.reconnect(&state.inbox, &account_id, secrets, Some(snapshot), Utc::now()).await?;
     changed(&app).await;
     Ok(())
 }
@@ -347,18 +298,7 @@ pub async fn rename_account(app: AppHandle, state: State<'_, AppState>, id: Stri
 
 #[tauri::command]
 pub async fn disconnect(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
-    let _writes = state.vault_writes.lock().await;
-    let (vault, all) = {
-        let mut inbox = state.inbox.lock().await;
-        (
-            inbox.vault(),
-            inbox.secrets_after(|all| {
-                all.remove(&id);
-            })?,
-        )
-    };
-    save_secrets(vault, all.clone()).await?;
-    state.inbox.lock().await.disconnect_saved(&id, all);
+    state.tokens.disconnect(&state.inbox, &id).await?;
     changed(&app).await;
     Ok(())
 }
@@ -436,10 +376,7 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<()> {
 
 #[tauri::command]
 pub async fn erase_local_data(app: AppHandle, state: State<'_, AppState>) -> Result<()> {
-    let _writes = state.vault_writes.lock().await;
-    let vault = state.inbox.lock().await.vault();
-    save_secrets(vault, remora_app::Secrets::new()).await?;
-    state.inbox.lock().await.erase_local_data_saved()?;
+    state.tokens.erase(&state.inbox).await?;
     crate::updates::forget(&app).await;
     crate::avatars::forget();
     changed(&app).await;

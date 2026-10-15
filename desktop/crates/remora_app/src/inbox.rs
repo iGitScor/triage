@@ -322,9 +322,9 @@ impl Inbox {
         Ok(self.secrets.insert(secrets))
     }
 
-    // The credential store can be slow: the app reads and writes it without holding the inbox lock (PERF-07), with
-    // `vault`, `needs_secrets` and `provide_secrets` for the read, then `secrets_after` and a `…_saved` method for each
-    // change. The methods without `_saved` do the same in one step, for tests and the demo.
+    // The credential store can be slow: the app reads and writes it without holding the inbox lock (PERF-07), through
+    // `Tokens` (tokens.rs): `needs_secrets` and `provide_secrets` for the read, then `secrets_after` (or a method built
+    // on it) and a `…_saved` method for each change.
 
     pub fn vault(&self) -> Arc<dyn Vault> {
         self.vault.clone()
@@ -341,7 +341,7 @@ impl Inbox {
     }
 
     /// Secrets the plugins renewed during the last fetches (an OAuth refresh token rotated), for accounts still
-    /// here: the app saves them with `secrets_after` and `renewed_saved`, outside the lock.
+    /// here: `Tokens::save_renewed` saves them, outside the lock.
     pub fn take_renewed_secrets(&mut self) -> Vec<(String, HashMap<String, String>)> {
         AccountSession::take_renewed(&self.sessions)
             .into_iter()
@@ -1233,7 +1233,7 @@ impl Inbox {
 
     // MARK: Accounts
 
-    /// Checks the settings by building the plugin; the caller fetches once, then calls `finish_connect`.
+    /// Checks the settings by building the plugin; the caller fetches once, then `Tokens::connect` saves it.
     pub fn prepare_connect(
         &self,
         plugin_id: &str,
@@ -1300,7 +1300,7 @@ impl Inbox {
     }
 
     /// Connecting an assistant: the caller tests it once with the plugin (a brief, or a made-up item
-    /// when the whole-inbox brief is off, so no inbox content leaves yet), then calls `finish_assistant_connect`.
+    /// when the whole-inbox brief is off, so no inbox content leaves yet), then `Tokens::connect_assistant` saves it.
     pub fn prepare_assistant_connect(
         &self,
         plugin_id: &str,
@@ -1335,18 +1335,6 @@ impl Inbox {
         Ok((account, plugin))
     }
 
-    /// One assistant at a time: a new one replaces the previous one, and its token.
-    pub fn finish_assistant_connect(
-        &mut self,
-        account: Account,
-        secrets: HashMap<String, String>,
-    ) -> Result<(), Message> {
-        let all = self.assistant_secrets(&account, secrets)?;
-        self.vault.save(&all)?;
-        self.finish_assistant_connect_saved(account, all);
-        Ok(())
-    }
-
     /// The tokens with `account` as the only assistant.
     pub fn assistant_secrets(
         &mut self,
@@ -1363,6 +1351,7 @@ impl Inbox {
         })
     }
 
+    /// One assistant at a time: a new one replaces the previous one, and its token.
     pub fn finish_assistant_connect_saved(&mut self, account: Account, saved: Secrets) {
         self.secrets = Some(saved);
         self.accounts.retain(|a| !claude::is_assistant(&a.plugin_id));
@@ -1397,23 +1386,6 @@ impl Inbox {
         }
     }
 
-    /// Saves an account whose first fetch worked. Its items arrive silently.
-    pub fn finish_connect(
-        &mut self,
-        account: Account,
-        secrets: HashMap<String, String>,
-        snapshot: SourceSnapshot,
-        now: DateTime<Utc>,
-    ) -> Result<(), Message> {
-        let key = self.connected_id(&account, &snapshot.identity);
-        let all = self.secrets_after(|all| {
-            all.insert(key, secrets);
-        })?;
-        self.vault.save(&all)?;
-        self.finish_connect_saved(account, all, snapshot, now);
-        Ok(())
-    }
-
     /// The account already connected for the same person on the same tool and server, as on macOS
     /// (`isSame(as:identity:)`): connecting it again updates that one instead of adding a duplicate.
     pub fn existing_account(&self, account: &Account, identity: &str) -> Option<&Account> {
@@ -1442,6 +1414,7 @@ impl Inbox {
         self.existing_account(account, identity).map_or_else(|| account.id.clone(), |a| a.id.clone())
     }
 
+    /// Saves an account whose first fetch worked. Its items arrive silently.
     pub fn finish_connect_saved(
         &mut self,
         mut account: Account,
@@ -1475,7 +1448,7 @@ impl Inbox {
     }
 
     /// Reconnect: the same account with a new token, so its Done, snoozes and pins stay. The caller
-    /// fetches once with the plugin, then calls `finish_reconnect`.
+    /// fetches once with the plugin, then `Tokens::reconnect` saves it.
     pub fn prepare_reconnect(
         &self,
         account_id: &str,
@@ -1496,23 +1469,6 @@ impl Inbox {
     }
 
     /// Saves the new token of an account whose fetch worked with it, and its items.
-    pub fn finish_reconnect(
-        &mut self,
-        account_id: &str,
-        secrets: HashMap<String, String>,
-        snapshot: SourceSnapshot,
-        now: DateTime<Utc>,
-    ) -> Result<(), Message> {
-        if !self.accounts.iter().any(|a| a.id == account_id) {
-            return Err("This account is no longer connected.".into());
-        }
-        let all = self.secrets_after(|all| {
-            all.insert(account_id.to_string(), secrets);
-        })?;
-        self.vault.save(&all)?;
-        self.finish_reconnect_saved(account_id, all, snapshot, now)
-    }
-
     pub fn finish_reconnect_saved(
         &mut self,
         account_id: &str,
@@ -1530,7 +1486,7 @@ impl Inbox {
     }
 
     /// Reconnecting the assistant: the same account with a new key. The caller tests it once with a made-up item
-    /// (no inbox content), then saves the key with `finish_reconnect_secrets`.
+    /// (no inbox content), then `Tokens::reconnect` saves the key.
     pub fn prepare_assistant_reconnect(
         &self,
         account_id: &str,
@@ -1562,15 +1518,6 @@ impl Inbox {
         self.persist(ACCOUNTS, &self.accounts);
     }
 
-    pub fn disconnect(&mut self, account_id: &str) -> Result<(), Message> {
-        let all = self.secrets_after(|all| {
-            all.remove(account_id);
-        })?;
-        self.vault.save(&all)?;
-        self.disconnect_saved(account_id, all);
-        Ok(())
-    }
-
     pub fn disconnect_saved(&mut self, account_id: &str, saved: Secrets) {
         self.undo_point = None;
         self.secrets = Some(saved);
@@ -1588,13 +1535,7 @@ impl Inbox {
         self.enforce_ai_policy();
     }
 
-    /// Settings → Privacy → Erase local data: every account, file and token.
-    pub fn erase_local_data(&mut self) -> Result<(), Message> {
-        self.vault.save(&Secrets::new())?;
-        self.erase_local_data_saved()
-    }
-
-    /// Erase, the tokens already deleted. The files go under the lock, so no save can bring one back.
+    /// Settings → Privacy → Erase local data, the tokens already deleted (`Tokens::erase`). The files go under the lock, so no save can bring one back.
     pub fn erase_local_data_saved(&mut self) -> Result<(), Message> {
         self.remarks.clear();
         self.undo_point = None;
@@ -1660,6 +1601,20 @@ mod tests {
     use chrono::Duration;
     use remora_core::{Badge, EXTERNAL_AI_OFF, LOCAL_AI_NOT_ALLOWED, SERVER_NOT_ALLOWED};
     use remora_plugins::{Request, Response};
+
+    /// Runs a token change as the app does, through `Tokens`, on an inbox the test owns:
+    /// `saved!(inbox, |tokens, shared| tokens.disconnect(&shared, "a1"))`.
+    macro_rules! saved {
+        ($inbox:expr, |$tokens:ident, $shared:ident| $call:expr) => {{
+            let vault = $inbox.vault();
+            let placeholder = Inbox::in_memory(vault.clone(), Managed::default());
+            let $shared = tokio::sync::Mutex::new(std::mem::replace(&mut $inbox, placeholder));
+            let $tokens = crate::Tokens::new(Arc::new(crate::InPlace(vault)));
+            let result = futures::executor::block_on($call);
+            $inbox = $shared.into_inner();
+            result
+        }};
+    }
 
     struct NoNetwork;
 
@@ -2158,18 +2113,12 @@ mod tests {
         assert!(plugin.fetch().await.is_err(), "fetches go through the client we gave");
 
         let id = account.id.clone();
-        inbox
-            .finish_connect(
-                account,
-                secrets,
-                SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] },
-                now(),
-            )
-            .unwrap();
+        let snapshot = SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] };
+        saved!(inbox, |tokens, shared| tokens.connect(&shared, account, secrets, snapshot, now())).unwrap();
         assert_eq!(vault.load().unwrap()[&id]["token"], "lin_api_k");
         assert_eq!(inbox.account_infos()[0].hosts, ["api.linear.app", "public.linear.app"]);
 
-        inbox.disconnect(&id).unwrap();
+        saved!(inbox, |tokens, shared| tokens.disconnect(&shared, &id)).unwrap();
         assert!(inbox.accounts.is_empty() && vault.load().unwrap().is_empty());
     }
 
@@ -2221,21 +2170,21 @@ mod tests {
         let snapshot = plugin.fetch().await.unwrap();
         assert_eq!(http.calls(), 1, "connecting asks: it tests the token");
         let id = account.id.clone();
-        inbox.finish_connect(account, token("t1"), snapshot, now()).unwrap();
+        saved!(inbox, |tokens, shared| tokens.connect(&shared, account, token("t1"), snapshot, now())).unwrap();
         refresh(&mut inbox, &http).await;
         refresh(&mut inbox, &http).await;
         assert_eq!(http.calls(), 2, "the first refresh asks, the next ones remember");
 
         let plugin = inbox.prepare_reconnect(&id, &token("t2"), http.clone()).unwrap();
         let snapshot = plugin.fetch().await.unwrap();
-        inbox.finish_reconnect(&id, token("t2"), snapshot, now()).unwrap();
+        saved!(inbox, |tokens, shared| tokens.reconnect(&shared, &id, token("t2"), Some(snapshot), now())).unwrap();
         refresh(&mut inbox, &http).await;
         assert_eq!(http.calls(), 4, "a new token: reconnecting asks, and the session starts over");
 
-        inbox.disconnect(&id).unwrap();
+        saved!(inbox, |tokens, shared| tokens.disconnect(&shared, &id)).unwrap();
         let (account, plugin) = connect(&mut inbox, &http);
         let snapshot = plugin.fetch().await.unwrap();
-        inbox.finish_connect(account, token("t1"), snapshot, now()).unwrap();
+        saved!(inbox, |tokens, shared| tokens.connect(&shared, account, token("t1"), snapshot, now())).unwrap();
         refresh(&mut inbox, &http).await;
         assert_eq!(http.calls(), 6, "after a disconnect, nothing was kept");
     }
@@ -2249,32 +2198,18 @@ mod tests {
         let (account, _) =
             inbox.prepare_connect("linear", None, HashMap::new(), &secrets, Arc::new(NoNetwork)).unwrap();
         let id = account.id.clone();
-        inbox
-            .finish_connect(
-                account,
-                secrets.clone(),
-                SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] },
-                now(),
-            )
-            .unwrap();
+        let snapshot = SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] };
+        saved!(inbox, |tokens, shared| tokens.connect(&shared, account, secrets.clone(), snapshot, now())).unwrap();
         let settings = HashMap::new();
         let (cache, _) = AccountSession::current(&mut inbox.sessions, &id, &settings, &secrets);
         cache.renew("refreshToken", "r2".into());
         let (gone, _) = AccountSession::current(&mut inbox.sessions, "gone", &settings, &secrets);
         gone.renew("refreshToken", "x".into());
-        let renewed = inbox.take_renewed_secrets();
-        assert_eq!(renewed.iter().map(|(a, _)| a.as_str()).collect::<Vec<_>>(), [id.as_str()]);
-        let all = inbox
-            .secrets_after(|all| {
-                for (account, secrets) in renewed {
-                    all.entry(account).or_default().extend(secrets);
-                }
-            })
-            .unwrap();
-        vault.save(&all).unwrap();
-        inbox.renewed_saved(all);
+        saved!(inbox, |tokens, shared| tokens.save_renewed(&shared)).unwrap();
         let saved = vault.load().unwrap();
+        assert_eq!(saved.keys().collect::<Vec<_>>(), [&id], "nothing for an account no longer here");
         assert_eq!((saved[&id]["token"].as_str(), saved[&id]["refreshToken"].as_str()), ("lin_k", "r2"));
+        assert_eq!(inbox.secrets().unwrap(), &saved, "the inbox uses them from now on");
     }
 
     /// Connecting the same account again (same person, tool and server) updates it: no second account, no
@@ -2292,7 +2227,7 @@ mod tests {
             issue.id = format!("{}/issue-1", account.id);
             issue.account_id = account.id.clone();
             let snapshot = SourceSnapshot { identity: "Alice".into(), items: vec![issue], remarks: vec![] };
-            inbox.finish_connect(account, secrets, snapshot, now()).unwrap();
+            saved!(*inbox, |tokens, shared| tokens.connect(&shared, account, secrets, snapshot, now())).unwrap();
         };
         connect(&mut inbox, None, "lin_old");
         let id = inbox.accounts[0].id.clone();
@@ -2362,7 +2297,7 @@ mod tests {
         assert!(reopened.states["1"].pinned);
         assert_eq!(reopened.preferences.refresh_minutes, 15);
 
-        reopened.erase_local_data().unwrap();
+        saved!(reopened, |tokens, shared| tokens.erase(&shared)).unwrap();
         assert!(reopened.all_items().is_empty());
         assert!(store.load::<Vec<Account>>(ACCOUNTS).is_none());
     }
@@ -2392,41 +2327,33 @@ mod tests {
         assert_ne!(std::fs::read_to_string(folder.join(format!("{STATES}.json"))).unwrap(), "untouched");
     }
 
-    /// The app saves tokens outside the lock: `secrets_after`, then `Vault::save`, then a `…_saved` method.
-    #[tokio::test]
-    async fn tokens_can_be_saved_outside_the_inbox() {
+    /// The app reads and saves tokens through `Tokens`, outside the lock: the other accounts' tokens stay.
+    #[test]
+    fn tokens_are_read_and_saved_outside_the_inbox() {
         let vault = Arc::new(MemoryVault::default());
         vault.save(&Secrets::from([("old".to_string(), HashMap::new())])).unwrap();
         let mut inbox = Inbox::in_memory(vault.clone(), Managed::default());
         assert!(inbox.needs_secrets());
-        inbox.provide_secrets(inbox.vault().load().unwrap());
+        saved!(inbox, |tokens, shared| async {
+            tokens.load_once(&shared).await;
+            Ok::<_, Message>(())
+        })
+        .unwrap();
         assert!(!inbox.needs_secrets());
 
         let secrets = HashMap::from([("token".to_string(), "lin_api_k".to_string())]);
         let (account, _) =
             inbox.prepare_connect("linear", None, HashMap::new(), &secrets, Arc::new(NoNetwork)).unwrap();
         let id = account.id.clone();
-        let all = inbox
-            .secrets_after(|all| {
-                all.insert(id.clone(), secrets);
-            })
-            .unwrap();
-        assert!(!vault.load().unwrap().contains_key(&id), "nothing saved yet");
-        inbox.vault().save(&all).unwrap();
         let identity = SourceSnapshot { identity: "Alice".into(), items: vec![], remarks: vec![] };
-        inbox.finish_connect_saved(account, all, identity, now());
+        saved!(inbox, |tokens, shared| tokens.connect(&shared, account, secrets, identity, now())).unwrap();
         assert_eq!(vault.load().unwrap()[&id]["token"], "lin_api_k");
         assert!(vault.load().unwrap().contains_key("old"));
         assert_eq!(inbox.accounts.len(), 1);
 
-        let all = inbox
-            .secrets_after(|all| {
-                all.remove(&id);
-            })
-            .unwrap();
-        inbox.vault().save(&all).unwrap();
-        inbox.disconnect_saved(&id, all);
+        saved!(inbox, |tokens, shared| tokens.disconnect(&shared, &id)).unwrap();
         assert!(inbox.accounts.is_empty() && !vault.load().unwrap().contains_key(&id));
+        assert!(vault.load().unwrap().contains_key("old"));
     }
 
     /// A refresh started before Erase finishes after it, and used to write the cache back.
@@ -2438,7 +2365,7 @@ mod tests {
         inbox.accounts = self::inbox().accounts;
         let in_flight = snapshot(vec![item("1", InboxBundle::reviews())]);
 
-        inbox.erase_local_data().unwrap();
+        saved!(inbox, |tokens, shared| tokens.erase(&shared)).unwrap();
         inbox.apply(in_flight, now());
 
         assert!(inbox.all_items().is_empty());
@@ -2451,7 +2378,7 @@ mod tests {
         let mut in_flight = snapshot(vec![item("1", InboxBundle::reviews())]);
         in_flight.push(("a1".into(), Err(PluginError::Network("timeout".into()))));
 
-        inbox.disconnect("a1").unwrap();
+        saved!(inbox, |tokens, shared| tokens.disconnect(&shared, "a1")).unwrap();
         inbox.apply(in_flight, now());
 
         assert!(inbox.all_items().is_empty());
@@ -2551,7 +2478,7 @@ mod tests {
             items: vec![item("x", InboxBundle::reviews())],
             remarks: vec![],
         };
-        inbox.finish_reconnect("a1", token, fetched, now()).unwrap();
+        saved!(inbox, |tokens, shared| tokens.reconnect(&shared, "a1", token, Some(fetched), now())).unwrap();
         assert_eq!(inbox.accounts.len(), 1, "the same account");
         assert_eq!(inbox.health(), SourcesHealth::Fine);
         assert!(inbox.states.get("x").is_some_and(|s| s.pinned), "its states stay");
@@ -2618,14 +2545,12 @@ mod tests {
         let mut inbox = inbox();
         inbox.preferences.allow_external_ai = true;
         let account = connect_openai(&inbox, "https://api.openai.com/v1").unwrap();
-        inbox.finish_assistant_connect(account.clone(), HashMap::from([("token".into(), "old".into())])).unwrap();
+        let old = HashMap::from([("token".into(), "old".into())]);
+        saved!(inbox, |tokens, shared| tokens.connect_assistant(&shared, account.clone(), old, None)).unwrap();
         let key = HashMap::from([("token".to_string(), "new".to_string())]);
         assert!(inbox.prepare_assistant_reconnect(&account.id, &key, Arc::new(NoNetwork), "en").is_ok());
         assert!(inbox.prepare_assistant_reconnect("a1", &key, Arc::new(NoNetwork), "en").is_err(), "not an assistant");
-        let all = inbox.secrets_after(|all| {
-            all.insert(account.id.clone(), key.clone());
-        });
-        inbox.finish_reconnect_secrets(&account.id, all.unwrap()).unwrap();
+        saved!(inbox, |tokens, shared| tokens.reconnect(&shared, &account.id, key.clone(), None, now())).unwrap();
         assert_eq!(inbox.assistant_account().map(|a| a.id), Some(account.id.clone()), "the same account");
         assert_eq!(inbox.secrets().unwrap()[&account.id]["token"], "new");
         inbox.preferences.allow_external_ai = false;
@@ -2754,7 +2679,8 @@ mod tests {
             let mut inbox = Inbox::open(store, Arc::new(MemoryVault::default()), Managed::default());
             inbox.preferences.allow_external_ai = true;
             let account = connect_openai(&inbox, "https://api.openai.com/v1").unwrap();
-            inbox.finish_assistant_connect(account.clone(), HashMap::from([("token".into(), "sk".into())])).unwrap();
+            let key = HashMap::from([("token".into(), "sk".into())]);
+            saved!(inbox, |tokens, shared| tokens.connect_assistant(&shared, account.clone(), key, None)).unwrap();
             (inbox, account.id)
         };
         let brief = || Brief::new("Two reviews wait.", vec![], Utc::now());
@@ -2769,7 +2695,7 @@ mod tests {
         assert!(inbox.brief.is_some() && inbox.bundle_summaries.len() == 1 && inbox.triage.len() == 1, "still wanted");
 
         let (mut inbox, from) = connected("erased");
-        inbox.erase_local_data().unwrap();
+        saved!(inbox, |tokens, shared| tokens.erase(&shared)).unwrap();
         inbox.keep_brief(&from, brief());
         inbox.keep_summary(&from, "b", summary());
         inbox.keep_triage(&from, suggestions());
@@ -2781,7 +2707,7 @@ mod tests {
         );
 
         let (mut inbox, from) = connected("disconnected");
-        inbox.disconnect(&from).unwrap();
+        saved!(inbox, |tokens, shared| tokens.disconnect(&shared, &from)).unwrap();
         inbox.keep_summary(&from, "b", summary());
         assert!(inbox.bundle_summaries.is_empty());
 

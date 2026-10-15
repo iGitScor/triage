@@ -21,7 +21,7 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 |---|---|---|
 | `crates/remora_core` | Domaine et règles : verbes, À moi / En attente, priorisation, règles de Terminé et de report, détection des changements, horloge et conseiller de report (raisons, retours, constats), préparation des relectures, assistant d’attente, classement personnel, liens entre outils, données et politique de l’assistant, politique de conformité | 127 |
 | `crates/remora_plugins` | GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365 ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 162 |
-| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 98 |
+| `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 102 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 5 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 93 |
 
@@ -71,7 +71,9 @@ flowchart LR
 
 L’app actualise toutes les quelques minutes, et vérifie toutes les 30 secondes les reports et rappels arrivés à
 échéance (Windows ne sait pas programmer des notifications à l’avance comme macOS). Les appels réseau se font sans
-garder le verrou de la boîte de réception, donc l’interface n’attend jamais un outil lent.
+garder le verrou de la boîte de réception, donc l’interface n’attend jamais un outil lent. Les jetons sont enregistrés
+de la même façon : chaque changement (connexion, reconnexion, déconnexion, effacement, connexion renouvelée) passe par
+`Tokens` dans `remora_app`, un à la fois, le coffre écrit sans le verrou.
 
 ## Construire et tester
 

@@ -10,7 +10,7 @@ mod linux;
 mod updates;
 
 use remora_app::tray::{notification_text, NotificationAction, TrayImage, TraySummary};
-use remora_app::{demo, paths, CredentialVault, Inbox, JsonStore, Managed, MemoryVault, Secrets, Vault};
+use remora_app::{demo, paths, Blocking, CredentialVault, Inbox, JsonStore, Managed, MemoryVault, Tokens, Vault};
 use remora_core::Notice;
 use remora_plugins::{HttpClient, ReqwestClient};
 use std::sync::Arc;
@@ -26,8 +26,8 @@ use tokio::sync::{Mutex, Notify};
 
 pub struct AppState {
     pub inbox: Mutex<Inbox>,
-    /// Held while the tokens change, from reading them to saving them, so two changes never race.
-    pub vault_writes: Mutex<()>,
+    /// Every change to the tokens, one at a time, saved without the inbox lock.
+    pub tokens: Tokens,
     /// The inbox's files, flushed when the app quits.
     pub store: Option<JsonStore>,
     pub http: Arc<dyn HttpClient>,
@@ -100,10 +100,11 @@ pub fn run() {
             eprintln!("Remora: could not move the data saved by 0.3.0: {error}");
         }
     }
+    let vault: Arc<dyn Vault> = if demo_mode { Arc::new(MemoryVault::default()) } else { Arc::new(CredentialVault) };
     let mut inbox = if demo_mode {
-        Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default())
+        Inbox::in_memory(vault.clone(), Managed::default())
     } else {
-        Inbox::open(JsonStore::new(paths::data_dir()), Arc::new(CredentialVault), Managed::read())
+        Inbox::open(JsonStore::new(paths::data_dir()), vault.clone(), Managed::read())
     };
     if demo_mode {
         demo::load(&mut inbox, chrono::Utc::now());
@@ -112,7 +113,7 @@ pub fn run() {
     let state = AppState {
         store: inbox.store(),
         inbox: Mutex::new(inbox),
-        vault_writes: Mutex::new(()),
+        tokens: Tokens::new(Arc::new(Blocking(vault))),
         http: Arc::new(ReqwestClient::new()),
         refresh_now: Notify::new(),
         cancel_sign_in: Notify::new(),
@@ -524,53 +525,18 @@ pub async fn refresh(app: &AppHandle, manual: bool) {
             inbox.enforce_ai_policy();
         }
         // The tokens are read once per launch, outside the lock.
-        let vault = {
-            let inbox = state.inbox.lock().await;
-            inbox.needs_secrets().then(|| inbox.vault())
-        };
-        if let Some(vault) = vault {
-            if let Ok(Ok(secrets)) = tauri::async_runtime::spawn_blocking(move || vault.load()).await {
-                state.inbox.lock().await.provide_secrets(secrets);
-            }
-        }
+        state.tokens.load_once(&state.inbox).await;
         let jobs = state.inbox.lock().await.fetch_jobs(state.http.clone(), chrono::Utc::now(), manual);
         let results = remora_app::run(jobs).await;
         let notices = state.inbox.lock().await.apply(results, chrono::Utc::now());
         post(app, &notices);
-        save_renewed(app).await;
+        // What a plugin renewed (a Microsoft sign-in's refresh token) is saved as a connection's is. A failed save
+        // keeps the old one, still valid.
+        if let Err(error) = state.tokens.save_renewed(&state.inbox).await {
+            eprintln!("Remora: a renewed sign-in couldn't be saved: {error}");
+        }
     }
     changed(app).await;
-}
-
-/// Secrets a plugin renewed during the refresh (a Microsoft sign-in's refresh token) go to the vault, as a
-/// connection's do: off the inbox lock, one write at a time. A failed save keeps the old one, still valid.
-async fn save_renewed(app: &AppHandle) {
-    let state = app.state::<AppState>();
-    let renewed = state.inbox.lock().await.take_renewed_secrets();
-    if renewed.is_empty() {
-        return;
-    }
-    let _writes = state.vault_writes.lock().await;
-    let (vault, all) = {
-        let mut inbox = state.inbox.lock().await;
-        let all = inbox.secrets_after(|all| {
-            for (account_id, secrets) in renewed {
-                all.entry(account_id).or_default().extend(secrets);
-            }
-        });
-        (inbox.vault(), all)
-    };
-    let Ok(all) = all else { return };
-    match save_secrets(vault, all.clone()).await {
-        Ok(()) => state.inbox.lock().await.renewed_saved(all),
-        Err(error) => eprintln!("Remora: a renewed sign-in couldn't be saved: {error}"),
-    }
-}
-
-/// Saves every account's tokens off the async runtime and without the inbox lock: the Credential Manager can be slow.
-/// The caller holds `vault_writes` from `secrets_after` to the `…_saved` call.
-pub async fn save_secrets(vault: Arc<dyn Vault>, secrets: Secrets) -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(move || vault.save(&secrets)).await.map_err(|e| e.to_string())?
 }
 
 /// Tells the interface to reload, and updates the tray.
