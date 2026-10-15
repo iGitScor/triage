@@ -40,9 +40,12 @@ pub fn migrate(from: &Path, to: &Path) -> io::Result<usize> {
     Ok(files.len())
 }
 
-/// The credential store entry holding every account's secrets, as one JSON value.
+/// The credential store's service for every entry: one per account, whose user is the account's id, and the index of
+/// those ids (`vault.rs`).
 pub const VAULT_SERVICE: &str = if INSTALLED { "fr.igitscor.remora" } else { "fr.igitscor.remora.windows-dev" };
-pub const VAULT_ACCOUNT: &str = "secrets";
+pub const VAULT_INDEX: &str = "accounts";
+/// The single entry that held every account's secrets in earlier versions, moved over once.
+pub const VAULT_LEGACY: &str = "secrets";
 
 #[cfg(test)]
 mod tests {

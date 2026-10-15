@@ -68,7 +68,7 @@ settings (it uses macOS’s login items).
 Each release also has **Remora-Setup.exe** (with its SHA-256, SBOM and attestation), always at
 `https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe`. It is an NSIS installer that installs for the current user, in
 `%LOCALAPPDATA%\Remora`, with no admin rights; silent install: `Remora-Setup.exe /S`. Its data is in
-`%LOCALAPPDATA%\fr.igitscor.remora` and its tokens in one Credential Manager entry (`fr.igitscor.remora`). It isn’t signed yet, so
+`%LOCALAPPDATA%\fr.igitscor.remora` and its tokens in the Credential Manager, one entry per account (`fr.igitscor.remora`). It isn’t signed yet, so
 SmartScreen warns once (*More info* → *Run anyway*); to avoid that, sign it with your organization’s code-signing
 certificate before deploying. The policy is set in the registry: see [MDM](./mdm#windows-group-policy-or-intune).
 

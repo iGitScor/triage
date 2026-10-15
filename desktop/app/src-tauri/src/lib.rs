@@ -100,7 +100,8 @@ pub fn run() {
             eprintln!("Remora: could not move the data saved by 0.3.0: {error}");
         }
     }
-    let vault: Arc<dyn Vault> = if demo_mode { Arc::new(MemoryVault::default()) } else { Arc::new(CredentialVault) };
+    let vault: Arc<dyn Vault> =
+        if demo_mode { Arc::new(MemoryVault::default()) } else { Arc::new(CredentialVault::system()) };
     let mut inbox = if demo_mode {
         Inbox::in_memory(vault.clone(), Managed::default())
     } else {

@@ -19,7 +19,7 @@ GlobalShortcuts portal (KDE Plasma, GNOME 48+), or else a system shortcut runnin
 |---|---|---|
 | `crates/remora_core` | Domain and rules: verbs, My turn / Waiting, prioritizer, Done and snooze rules, change detection, snooze clock and advisor (reasons, returns, insights), review prep, waiting assistant, personal ranking, links between tools, the assistant's data and policy, compliance policy | 127 |
 | `crates/remora_plugins` | GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365; the assistant: Claude through the API or Claude Code, or an OpenAI-compatible server; the HTTP client limited to each plugin’s declared hosts | 162 |
-| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 104 |
+| `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 114 |
 | `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 5 |
 | `app/src` | The Svelte interface, in English and French | type-checked, 93 |
 
@@ -49,7 +49,7 @@ GlobalShortcuts portal (KDE Plasma, GNOME 48+), or else a system shortcut runnin
 
 | | macOS | Windows |
 |---|---|---|
-| Tokens | Keychain, one item | Credential Manager, one entry |
+| Tokens | Keychain, one item | Credential Manager, one entry per account |
 | Data | `~/Library/Application Support/Remora` | `%LOCALAPPDATA%\fr.igitscor.remora` |
 | Managed policy | Configuration profile, domain `fr.igitscor.remora` | `HKLM\SOFTWARE\Policies\Remora` (Group Policy, Intune) |
 | TLS | System trust | `native-tls`: the Windows certificate store, so corporate root certificates work |

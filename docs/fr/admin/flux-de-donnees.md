@@ -107,7 +107,7 @@ et ses entrées Spotlight ; de même pour un outil que la politique bloque ou do
 | Données | Emplacement |
 |---|---|
 | Les mêmes données que sur macOS : les comptes, la dernière copie des éléments de chaque outil (texte des messages Slack compris), les états, les rappels, l’historique des reports, ce que l’utilisateur traite vite, la durée des relectures, le dernier brief et les résumés, les préférences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `snooze-history.json`, `learning.json`, `review-times.json`, `brief.json`, `bundle-summaries.json`, `preferences.json` dans `%LOCALAPPDATA%\fr.igitscor.remora` |
-| Jetons | Une entrée du Gestionnaire d’identification : `fr.igitscor.remora`, utilisateur `secrets` |
+| Jetons | Une entrée du Gestionnaire d’identification par compte : `fr.igitscor.remora`, utilisateur l’identifiant du compte, et un index des identifiants (utilisateur `accounts`) |
 
 Les fichiers sont du JSON en clair, lisibles par le compte Windows de l’utilisateur (et les administrateurs) ;
 BitLocker les chiffre avec le reste du disque. Réglages → Confidentialité → **Effacer les données locales**
@@ -118,7 +118,7 @@ qu’elles soient fermées. L’option « supprimer les données de l’app » d
 
 Les mêmes fichiers que sous Windows, dans `$XDG_DATA_HOME/fr.igitscor.remora` (en général `~/.local/share`), un
 dossier lisible par l’utilisateur seul (`0700`, fichiers `0600`). Les jetons sont dans le Secret Service (GNOME
-Keyring, KWallet ou KeePassXC), entrée `fr.igitscor.remora`, utilisateur `secrets`, qui les garde chiffrés au repos ;
+Keyring, KWallet ou KeePassXC), mêmes entrées que sous Windows, qui les garde chiffrés au repos ;
 sans trousseau actif, Remora le dit au lieu de démarrer sans jetons. Politique :
 [`/etc/remora/policy.json`](./mdm#linux-un-fichier-de-politique).
 

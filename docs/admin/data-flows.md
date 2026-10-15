@@ -102,7 +102,7 @@ items, its notifications and its Spotlight entries; so does a tool the policy bl
 | Data | Where |
 |---|---|
 | The same data as on macOS: accounts, the last copy of each tool’s items (Slack message text included), item states, reminders, snooze history, what the user handles quickly, review times, the last brief and summaries, preferences | `accounts.json`, `cache.json`, `states.json`, `reminders.json`, `snooze-history.json`, `learning.json`, `review-times.json`, `brief.json`, `bundle-summaries.json`, `preferences.json` in `%LOCALAPPDATA%\fr.igitscor.remora` |
-| Tokens | One Credential Manager entry: `fr.igitscor.remora`, user `secrets` |
+| Tokens | One Credential Manager entry per account: `fr.igitscor.remora`, user the account’s id, and an index of the ids (user `accounts`) |
 
 The files are plain JSON, readable by the user’s Windows account (and administrators); BitLocker encrypts them with
 the rest of the disk. Settings → Privacy → **Erase local data** deletes the files and the tokens; notifications
@@ -112,8 +112,8 @@ folder too.
 ### Linux (preview)
 
 The same files as on Windows, in `$XDG_DATA_HOME/fr.igitscor.remora` (usually `~/.local/share`), the folder readable
-by the user only (`0700`, files `0600`). Tokens are in the Secret Service (GNOME Keyring, KWallet or KeePassXC), entry
-`fr.igitscor.remora`, user `secrets`, which keeps them encrypted at rest; without a keyring running, Remora says so
+by the user only (`0700`, files `0600`). Tokens are in the Secret Service (GNOME Keyring, KWallet or KeePassXC), the same
+entries as on Windows, which keeps them encrypted at rest; without a keyring running, Remora says so
 rather than starting without tokens. Policy: [`/etc/remora/policy.json`](./mdm#linux-a-policy-file).
 
 **On-device ML**: on macOS, sorting messages and comparing topics use Apple’s NaturalLanguage framework (sentence and
