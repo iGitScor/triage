@@ -10,6 +10,8 @@ let package = Package(
         .target(name: "RemoraCore"),
         .target(name: "RemoraPlugins", dependencies: ["RemoraCore"]),
         .executableTarget(name: "Remora", dependencies: ["RemoraCore", "RemoraPlugins"]),
+        // The `remora` command (IDEA-22), copied into the app as Contents/Helpers/remora.
+        .executableTarget(name: "RemoraCLI", dependencies: ["RemoraCore"]),
         .testTarget(name: "RemoraCoreTests", dependencies: ["RemoraCore"]),
         .testTarget(name: "RemoraPluginsTests", dependencies: ["RemoraPlugins"]),
         // The app layer (inbox model, stores, Keychain vault, policy) on a temporary folder and stand-ins.

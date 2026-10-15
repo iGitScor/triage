@@ -262,6 +262,7 @@ pub fn run() {
                 new_reminder(app.handle());
             }
             links(app)?;
+            listen(app.handle(), demo_mode);
             tauri::async_runtime::spawn(background(app.handle().clone()));
             tauri::async_runtime::spawn(swim(app.handle().clone()));
             if !demo_mode {
@@ -374,6 +375,28 @@ fn follow(app: &AppHandle, url: &str) {
         }
         Some(remora_core::Link::Refresh) => app.state::<AppState>().refresh_now.notify_one(),
         None => {}
+    }
+}
+
+/// The `remora` command (IDEA-22): `remora count`, `list`, `remind` ask the app here, on a socket (a named pipe on
+/// Windows) only this user can open. A demo run answers only where REMORA_SOCKET says, never in the real app's place.
+fn listen(app: &AppHandle, demo: bool) {
+    use remora_app::local_api;
+    if demo && std::env::var_os(local_api::ENDPOINT_VARIABLE).is_none() {
+        return;
+    }
+    let handle = app.clone();
+    let served = local_api::serve(local_api::endpoint(), move |line| {
+        let state = handle.state::<AppState>();
+        let (answer, saved) = local_api::answer(&mut state.inbox.blocking_lock(), line, chrono::Utc::now());
+        if saved {
+            let app = handle.clone();
+            tauri::async_runtime::spawn(async move { changed(&app).await });
+        }
+        answer
+    });
+    if let Err(error) = served {
+        eprintln!("Remora: the remora command can't reach this app: {error}");
     }
 }
 

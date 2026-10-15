@@ -127,6 +127,14 @@ framework NaturalLanguage d’Apple (plongements de phrases et de mots fournis a
 conseils de report, de petites statistiques sur l’historique local. L’app Windows et Linux trie avec des règles de mots-clés
 seulement. Rien n’est envoyé.
 
+**La commande `remora`** ([Liens et automatisation](../guide/liens#la-commande-remora)) lit le compte et les titres,
+contextes et liens des éléments dans l’app ouverte, et peut enregistrer un rappel. Elle passe par un socket que seul
+l’utilisateur peut ouvrir (`remora.sock`, `0600`, dans le dossier temporaire de l’utilisateur sur macOS et
+`$XDG_RUNTIME_DIR` sous Linux ; sous Windows un tube nommé `\\.\pipe\remora-<utilisateur>` accessible au seul
+utilisateur, qui refuse les clients distants), jamais le réseau. Les titres des outils sous *Masquer le contenu des
+messages* (ceux de l’utilisateur ou `HiddenContentSources`) en sont exclus ; après l’effacement, elle trouve une boîte
+vide.
+
 ## Comment c’est appliqué
 
 1. **Destinations déclarées.** Chaque extension déclare ses sorties (adresses, description, IA externe ou non) dans

@@ -30,6 +30,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 - Azure DevOps, on Mac, Windows and Linux: pull requests you opened or still have to vote on, with votes, conflicts
   and build policies as badges and review prep, and the open work items assigned to you in *To do*. Azure DevOps
   Services or Server 2020 and later, with a personal access token.
+- The `remora` command, on Mac, Windows and Linux: `remora count`, `remora list --tab waiting [--json]` and
+  `remora remind "…" --at 15:00` ask the running app, for a status bar, Raycast, Alfred or a script. Titles you hide
+  with *Hide message content* stay hidden; nothing is marked done or snoozed.
 
 ## 0.9.0 (2026-10-13)
 

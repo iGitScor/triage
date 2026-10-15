@@ -14,8 +14,10 @@ BIN="$(swift build -c "$CONFIG" ${BUILD_FLAGS[@]+"${BUILD_FLAGS[@]}"} --show-bin
 
 APP=build/Remora.app
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Helpers"
 cp "$BIN/Remora" "$APP/Contents/MacOS/Remora"
+# The `remora` command (IDEA-22): a link to it on the PATH runs it (docs/guide/links.md).
+cp "$BIN/RemoraCLI" "$APP/Contents/Helpers/remora"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/Outfit.woff2 "$APP/Contents/Resources/"
 cp -R Resources/en.lproj Resources/fr.lproj "$APP/Contents/Resources/"
@@ -35,16 +37,19 @@ fi
 if [ -z "$IDENTITY" ] && echo "$IDENTITIES" | grep -q '"Remora Local Signing"'; then
     IDENTITY="Remora Local Signing"
 fi
-# Always the hardened runtime: the app needs no exception (no plug-ins, no JIT; starting `claude` is allowed).
+# The command inside first, then the app around it. Always the hardened runtime: the app needs no exception (no
+# plug-ins, no JIT; starting `claude` is allowed).
 # Apple's timestamp server only accepts Apple-issued certificates, and notarization requires it.
 OPTIONS=(--force --options runtime)
 case "$IDENTITY" in "Developer ID Application:"*) OPTIONS+=(--timestamp) ;; esac
 if [ -n "$IDENTITY" ]; then
     echo "Signing with $IDENTITY"
+    codesign "${OPTIONS[@]}" --sign "$IDENTITY" "$APP/Contents/Helpers/remora"
     codesign "${OPTIONS[@]}" --sign "$IDENTITY" "$APP"
 else
     echo "No signing certificate, signing ad hoc: the Keychain will ask again after each build."
     echo "scripts/make-signing-cert.sh creates \"Remora Local Signing\", so it recognizes Remora across builds."
+    codesign "${OPTIONS[@]}" --sign - "$APP/Contents/Helpers/remora"
     codesign "${OPTIONS[@]}" --sign - "$APP"
 fi
 echo "Built $APP"

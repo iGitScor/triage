@@ -18,6 +18,7 @@ struct RemoraApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
     private var statusItem: StatusItemController?
+    private var commands: LocalSocketServer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Fonts.register()
@@ -35,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Notifier.shared.activate()
         statusItem = MainActor.assumeIsolated { StatusItemController(model: .shared) }
         Task { @MainActor in InboxModel.shared.start() }
+        commands = MainActor.assumeIsolated { CommandEndpoint.start(demo: CommandLine.arguments.contains("--demo")) }
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { _ in
@@ -88,6 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Changes are saved a moment later, off the main thread: what's still pending is written before quitting.
     func applicationWillTerminate(_ notification: Notification) {
         MainActor.assumeIsolated { InboxModel.shared.flushWrites() }
+        commands?.stop()
     }
 
     /// The inbox in a regular window: handy when the menu bar is crowded, and for screenshots.

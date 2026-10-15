@@ -58,6 +58,28 @@ struct InboxModelTests {
         #expect(!acme.isSame(as: org("globex"), identity: "alice"))
     }
 
+    /// IDEA-22: the `remora` command reads the inbox as it is, without hidden titles, saves reminders, and finds
+    /// nothing once erased.
+    @Test func theCommandAnswersFromTheInboxAndHidesWhatIsHidden() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let titles = model.allItems.map(\.title)
+        let listed = model.answerCommand(#"{"command":"list"}"#)
+        #expect(titles.allSatisfy(listed.contains))
+
+        model.preferences.hiddenContentPlugins = ["linear"]
+        let hidden = model.answerCommand(#"{"command":"list"}"#)
+        #expect(!titles.contains(where: hidden.contains), "\(hidden)")
+        #expect(hidden.contains("ENG-42"), "where, not what")
+
+        let saved = model.answerCommand(#"{"command":"remind","text":"Call Erin","at":"23:59"}"#)
+        #expect(saved.contains(#""ok":true"#), "\(saved)")
+        #expect(model.reminders.map(\.title) == ["Call Erin"])
+
+        try model.eraseLocalData()
+        #expect(model.answerCommand(#"{"command":"list","tab":"snoozed"}"#).contains(#""items":[]"#))
+    }
+
     @Test func aNewLaunchFindsAccountsItemsAndStates() async throws {
         let harness = Harness()
         let model = try await harness.connected()

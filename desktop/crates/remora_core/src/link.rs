@@ -9,8 +9,8 @@ pub const LINK_SCHEME: &str = "remora";
 /// A reminder's text from a link is cut there: a link can't fill the panel with a page of text.
 pub const LINK_TEXT_LIMIT: usize = 200;
 
-/// The tabs a link may name, and the app's own names for them.
-const TABS: [(&str, &str); 5] = [
+/// The tabs a link (or the `remora` command) may name, and the app's own names for them.
+pub(crate) const TABS: [(&str, &str); 5] = [
     ("in-progress", "inProgress"),
     ("my-turn", "myTurn"),
     ("waiting", "waiting"),
@@ -63,7 +63,7 @@ pub fn parse_link(url: &str, now: DateTime<Utc>) -> Option<Link> {
 }
 
 /// "2026-10-14T09:00:00+02:00", or "2026-10-14T09:00" on this computer's clock.
-fn time(raw: &str) -> Option<DateTime<Utc>> {
+pub(crate) fn time(raw: &str) -> Option<DateTime<Utc>> {
     let raw = raw.trim();
     if let Ok(at) = DateTime::parse_from_rfc3339(raw) {
         return Some(at.with_timezone(&Utc));

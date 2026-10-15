@@ -1246,8 +1246,12 @@ final class InboxModel {
         }
     }
 
-    /// A reminder hidden until `date`; with a rule, it comes back after each Done until `until`'s day.
-    func addReminder(_ title: String, at date: Date, repeating rule: Recurrence.Rule? = nil, until: Date? = nil) {
+    /// A reminder hidden until `date`; with a rule, it comes back after each Done until `until`'s day. Its id, or
+    /// nil when the rule ends before it starts.
+    @discardableResult
+    func addReminder(
+        _ title: String, at date: Date, repeating rule: Recurrence.Rule? = nil, until: Date? = nil
+    ) -> String? {
         var item = InboxItem(
             id: "reminder/\(UUID().uuidString)",
             accountID: UUID(),
@@ -1260,12 +1264,13 @@ final class InboxModel {
         )
         if let rule {
             let recurrence = Recurrence(rule: rule, anchor: date, until: until)
-            guard !recurrence.endsBeforeStart() else { return }
+            guard !recurrence.endsBeforeStart() else { return nil }
             item.recurrence = recurrence
         }
         reminders.append(item)
         persist(remindersStore, reminders)
         snooze(item, until: date, mode: .hide, note: nil)
+        return item.id
     }
 
     /// This reminder stays as it is, but won't come back after Done.

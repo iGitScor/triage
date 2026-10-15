@@ -3,7 +3,7 @@ use std::{fs, io};
 
 /// Whether this build is the installed app, which uses Remora's own names. A development build on Linux, and any
 /// build on a Mac (where the macOS app is the real one), keeps to names of its own and never touches its data.
-const INSTALLED: bool = cfg!(windows) || (cfg!(target_os = "linux") && !cfg!(debug_assertions));
+pub(crate) const INSTALLED: bool = cfg!(windows) || (cfg!(target_os = "linux") && !cfg!(debug_assertions));
 
 /// `%LOCALAPPDATA%\fr.igitscor.remora` on Windows: Tauri's app data folder, which the uninstaller's
 /// "delete app data" option removes. Not `%LOCALAPPDATA%\Remora`: that is where the per-user installer puts

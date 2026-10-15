@@ -1,6 +1,6 @@
 ---
 title: Links and automation
-description: Open Remora, a tab or the reminder panel from Shortcuts, Raycast, Alfred, a Stream Deck or a script, with remora:// links.
+description: Open Remora, a tab or the reminder panel from Shortcuts, Raycast, Alfred, a Stream Deck or a script, with remora:// links; read the count and the list with the remora command.
 ---
 
 # Links and automation
@@ -23,3 +23,39 @@ and you decide. An unknown link is ignored.
 
 Try one from a terminal: `open "remora://open?tab=waiting"` on a Mac, `start remora://refresh` on Windows,
 `xdg-open remora://open` on Linux (the `.deb` registers the links; the AppImage does it when it starts).
+
+## The `remora` command
+
+A link can't answer. For a status bar (SketchyBar, tmux, Waybar), a launcher or a script that wants the count or the
+list, the `remora` command asks the running app:
+
+| Command | What it prints |
+|---|---|
+| `remora count` | What needs you, the number the menu bar shows |
+| `remora list --tab waiting` | A tab's items, one per line: `in-progress`, `my-turn` (the default), `waiting`, `snoozed` or `done` |
+| `remora remind "Call Erin" --at 15:00` | Saves a reminder: `15:00` is the next 15:00, or a date as in a link |
+
+`--json` prints the answer as JSON (each item's id, source, kind, title, context and link), for Raycast or Alfred.
+A tool you ticked in **Hide message content** keeps its titles: its items come with `"title": null` and
+`"hidden": true` (*(content hidden)* in the list), only where and what kind. Like links, the command never marks an
+item done, snoozes it or deletes anything; a reminder is the one thing it saves. It speaks to the app only, through a
+socket (a named pipe on Windows) that only your user account can open: nothing goes over the network, and with Remora
+closed it says so (exit code 3).
+
+Putting it on your PATH:
+
+- **Mac**: `sudo ln -s /Applications/Remora.app/Contents/Helpers/remora /usr/local/bin/remora`
+- **Linux**: the `.deb` installs `/usr/bin/remora`, which is the command too; with the AppImage, `Remora.AppImage count`.
+- **Windows**: the app itself, `%LOCALAPPDATA%\Remora\Remora.exe count`; add that folder to your PATH to type
+  `remora count`.
+
+A Raycast script command, for example, is a file with a few comments on top:
+
+```sh
+#!/bin/bash
+# @raycast.schemaVersion 1
+# @raycast.title Remora count
+# @raycast.mode inline
+# @raycast.refreshTime 5m
+remora count
+```

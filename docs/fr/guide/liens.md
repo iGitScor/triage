@@ -1,6 +1,6 @@
 ---
 title: Liens et automatisation
-description: Ouvrir Remora, un onglet ou le panneau de rappel depuis Raccourcis, Raycast, Alfred, un Stream Deck ou un script, avec les liens remora://.
+description: Ouvrir Remora, un onglet ou le panneau de rappel depuis Raccourcis, Raycast, Alfred, un Stream Deck ou un script, avec les liens remora:// ; lire le compte et la liste avec la commande remora.
 ---
 
 # Liens et automatisation
@@ -23,3 +23,40 @@ fait que vous montrer quelque chose, et vous décidez. Un lien inconnu est ignor
 
 Essayez depuis un terminal : `open "remora://open?tab=waiting"` sur Mac, `start remora://refresh` sous Windows,
 `xdg-open remora://open` sous Linux (le `.deb` enregistre les liens ; l’AppImage le fait à son lancement).
+
+## La commande `remora`
+
+Un lien ne peut pas répondre. Pour une barre d’état (SketchyBar, tmux, Waybar), un lanceur ou un script qui veut le
+compte ou la liste, la commande `remora` interroge l’app ouverte :
+
+| Commande | Ce qu’elle affiche |
+|---|---|
+| `remora count` | Ce qui vous attend, le nombre affiché dans la barre des menus |
+| `remora list --tab waiting` | Les éléments d’un onglet, un par ligne : `in-progress`, `my-turn` (par défaut), `waiting`, `snoozed` ou `done` |
+| `remora remind "Appeler Erin" --at 15:00` | Enregistre un rappel : `15:00` est le prochain 15 h, ou une date comme dans un lien |
+
+`--json` affiche la réponse en JSON (identifiant, source, type, titre, contexte et lien de chaque élément), pour
+Raycast ou Alfred. Un outil coché dans **Masquer le contenu des messages** garde ses titres : ses éléments arrivent
+avec `"title": null` et `"hidden": true` (*(content hidden)* dans la liste), seulement où et de quel type. Comme les
+liens, la commande ne marque jamais un élément comme terminé, ne le reporte pas et ne supprime rien ; un rappel est la
+seule chose qu’elle enregistre. Elle ne parle qu’à l’app, par un socket (un tube nommé sous Windows) que seul votre
+compte utilisateur peut ouvrir : rien ne passe par le réseau, et Remora fermé, elle le dit (code de sortie 3).
+
+La mettre dans votre PATH :
+
+- **Mac** : `sudo ln -s /Applications/Remora.app/Contents/Helpers/remora /usr/local/bin/remora`
+- **Linux** : le `.deb` installe `/usr/bin/remora`, qui est aussi la commande ; avec l’AppImage,
+  `Remora.AppImage count`.
+- **Windows** : l’app elle-même, `%LOCALAPPDATA%\Remora\Remora.exe count` ; ajoutez ce dossier à votre PATH pour
+  taper `remora count`.
+
+Une commande de script Raycast, par exemple, est un fichier avec quelques commentaires en tête :
+
+```sh
+#!/bin/bash
+# @raycast.schemaVersion 1
+# @raycast.title Remora count
+# @raycast.mode inline
+# @raycast.refreshTime 5m
+remora count
+```

@@ -3,6 +3,7 @@
 
 pub mod demo;
 pub mod inbox;
+pub mod local_api;
 pub mod managed;
 pub mod paths;
 pub mod preferences;

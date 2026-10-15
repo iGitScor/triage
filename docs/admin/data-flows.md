@@ -120,6 +120,13 @@ rather than starting without tokens. Policy: [`/etc/remora/policy.json`](./mdm#l
 word embeddings shipped with macOS); ranking and snooze advice use small statistics over the local history. The
 Windows and Linux app sorts with keyword rules only. Nothing is sent anywhere.
 
+**The `remora` command** ([Links and automation](../guide/links#the-remora-command)) reads the count and the items'
+titles, contexts and links from the running app, and can save a reminder. It goes through a socket that only the user
+can open (`remora.sock`, `0600`, in the user's temporary folder on macOS and `$XDG_RUNTIME_DIR` on Linux; on Windows a
+named pipe `\\.\pipe\remora-<user>` whose only access is the user's, refusing remote clients), never the network.
+Titles of the tools under *Hide message content* (the user's or `HiddenContentSources`) are left out; after Erase it
+finds an empty inbox.
+
 ## How it is enforced
 
 1. **Declared destinations.** Every plugin declares its egress (hosts, description, external AI or not) in its
