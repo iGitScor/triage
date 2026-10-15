@@ -41,6 +41,29 @@ struct VerbClassifierTests {
         #expect(KeywordIntentClassifier().intent(of: "Lunch tomorrow") == nil)
     }
 
+    /// ML-05: nothing but code or a link is to read, not to reply. Same cases as Windows.
+    @Test(
+        arguments: [
+            ("```\nlet total = items.count\n```", TextIntent.info),
+            ("https://example.com/runbook", .info),
+            ("`make check`", .info),
+            ("   ", nil),
+            ("https://example.com/runbook can you check?", .request),
+        ] as [(String, TextIntent?)])
+    func codeAndLinksAloneAreToRead(text: String, expected: TextIntent?) {
+        #expect(KeywordIntentClassifier().intent(of: text) == expected)
+    }
+
+    /// ML-05: a message clearly in another language isn't read with the English examples; short words still are.
+    @Test func otherLanguagesStayUnsure() {
+        #expect(EmbeddingIntentClassifier.language(of: "Kannst du dir das bitte ansehen?") == nil)
+        #expect(EmbeddingIntentClassifier.language(of: "¿Puedes revisar esto hoy?") == nil)
+        #expect(EmbeddingIntentClassifier.language(of: "ok") == .english)
+        #expect(EmbeddingIntentClassifier.language(of: "Deploy done") == .english)
+        #expect(EmbeddingIntentClassifier.language(of: "Tu peux regarder ?") == .french)
+        #expect(EmbeddingIntentClassifier().intent(of: "Kannst du dir das bitte ansehen?") == nil)
+    }
+
     /// Whole words, a question mark that ends a sentence, links and code left out. Same cases as Windows.
     @Test(
         arguments: [

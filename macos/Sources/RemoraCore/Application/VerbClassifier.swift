@@ -118,7 +118,10 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
     public init() {}
 
     public func intent(of text: String) -> TextIntent? {
-        var text = Self.prose(text.lowercased())
+        let lowercased = text.lowercased()
+        var text = Self.prose(lowercased)
+        // Nothing but code or links (a snippet, a URL pasted alone) asks nothing in words: to read (ML-05).
+        if text.allSatisfy(\.isWhitespace) { return lowercased.allSatisfy(\.isWhitespace) ? nil : .info }
         let saysNoReply = Self.matches(Self.noReplyWords, text)
         text = Self.removing(Self.noReplyWords, from: text)
         text = Self.removing(Self.notUrgentWords, from: text)

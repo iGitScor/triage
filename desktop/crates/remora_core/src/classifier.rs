@@ -205,8 +205,12 @@ impl KeywordIntentClassifier {
     const CLOSING_WORDS: usize = 12;
 
     pub fn intent(text: &str) -> Option<TextIntent> {
-        let text = text.to_lowercase();
-        let text = NOT_PROSE.replace_all(&text, " ");
+        let lowercased = text.to_lowercase();
+        let text = NOT_PROSE.replace_all(&lowercased, " ");
+        // Nothing but code or links (a snippet, a URL pasted alone) asks nothing in words: to read (ML-05).
+        if text.trim().is_empty() {
+            return (!lowercased.trim().is_empty()).then_some(TextIntent::Info);
+        }
         let says_no_reply = NO_REPLY_WORDS.is_match(&text);
         let text = NO_REPLY_WORDS.replace_all(&text, "$1 $3");
         let text = NOT_URGENT_WORDS.replace_all(&text, "$1 $3");
@@ -361,6 +365,20 @@ mod tests {
             ("FYI: www.example.com/faq?x=1 is updated", Some(TextIntent::Info)),
         ];
         for (text, expected) in cases {
+            assert_eq!(KeywordIntentClassifier::intent(text), expected, "{text}");
+        }
+    }
+
+    /// ML-05: nothing but code or a link is to read, not to reply. Same cases as the Mac.
+    #[test]
+    fn code_and_links_alone_are_to_read() {
+        for (text, expected) in [
+            ("```\nlet total = items.count\n```", Some(TextIntent::Info)),
+            ("https://example.com/runbook", Some(TextIntent::Info)),
+            ("`make check`", Some(TextIntent::Info)),
+            ("   ", None),
+            ("https://example.com/runbook can you check?", Some(TextIntent::Request)),
+        ] {
             assert_eq!(KeywordIntentClassifier::intent(text), expected, "{text}");
         }
     }

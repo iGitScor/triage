@@ -31,7 +31,7 @@ public final class EmbeddingSimilarity: SimilarityModel, @unchecked Sendable {
         let wordsA = Self.words(a)
         let wordsB = Self.words(b)
         guard !wordsA.isEmpty, !wordsB.isEmpty,
-            let embedding = embedding(for: EmbeddingIntentClassifier.language(of: a + " " + b))
+            let embedding = embedding(for: EmbeddingIntentClassifier.language(of: a + " " + b) ?? .english)
         else { return nil }
 
         func side(_ from: [String], _ to: [String]) -> Double {

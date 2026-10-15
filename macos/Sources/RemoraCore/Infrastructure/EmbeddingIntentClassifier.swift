@@ -116,7 +116,11 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     }
 
     private func classify(_ text: String) -> TextIntent? {
-        guard let model = model(for: Self.language(of: text)), let message = model.vector(for: text) else { return nil }
+        // Code and links say nothing of what's asked, and would pull the sentence's meaning their way.
+        let text = KeywordIntentClassifier.prose(text).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let language = Self.language(of: text), let model = model(for: language),
+            let message = model.vector(for: text)
+        else { return nil }
         let examples = model.examples
 
         func distance(to intent: TextIntent) -> Double {
@@ -172,10 +176,23 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         return (2 * max(0, 1 - cosine)).squareRoot()
     }
 
-    static func language(of text: String) -> NLLanguage {
+    /// English or French, or nil for a message clearly in another language (ML-05): the English examples would only
+    /// guess at German or Spanish, so the message stays unsure. Short words ("ok", "PR") read as English.
+    static func language(of text: String) -> NLLanguage? {
         let recognizer = NLLanguageRecognizer()
-        recognizer.languageConstraints = [.english, .french]
+        recognizer.processString(text)
+        if let (other, confidence) = recognizer.languageHypotheses(withMaximum: 1).first,
+            !examples.keys.contains(other), confidence >= otherLanguageConfidence
+        {
+            return nil
+        }
+        recognizer.reset()
+        recognizer.languageConstraints = Array(examples.keys)
         recognizer.processString(text)
         return recognizer.dominantLanguage ?? .english
     }
+
+    /// How sure the recognizer must be of another language to leave a message unsure: "Hast du kurz Zeit?" is
+    /// German at 1.0, "ok" Polish at 0.3.
+    static let otherLanguageConfidence = 0.8
 }
