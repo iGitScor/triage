@@ -391,7 +391,7 @@ def screen(tab: str, lang: str, eager: bool = False, whole: bool = False) -> str
         f'<source media="(prefers-color-scheme: dark)" type="image/webp" srcset="{base}.dark.webp" />'
         f'<source media="(prefers-color-scheme: dark)" srcset="{base}.dark.png" />'
         f'<source type="image/webp" srcset="{base}.light.webp" />'
-        f'<img src="{base}.light.png" alt="{e(T[lang]["screens"][tab])}" width="800" height="1200" {loading} decoding="async" />'
+        f'<img src="{base}.light.png" alt="{e(T[lang]["screens"][tab])}" width="920" height="1400" {loading} decoding="async" />'
         f"</picture>"
     )
 

@@ -1,26 +1,39 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useData, withBase } from 'vitepress'
 
-/** One of the app's screenshots (macos/scripts/screenshots.sh), in the page's language and the reader's scheme. */
 const props = defineProps<{ name: 'myturn' | 'waiting' | 'snoozed'; alt: string; caption?: string }>()
 
 const { lang } = useData()
 const dialog = ref<HTMLDialogElement>()
+// The full-size images load only once the dialog has been opened.
+const zoomed = ref(false)
 const locale = computed(() => (lang.value.startsWith('fr') ? 'fr' : 'en'))
-const url = (scheme: string) => withBase(`/screenshots/${props.name}.${locale.value}.${scheme}.png`)
+const url = (scheme: string, ext: string) => withBase(`/screenshots/${props.name}.${locale.value}.${scheme}.${ext}`)
+
+async function open() {
+  zoomed.value = true
+  await nextTick()
+  dialog.value?.showModal()
+}
 </script>
 
 <template>
   <figure class="screenshot">
-    <button type="button" class="zoom" :aria-label="`${alt} (${locale === 'fr' ? 'agrandir' : 'zoom in'})`" @click="dialog?.showModal()">
-      <img class="only-light" :src="url('light')" :alt="alt" width="800" height="1200" loading="lazy" decoding="async" />
-      <img class="only-dark" :src="url('dark')" :alt="alt" width="800" height="1200" loading="lazy" decoding="async" />
+    <button type="button" class="zoom" :aria-label="`${alt} (${locale === 'fr' ? 'agrandir' : 'zoom in'})`" @click="open">
+      <picture v-for="scheme in ['light', 'dark']" :key="scheme" :class="`only-${scheme}`">
+        <source type="image/webp" :srcset="url(scheme, 'webp')" />
+        <img :src="url(scheme, 'png')" :alt="alt" width="920" height="1400" loading="lazy" decoding="async" />
+      </picture>
     </button>
     <figcaption v-if="caption">{{ caption }}</figcaption>
     <dialog ref="dialog" class="screenshot-full" :aria-label="alt" @click="dialog?.close()">
-      <img class="only-light" :src="url('light')" :alt="alt" />
-      <img class="only-dark" :src="url('dark')" :alt="alt" />
+      <template v-if="zoomed">
+        <picture v-for="scheme in ['light', 'dark']" :key="scheme" :class="`only-${scheme}`">
+          <source type="image/webp" :srcset="url(scheme, 'webp')" />
+          <img :src="url(scheme, 'png')" :alt="alt" width="920" height="1400" loading="lazy" decoding="async" />
+        </picture>
+      </template>
     </dialog>
   </figure>
 </template>
@@ -40,7 +53,8 @@ const url = (scheme: string) => withBase(`/screenshots/${props.name}.${locale.va
   background: var(--vp-c-bg-soft);
   cursor: zoom-in;
 }
-.zoom img {
+.zoom img,
+.screenshot-full img {
   display: block;
   width: 100%;
   height: auto;
@@ -61,10 +75,6 @@ figcaption {
 }
 .screenshot-full::backdrop {
   background: rgba(0, 0, 0, 0.6);
-}
-.screenshot-full img {
-  display: block;
-  width: 100%;
 }
 .dark .only-light,
 html:not(.dark) .only-dark {
