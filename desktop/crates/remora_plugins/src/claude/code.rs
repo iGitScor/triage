@@ -31,6 +31,7 @@ pub fn manifest() -> PluginManifest {
         is_optional: false,
         help: None,
         managed_key: None,
+        is_toggle: false,
     };
     PluginManifest {
         id: ID.into(),
@@ -42,6 +43,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: true,
                 help: Some(PATH_HELP.into()),
                 managed_key: None,
+                is_toggle: false,
                 ..field("path", "Path to claude")
             },
             ConfigField { placeholder: "Claude Code’s default".into(), is_optional: true, ..field("model", "Model for the brief") },
@@ -49,6 +51,7 @@ pub fn manifest() -> PluginManifest {
                 default_value: DEFAULT_DIGEST_MODEL.into(),
                 help: Some("A lighter model is enough for two sentences and uses less of your plan.".into()),
                 managed_key: None,
+                is_toggle: false,
                 ..field("digestModel", "Model for bundle summaries")
             },
         ],

@@ -246,16 +246,22 @@ private struct ConnectForm: View {
                     ForEach(manifest.fields) { field in
                         let forced = forcedValue(field)
                         let locked = forced != nil
-                        self.field(
-                            field.isOptional ? L("%@ (optional)", L(field.label)) : field.label, help: field.help
-                        ) {
-                            if field.isSecret {
-                                SecureField(L(field.placeholder), text: binding(field))
-                            } else {
-                                // The organization's `AIServer`, or its value for this field: shown, not editable.
-                                TextField(L(field.placeholder), text: locked ? .constant(forced ?? "") : binding(field))
+                        if field.isToggle {
+                            toggle(field, locked: locked, forced: forced)
+                        } else {
+                            self.field(
+                                field.isOptional ? L("%@ (optional)", L(field.label)) : field.label, help: field.help
+                            ) {
+                                if field.isSecret {
+                                    SecureField(L(field.placeholder), text: binding(field))
+                                } else {
+                                    // The organization's `AIServer`, or its value for this field: shown, not editable.
+                                    TextField(
+                                        L(field.placeholder), text: locked ? .constant(forced ?? "") : binding(field)
+                                    )
                                     .disabled(locked)
                                     .help(locked ? L("Managed by your organization") : "")
+                                }
                             }
                         }
                     }
@@ -314,6 +320,25 @@ private struct ConnectForm: View {
                 .accessibilityLabel(L(label))
                 .accessibilityHint(help.map { L($0) } ?? "")
             if let help {
+                Text(L(help)).font(Myna.font(11)).foregroundStyle(Myna.muted).accessibilityHidden(true)
+            }
+        }
+    }
+
+    /// An on/off option: a switch with its help below, "true" when on.
+    private func toggle(_ field: ConfigField, locked: Bool, forced: String?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(
+                L(field.label),
+                isOn: Binding(
+                    get: { (locked ? forced : values[field.key]) == "true" },
+                    set: { values[field.key] = $0 ? "true" : "" })
+            )
+            .font(Myna.font(12, .semibold))
+            .disabled(locked)
+            .help(locked ? L("Managed by your organization") : "")
+            .accessibilityHint(field.help.map { L($0) } ?? "")
+            if let help = field.help {
                 Text(L(help)).font(Myna.font(11)).foregroundStyle(Myna.muted).accessibilityHidden(true)
             }
         }

@@ -1371,7 +1371,7 @@ def privacy(lang: str) -> str:
                 (
                     "Jira",
                     "Your Jira host: <code>*.atlassian.net</code>, or your Data Center",
-                    "Your token (and e-mail on Cloud); searches for issues assigned to you, and for the comments of the last week on issues you watch",
+                    "Your token (and e-mail on Cloud); searches for issues assigned to you, and for the comments of the last week on issues you watch; on Cloud, if you turn it on, for the Confluence pages and comments of the last week that mention you",
                     "Allowed",
                 ),
                 (
@@ -1541,7 +1541,7 @@ def privacy(lang: str) -> str:
                 (
                     "Jira",
                     "Votre hôte Jira : <code>*.atlassian.net</code>, ou votre Data Center",
-                    "Votre jeton (et l’e-mail sur Cloud) ; des recherches des tickets qui vous sont assignés, et des commentaires de la dernière semaine sur les tickets que vous suivez",
+                    "Votre jeton (et l’e-mail sur Cloud) ; des recherches des tickets qui vous sont assignés, et des commentaires de la dernière semaine sur les tickets que vous suivez ; sur Cloud, si vous l’activez, des pages et commentaires Confluence de la dernière semaine qui vous mentionnent",
                     "Autorisé",
                 ),
                 (

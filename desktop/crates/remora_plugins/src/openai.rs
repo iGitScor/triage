@@ -46,6 +46,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: false,
                 help: Some(SERVER_HELP.into()),
                 managed_key: None,
+                is_toggle: false,
             },
             ConfigField { is_optional: true, ..ConfigField::token("API key", KEY_HELP) },
             ConfigField {
@@ -57,6 +58,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: false,
                 help: None,
                 managed_key: None,
+                is_toggle: false,
             },
             ConfigField {
                 key: "digestModel".into(),
@@ -67,6 +69,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: true,
                 help: None,
                 managed_key: None,
+                is_toggle: false,
             },
         ],
         setup_steps: vec![

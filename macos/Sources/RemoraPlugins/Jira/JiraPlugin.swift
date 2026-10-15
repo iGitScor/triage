@@ -1,7 +1,8 @@
 import Foundation
 import RemoraCore
 
-/// Issues assigned to you, and recent comments that mention you, on Jira Cloud or Data Center.
+/// Issues assigned to you, and recent comments that mention you, on Jira Cloud or Data Center. On Cloud, if turned
+/// on, the Confluence pages and comments that mention you too, read on the same site with the same token.
 public struct JiraPlugin: SourcePlugin {
     public static let manifest = PluginManifest(
         id: "jira",
@@ -14,6 +15,9 @@ public struct JiraPlugin: SourcePlugin {
                 key: "email", label: "E-mail", placeholder: "you@company.com", isOptional: true,
                 help: "Jira Cloud only: the e-mail you sign in with. Leave empty for Data Center."),
             .token("API token", help: "Jira Cloud: an API token. Data Center: a personal access token."),
+            .toggle(
+                "confluence", label: "Mentions in Confluence",
+                help: "Jira Cloud only: pages and comments that mention you in Confluence, with the same token."),
         ],
         setupSteps: [
             "Set your Jira host first, for example your-company.atlassian.net.",
@@ -24,7 +28,9 @@ public struct JiraPlugin: SourcePlugin {
         setupURL: { _ in URL(string: "https://id.atlassian.com/manage-profile/security/api-tokens") },
         egress: Egress(
             hosts: ["atlassian.net"],
-            description: "Reads issues assigned to you and recent comments on issues you watch, from your Jira host."),
+            description:
+                "Reads issues assigned to you and recent comments on issues you watch, from your Jira host. If turned on, the Confluence pages and comments that mention you, on the same site."
+        ),
         logo: "jira"
     )
 
@@ -32,11 +38,15 @@ public struct JiraPlugin: SourcePlugin {
     /// Issues you watch (Jira adds you to those you create, are assigned or comment on) with recent activity: their
     /// comments are read for mentions of you.
     static let watchedJQL = "watcher = currentUser() AND updated >= -7d ORDER BY updated DESC"
+    /// Confluence pages and comments that mention you, changed in the last week.
+    static let mentionCQL = #"mention = currentUser() AND lastmodified >= now("-7d") ORDER BY lastmodified DESC"#
 
     private let accountID: UUID
     private let host: URL
     private let authorization: String
     private let isCloud: Bool
+    /// Confluence lives on the same Cloud site, under `/wiki`; Data Center's is a separate server.
+    private let readsConfluence: Bool
     private let http: HTTPClient
     private let cache: any AccountCache
 
@@ -50,6 +60,7 @@ public struct JiraPlugin: SourcePlugin {
         if host.host?.lowercased().hasSuffix(".atlassian.net") == true, !isCloud {
             throw PluginError.missingField("email")
         }
+        readsConfluence = isCloud && config["confluence"] == "true"
         authorization =
             isCloud ? "Basic " + Data("\(email):\(token)".utf8).base64EncodedString() : "Bearer \(token)"
         self.http = http
@@ -65,14 +76,22 @@ public struct JiraPlugin: SourcePlugin {
             try await BestEffort.value("Mentions and comments", remarks: &remarks) {
                 try await search(Self.watchedJQL, fields: "summary,comment", max: 25)
             } ?? SearchPage()
+        var pages = ConfluencePage()
+        if readsConfluence {
+            pages =
+                try await BestEffort.value("Confluence mentions", remarks: &remarks) { try await confluenceMentions() }
+                ?? pages
+        }
         var snapshot = try await Self.snapshot(
-            me: me, assigned: assigned, watched: watched, host: host, accountID: accountID, now: .now)
+            me: me, assigned: assigned, watched: watched, confluence: pages, host: host, accountID: accountID,
+            now: .now)
         snapshot.remarks += remarks
         return snapshot
     }
 
     static func snapshot(
-        me: Myself, assigned: SearchPage, watched: SearchPage, host: URL, accountID: UUID, now: Date
+        me: Myself, assigned: SearchPage, watched: SearchPage, confluence: ConfluencePage = ConfluencePage(),
+        host: URL, accountID: UUID, now: Date
     ) -> SourceSnapshot {
         let issues = assigned.issues.map { $0.item(host: host, accountID: accountID) }
         let weekAgo = now.addingTimeInterval(-7 * .day)
@@ -84,8 +103,12 @@ public struct JiraPlugin: SourcePlugin {
                 }
                 .map { $0.item(issue: issue, host: host, accountID: accountID) }
         }
+        // Not the pages you changed last: you have seen those.
+        let pages = confluence.results
+            .filter { me.accountId == nil || $0.content?.history?.lastUpdated?.by?.accountId != me.accountId }
+            .compactMap { $0.item(site: Self.site(host), accountID: accountID) }
         return SourceSnapshot(
-            identity: me.displayName, items: issues + mentions,
+            identity: me.displayName, items: issues + mentions + pages,
             remarks: assigned.isCut ? [SourceSnapshot.truncated("Jira")] : [])
     }
 
@@ -94,6 +117,22 @@ public struct JiraPlugin: SourcePlugin {
         isCloud
             ? try await get("search/jql", ["jql": jql, "fields": fields, "maxResults": String(max)])
             : try await get("search", ["jql": jql, "fields": fields, "maxResults": String(max)])
+    }
+
+    /// Confluence's search, on the same site: CQL finds what mentions you, pages and comments alike.
+    private func confluenceMentions() async throws -> ConfluencePage {
+        let query = ["cql": Self.mentionCQL, "limit": "25", "expand": "content.history.lastUpdated,content.container"]
+        return try await http.decode(
+            ConfluencePage.self,
+            from: .get(
+                host.appending(path: "wiki/rest/api/search", query: query),
+                headers: ["Authorization": authorization, "Accept": "application/json"]))
+    }
+
+    /// The site's address, without a trailing slash: Confluence's links are paths to add to it.
+    static func site(_ host: URL) -> String {
+        let site = host.absoluteString
+        return site.hasSuffix("/") ? String(site.dropLast()) : site
     }
 
     private func get<T: Decodable>(_ path: String, _ query: [String: String] = [:]) async throws -> T {
@@ -300,5 +339,80 @@ extension JiraPlugin {
                     .trimmingCharacters(in: .whitespacesAndNewlines)
             }
         }
+    }
+}
+
+// MARK: - Confluence
+
+extension JiraPlugin {
+    /// Confluence's search (`wiki/rest/api/search`): pages and comments, each with its content.
+    struct ConfluencePage: Decodable {
+        var results: [ConfluenceResult] = []
+    }
+
+    struct ConfluenceResult: Decodable {
+        struct Content: Decodable {
+            struct History: Decodable {
+                struct Version: Decodable {
+                    struct By: Decodable {
+                        struct Picture: Decodable { var path: String? }
+                        var accountId: String?
+                        var displayName: String?
+                        var profilePicture: Picture?
+                    }
+                    var by: By?
+                }
+                var lastUpdated: Version?
+            }
+            /// A comment's page.
+            struct Container: Decodable { var title: String? }
+            struct Links: Decodable { var webui: String? }
+
+            var id: String
+            var type: String?
+            var title: String?
+            var history: History?
+            var container: Container?
+            var links: Links?
+
+            enum CodingKeys: String, CodingKey {
+                case id, type, title, history, container
+                case links = "_links"
+            }
+        }
+        struct Space: Decodable { var title: String? }
+
+        var content: Content?
+        var excerpt: String?
+        var lastModified: String?
+        var resultGlobalContainer: Space?
+
+        /// A mention, the page's title first: the verb classifier reads it with the excerpt.
+        func item(site: String, accountID: UUID) -> InboxItem? {
+            guard let content, let link = content.links?.webui else { return nil }
+            let title = (content.type == "comment" ? content.container?.title : nil) ?? content.title ?? ""
+            let excerpt = JiraPlugin.excerpt(excerpt ?? "")
+            let by = content.history?.lastUpdated?.by
+            // A profile picture's path is on the site: `/wiki/aa-avatar/…`.
+            let avatar = by?.profilePicture?.path.map { $0.hasPrefix("/") ? site + $0 : $0 }
+            return InboxItem(
+                id: "\(accountID.uuidString)/confluence/\(content.id)",
+                accountID: accountID,
+                pluginID: JiraPlugin.manifest.id,
+                bundle: .mentions,
+                title: Readable.text(title),
+                context: resultGlobalContainer?.title ?? "Confluence",
+                preview: excerpt.isEmpty ? nil : excerpt,
+                url: URL(string: site + "/wiki" + link),
+                author: by?.displayName.map { RemoraCore.Person(name: $0, avatarURL: URL(lenient: avatar)) },
+                date: lastModified.flatMap { Date(iso8601: $0) } ?? .now,
+                needsAction: true
+            )
+        }
+    }
+
+    /// A search excerpt as text: without its `@@@hl@@@` highlight marks and HTML.
+    static func excerpt(_ raw: String) -> String {
+        MicrosoftPlugin.plain(raw.replacing("@@@hl@@@", with: "").replacing("@@@endhl@@@", with: ""))
     }
 }

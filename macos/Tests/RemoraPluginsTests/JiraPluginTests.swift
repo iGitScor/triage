@@ -4,19 +4,22 @@ import Testing
 
 @testable import RemoraPlugins
 
-/// Answers Jira by path: who you are, then the two searches, told apart by their JQL.
+/// Answers Jira by path: who you are, then the two searches, told apart by their JQL, and Confluence's search.
 struct JiraStub: HTTPClient {
     var myself: String
     var assigned: String
     var watched: String
     var expectedAuthorization: String
+    var confluence = JiraPluginTests.confluence
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         #expect(request.value(forHTTPHeaderField: "Authorization") == expectedAuthorization)
         let url = request.url!
         let jql = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "jql" }?.value
         let body =
-            url.path.hasSuffix("/myself") ? myself : jql?.hasPrefix("watcher") == true ? watched : assigned
+            url.path.hasSuffix("/wiki/rest/api/search")
+            ? confluence
+            : url.path.hasSuffix("/myself") ? myself : jql?.hasPrefix("watcher") == true ? watched : assigned
         return (Data(body.utf8), HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
     }
 }
@@ -61,12 +64,35 @@ struct JiraPluginTests {
         """
     }
 
+    /// Confluence's search for `mention = currentUser()`: a page, a comment on it, and a page you changed last.
+    static let confluence = """
+        {"results": [
+          {"content": {"id": "98304", "type": "page", "title": "Q4 launch plan",
+            "history": {"lastUpdated": {"by": {"accountId": "erin", "displayName": "Erin", "profilePicture": {"path": "/wiki/aa-avatar/erin"}}}},
+            "_links": {"webui": "/spaces/ENG/pages/98304/Q4+launch+plan"}},
+           "excerpt": "@@@hl@@@@Alice@@@endhl@@@ can you review this page?", "lastModified": "2026-10-12T09:14:03.000Z",
+           "resultGlobalContainer": {"title": "Engineering"}},
+          {"content": {"id": "98400", "type": "comment", "title": "Re: Q4 launch plan", "container": {"title": "Q4 launch plan"},
+            "history": {"lastUpdated": {"by": {"accountId": "frank", "displayName": "Frank"}}},
+            "_links": {"webui": "/spaces/ENG/pages/98304/Q4+launch+plan?focusedCommentId=98400#comment-98400"}},
+           "excerpt": "FYI @Alice, the dates moved &amp; nothing to do", "lastModified": "2026-10-12T10:00:00.000Z",
+           "resultGlobalContainer": {"title": "Engineering"}},
+          {"content": {"id": "98500", "type": "page", "title": "My notes",
+            "history": {"lastUpdated": {"by": {"accountId": "alice-id", "displayName": "Alice"}}},
+            "_links": {"webui": "/spaces/~alice/pages/98500"}},
+           "excerpt": "@Alice to do", "lastModified": "2026-10-12T11:00:00.000Z", "resultGlobalContainer": {"title": "Alice"}}
+        ]}
+        """
+
     let cloudMe = #"{"accountId": "alice-id", "displayName": "Alice"}"#
     var cloudAuth: String { "Basic " + Data("alice@acme.com:t0ken".utf8).base64EncodedString() }
 
-    func cloud(assigned: String? = nil) throws -> JiraPlugin {
+    func cloud(assigned: String? = nil, confluence: Bool = false) throws -> JiraPlugin {
         try JiraPlugin(
-            config: config(["host": "acme.atlassian.net", "email": "alice@acme.com", "token": "t0ken"]),
+            config: config([
+                "host": "acme.atlassian.net", "email": "alice@acme.com", "token": "t0ken",
+                "confluence": confluence ? "true" : "",
+            ]),
             http: JiraStub(
                 myself: cloudMe, assigned: assigned ?? self.assigned, watched: watched(mentioning: "alice-id"),
                 expectedAuthorization: cloudAuth))
@@ -95,6 +121,29 @@ struct JiraPluginTests {
         #expect(mention.url?.absoluteString == "https://acme.atlassian.net/browse/OPS-9?focusedCommentId=501")
     }
 
+    /// Turned on: Confluence pages and comments that mention you, not those you changed last, then sorted by verb.
+    @Test func confluenceMentionsAreMentionsWhenTurnedOn() async throws {
+        #expect(try await cloud().fetch().items.filter { $0.id.contains("/confluence/") }.isEmpty, "off by default")
+        let pages = try await cloud(confluence: true).fetch().items.filter { $0.id.contains("/confluence/") }
+        #expect(pages.map(\.title) == ["Q4 launch plan", "Q4 launch plan"])
+        let page = try #require(pages.first)
+        #expect(page.bundle == .mentions && page.context == "Engineering")
+        #expect(page.preview == "@Alice can you review this page?")
+        #expect(page.author?.name == "Erin")
+        #expect(page.author?.avatarURL?.absoluteString == "https://acme.atlassian.net/wiki/aa-avatar/erin")
+        #expect(page.url?.absoluteString == "https://acme.atlassian.net/wiki/spaces/ENG/pages/98304/Q4+launch+plan")
+        #expect(page.date == Date(iso8601: "2026-10-12T09:14:03.000Z"))
+        let comment = pages[1]
+        #expect(comment.preview == "FYI @Alice, the dates moved & nothing to do")
+        #expect(
+            comment.url?.absoluteString
+                == "https://acme.atlassian.net/wiki/spaces/ENG/pages/98304/Q4+launch+plan?focusedCommentId=98400#comment-98400"
+        )
+        let classifier = VerbClassifier()
+        #expect(classifier.classify(page).bundle == .reply)
+        #expect(classifier.classify(comment).bundle == .read)
+    }
+
     @Test func saysWhenIssuesAreCut() async throws {
         let more = assigned.replacingOccurrences(of: #""isLast": true"#, with: #""nextPageToken": "abc""#)
         #expect(try await cloud(assigned: more).fetch().remarks == [SourceSnapshot.truncated("Jira")])
@@ -113,6 +162,13 @@ struct JiraPluginTests {
             http: JiraStub(
                 myself: #"{"name": "alice", "key": "JIRAUSER1", "displayName": "Alice"}"#,
                 assigned: #"{"issues": [], "total": 0}"#, watched: watched, expectedAuthorization: "Bearer pat"))
+        // Data Center's Confluence is another server: the option is for Cloud.
+        let withConfluence = try JiraPlugin(
+            config: config(["host": "jira.acme.io", "token": "pat", "confluence": "true"]),
+            http: JiraStub(
+                myself: #"{"name": "alice", "key": "JIRAUSER1", "displayName": "Alice"}"#,
+                assigned: #"{"issues": [], "total": 0}"#, watched: watched, expectedAuthorization: "Bearer pat"))
+        #expect(try await withConfluence.fetch().items.map(\.context) == ["IT-3"])
         let mentions = try await plugin.fetch().items
         #expect(mentions.map(\.context) == ["IT-3"])
         #expect(mentions.first?.preview == "@alice please check")
@@ -137,7 +193,10 @@ struct JiraPluginTests {
                 expectedAuthorization: cloudAuth),
             allowing: JiraPlugin.manifest.egress.hosts)
         let plugin = try JiraPlugin(
-            config: config(["host": "acme.atlassian.net", "email": "alice@acme.com", "token": "t0ken"]), http: guarded)
-        #expect(try await plugin.fetch().items.count == 3)
+            config: config([
+                "host": "acme.atlassian.net", "email": "alice@acme.com", "token": "t0ken", "confluence": "true",
+            ]), http: guarded)
+        let snapshot = try await plugin.fetch()
+        #expect(snapshot.items.count == 5 && snapshot.remarks.isEmpty, "Confluence is on the same site")
     }
 }

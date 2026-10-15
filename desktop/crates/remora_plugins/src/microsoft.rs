@@ -41,6 +41,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: false,
                 help: Some("Your organization’s domain or tenant ID.".into()),
                 managed_key: Some("MicrosoftTenant".into()),
+                is_toggle: false,
             },
             ConfigField {
                 key: "clientId".into(),
@@ -51,6 +52,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: false,
                 help: Some("The ID of the app your IT team registered for Remora in Microsoft Entra.".into()),
                 managed_key: Some("MicrosoftClientID".into()),
+                is_toggle: false,
             },
         ],
         setup_steps: vec![

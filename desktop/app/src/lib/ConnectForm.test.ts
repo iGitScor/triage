@@ -199,4 +199,40 @@ describe('ConnectForm', () => {
     expect(host.value).toBe('https://api.openai.com/v1')
     expect(container.textContent).toContain('The address')
   })
+
+  it('shows an on/off option as a switch, off unless turned on', async () => {
+    invoke.mockResolvedValue(undefined)
+    const jira: Manifest = {
+      ...gitlab,
+      id: 'jira',
+      fields: [
+        ...gitlab.fields,
+        {
+          key: 'confluence',
+          label: 'Mentions in Confluence',
+          placeholder: '',
+          defaultValue: '',
+          isSecret: false,
+          isOptional: true,
+          isToggle: true,
+        },
+      ],
+    }
+    const ondone = vi.fn()
+    const { container } = render(ConnectForm, { props: { manifest: jira, ondone } })
+    const [, token, toggle] = inputs(container)
+    expect(toggle.type).toBe('checkbox')
+    expect(toggle.checked).toBe(false)
+    await fireEvent.input(token, { target: { value: 't0ken' } })
+    await fireEvent.click(toggle)
+    await fireEvent.click(submit(container))
+
+    await waitFor(() => expect(ondone).toHaveBeenCalled())
+    expect(invoke).toHaveBeenCalledWith('connect', {
+      pluginId: 'jira',
+      name: null,
+      settings: { host: 'https://gitlab.com', confluence: 'true' },
+      secrets: { token: 't0ken' },
+    })
+  })
 })

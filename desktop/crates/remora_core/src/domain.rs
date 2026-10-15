@@ -344,9 +344,27 @@ pub struct ConfigField {
     /// The policy value that sets this field for the organization (`MicrosoftTenant`), locking it in the form.
     #[serde(default)]
     pub managed_key: Option<String>,
+    /// An on/off option, shown as a switch: "true" when on, empty when off.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub is_toggle: bool,
 }
 
 impl ConfigField {
+    /// An option that is off unless turned on.
+    pub fn toggle(key: &str, label: &str, help: &str) -> Self {
+        ConfigField {
+            key: key.into(),
+            label: label.into(),
+            placeholder: String::new(),
+            default_value: String::new(),
+            is_secret: false,
+            is_optional: true,
+            help: Some(help.into()),
+            managed_key: None,
+            is_toggle: true,
+        }
+    }
+
     pub fn token(label: &str, help: &str) -> Self {
         ConfigField {
             key: "token".into(),
@@ -357,6 +375,7 @@ impl ConfigField {
             is_optional: false,
             help: Some(help.into()),
             managed_key: None,
+            is_toggle: false,
         }
     }
 
@@ -370,6 +389,7 @@ impl ConfigField {
             is_optional: false,
             help: None,
             managed_key: None,
+            is_toggle: false,
         }
     }
 }

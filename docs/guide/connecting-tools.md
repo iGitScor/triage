@@ -99,6 +99,10 @@ comment on). Works with Jira Cloud and Jira Data Center.
 Highest (or Blocker, Critical) issues are urgent and High (or Major) are high; Low and Lowest are shown but not
 counted. Overdue and due-today issues get a notification. A mention on an issue you don't watch doesn't show up.
 
+On Jira Cloud, turn on **Mentions in Confluence** to also see the Confluence pages and comments of the last week that
+mention you (not those you changed last), with the same token, sorted like any mention: *To reply*, *To read* or
+*Done*.
+
 ## Microsoft 365
 
 **Preview**: built and tested against Microsoft’s documented answers, not yet tried with a real organization. If

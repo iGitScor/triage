@@ -1237,7 +1237,7 @@
       "assistant": false,
       "manifest": {
         "egress": {
-          "description": "Reads issues assigned to you and recent comments on issues you watch, from your Jira host.",
+          "description": "Reads issues assigned to you and recent comments on issues you watch, from your Jira host. If turned on, the Confluence pages and comments that mention you, on the same site.",
           "externalAi": false,
           "hosts": ["atlassian.net"]
         },
@@ -1269,6 +1269,17 @@
             "isSecret": true,
             "key": "token",
             "label": "API token",
+            "managedKey": null,
+            "placeholder": ""
+          },
+          {
+            "defaultValue": "",
+            "help": "Jira Cloud only: pages and comments that mention you in Confluence, with the same token.",
+            "isOptional": true,
+            "isSecret": false,
+            "isToggle": true,
+            "key": "confluence",
+            "label": "Mentions in Confluence",
             "managedKey": null,
             "placeholder": ""
           }

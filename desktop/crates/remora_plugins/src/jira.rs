@@ -27,6 +27,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: false,
                 help: None,
                 managed_key: None,
+                is_toggle: false,
             },
             ConfigField {
                 key: "email".into(),
@@ -37,8 +38,14 @@ pub fn manifest() -> PluginManifest {
                 is_optional: true,
                 help: Some("Jira Cloud only: the e-mail you sign in with. Leave empty for Data Center.".into()),
                 managed_key: None,
+                is_toggle: false,
             },
             ConfigField::token("API token", "Jira Cloud: an API token. Data Center: a personal access token."),
+            ConfigField::toggle(
+                "confluence",
+                "Mentions in Confluence",
+                "Jira Cloud only: pages and comments that mention you in Confluence, with the same token.",
+            ),
         ],
         setup_steps: vec![
             "Set your Jira host first, for example your-company.atlassian.net.".into(),
@@ -51,7 +58,8 @@ pub fn manifest() -> PluginManifest {
         setup_url: Some("https://id.atlassian.com/manage-profile/security/api-tokens".into()),
         egress: Egress {
             hosts: vec!["atlassian.net".into()],
-            description: "Reads issues assigned to you and recent comments on issues you watch, from your Jira host."
+            description: "Reads issues assigned to you and recent comments on issues you watch, from your Jira host. \
+                If turned on, the Confluence pages and comments that mention you, on the same site."
                 .into(),
             external_ai: false,
         },
@@ -64,14 +72,19 @@ const ASSIGNED_JQL: &str = "assignee = currentUser() AND statusCategory != Done 
 /// Issues you watch (Jira adds you to those you create, are assigned or comment on) with recent activity: their
 /// comments are read for mentions of you.
 const WATCHED_JQL: &str = "watcher = currentUser() AND updated >= -7d ORDER BY updated DESC";
+/// Confluence pages and comments that mention you, changed in the last week.
+const MENTION_CQL: &str = r#"mention = currentUser() AND lastmodified >= now("-7d") ORDER BY lastmodified DESC"#;
 
-/// Issues assigned to you, and recent comments that mention you, on Jira Cloud or Data Center.
+/// Issues assigned to you, and recent comments that mention you, on Jira Cloud or Data Center. On Cloud, if turned
+/// on, the Confluence pages and comments that mention you too, read on the same site with the same token.
 pub struct JiraPlugin {
     account_id: String,
     host: String,
     authorization: String,
     /// Cloud signs in with the e-mail and an API token, on `api/3`; Data Center with a personal access token.
     cloud: bool,
+    /// Confluence lives on the same Cloud site, under `/wiki`; Data Center's is a separate server.
+    confluence: bool,
     http: Arc<dyn HttpClient>,
     cache: Arc<AccountCache>,
 }
@@ -97,6 +110,7 @@ impl JiraPlugin {
             host,
             authorization,
             cloud,
+            confluence: cloud && config.get("confluence") == "true",
             http,
             cache: config.cache.clone(),
         })
@@ -116,10 +130,21 @@ impl JiraPlugin {
         self.get(path, &[("jql", jql), ("fields", fields), ("maxResults", max)]).await
     }
 
+    /// Confluence's search, on the same site: CQL finds what mentions you, pages and comments alike.
+    async fn confluence_mentions(&self) -> Result<ConfluencePage, PluginError> {
+        let query =
+            [("cql", MENTION_CQL), ("limit", "25"), ("expand", "content.history.lastUpdated,content.container")];
+        let url = url_with_query(&self.host, "wiki/rest/api/search", &query)?;
+        let request =
+            Request::get(url).header("Authorization", self.authorization.clone()).header("Accept", "application/json");
+        decode(self.http.as_ref(), request).await
+    }
+
     pub fn snapshot(
         me: &Myself,
         assigned: &SearchPage,
         watched: &SearchPage,
+        confluence: &ConfluencePage,
         host: &str,
         account_id: &str,
         now: DateTime<Utc>,
@@ -139,6 +164,17 @@ impl JiraPlugin {
                     .map(|c| c.item(issue, host, account_id)),
             );
         }
+        // Not the pages you changed last: you have seen those.
+        items.extend(
+            confluence
+                .results
+                .iter()
+                .filter(|r| {
+                    me.account_id.is_none()
+                        || r.last_editor().and_then(|b| b.account_id.as_ref()) != me.account_id.as_ref()
+                })
+                .filter_map(|r| r.item(host, account_id)),
+        );
         SourceSnapshot {
             identity: me.display_name.clone(),
             items,
@@ -163,8 +199,20 @@ impl SourcePlugin for JiraPlugin {
                 None => (SearchPage::default(), Some(crate::partial("Mentions and comments", &error))),
             },
         };
-        let mut snapshot = Self::snapshot(&me, &assigned?, &watched, &self.host, &self.account_id, Utc::now());
+        let mut pages = ConfluencePage::default();
+        let mut confluence_failed = None;
+        if self.confluence {
+            match self.confluence_mentions().await {
+                Ok(page) => pages = page,
+                Err(error) => match crate::rate_limit_of(&error) {
+                    Some(limit) => return Err(limit),
+                    None => confluence_failed = Some(crate::partial("Confluence mentions", &error)),
+                },
+            }
+        }
+        let mut snapshot = Self::snapshot(&me, &assigned?, &watched, &pages, &self.host, &self.account_id, Utc::now());
         snapshot.remarks.extend(failed);
+        snapshot.remarks.extend(confluence_failed);
         Ok(snapshot)
     }
 }
@@ -449,6 +497,131 @@ impl Body {
     }
 }
 
+/// Confluence's search (`wiki/rest/api/search`): pages and comments, each with its content.
+#[derive(Default, Deserialize)]
+pub struct ConfluencePage {
+    #[serde(default)]
+    results: Vec<ConfluenceResult>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ConfluenceResult {
+    content: Option<Content>,
+    excerpt: Option<String>,
+    last_modified: Option<String>,
+    result_global_container: Option<Titled>,
+}
+
+#[derive(Deserialize)]
+struct Titled {
+    title: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct Content {
+    id: String,
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    title: Option<String>,
+    history: Option<History>,
+    /// A comment's page.
+    container: Option<Titled>,
+    #[serde(rename = "_links")]
+    links: Option<Links>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct History {
+    last_updated: Option<Version>,
+}
+
+#[derive(Deserialize)]
+struct Version {
+    by: Option<Editor>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Editor {
+    account_id: Option<String>,
+    display_name: Option<String>,
+    profile_picture: Option<Picture>,
+}
+
+#[derive(Deserialize)]
+struct Picture {
+    path: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct Links {
+    webui: Option<String>,
+}
+
+impl ConfluenceResult {
+    fn last_editor(&self) -> Option<&Editor> {
+        self.content.as_ref()?.history.as_ref()?.last_updated.as_ref()?.by.as_ref()
+    }
+
+    /// A mention, the page's title first: the verb classifier reads it with the excerpt.
+    fn item(&self, host: &str, account_id: &str) -> Option<InboxItem> {
+        let content = self.content.as_ref()?;
+        let link = content.links.as_ref()?.webui.as_ref()?;
+        let site = host.trim_end_matches('/');
+        let page_title = if content.kind.as_deref() == Some("comment") {
+            content.container.as_ref().and_then(|c| c.title.as_deref())
+        } else {
+            None
+        };
+        let title = page_title.or(content.title.as_deref()).unwrap_or_default();
+        let excerpt = confluence_excerpt(self.excerpt.as_deref().unwrap_or_default());
+        let by = self.last_editor();
+        Some(InboxItem {
+            id: format!("{account_id}/confluence/{}", content.id),
+            account_id: account_id.into(),
+            plugin_id: "jira".into(),
+            bundle: InboxBundle::mentions(),
+            title: remora_core::text::readable(title),
+            context: self.result_global_container.as_ref().and_then(|c| c.title.clone()).unwrap_or("Confluence".into()),
+            preview: (!excerpt.is_empty()).then_some(excerpt),
+            url: Some(format!("{site}/wiki{link}")),
+            app_url: None,
+            author: by.and_then(|b| {
+                b.display_name.as_ref().map(|name| Person {
+                    name: name.clone(),
+                    // A profile picture's path is on the site: `/wiki/aa-avatar/…`.
+                    avatar_url: b.profile_picture.as_ref().and_then(|p| p.path.as_ref()).map(|path| {
+                        if path.starts_with('/') {
+                            format!("{site}{path}")
+                        } else {
+                            path.clone()
+                        }
+                    }),
+                    tone: None,
+                })
+            }),
+            participants: vec![],
+            badges: vec![],
+            date: jira_date(self.last_modified.as_deref()).unwrap_or_else(Utc::now),
+            needs_action: true,
+            priority: None,
+            due: None,
+            expires: None,
+            changes: None,
+            suggested_people: None,
+            recurrence: None,
+            reactions: None,
+        })
+    }
+}
+
+/// A search excerpt as text: without its `@@@hl@@@` highlight marks and HTML.
+fn confluence_excerpt(raw: &str) -> String {
+    crate::microsoft::plain(&raw.replace("@@@hl@@@", "").replace("@@@endhl@@@", ""))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -463,6 +636,24 @@ mod tests {
         authorization: String,
     }
 
+    /// Confluence's search for `mention = currentUser()`: a page, a comment on it, and a page you changed last.
+    const CONFLUENCE: &str = r#"{"results": [
+          {"content": {"id": "98304", "type": "page", "title": "Q4 launch plan",
+            "history": {"lastUpdated": {"by": {"accountId": "erin", "displayName": "Erin", "profilePicture": {"path": "/wiki/aa-avatar/erin"}}}},
+            "_links": {"webui": "/spaces/ENG/pages/98304/Q4+launch+plan"}},
+           "excerpt": "@@@hl@@@@Alice@@@endhl@@@ can you review this page?", "lastModified": "2026-10-12T09:14:03.000Z",
+           "resultGlobalContainer": {"title": "Engineering"}},
+          {"content": {"id": "98400", "type": "comment", "title": "Re: Q4 launch plan", "container": {"title": "Q4 launch plan"},
+            "history": {"lastUpdated": {"by": {"accountId": "frank", "displayName": "Frank"}}},
+            "_links": {"webui": "/spaces/ENG/pages/98304/Q4+launch+plan?focusedCommentId=98400#comment-98400"}},
+           "excerpt": "FYI @Alice, the dates moved &amp; nothing to do", "lastModified": "2026-10-12T10:00:00.000Z",
+           "resultGlobalContainer": {"title": "Engineering"}},
+          {"content": {"id": "98500", "type": "page", "title": "My notes",
+            "history": {"lastUpdated": {"by": {"accountId": "alice-id", "displayName": "Alice"}}},
+            "_links": {"webui": "/spaces/~alice/pages/98500"}},
+           "excerpt": "@Alice to do", "lastModified": "2026-10-12T11:00:00.000Z", "resultGlobalContainer": {"title": "Alice"}}
+        ]}"#;
+
     #[async_trait]
     impl HttpClient for JiraStub {
         async fn send(&self, request: Request) -> Result<Response, PluginError> {
@@ -470,14 +661,16 @@ mod tests {
             assert_eq!(auth.as_deref(), Some(self.authorization.as_str()));
             let url = reqwest::Url::parse(&request.url).unwrap();
             let jql = url.query_pairs().find(|(k, _)| k == "jql").map(|(_, v)| v.into_owned()).unwrap_or_default();
-            let body = if url.path().ends_with("/myself") {
+            let body: &str = if url.path().ends_with("/wiki/rest/api/search") {
+                CONFLUENCE
+            } else if url.path().ends_with("/myself") {
                 &self.myself
             } else if jql.starts_with("watcher") {
                 &self.watched
             } else {
                 &self.assigned
             };
-            Ok(Response { status: 200, body: body.clone(), etag: None, reset: None })
+            Ok(Response { status: 200, body: body.to_string(), etag: None, reset: None })
         }
     }
 
@@ -515,6 +708,10 @@ mod tests {
     }
 
     fn cloud(assigned_body: Option<String>) -> JiraPlugin {
+        cloud_with(assigned_body, "")
+    }
+
+    fn cloud_with(assigned_body: Option<String>, confluence: &str) -> JiraPlugin {
         let now = Utc::now();
         let (recent, old) = (jira(now - Duration::hours(1)), jira(now - Duration::days(10)));
         let stub = JiraStub {
@@ -524,7 +721,12 @@ mod tests {
             authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
         };
         JiraPlugin::new(
-            &config(&[("host", "acme.atlassian.net"), ("email", "alice@acme.com"), ("token", "t0ken")]),
+            &config(&[
+                ("host", "acme.atlassian.net"),
+                ("email", "alice@acme.com"),
+                ("token", "t0ken"),
+                ("confluence", confluence),
+            ]),
             Arc::new(stub),
         )
         .unwrap()
@@ -557,6 +759,33 @@ mod tests {
         assert_eq!(mentions[0].url.as_deref(), Some("https://acme.atlassian.net/browse/OPS-9?focusedCommentId=501"));
     }
 
+    /// Turned on: Confluence pages and comments that mention you, not those you changed last, then sorted by verb.
+    #[tokio::test]
+    async fn confluence_mentions_are_mentions_when_turned_on() {
+        let off = cloud(None).fetch().await.unwrap().items;
+        assert!(!off.iter().any(|i| i.id.contains("/confluence/")), "off by default");
+        let items = cloud_with(None, "true").fetch().await.unwrap().items;
+        let pages: Vec<_> = items.iter().filter(|i| i.id.contains("/confluence/")).collect();
+        assert_eq!(pages.iter().map(|i| i.title.as_str()).collect::<Vec<_>>(), ["Q4 launch plan", "Q4 launch plan"]);
+        let page = pages[0];
+        assert!(page.bundle == InboxBundle::mentions() && page.context == "Engineering");
+        assert_eq!(page.preview.as_deref(), Some("@Alice can you review this page?"));
+        let author = page.author.as_ref().unwrap();
+        assert_eq!(author.name, "Erin");
+        assert_eq!(author.avatar_url.as_deref(), Some("https://acme.atlassian.net/wiki/aa-avatar/erin"));
+        assert_eq!(page.url.as_deref(), Some("https://acme.atlassian.net/wiki/spaces/ENG/pages/98304/Q4+launch+plan"));
+        assert_eq!(page.date, jira_date(Some("2026-10-12T09:14:03.000Z")).unwrap());
+        let comment = pages[1];
+        assert_eq!(comment.preview.as_deref(), Some("FYI @Alice, the dates moved & nothing to do"));
+        assert_eq!(
+            comment.url.as_deref(),
+            Some("https://acme.atlassian.net/wiki/spaces/ENG/pages/98304/Q4+launch+plan?focusedCommentId=98400#comment-98400")
+        );
+        use remora_core::VerbClassifier;
+        assert_eq!(VerbClassifier::classify(page.clone()).bundle, InboxBundle::reply());
+        assert_eq!(VerbClassifier::classify(comment.clone()).bundle, InboxBundle::read());
+    }
+
     #[tokio::test]
     async fn says_when_issues_are_cut() {
         let recent = jira(Utc::now());
@@ -580,7 +809,12 @@ mod tests {
             watched,
             authorization: "Bearer pat".into(),
         };
-        let plugin = JiraPlugin::new(&config(&[("host", "jira.acme.io"), ("token", "pat")]), Arc::new(stub)).unwrap();
+        // Data Center's Confluence is another server: the option is for Cloud.
+        let plugin = JiraPlugin::new(
+            &config(&[("host", "jira.acme.io"), ("token", "pat"), ("confluence", "true")]),
+            Arc::new(stub),
+        )
+        .unwrap();
         let items = plugin.fetch().await.unwrap().items;
         assert_eq!(items.iter().map(|i| i.context.as_str()).collect::<Vec<_>>(), ["IT-3"]);
         assert_eq!(items[0].preview.as_deref(), Some("@alice please check"));
@@ -599,11 +833,17 @@ mod tests {
         };
         let guarded = crate::GuardedHttpClient::new(Arc::new(stub), manifest().egress.hosts);
         let plugin = JiraPlugin::new(
-            &config(&[("host", "acme.atlassian.net"), ("email", "alice@acme.com"), ("token", "t0ken")]),
+            &config(&[
+                ("host", "acme.atlassian.net"),
+                ("email", "alice@acme.com"),
+                ("token", "t0ken"),
+                ("confluence", "true"),
+            ]),
             Arc::new(guarded),
         )
         .unwrap();
-        assert_eq!(plugin.fetch().await.unwrap().items.len(), 3);
+        let snapshot = plugin.fetch().await.unwrap();
+        assert!(snapshot.items.len() == 5 && snapshot.remarks.is_empty(), "Confluence is on the same site");
     }
 
     #[test]

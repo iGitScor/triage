@@ -30,6 +30,7 @@ pub fn manifest() -> PluginManifest {
                 is_optional: false,
                 help: None,
                 managed_key: None,
+                is_toggle: false,
             },
         ],
         setup_steps: vec![

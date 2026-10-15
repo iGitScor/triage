@@ -107,6 +107,10 @@ Les tickets *Highest* (ou *Blocker*, *Critical*) sont urgents et *High* (ou *Maj
 sont affichés mais pas comptés. Les tickets en retard ou à rendre aujourd’hui déclenchent une notification. Une
 mention sur un ticket que vous ne suivez pas n’apparaît pas.
 
+Sur Jira Cloud, activez **Mentions dans Confluence** pour voir aussi les pages et commentaires Confluence de la
+dernière semaine qui vous mentionnent (sauf ceux que vous avez modifiés en dernier), avec le même jeton, rangés comme
+toute mention : *À répondre*, *À lire* ou *Terminé*.
+
 ## Microsoft 365
 
 **Aperçu** : construit et testé sur les réponses documentées par Microsoft, pas encore essayé avec une vraie

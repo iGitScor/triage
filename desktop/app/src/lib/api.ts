@@ -9,6 +9,8 @@ export type Tone = 'neutral' | 'accent' | 'positive' | 'warning' | 'negative'
 export interface Person {
   name: string
   avatarUrl?: string | null
+  /** An on/off option, shown as a switch: "true" when on, empty when off. */
+  isToggle?: boolean
   tone?: Tone | null
 }
 export interface Badge {
@@ -181,6 +183,8 @@ export interface Field {
   help?: string | null
   /** The policy value that sets this field for the organization (`MicrosoftTenant`), locking it. */
   managedKey?: string | null
+  /** An on/off option, shown as a switch: "true" when on, empty when off. */
+  isToggle?: boolean
 }
 export interface Manifest {
   id: string

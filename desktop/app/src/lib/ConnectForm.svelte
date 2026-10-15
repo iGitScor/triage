@@ -101,11 +101,18 @@ const ready = $derived(fields.every((f) => f.isOptional || values[f.key]?.trim()
       (field.key === 'host' && !!lockedServer) ||
       (field.key === 'path' && !!lockedPath) ||
       forced(field.managedKey) !== undefined}
+    {#if field.isToggle}
+      <div class="stack">
+        <label class="toggle"><input type="checkbox" checked={values[field.key] === 'true'} onchange={(e) => (values[field.key] = e.currentTarget.checked ? 'true' : '')} disabled={locked} />{t(field.label)}</label>
+        {#if locked}<small>{t('Managed by your organization')}</small>{:else if field.help}<small>{t(field.help)}</small>{/if}
+      </div>
+    {:else}
     <label class="stack">
       {t(field.label)}
       <input class="field" type={field.isSecret ? 'password' : 'text'} placeholder={t(field.placeholder)} bind:value={values[field.key]} disabled={locked} autocomplete="off" spellcheck="false" />
       {#if locked}<small>{t('Managed by your organization')}</small>{:else if field.help}<small>{t(field.help)}</small>{/if}
     </label>
+    {/if}
   {/each}
   {#if !account}
     <label class="stack">

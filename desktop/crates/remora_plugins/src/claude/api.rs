@@ -38,6 +38,7 @@ pub fn manifest() -> PluginManifest {
         is_optional: false,
         help: None,
         managed_key: None,
+        is_toggle: false,
     };
     PluginManifest {
         id: ID.into(),
