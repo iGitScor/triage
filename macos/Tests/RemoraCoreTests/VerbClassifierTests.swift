@@ -15,6 +15,13 @@ struct VerbClassifierTests {
         ("@here the office is closed tomorrow", .info),
         ("Pour info, la release est partie", .info),
         ("FYI, can you double check?", .request),
+        // A curly apostrophe, the formal form and no hyphen, as people type at work. Same cases as Windows.
+        ("S’il vous plaît, relisez la spec avant demain", .request),
+        ("Qu’en pensez-vous", .request),
+        ("Qu'en pensez vous, Marc", .request),
+        ("Peux tu regarder la PR", .request),
+        ("Pourriez vous valider le devis", .request),
+        ("À titre d’info, le build passe", .info),
     ])
     func keywordsCatchExplicitWording(text: String, expected: TextIntent) {
         #expect(KeywordIntentClassifier().intent(of: text) == expected)

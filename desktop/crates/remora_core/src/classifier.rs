@@ -26,8 +26,10 @@ static NOT_PROSE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?s)```.*?```|`[^`]*`|(https?://|www\.)\S+").expect("valid pattern"));
 /// A question mark that ends a sentence: before a space, a closing quote or bracket, or the end.
 static QUESTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"\?+["'”’)\]]*(\s|$)"#).expect("valid pattern"));
-static REQUEST_WORDS: LazyLock<Regex> = LazyLock::new(|| word_pattern(KeywordIntentClassifier::REQUESTS));
-static INFO_WORDS: LazyLock<Regex> = LazyLock::new(|| word_pattern(KeywordIntentClassifier::INFOS));
+/// Each list with a straight and a curly apostrophe, as people type both ("s’il vous plaît" from a phone or a Mac).
+static REQUEST_WORDS: LazyLock<Regex> =
+    LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::REQUESTS)));
+static INFO_WORDS: LazyLock<Regex> = LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::INFOS)));
 static NO_REPLY_WORDS: LazyLock<Regex> =
     LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NO_REPLY)));
 static NOT_URGENT_WORDS: LazyLock<Regex> =
@@ -85,15 +87,20 @@ impl KeywordIntentClassifier {
         "tu pourrais",
         "pouvez-vous",
         "pourriez-vous",
+        // Typed without the hyphen, as often in chat.
+        "peux tu",
+        "pourrais tu",
+        "pouvez vous",
+        "pourriez vous",
         "vous pouvez",
         "stp",
         "svp",
         "s'il te plaît",
-        "s’il te plaît",
         "s'il vous plaît",
         "est-ce que",
         "qu'en penses",
-        "qu’en penses",
+        // The formal form, common at work.
+        "qu'en pensez",
         "dis-moi",
         "dites-moi",
         "ton avis",
@@ -440,6 +447,22 @@ mod tests {
         ];
         for (text, expected) in cases {
             assert_eq!(KeywordIntentClassifier::intent(text), expected, "{text}");
+        }
+    }
+
+    /// A curly apostrophe, the formal form and no hyphen, as people type at work. Same cases as the Mac. "est ce que"
+    /// without its hyphen stays out: it is also "c'est ce que je pensais", which asks nothing.
+    #[test]
+    fn typed_forms_still_ask() {
+        for (text, expected) in [
+            ("S’il vous plaît, relisez la spec avant demain", TextIntent::Request),
+            ("Qu’en pensez-vous", TextIntent::Request),
+            ("Qu'en pensez vous, Marc", TextIntent::Request),
+            ("Peux tu regarder la PR", TextIntent::Request),
+            ("Pourriez vous valider le devis", TextIntent::Request),
+            ("À titre d’info, le build passe", TextIntent::Info),
+        ] {
+            assert_eq!(KeywordIntentClassifier::intent(text), Some(expected), "{text}");
         }
     }
 

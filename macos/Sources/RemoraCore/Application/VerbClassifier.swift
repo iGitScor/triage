@@ -92,18 +92,21 @@ public struct VerbClassifier: Sendable {
 /// Keywords match whole words, a question mark only ends a sentence, and links and code are left out:
 /// "pleased", `a ?? b` and `search?q=x` ask nothing.
 public struct KeywordIntentClassifier: TextIntentClassifier {
-    static let requests = [
+    /// Each with a straight and a curly apostrophe ("s’il vous plaît" from a phone or a Mac), with and without the
+    /// hyphen ("peux tu"), and the formal form common at work ("qu'en pensez").
+    static let requests = withApostrophes([
         "can you", "could you", "would you", "will you", "please", "pls", "plz", "let me know", "lmk",
         "what do you think", "thoughts", "your opinion", "need you", "waiting for you", "asap", "urgent",
         "peux-tu", "pourrais-tu", "tu peux", "tu pourrais", "pouvez-vous", "pourriez-vous", "vous pouvez",
-        "stp", "svp", "s'il te plaît", "s’il te plaît", "s'il vous plaît", "est-ce que",
-        "qu'en penses", "qu’en penses", "dis-moi", "dites-moi", "ton avis", "votre avis", "besoin de toi",
-    ]
-    static let infos = [
+        "peux tu", "pourrais tu", "pouvez vous", "pourriez vous",
+        "stp", "svp", "s'il te plaît", "s'il vous plaît", "est-ce que",
+        "qu'en penses", "qu'en pensez", "dis-moi", "dites-moi", "ton avis", "votre avis", "besoin de toi",
+    ])
+    static let infos = withApostrophes([
         "fyi", "for your information", "heads up", "heads-up", "just so you know", "announcement",
         "@here", "@channel", "@everyone", "pour info", "pour information", "pour rappel", "à titre d'info",
         "a titre d'info", "je vous informe", "annonce",
-    ]
+    ])
 
     /// Says that nothing is expected: information, and taken out before looking for requests.
     static let noReply = withApostrophes([

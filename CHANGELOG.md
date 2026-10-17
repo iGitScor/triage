@@ -16,6 +16,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
   **Bot** mark, as the tool says it. **Group bots and agents apart** (Settings → General) puts those items last in
   *My turn*, still counted. Teams messages from apps now show, in *To read*, as Slack's do.
 
+### Changed
+
+- French requests typed with a curly apostrophe (*s’il vous plaît*), in the formal form (*qu’en pensez-vous*)
+  or without a hyphen (*pourriez vous*, *peux tu*) go to *To reply*.
+
 ## 0.10.0 (2026-10-17)
 
 ### Changed
