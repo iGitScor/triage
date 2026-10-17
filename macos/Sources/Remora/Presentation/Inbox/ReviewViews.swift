@@ -57,7 +57,7 @@ struct ReviewPrepLine: View {
             ForEach(prep.flags.prefix(shown), id: \.self) { flag in
                 BadgeChip(
                     badge: Badge(
-                        id: flag.rawValue, label: flag.title, symbol: flag.symbol,
+                        id: BadgeID(rawValue: flag.rawValue), label: flag.title, symbol: flag.symbol,
                         tone: flag == .lockfileOnly ? .neutral : .warning))
             }
             if prep.flags.count > shown {

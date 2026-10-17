@@ -288,10 +288,10 @@ struct PullRequest: Decodable {
     private func participants(reviews: [Review]) -> [Person] {
         var people = reviews.compactMap { review -> Person? in
             guard var person = review.author?.person else { return nil }
-            person.tone =
+            person.review =
                 review.state == "APPROVED"
-                ? ReviewerTone.approved
-                : review.state == "CHANGES_REQUESTED" ? ReviewerTone.changes : ReviewerTone.waiting
+                ? ReviewState.approved
+                : review.state == "CHANGES_REQUESTED" ? ReviewState.changesRequested : nil
             return person
         }
         for request in reviewRequests?.all ?? [] {

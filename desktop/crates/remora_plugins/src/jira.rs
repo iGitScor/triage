@@ -6,6 +6,7 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use regex::Regex;
+use remora_core::badge;
 use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -341,9 +342,9 @@ impl Issue {
         let mut badges = vec![];
         match priority {
             Priority::Urgent => {
-                badges.push(Badge::new("priority.urgent", "Urgent", Tone::Negative).notifying("Urgent issue"))
+                badges.push(Badge::new(badge::PRIORITY_URGENT, "Urgent", Tone::Negative).notifying("Urgent issue"))
             }
-            Priority::High => badges.push(Badge::new("priority.high", "High", Tone::Warning)),
+            Priority::High => badges.push(Badge::new(badge::PRIORITY_HIGH, "High", Tone::Warning)),
             _ => {}
         }
         let due = self.fields.duedate.as_deref().and_then(due_date);
@@ -351,7 +352,7 @@ impl Issue {
             badges.push(due_badge(due));
         }
         if let Some(status) = &self.fields.status {
-            badges.push(Badge::new("status", &status.name, Tone::Neutral));
+            badges.push(Badge::new(badge::STATUS, &status.name, Tone::Neutral));
         }
         InboxItem {
             id: format!("{account_id}/{}", self.id),
@@ -404,7 +405,7 @@ impl Comment {
                 a.display_name.as_ref().map(|name| Person {
                     name: name.clone(),
                     avatar_url: a.avatar_urls.as_ref().and_then(|u| u.get("48x48").cloned()),
-                    tone: None,
+                    review: None,
                 })
             }),
             participants: vec![],
@@ -599,7 +600,7 @@ impl ConfluenceResult {
                             path.clone()
                         }
                     }),
-                    tone: None,
+                    review: None,
                 })
             }),
             participants: vec![],

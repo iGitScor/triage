@@ -105,7 +105,9 @@ struct VerbClassifierTests {
     @Test func authoredMergeRequestsGetAVerb() {
         func authored(_ badges: [String]) -> InboxBundle {
             classifier.classify(
-                makeItem("1", bundle: .authored, badges: badges.map { Badge(id: $0, label: $0, tone: .neutral) })
+                makeItem(
+                    "1", bundle: .authored,
+                    badges: badges.map { Badge(id: BadgeID(rawValue: $0), label: $0, tone: .neutral) })
             ).bundle
         }
         #expect(authored(["approved"]) == .merge)

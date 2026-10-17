@@ -28,9 +28,9 @@ struct GitLabPluginTests {
         #expect(snapshot.items.map(\.bundle) == [.authored, .reviews])
         let item = snapshot.items[0]
         #expect(item.context == "g/p !12")
-        #expect(item.hasBadge("approved") && item.hasBadge("checks.passing") && item.hasBadge("comments"))
-        #expect(item.participants.first { $0.name == "erin" }?.tone == .accent)
-        #expect(item.participants.first { $0.name == "frank" }?.tone == nil)
+        #expect(item.hasBadge(.approved) && item.hasBadge(.checksPassing) && item.hasBadge(.comments))
+        #expect(item.participants.first { $0.name == "erin" }?.review == .approved)
+        #expect(item.participants.first { $0.name == "frank" }?.review == nil)
         #expect(item.author?.avatarURL?.absoluteString == "https://gitlab.acme.io/uploads/a.png")
         let review = snapshot.items[1]
         #expect(review.changes?.files == [ChangedFile(path: "db/migrate/add_avatars.rb")])
@@ -94,7 +94,7 @@ struct GitLabPluginTests {
         #expect(paths.filter { $0.contains("/projects/") }.isEmpty, "no per-merge-request call")
         #expect(paths.count == 5, "user, the two lists, the To-Dos, and one GraphQL request")
         let authored = snapshot.items[0]
-        #expect(authored.hasBadge("approved") && authored.hasBadge("checks.failing"))
+        #expect(authored.hasBadge(.approved) && authored.hasBadge(.checksFailing))
         #expect(authored.changes == nil)
         let review = snapshot.items[1]
         #expect(review.changes?.files == [ChangedFile(path: "app/models/user.rb", additions: 12, deletions: 3)])

@@ -1,3 +1,4 @@
+use remora_core::badge;
 use remora_core::{Badge, Tone};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -33,30 +34,30 @@ impl CodeReview {
         let notify = |badge: Badge, title: &str| if authored { badge.notifying(title) } else { badge };
         let mut badges = vec![];
         if self.is_draft {
-            badges.push(Badge::new("draft", "Draft", Tone::Neutral));
+            badges.push(Badge::new(badge::DRAFT, "Draft", Tone::Neutral));
         }
         if self.is_approved {
-            badges.push(notify(Badge::new("approved", "Approved", Tone::Accent), "Approved"));
+            badges.push(notify(Badge::new(badge::APPROVED, "Approved", Tone::Accent), "Approved"));
         }
         if self.changes_requested {
-            badges.push(notify(Badge::new("changes", "Changes requested", Tone::Negative), "Changes requested"));
+            badges.push(notify(Badge::new(badge::CHANGES, "Changes requested", Tone::Negative), "Changes requested"));
         }
         if self.has_conflicts {
-            badges.push(Badge::new("conflicts", "Conflicts", Tone::Warning));
+            badges.push(Badge::new(badge::CONFLICTS, "Conflicts", Tone::Warning));
         }
         match self.checks {
-            Checks::Passing => badges.push(Badge::new("checks.passing", "Checks", Tone::Positive)),
+            Checks::Passing => badges.push(Badge::new(badge::CHECKS_PASSING, "Checks", Tone::Positive)),
             Checks::Failing => {
-                badges.push(notify(Badge::new("checks.failing", "Checks failed", Tone::Negative), "Checks failed"))
+                badges.push(notify(Badge::new(badge::CHECKS_FAILING, "Checks failed", Tone::Negative), "Checks failed"))
             }
-            Checks::Running => badges.push(Badge::new("checks.running", "Running", Tone::Warning)),
+            Checks::Running => badges.push(Badge::new(badge::CHECKS_RUNNING, "Running", Tone::Warning)),
             Checks::None => {}
         }
         if self.comments > 0 {
-            badges.push(Badge::new("comments", &self.comments.to_string(), Tone::Neutral));
+            badges.push(Badge::new(badge::COMMENTS, &self.comments.to_string(), Tone::Neutral));
         }
         if let (Some(additions), Some(deletions)) = (self.additions, self.deletions) {
-            badges.push(Badge::new("diff", &format!("+{additions} −{deletions}"), Tone::Neutral));
+            badges.push(Badge::new(badge::DIFF, &format!("+{additions} −{deletions}"), Tone::Neutral));
         }
         badges
     }

@@ -265,7 +265,7 @@ extension String {
 extension InboxItem {
     /// Lines changed, read from the "+a −d" badge.
     var diffSize: Int? {
-        guard let label = badges.first(where: { $0.id == "diff" })?.label else { return nil }
+        guard let label = badges.first(where: { $0.id == .diff })?.label else { return nil }
         let numbers = label.split { !$0.isNumber }.compactMap { Int($0) }
         return numbers.isEmpty ? nil : numbers.reduce(0, +)
     }

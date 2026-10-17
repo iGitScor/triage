@@ -24,52 +24,46 @@ struct CodeReview {
     func badges(authored: Bool) -> [Badge] {
         var badges: [Badge] = []
         if isDraft {
-            badges.append(Badge(id: "draft", label: L("Draft"), symbol: "pencil", tone: .neutral))
+            badges.append(Badge(id: .draft, label: L("Draft"), symbol: "pencil", tone: .neutral))
         }
         if isApproved {
             badges.append(
                 Badge(
-                    id: "approved", label: L("Approved"), symbol: "checkmark", tone: .accent,
+                    id: .approved, label: L("Approved"), symbol: "checkmark", tone: .accent,
                     notify: authored ? .init(title: L("Approved")) : nil
                 ))
         }
         if changesRequested {
             badges.append(
                 Badge(
-                    id: "changes", label: L("Changes requested"), symbol: "exclamationmark.bubble", tone: .negative,
+                    id: .changes, label: L("Changes requested"), symbol: "exclamationmark.bubble", tone: .negative,
                     notify: authored ? .init(title: L("Changes requested")) : nil
                 ))
         }
         if hasConflicts {
-            badges.append(Badge(id: "conflicts", label: L("Conflicts"), symbol: "arrow.triangle.merge", tone: .warning))
+            badges.append(Badge(id: .conflicts, label: L("Conflicts"), symbol: "arrow.triangle.merge", tone: .warning))
         }
         switch checks {
         case .passing:
             badges.append(
-                Badge(id: "checks.passing", label: L("Checks"), symbol: "checkmark.circle.fill", tone: .positive))
+                Badge(id: .checksPassing, label: L("Checks"), symbol: "checkmark.circle.fill", tone: .positive))
         case .failing:
             badges.append(
                 Badge(
-                    id: "checks.failing", label: L("Checks failed"), symbol: "xmark.octagon.fill", tone: .negative,
+                    id: .checksFailing, label: L("Checks failed"), symbol: "xmark.octagon.fill", tone: .negative,
                     notify: authored ? .init(title: L("Checks failed")) : nil
                 ))
         case .running:
-            badges.append(Badge(id: "checks.running", label: L("Running"), symbol: "clock", tone: .warning))
+            badges.append(Badge(id: .checksRunning, label: L("Running"), symbol: "clock", tone: .warning))
         case .none:
             break
         }
         if comments > 0 {
-            badges.append(Badge(id: "comments", label: "\(comments)", symbol: "bubble.left", tone: .neutral))
+            badges.append(Badge(id: .comments, label: "\(comments)", symbol: "bubble.left", tone: .neutral))
         }
         if let additions, let deletions {
-            badges.append(Badge(id: "diff", label: "+\(additions) −\(deletions)", tone: .neutral))
+            badges.append(Badge(id: .diff, label: "+\(additions) −\(deletions)", tone: .neutral))
         }
         return badges
     }
-}
-
-enum ReviewerTone {
-    static let approved = Tone.accent
-    static let changes = Tone.negative
-    static let waiting: Tone? = nil
 }

@@ -18,4 +18,4 @@ func makeItem(
     )
 }
 
-let approved = Badge(id: "approved", label: "Approved", tone: .accent, notify: .init(title: "Approved"))
+let approved = Badge(id: .approved, label: "Approved", tone: .accent, notify: .init(title: "Approved"))

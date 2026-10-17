@@ -4,6 +4,7 @@
 //! Text: the core can't translate, so the functions that build a sentence take a translator
 //! (`&dyn Fn(&str) -> String`, English key → the language's format string, e.g. `|k| translator.t(k)`) and fill in
 //! the `%d`/`%@` placeholders themselves. The keys are the Swift ones, so the shared French dictionary applies.
+use crate::badge;
 use crate::{ChangedFile, InboxItem, Prioritizer};
 use chrono::{DateTime, Utc};
 use regex::Regex;
@@ -237,7 +238,7 @@ fn paced(minutes: u32, pace: f64) -> u32 {
 
 /// Lines changed, read from the "+a −d" badge (Swift's `InboxItem.diffSize`).
 pub(crate) fn diff_size(item: &InboxItem) -> Option<u32> {
-    let label = &item.badges.iter().find(|b| b.id == "diff")?.label;
+    let label = &item.badges.iter().find(|b| b.id == badge::DIFF)?.label;
     let numbers: Vec<u32> =
         label.split(|c: char| !c.is_numeric()).filter(|s| !s.is_empty()).filter_map(|s| s.parse().ok()).collect();
     if numbers.is_empty() {

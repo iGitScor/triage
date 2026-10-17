@@ -7,8 +7,8 @@ import { t } from './i18n'
 export type Mark = 'approved' | 'changes' | null
 
 export function mark(person: Person): Mark {
-  if (person.tone === 'accent' || person.tone === 'positive') return 'approved'
-  if (person.tone === 'negative') return 'changes'
+  if (person.review === 'approved') return 'approved'
+  if (person.review === 'changesRequested') return 'changes'
   return null
 }
 

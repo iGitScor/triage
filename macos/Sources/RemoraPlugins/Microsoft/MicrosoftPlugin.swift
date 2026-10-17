@@ -229,7 +229,7 @@ extension MicrosoftPlugin {
                 url: URL(lenient: webLink),
                 author: from?.person,
                 badges: important
-                    ? [Badge(id: "priority.high", label: L("High"), symbol: "exclamationmark.2", tone: .warning)] : [],
+                    ? [Badge(id: .priorityHigh, label: L("High"), symbol: "exclamationmark.2", tone: .warning)] : [],
                 date: MicrosoftPlugin.graphDate(receivedDateTime) ?? .now,
                 needsAction: true,
                 priority: important ? .high : nil
@@ -239,7 +239,7 @@ extension MicrosoftPlugin {
         /// Flagged: a task you set yourself, with its due date if it has one.
         func flaggedItem(accountID: UUID) -> InboxItem {
             var item = base(accountID: accountID, bundle: .tasks)
-            item.badges.append(Badge(id: "flagged", label: L("Flagged"), symbol: "flag", tone: .accent))
+            item.badges.append(Badge(id: .flagged, label: L("Flagged"), symbol: "flag", tone: .accent))
             item.due = MicrosoftPlugin.graphDate(flag?.dueDateTime?.dateTime)
             if let due = item.due { item.badges.append(DueDate.badge(for: due)) }
             return item
@@ -276,11 +276,11 @@ extension MicrosoftPlugin {
         }
 
         func item(accountID: UUID) -> InboxItem {
-            var badges = [Badge(id: "invitation", label: L("Invitation"), symbol: "calendar.badge.plus", tone: .accent)]
+            var badges = [Badge(id: .invitation, label: L("Invitation"), symbol: "calendar.badge.plus", tone: .accent)]
             if let startDate {
                 badges.append(
                     Badge(
-                        id: "event",
+                        id: .event,
                         label: startDate.formatted(
                             .dateTime.weekday(.abbreviated).day().month(.abbreviated).hour().minute()),
                         symbol: "calendar", tone: .neutral))

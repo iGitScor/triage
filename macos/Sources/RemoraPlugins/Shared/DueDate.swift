@@ -6,16 +6,16 @@ enum DueDate {
     static func badge(for due: Date, now: Date = .now, calendar: Calendar = .current) -> Badge {
         if due < calendar.startOfDay(for: now) {
             return Badge(
-                id: "overdue", label: L("Overdue"), symbol: "exclamationmark.circle", tone: .negative,
+                id: .overdue, label: L("Overdue"), symbol: "exclamationmark.circle", tone: .negative,
                 notify: .init(title: L("Task overdue")))
         }
         if calendar.isDate(due, inSameDayAs: now) {
             return Badge(
-                id: "due.today", label: L("Due today"), symbol: "calendar", tone: .warning,
+                id: .dueToday, label: L("Due today"), symbol: "calendar", tone: .warning,
                 notify: .init(title: L("Due today")))
         }
         return Badge(
-            id: "due", label: due.formatted(.dateTime.day().month(.abbreviated)), symbol: "calendar", tone: .neutral)
+            id: .due, label: due.formatted(.dateTime.day().month(.abbreviated)), symbol: "calendar", tone: .neutral)
     }
 
     /// "2026-10-09" or a full ISO-8601 timestamp.

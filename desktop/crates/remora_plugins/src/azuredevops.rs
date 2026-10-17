@@ -8,6 +8,8 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
+use remora_core::badge;
+use remora_core::ReviewState;
 use remora_core::{
     Badge, ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone,
 };
@@ -248,14 +250,14 @@ impl AzureDevOpsPlugin {
             .iter()
             .map(|r| {
                 let vote = r.vote.unwrap_or(0);
-                let tone = if vote >= 5 {
-                    Some(Tone::Accent)
+                let review = if vote >= 5 {
+                    Some(ReviewState::Approved)
                 } else if vote < 0 {
-                    Some(Tone::Negative)
+                    Some(ReviewState::ChangesRequested)
                 } else {
                     None
                 };
-                Person { name: r.display_name.clone(), avatar_url: None, tone }
+                Person { name: r.display_name.clone(), avatar_url: None, review }
             })
             .collect();
         let files: Vec<ChangedFile> = changes
@@ -279,7 +281,7 @@ impl AzureDevOpsPlugin {
             preview: None,
             url: web_url(host, &[&repository.project.name, "_git", &repository.name, "pullrequest", &id]),
             app_url: None,
-            author: pr.created_by.map(|c| Person { name: c.display_name, avatar_url: None, tone: None }),
+            author: pr.created_by.map(|c| Person { name: c.display_name, avatar_url: None, review: None }),
             participants,
             badges: review.badges(authored),
             // The list has no last-updated date: the latest push stands for it when known.
@@ -552,14 +554,14 @@ impl WorkItem {
         let priority = self.item_priority();
         let mut badges = vec![];
         if priority == Priority::High {
-            badges.push(Badge::new("priority.high", "High", Tone::Warning));
+            badges.push(Badge::new(badge::PRIORITY_HIGH, "High", Tone::Warning));
         }
         let due = self.fields.due.as_deref().and_then(due_date);
         if let Some(due) = due {
             badges.push(due_badge(due));
         }
         if let Some(state) = &self.fields.state {
-            badges.push(Badge::new("status", state, Tone::Neutral));
+            badges.push(Badge::new(badge::STATUS, state, Tone::Neutral));
         }
         let id = self.id.to_string();
         let kind = [self.fields.kind.as_deref(), Some(id.as_str())].into_iter().flatten().collect::<Vec<_>>().join(" ");
@@ -692,14 +694,20 @@ pub(crate) mod tests {
         assert_eq!(mine.context, "Acme/app !12");
         assert_eq!(mine.url.as_deref(), Some("https://dev.azure.com/acme/Acme/_git/app/pullrequest/12"));
         assert!(mine.has_badge("approved") && mine.has_badge("checks.failing") && mine.needs_action);
-        assert_eq!(mine.participants.iter().find(|p| p.name == "Erin").and_then(|p| p.tone), Some(Tone::Accent));
-        assert_eq!(mine.participants.iter().find(|p| p.name == "Frank").and_then(|p| p.tone), None);
+        assert_eq!(
+            mine.participants.iter().find(|p| p.name == "Erin").and_then(|p| p.review),
+            Some(ReviewState::Approved)
+        );
+        assert_eq!(mine.participants.iter().find(|p| p.name == "Frank").and_then(|p| p.review), None);
         assert_eq!(mine.changes, None, "your own pull requests don't need a review prep");
 
         let review = &snapshot.items[1];
         assert_eq!(review.author.as_ref().map(|a| a.name.as_str()), Some("Bob"));
         assert!(review.has_badge("changes") && review.has_badge("conflicts") && !review.has_badge("approved"));
-        assert_eq!(review.participants.iter().find(|p| p.name == "Erin").and_then(|p| p.tone), Some(Tone::Negative));
+        assert_eq!(
+            review.participants.iter().find(|p| p.name == "Erin").and_then(|p| p.review),
+            Some(ReviewState::ChangesRequested)
+        );
         assert_eq!(
             review.changes.as_ref().map(|c| c.files.clone()),
             Some(vec![ChangedFile { path: "src/db/add_avatars.sql".into(), additions: None, deletions: None }])

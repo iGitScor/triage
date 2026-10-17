@@ -62,9 +62,9 @@ public struct VerbClassifier: Sendable {
     }
 
     private func verbForAuthored(_ item: InboxItem) -> InboxBundle {
-        if item.hasBadge("draft") { return .awaiting }
-        if item.hasBadge("changes") || item.hasBadge("checks.failing") || item.hasBadge("conflicts") { return .fix }
-        if item.hasBadge("approved") { return .merge }
+        if item.hasBadge(.draft) { return .awaiting }
+        if item.hasBadge(.changes) || item.hasBadge(.checksFailing) || item.hasBadge(.conflicts) { return .fix }
+        if item.hasBadge(.approved) { return .merge }
         return .awaiting
     }
 }

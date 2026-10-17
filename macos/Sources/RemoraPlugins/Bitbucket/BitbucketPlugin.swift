@@ -311,10 +311,10 @@ extension BitbucketPlugin {
                     participants: others.filter { $0.role == "REVIEWER" || $0.approved == true }.compactMap { one in
                         one.user.map { user in
                             var person = user.person
-                            person.tone =
+                            person.review =
                                 one.approved == true
-                                ? ReviewerTone.approved
-                                : one.changesRequested ? ReviewerTone.changes : ReviewerTone.waiting
+                                ? ReviewState.approved
+                                : one.changesRequested ? ReviewState.changesRequested : nil
                             return person
                         }
                     },
@@ -406,9 +406,9 @@ extension BitbucketPlugin {
                         reviewer.user.map {
                             Person(
                                 name: $0.displayName ?? $0.name ?? "?",
-                                tone: reviewer.status == "APPROVED"
-                                    ? ReviewerTone.approved
-                                    : reviewer.status == "NEEDS_WORK" ? ReviewerTone.changes : ReviewerTone.waiting)
+                                review: reviewer.status == "APPROVED"
+                                    ? ReviewState.approved
+                                    : reviewer.status == "NEEDS_WORK" ? ReviewState.changesRequested : nil)
                         }
                     },
                     badges: review.badges(authored: authored),

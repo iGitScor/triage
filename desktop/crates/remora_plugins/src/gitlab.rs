@@ -6,7 +6,8 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
-use remora_core::{ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Tone};
+use remora_core::ReviewState;
+use remora_core::{ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -162,7 +163,7 @@ impl GitLabPlugin {
             .map(|r| Person {
                 name: r.username.clone(),
                 avatar_url: avatar(&r.avatar_url),
-                tone: approvers.contains(&r.username).then_some(Tone::Accent),
+                review: approvers.contains(&r.username).then_some(ReviewState::Approved),
             })
             .collect();
         for approver in approvals.approved_by.iter().flatten() {
@@ -170,7 +171,7 @@ impl GitLabPlugin {
                 participants.push(Person {
                     name: approver.user.username.clone(),
                     avatar_url: avatar(&approver.user.avatar_url),
-                    tone: Some(Tone::Accent),
+                    review: Some(ReviewState::Approved),
                 });
             }
         }
@@ -192,7 +193,7 @@ impl GitLabPlugin {
             author: Some(Person {
                 name: mr.author.username.clone(),
                 avatar_url: avatar(&mr.author.avatar_url),
-                tone: None,
+                review: None,
             }),
             participants,
             badges: review.badges(authored),
@@ -360,7 +361,7 @@ impl Todo {
             app_url: None,
             author: self.author.as_ref().and_then(|a| {
                 let name = a.username.clone().or_else(|| a.name.clone())?;
-                Some(Person { name, avatar_url: a.avatar_url.clone(), tone: None })
+                Some(Person { name, avatar_url: a.avatar_url.clone(), review: None })
             }),
             participants: vec![],
             badges: vec![],
@@ -579,8 +580,11 @@ pub(crate) mod tests {
         let item = &snapshot.items[0];
         assert_eq!(item.context, "g/p !12");
         assert!(item.has_badge("approved") && item.has_badge("checks.passing") && item.has_badge("comments"));
-        assert_eq!(item.participants.iter().find(|p| p.name == "erin").and_then(|p| p.tone), Some(Tone::Accent));
-        assert_eq!(item.participants.iter().find(|p| p.name == "frank").and_then(|p| p.tone), None);
+        assert_eq!(
+            item.participants.iter().find(|p| p.name == "erin").and_then(|p| p.review),
+            Some(ReviewState::Approved)
+        );
+        assert_eq!(item.participants.iter().find(|p| p.name == "frank").and_then(|p| p.review), None);
         assert_eq!(
             item.author.as_ref().and_then(|a| a.avatar_url.clone()).as_deref(),
             Some("https://gitlab.acme.io/uploads/a.png")
@@ -674,7 +678,10 @@ pub(crate) mod tests {
         assert_eq!(paths.len(), 5, "user, the two lists, the To-Dos, one GraphQL request");
         let item = &snapshot.items[0];
         assert!(item.has_badge("approved") && item.has_badge("checks.failing"));
-        assert_eq!(item.participants.iter().find(|p| p.name == "erin").and_then(|p| p.tone), Some(Tone::Accent));
+        assert_eq!(
+            item.participants.iter().find(|p| p.name == "erin").and_then(|p| p.review),
+            Some(ReviewState::Approved)
+        );
         assert_eq!(item.changes, None, "your own merge requests don't need a review prep");
         let review = &snapshot.items[1];
         assert_eq!(review.bundle, InboxBundle::reviews());

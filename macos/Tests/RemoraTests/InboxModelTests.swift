@@ -149,8 +149,8 @@ struct InboxModelTests {
         model.start(item)
         let items = model.briefItems
         #expect(items.first?.id == item.id, "in progress first")
-        #expect(items.first?.badges.contains { $0.id == "inProgress" } == true)
-        #expect(items.count == 2 && !items[1].badges.contains { $0.id == "inProgress" })
+        #expect(items.first?.badges.contains { $0.id == .inProgress } == true)
+        #expect(items.count == 2 && !items[1].badges.contains { $0.id == .inProgress })
     }
 
     @Test func startAndStop() async throws {

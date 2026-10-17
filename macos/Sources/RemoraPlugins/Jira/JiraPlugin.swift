@@ -223,15 +223,15 @@ extension JiraPlugin {
             case .urgent:
                 badges.append(
                     Badge(
-                        id: "priority.urgent", label: L("Urgent"), symbol: "exclamationmark.3", tone: .negative,
+                        id: .priorityUrgent, label: L("Urgent"), symbol: "exclamationmark.3", tone: .negative,
                         notify: .init(title: L("Urgent issue"))))
             case .high:
-                badges.append(Badge(id: "priority.high", label: L("High"), symbol: "exclamationmark.2", tone: .warning))
+                badges.append(Badge(id: .priorityHigh, label: L("High"), symbol: "exclamationmark.2", tone: .warning))
             default: break
             }
             let due = DueDate.parse(fields.duedate)
             if let due { badges.append(DueDate.badge(for: due)) }
-            if let status = fields.status { badges.append(Badge(id: "status", label: status.name, tone: .neutral)) }
+            if let status = fields.status { badges.append(Badge(id: .status, label: status.name, tone: .neutral)) }
             return InboxItem(
                 id: "\(accountID.uuidString)/\(id)",
                 accountID: accountID,

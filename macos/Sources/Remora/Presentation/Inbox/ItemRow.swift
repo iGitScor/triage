@@ -234,20 +234,20 @@ struct ItemRow: View {
                 if let startedAt = state.startedAt {
                     BadgeChip(
                         badge: Badge(
-                            id: "started", label: L("Started %@", startedAt.formatted(.relative(presentation: .named))),
+                            id: .started, label: L("Started %@", startedAt.formatted(.relative(presentation: .named))),
                             symbol: "play.fill", tone: .accent
                         ))
                 }
                 if state.remindedAt != nil {
-                    BadgeChip(badge: Badge(id: "reminder", label: L("Reminder"), symbol: "bell.fill", tone: .accent))
+                    BadgeChip(badge: Badge(id: .reminder, label: L("Reminder"), symbol: "bell.fill", tone: .accent))
                 }
                 if let reason {
-                    BadgeChip(badge: Badge(id: "reason", label: reason.title, symbol: reason.symbol, tone: .neutral))
+                    BadgeChip(badge: Badge(id: .reason, label: reason.title, symbol: reason.symbol, tone: .neutral))
                 }
                 if times >= 2 {
                     BadgeChip(
                         badge: Badge(
-                            id: "times", label: L("Snoozed %d×", times), symbol: "arrow.triangle.2.circlepath",
+                            id: .times, label: L("Snoozed %d×", times), symbol: "arrow.triangle.2.circlepath",
                             tone: .warning))
                 }
                 ForEach(badges) { BadgeChip(badge: $0) }
@@ -258,7 +258,7 @@ struct ItemRow: View {
                     } label: {
                         BadgeChip(
                             badge: Badge(
-                                id: "link", label: other.shownContext,
+                                id: .link, label: other.shownContext,
                                 symbol: PluginRegistry.manifest(other.pluginID)?.symbol ?? "link", tone: .accent
                             ))
                     }
@@ -326,8 +326,7 @@ struct ItemRow: View {
     }
 
     private var background: Color {
-        if state.remindedAt != nil || state.startedAt != nil || (item.hasBadge("approved") && item.bundle == .authored)
-        {
+        if state.remindedAt != nil || state.startedAt != nil || (item.hasBadge(.approved) && item.bundle == .authored) {
             return showsActions ? Myna.accentSoft.opacity(1.4) : Myna.accentSoft
         }
         return showsActions ? Myna.card2 : Myna.card

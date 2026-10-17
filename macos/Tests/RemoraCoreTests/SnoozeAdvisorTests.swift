@@ -71,9 +71,9 @@ struct SnoozeAdvisorTests {
 
     @Test func nudgeDependsOnSize() {
         var big = makeItem("1", bundle: .reviews)
-        big.badges = [Badge(id: "diff", label: "+420 −80", tone: .neutral)]
+        big.badges = [Badge(id: .diff, label: "+420 −80", tone: .neutral)]
         var small = makeItem("2", bundle: .reviews)
-        small.badges = [Badge(id: "diff", label: "+12 −3", tone: .neutral)]
+        small.badges = [Badge(id: .diff, label: "+12 −3", tone: .neutral)]
         #expect(advisor.nudge(for: big) == "Do just the first step")
         #expect(advisor.nudge(for: small) == "Start with 10 minutes")
     }

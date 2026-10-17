@@ -296,8 +296,8 @@ struct KeychainTests {
 @MainActor
 struct ReviewerDescriptionTests {
     @Test func eachStateIsSpoken() {
-        #expect(PeopleStack.describe(Person(name: "erin", tone: .accent)) == "erin, approved")
-        #expect(PeopleStack.describe(Person(name: "dave", tone: .negative)) == "dave, changes requested")
+        #expect(PeopleStack.describe(Person(name: "erin", review: .approved)) == "erin, approved")
+        #expect(PeopleStack.describe(Person(name: "dave", review: .changesRequested)) == "dave, changes requested")
         #expect(PeopleStack.describe(Person(name: "frank")) == "frank, waiting")
     }
 }

@@ -160,7 +160,7 @@ public struct GitLabPlugin: SourcePlugin {
             Person(
                 name: reviewer.username,
                 avatarURL: URL(lenient: reviewer.avatarUrl, relativeTo: host),
-                tone: approvers.contains(reviewer.username) ? ReviewerTone.approved : ReviewerTone.waiting
+                review: approvers.contains(reviewer.username) ? ReviewState.approved : nil
             )
         }
         for approver in approvals.approvedBy ?? []
@@ -169,7 +169,7 @@ public struct GitLabPlugin: SourcePlugin {
                 Person(
                     name: approver.user.username,
                     avatarURL: URL(lenient: approver.user.avatarUrl, relativeTo: host),
-                    tone: ReviewerTone.approved
+                    review: ReviewState.approved
                 ))
         }
 

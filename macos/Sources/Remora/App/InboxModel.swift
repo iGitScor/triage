@@ -390,7 +390,7 @@ final class InboxModel {
         let layout = layout
         let started = layout.inProgress.map { item in
             var item = item
-            item.badges.append(Badge(id: "inProgress", label: L("In progress"), symbol: "play.fill", tone: .accent))
+            item.badges.append(Badge(id: .inProgress, label: L("In progress"), symbol: "play.fill", tone: .accent))
             return item
         }
         return assistantPolicy.items(started + layout.pinned + layout.groups.flatMap(\.items))

@@ -105,7 +105,7 @@ struct JiraPluginTests {
         #expect(tasks.map(\.context) == ["OPS-7", "OPS-8"])
         let urgent = try #require(tasks.first)
         #expect(urgent.priority == .urgent && urgent.needsAction)
-        #expect(urgent.badges.map(\.id).contains("overdue"))
+        #expect(urgent.badges.map(\.id.rawValue).contains("overdue"))
         #expect(urgent.url?.absoluteString == "https://acme.atlassian.net/browse/OPS-7")
         #expect(tasks[1].priority == .low && !tasks[1].needsAction, "low priority is shown, not counted")
     }

@@ -41,7 +41,7 @@ struct NotionPluginTests {
         #expect(snapshot.identity == "Alice")
         #expect(items.map(\.title) == ["Task a"])
         #expect(items.first?.context == "Team tasks")
-        #expect(items.first?.hasBadge("overdue") == true)
+        #expect(items.first?.hasBadge(.overdue) == true)
     }
 
     /// Notion leaves finished tasks out, so they don't use up the 50 places (FEAT-08): every status in the Complete

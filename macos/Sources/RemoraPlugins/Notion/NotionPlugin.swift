@@ -320,7 +320,7 @@ extension NotionPlugin {
 
         func item(accountID: UUID, database: String) -> InboxItem {
             var badges: [Badge] = []
-            if let status { badges.append(Badge(id: "status", label: status, tone: .neutral)) }
+            if let status { badges.append(Badge(id: .status, label: status, tone: .neutral)) }
             if let due { badges.append(DueDate.badge(for: due)) }
             return InboxItem(
                 id: "\(accountID.uuidString)/\(id)",

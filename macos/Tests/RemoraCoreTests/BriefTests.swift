@@ -29,7 +29,7 @@ struct BriefTests {
     @Test func aChangedItemMakesThemStale() {
         let items = [makeItem("1"), makeItem("2")]
         var changed = items
-        changed[0].badges.append(Badge(id: "approved", label: "Approved", tone: .positive))
+        changed[0].badges.append(Badge(id: .approved, label: "Approved", tone: .positive))
         #expect(!brief.writtenFrom(items).isFresh(for: changed, cacheMinutes: 30, now: now))
         #expect(
             !BundleSummary(text: "t", items: items, createdAt: now).isFresh(for: changed, cacheMinutes: 30, now: now))

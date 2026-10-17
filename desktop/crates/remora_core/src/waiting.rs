@@ -1,5 +1,6 @@
 //! Helps with what you're waiting on: who could review, and a friendly nudge when nobody answers.
 //! Drafts are written locally from templates; nothing is sent. Port of the macOS `WaitingAssistant.swift`.
+use crate::badge;
 use crate::review_prep::{diff_size, fill, plural};
 use crate::snooze_advisor::context_key;
 use crate::{InboxBundle, InboxItem, Person};
@@ -34,14 +35,14 @@ impl WaitingAssistant {
         me: Option<&str>,
         now: DateTime<Utc>,
     ) -> Option<WaitingHelp> {
-        if item.bundle != InboxBundle::awaiting() || item.has_badge("draft") {
+        if item.bundle != InboxBundle::awaiting() || item.has_badge(badge::DRAFT) {
             return None;
         }
         if item.participants.is_empty() {
             let people = self.reviewers(item, items, me, 3);
             return (!people.is_empty()).then_some(WaitingHelp::SuggestReviewers(people));
         }
-        let waiting_on: Vec<Person> = item.participants.iter().filter(|p| p.tone.is_none()).cloned().collect();
+        let waiting_on: Vec<Person> = item.participants.iter().filter(|p| p.review.is_none()).cloned().collect();
         let silence = now - item.date;
         if waiting_on.is_empty() || silence <= self.patience {
             return None;
@@ -73,7 +74,7 @@ impl WaitingAssistant {
             .flatten()
             .chain(ranked)
             .filter(|p| !excluded.contains(&p.name.to_lowercase()) && seen.insert(p.name.to_lowercase()))
-            .map(|p| Person { name: p.name.clone(), avatar_url: p.avatar_url.clone(), tone: None })
+            .map(|p| Person { name: p.name.clone(), avatar_url: p.avatar_url.clone(), review: None })
             .take(limit)
             .collect()
     }
@@ -103,8 +104,8 @@ impl WaitingAssistant {
 /// "It's small (+12 −3) and checks are green." Only what's true and useful.
 fn facts(item: &InboxItem, tr: &dyn Fn(&str) -> String) -> String {
     let small = diff_size(item).is_some_and(|size| size < 150);
-    let green = item.has_badge("checks.passing");
-    let diff = || item.badges.iter().find(|b| b.id == "diff").map(|b| b.label.clone()).unwrap_or_default();
+    let green = item.has_badge(badge::CHECKS_PASSING);
+    let diff = || item.badges.iter().find(|b| b.id == badge::DIFF).map(|b| b.label.clone()).unwrap_or_default();
     match (small, green) {
         (true, true) => fill(&tr("It’s small (%@) and checks are green."), &[diff()]),
         (true, false) => fill(&tr("It’s small (%@)."), &[diff()]),
@@ -157,7 +158,7 @@ mod tests {
     #[test]
     fn nudges_silent_reviewers_after_a_day() {
         let assistant = WaitingAssistant::default();
-        let frank = Person { tone: Some(Tone::Accent), ..person("frank") };
+        let frank = Person { review: Some(crate::ReviewState::Approved), ..person("frank") };
         let waiting = mine("1", vec![person("erin"), frank], 50, None);
         assert_eq!(
             assistant.help(&waiting, &[], Some("alice"), now()),

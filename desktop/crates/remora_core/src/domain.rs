@@ -103,18 +103,51 @@ impl InboxItem {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", from = "SavedPerson")]
 pub struct Person {
     pub name: String,
     #[serde(default)]
     pub avatar_url: Option<String>,
+    /// A reviewer's stand; none while they haven't reviewed. The interface draws its colour and glyph from it.
     #[serde(default)]
-    pub tone: Option<Tone>,
+    pub review: Option<ReviewState>,
+}
+
+/// Where a reviewer stands on a pull request.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum ReviewState {
+    Approved,
+    ChangesRequested,
+}
+
+/// A person as saved, also before 0.10, when a reviewer's stand was only the colour of their avatar (`tone`).
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SavedPerson {
+    name: String,
+    #[serde(default)]
+    avatar_url: Option<String>,
+    #[serde(default)]
+    review: Option<ReviewState>,
+    #[serde(default)]
+    tone: Option<Tone>,
+}
+
+impl From<SavedPerson> for Person {
+    fn from(saved: SavedPerson) -> Self {
+        let review = saved.review.or(match saved.tone {
+            Some(Tone::Accent | Tone::Positive) => Some(ReviewState::Approved),
+            Some(Tone::Negative) => Some(ReviewState::ChangesRequested),
+            _ => None,
+        });
+        Person { name: saved.name, avatar_url: saved.avatar_url, review }
+    }
 }
 
 impl Person {
     pub fn named(name: &str) -> Self {
-        Person { name: name.to_string(), avatar_url: None, tone: None }
+        Person { name: name.to_string(), avatar_url: None, review: None }
     }
 }
 
@@ -128,6 +161,30 @@ pub struct Badge {
     pub tone: Tone,
     #[serde(default)]
     pub notify: Option<String>,
+}
+
+/// The badge ids plugins write and the rules read back (Swift's `BadgeID`), so a typo is a compile error, not an
+/// item quietly in the wrong verb. They are saved with the inbox: renaming one is a format change.
+pub mod badge {
+    pub const APPROVED: &str = "approved";
+    pub const CHANGES: &str = "changes";
+    pub const DRAFT: &str = "draft";
+    pub const CONFLICTS: &str = "conflicts";
+    pub const CHECKS_PASSING: &str = "checks.passing";
+    pub const CHECKS_FAILING: &str = "checks.failing";
+    pub const CHECKS_RUNNING: &str = "checks.running";
+    pub const COMMENTS: &str = "comments";
+    pub const DIFF: &str = "diff";
+    pub const STATUS: &str = "status";
+    pub const PRIORITY_HIGH: &str = "priority.high";
+    pub const PRIORITY_URGENT: &str = "priority.urgent";
+    pub const DUE: &str = "due";
+    pub const DUE_TODAY: &str = "due.today";
+    pub const OVERDUE: &str = "overdue";
+    pub const IN_PROGRESS: &str = "inProgress";
+    pub const INVITATION: &str = "invitation";
+    pub const FLAGGED: &str = "flagged";
+    pub const EVENT: &str = "event";
 }
 
 impl Badge {
@@ -430,4 +487,23 @@ pub struct SignIn {
     /// The setting holding the app's client id, registered by the organization.
     pub client_id_key: String,
     pub scopes: Vec<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// CODE-04: an inbox saved before 0.10 gave a reviewer's stand only as the colour of their avatar.
+    #[test]
+    fn a_saved_reviewer_colour_becomes_their_stand() {
+        let read = |json: &str| serde_json::from_str::<Person>(json).expect("person").review;
+        assert_eq!(read(r#"{"name":"a","tone":"accent"}"#), Some(ReviewState::Approved));
+        assert_eq!(read(r#"{"name":"a","tone":"positive"}"#), Some(ReviewState::Approved));
+        assert_eq!(read(r#"{"name":"a","tone":"negative"}"#), Some(ReviewState::ChangesRequested));
+        assert_eq!(read(r#"{"name":"a","tone":null}"#), None);
+        assert_eq!(read(r#"{"name":"a","review":"changesRequested"}"#), Some(ReviewState::ChangesRequested));
+        let saved =
+            serde_json::to_string(&Person { review: Some(ReviewState::Approved), ..Person::named("a") }).unwrap();
+        assert_eq!(saved, r#"{"name":"a","avatarUrl":null,"review":"approved"}"#);
+    }
 }

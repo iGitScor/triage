@@ -15,8 +15,8 @@ struct WaitingAssistantTests {
         item.participants = participants
         item.suggestedPeople = suggested
         item.badges = [
-            Badge(id: "diff", label: "+12 −3", tone: .neutral),
-            Badge(id: "checks.passing", label: "Checks", tone: .positive),
+            Badge(id: .diff, label: "+12 −3", tone: .neutral),
+            Badge(id: .checksPassing, label: "Checks", tone: .positive),
         ]
         item.url = URL(string: "https://github.com/acme/app/pull/\(id)")
         return item
@@ -35,7 +35,7 @@ struct WaitingAssistantTests {
 
     @Test func nudgesSilentReviewersAfterADay() {
         let waiting = mine(
-            "1", participants: [Person(name: "erin"), Person(name: "frank", tone: .accent)], hoursAgo: 50)
+            "1", participants: [Person(name: "erin"), Person(name: "frank", review: .approved)], hoursAgo: 50)
         #expect(
             assistant.help(for: waiting, among: [], me: "alice", now: now) == .nudge([Person(name: "erin")], days: 2))
         let fresh = mine("1", participants: [Person(name: "erin")], hoursAgo: 3)
@@ -52,7 +52,7 @@ struct WaitingAssistantTests {
 
     @Test func draftsAndReviewItemsGetNoHelp() {
         var draft = mine("1")
-        draft.badges.append(Badge(id: "draft", label: "Draft", tone: .neutral))
+        draft.badges.append(Badge(id: .draft, label: "Draft", tone: .neutral))
         #expect(assistant.help(for: draft, among: [], me: nil, now: now) == nil)
         #expect(assistant.help(for: makeItem("2", bundle: .reviews), among: [], me: nil, now: now) == nil)
     }

@@ -2,7 +2,8 @@ use crate::code_review::{Checks, CodeReview};
 use crate::{decode_with_reset, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use remora_core::{ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Tone};
+use remora_core::ReviewState;
+use remora_core::{ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -246,7 +247,7 @@ impl Actor {
         Person {
             name: self.login.clone().or_else(|| self.name.clone()).unwrap_or_else(|| "?".into()),
             avatar_url: self.avatar_url.clone(),
-            tone: None,
+            review: None,
         }
     }
 }
@@ -368,9 +369,9 @@ impl PullRequest {
             .flat_map(|c| c.nodes.iter().flatten())
             .filter_map(|r| {
                 let mut person = r.author.as_ref()?.person();
-                person.tone = match r.state.as_str() {
-                    "APPROVED" => Some(Tone::Accent),
-                    "CHANGES_REQUESTED" => Some(Tone::Negative),
+                person.review = match r.state.as_str() {
+                    "APPROVED" => Some(ReviewState::Approved),
+                    "CHANGES_REQUESTED" => Some(ReviewState::ChangesRequested),
                     _ => None,
                 };
                 Some(person)

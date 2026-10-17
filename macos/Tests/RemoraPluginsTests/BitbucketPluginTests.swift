@@ -123,14 +123,14 @@ struct BitbucketPluginTests {
 
         let mine = snapshot.items[0]
         #expect(mine.bundle == .authored && mine.needsAction)
-        #expect(mine.badges.map(\.id) == ["approved", "checks.failing", "comments"])
-        #expect(mine.participants.map(\.name) == ["Bob"] && mine.participants.first?.tone == ReviewerTone.approved)
+        #expect(mine.badges.map(\.id.rawValue) == ["approved", "checks.failing", "comments"])
+        #expect(mine.participants.map(\.name) == ["Bob"] && mine.participants.first?.review == ReviewState.approved)
         #expect(mine.url?.absoluteString == "https://bitbucket.org/acme/inbox/pull-requests/7")
         #expect(mine.date == Date(iso8601: "2026-10-12T09:14:03.123Z"))
 
         let review = snapshot.items[1]
         #expect(review.bundle == .reviews && review.needsAction)
-        #expect(review.badges.map(\.id) == ["changes", "checks.running"])
+        #expect(review.badges.map(\.id.rawValue) == ["changes", "checks.running"])
         #expect(review.author?.name == "Erin")
         #expect(review.participants.map(\.name) == ["Bob"], "you aren't listed among the reviewers")
     }
@@ -175,14 +175,14 @@ struct BitbucketPluginTests {
 
         let draft = snapshot.items[0]
         #expect(draft.bundle == .authored && !draft.needsAction)
-        #expect(draft.badges.map(\.id) == ["draft", "checks.passing"])
+        #expect(draft.badges.map(\.id.rawValue) == ["draft", "checks.passing"])
         #expect(draft.url?.absoluteString == "https://bitbucket.acme.io/projects/WEB/repos/portal/pull-requests/42")
         #expect(draft.date == Date(timeIntervalSince1970: 1_760_259_243))
 
         let review = snapshot.items[1]
         #expect(review.bundle == .reviews && review.needsAction)
-        #expect(review.badges.map(\.id) == ["changes", "conflicts", "checks.running", "comments"])
-        #expect(review.participants.map(\.tone) == [ReviewerTone.waiting, ReviewerTone.changes])
+        #expect(review.badges.map(\.id.rawValue) == ["changes", "conflicts", "checks.running", "comments"])
+        #expect(review.participants.map(\.review) == [nil, ReviewState.changesRequested])
     }
 
     @Test func readsCloudDatesWithMicroseconds() {

@@ -1,6 +1,7 @@
 use crate::{decode, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Local, NaiveDate, TimeZone, Utc};
+use remora_core::badge;
 use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -193,8 +194,10 @@ impl Issue {
     fn item(&self, account_id: &str) -> InboxItem {
         let mut badges = vec![];
         match self.priority {
-            Some(1) => badges.push(Badge::new("priority.urgent", "Urgent", Tone::Negative).notifying("Urgent issue")),
-            Some(2) => badges.push(Badge::new("priority.high", "High", Tone::Warning)),
+            Some(1) => {
+                badges.push(Badge::new(badge::PRIORITY_URGENT, "Urgent", Tone::Negative).notifying("Urgent issue"))
+            }
+            Some(2) => badges.push(Badge::new(badge::PRIORITY_HIGH, "High", Tone::Warning)),
             _ => {}
         }
         let due = self.due_date.as_deref().and_then(due_date);
@@ -202,7 +205,7 @@ impl Issue {
             badges.push(due_badge(due));
         }
         if let Some(state) = &self.state {
-            badges.push(Badge::new("status", &state.name, Tone::Neutral));
+            badges.push(Badge::new(badge::STATUS, &state.name, Tone::Neutral));
         }
         let priority = self.item_priority();
         InboxItem {
@@ -245,11 +248,11 @@ pub(crate) fn due_badge(due: DateTime<Utc>) -> Badge {
     let today = Local::now().date_naive();
     let day = due.with_timezone(&Local).date_naive();
     if day < today {
-        Badge::new("overdue", "Overdue", Tone::Negative).notifying("Task overdue")
+        Badge::new(badge::OVERDUE, "Overdue", Tone::Negative).notifying("Task overdue")
     } else if day == today {
-        Badge::new("due.today", "Due today", Tone::Warning).notifying("Due today")
+        Badge::new(badge::DUE_TODAY, "Due today", Tone::Warning).notifying("Due today")
     } else {
-        Badge::new("due", &day.format("%Y-%m-%d").to_string(), Tone::Neutral)
+        Badge::new(badge::DUE, &day.format("%Y-%m-%d").to_string(), Tone::Neutral)
     }
 }
 
@@ -298,7 +301,7 @@ impl Notification {
             author: self.actor.as_ref().map(|a| Person {
                 name: a.name.clone(),
                 avatar_url: a.avatar_url.clone(),
-                tone: None,
+                review: None,
             }),
             participants: vec![],
             badges: vec![],

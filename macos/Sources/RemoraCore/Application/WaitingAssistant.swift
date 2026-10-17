@@ -18,8 +18,8 @@ public struct WaitingAssistant: Sendable {
     }
 
     public func help(for item: InboxItem, among items: [InboxItem], me: String?, now: Date = .now) -> Help? {
-        guard item.bundle == .awaiting, !item.hasBadge("draft") else { return nil }
-        let waitingOn = item.participants.filter { $0.tone == nil }
+        guard item.bundle == .awaiting, !item.hasBadge(.draft) else { return nil }
+        let waitingOn = item.participants.filter { $0.review == nil }
         if item.participants.isEmpty {
             let people = reviewers(for: item, among: items, me: me)
             return people.isEmpty ? nil : .suggestReviewers(people)
@@ -69,11 +69,11 @@ public struct WaitingAssistant: Sendable {
     /// "It's small (+12 −3) and checks are green." Only what's true and useful.
     static func facts(of item: InboxItem) -> String {
         let small = (item.diffSize ?? .max) < 150
-        let green = item.hasBadge("checks.passing")
+        let green = item.hasBadge(.checksPassing)
         switch (small, green) {
         case (true, true):
-            return L("It’s small (%@) and checks are green.", item.badges.first { $0.id == "diff" }?.label ?? "")
-        case (true, false): return L("It’s small (%@).", item.badges.first { $0.id == "diff" }?.label ?? "")
+            return L("It’s small (%@) and checks are green.", item.badges.first { $0.id == .diff }?.label ?? "")
+        case (true, false): return L("It’s small (%@).", item.badges.first { $0.id == .diff }?.label ?? "")
         case (false, true): return L("Checks are green.")
         case (false, false): return ""
         }

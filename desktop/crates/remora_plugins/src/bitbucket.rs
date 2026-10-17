@@ -7,7 +7,8 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, TimeZone, Utc};
 use futures::future::join_all;
-use remora_core::{ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Tone};
+use remora_core::ReviewState;
+use remora_core::{ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -312,11 +313,11 @@ pub fn cloud_checks<'a>(states: impl Iterator<Item = &'a str>) -> Checks {
     }
 }
 
-fn tone(approved: bool, changes: bool) -> Option<Tone> {
+fn review_state(approved: bool, changes: bool) -> Option<ReviewState> {
     if approved {
-        Some(Tone::Accent)
+        Some(ReviewState::Approved)
     } else if changes {
-        Some(Tone::Negative)
+        Some(ReviewState::ChangesRequested)
     } else {
         None
     }
@@ -353,11 +354,11 @@ struct CloudUser {
 }
 
 impl CloudUser {
-    fn person(&self, tone: Option<Tone>) -> Person {
+    fn person(&self, review: Option<ReviewState>) -> Person {
         Person {
             name: self.display_name.clone().or(self.nickname.clone()).unwrap_or_else(|| "?".into()),
             avatar_url: self.links.as_ref().and_then(|l| l.avatar.as_ref()).and_then(|a| a.href.clone()),
-            tone,
+            review,
         }
     }
 }
@@ -456,7 +457,7 @@ impl CloudPullRequest {
             participants: others
                 .iter()
                 .filter(|p| p.role.as_deref() == Some("REVIEWER") || p.approved())
-                .filter_map(|p| p.user.as_ref().map(|u| u.person(tone(p.approved(), p.changes_requested()))))
+                .filter_map(|p| p.user.as_ref().map(|u| u.person(review_state(p.approved(), p.changes_requested()))))
                 .collect(),
             badges: review.badges(authored),
             date: self.updated_on,
@@ -496,11 +497,11 @@ struct DataCenterUser {
 }
 
 impl DataCenterUser {
-    fn person(&self, tone: Option<Tone>) -> Person {
+    fn person(&self, review: Option<ReviewState>) -> Person {
         Person {
             name: self.display_name.clone().or(self.name.clone()).unwrap_or_else(|| "?".into()),
             avatar_url: None,
-            tone,
+            review,
         }
     }
 }
@@ -619,7 +620,7 @@ impl DataCenterPullRequest {
             participants: self
                 .reviewers
                 .iter()
-                .filter_map(|r| r.user.as_ref().map(|u| u.person(tone(r.approved(), r.needs_work()))))
+                .filter_map(|r| r.user.as_ref().map(|u| u.person(review_state(r.approved(), r.needs_work()))))
                 .collect(),
             badges: review.badges(authored),
             date: self.updated_date.and_then(|ms| Utc.timestamp_millis_opt(ms).single()).unwrap_or_else(Utc::now),
@@ -797,8 +798,8 @@ pub(crate) mod tests {
         assert!(mine.bundle == InboxBundle::authored() && mine.needs_action);
         assert_eq!(ids(mine), ["approved", "checks.failing", "comments"]);
         assert_eq!(
-            mine.participants.iter().map(|p| (p.name.as_str(), p.tone)).collect::<Vec<_>>(),
-            [("Bob", Some(Tone::Accent))]
+            mine.participants.iter().map(|p| (p.name.as_str(), p.review)).collect::<Vec<_>>(),
+            [("Bob", Some(ReviewState::Approved))]
         );
         assert_eq!(mine.url.as_deref(), Some("https://bitbucket.org/acme/inbox/pull-requests/7"));
         assert_eq!(mine.date.timestamp_millis(), 1_791_796_443_123);
@@ -871,7 +872,10 @@ pub(crate) mod tests {
         let review = &snapshot.items[1];
         assert!(review.bundle == InboxBundle::reviews() && review.needs_action);
         assert_eq!(ids(review), ["changes", "conflicts", "checks.running", "comments"]);
-        assert_eq!(review.participants.iter().map(|p| p.tone).collect::<Vec<_>>(), [None, Some(Tone::Negative)]);
+        assert_eq!(
+            review.participants.iter().map(|p| p.review).collect::<Vec<_>>(),
+            [None, Some(ReviewState::ChangesRequested)]
+        );
     }
 
     #[test]

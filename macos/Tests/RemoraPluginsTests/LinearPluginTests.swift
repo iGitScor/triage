@@ -68,7 +68,7 @@ struct LinearPluginTests {
         #expect(tasks.map(\.needsAction) == [true, false, false, true])
         #expect(tasks[0].due != nil)
         #expect(tasks[0].appURL?.absoluteString == "linear://x/issue/ENG-42")
-        #expect(tasks[0].hasBadge("priority.urgent") && tasks[0].hasBadge("overdue") && tasks[0].hasBadge("status"))
+        #expect(tasks[0].hasBadge(.priorityUrgent) && tasks[0].hasBadge(.overdue) && tasks[0].hasBadge(.status))
         let mentions = snapshot.items.filter { $0.bundle == .mentions }
         #expect(mentions.map(\.title) == ["Erin mentioned you in ENG-40"], "unread, recent, mentions or comments only")
         #expect(mentions.first?.author?.name == "Erin")

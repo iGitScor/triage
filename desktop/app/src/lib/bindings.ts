@@ -311,7 +311,11 @@ export type Mark = { at: string, fingerprint: string, clearedAt: string | null, 
 
 export type Message = { code: string, args: Array<string>, text: string, };
 
-export type Person = { name: string, avatarUrl: string | null, tone: Tone | null, };
+export type Person = { name: string, avatarUrl: string | null, 
+/**
+ * A reviewer's stand; none while they haven't reviewed. The interface draws its colour and glyph from it.
+ */
+review: ReviewState | null, };
 
 /**
  * The user's settings, as in the macOS app. Missing keys keep their defaults, so adding one never
@@ -406,6 +410,11 @@ anchor: string,
 until?: string | null, };
 
 export type RecurrenceRule = "daily" | "weekdays" | "weekly";
+
+/**
+ * Where a reviewer stands on a pull request.
+ */
+export type ReviewState = "approved" | "changesRequested";
 
 export type Settings = { preferences: Preferences, managed: Managed, isManaged: boolean, policy: CompliancePolicy, autostart: boolean, version: string, dataDir: string, 
 /**

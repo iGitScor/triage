@@ -21,7 +21,7 @@ struct ChangeDetectorTests {
     }
 
     @Test func silentBadgesAreIgnored() {
-        let quiet = Badge(id: "draft", label: "Draft", tone: .neutral)
+        let quiet = Badge(id: .draft, label: "Draft", tone: .neutral)
         #expect(ChangeDetector.notices(previous: [makeItem("1")], current: [makeItem("1", badges: [quiet])]).isEmpty)
     }
 

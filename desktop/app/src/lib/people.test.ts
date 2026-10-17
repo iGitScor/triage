@@ -6,12 +6,12 @@ vi.mock('@tauri-apps/api/core', () => ({
 }))
 const { describe, mark, shown, avatarSrc } = await import('./people')
 
-const person = (name: string, tone: Person['tone'] = null): Person => ({ name, avatarUrl: null, tone })
+const person = (name: string, review: Person['review'] = null): Person => ({ name, avatarUrl: null, review })
 
 group('reviewers on a row', () => {
   it('says each state in words, not only in colour', () => {
-    expect(describe(person('erin', 'accent'))).toBe('erin, approved')
-    expect(describe(person('dave', 'negative'))).toBe('dave, changes requested')
+    expect(describe(person('erin', 'approved'))).toBe('erin, approved')
+    expect(describe(person('dave', 'changesRequested'))).toBe('dave, changes requested')
     expect(describe(person('frank'))).toBe('frank, waiting')
     expect(mark(person('frank'))).toBeNull()
   })

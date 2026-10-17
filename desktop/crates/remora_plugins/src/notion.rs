@@ -6,6 +6,7 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::try_join_all;
+use remora_core::badge;
 use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Tone};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -484,7 +485,7 @@ impl Page {
     fn item(&self, account_id: &str, database: &str) -> InboxItem {
         let mut badges = vec![];
         if let Some(status) = self.status() {
-            badges.push(Badge::new("status", status, Tone::Neutral));
+            badges.push(Badge::new(badge::STATUS, status, Tone::Neutral));
         }
         let due = self.due();
         if let Some(due) = due {

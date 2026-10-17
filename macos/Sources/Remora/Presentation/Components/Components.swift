@@ -50,7 +50,7 @@ struct RemoteImage<Placeholder: View>: View {
     }
 }
 
-/// Overlapping reviewer avatars, each ringed with its review tone and marked ✓ (approved) or ✕ (changes requested),
+/// Overlapping reviewer avatars, each ringed with a colour for its review and marked ✓ (approved) or ✕ (changes requested),
 /// so the state doesn't rest on colour alone; VoiceOver reads each reviewer with their state.
 struct PeopleStack: View {
     let people: [Person]
@@ -77,24 +77,24 @@ struct PeopleStack: View {
 
     /// "Erin, approved", "Dave, changes requested", "Frank, waiting".
     static func describe(_ person: Person) -> String {
-        switch person.tone {
-        case .accent?, .positive?: L("%@, approved", person.name)
-        case .negative?: L("%@, changes requested", person.name)
-        default: L("%@, waiting", person.name)
+        switch person.review {
+        case .approved: L("%@, approved", person.name)
+        case .changesRequested: L("%@, changes requested", person.name)
+        case nil: L("%@, waiting", person.name)
         }
     }
 
     @ViewBuilder private func mark(for person: Person) -> some View {
         let symbol: String? =
-            switch person.tone {
-            case .accent?, .positive?: "checkmark"
-            case .negative?: "xmark"
-            default: nil
+            switch person.review {
+            case .approved: "checkmark"
+            case .changesRequested: "xmark"
+            case nil: nil
             }
         if let symbol {
             Image(systemName: symbol)
                 .font(.system(size: 5.5, weight: .black))
-                .foregroundStyle(person.tone == .negative ? Myna.onDark : Myna.onAccent)
+                .foregroundStyle(person.review == .changesRequested ? Myna.onDark : Myna.onAccent)
                 .frame(width: 9, height: 9)
                 .background(ring(for: person), in: Circle())
                 .overlay(Circle().strokeBorder(Myna.card, lineWidth: 1))
@@ -103,8 +103,11 @@ struct PeopleStack: View {
     }
 
     private func ring(for person: Person) -> Color {
-        guard let tone = person.tone else { return Myna.card }
-        return tone == .accent ? Myna.accentDeep : Myna.color(for: tone).foreground
+        switch person.review {
+        case .approved: Myna.accentDeep
+        case .changesRequested: Myna.color(for: .negative).foreground
+        case nil: Myna.card
+        }
     }
 }
 

@@ -21,9 +21,10 @@ flowchart TB
 **Domaine** (`Sources/RemoraCore/Domain`)
 
 - `InboxItem` : tout ce qui demande de l’attention. Il appartient à un `bundle`, porte des `badges` (pastilles de
-  statut) et des `participants` (par exemple les relecteurs). `needsAction` marque les éléments qui attendent
+  statut) et des `participants` (par exemple les relecteurs, chacun avec son état `review`). `needsAction` marque les éléments qui attendent
   quelque chose de vous : leur arrivée est annoncée.
-- `Badge` : une pastille avec un `Tone`. Un badge avec `notify` déclenche une notification la première fois qu’il
+- `Badge` : une pastille avec un `Tone` et un `BadgeID` (constantes `badge::` sous Windows) : les identifiants que les
+  règles relisent sont déclarés une fois, jamais tapés en chaînes. Un badge avec `notify` déclenche une notification la première fois qu’il
   apparaît sur un élément (par exemple *Approuvée* sur votre propre MR).
 - `InboxBundle` : les catégories communes (`reviews`, `mentions`, `directMessages`, `authored`, `asked`, `answered`,
   `tasks`, `reminders`). Les extensions en choisissent une ; elles n’inventent jamais d’interface. `finished` (une

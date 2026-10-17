@@ -17,7 +17,7 @@ struct ItemRowSpeechTests {
             ChangedFile(path: "src/api/retry.test.ts", additions: 30, deletions: 0),
         ])
         let prep = try #require(ReviewPrep(item))
-        let reviewers = [Person(name: "Erin", tone: .positive), Person(name: "Dave", tone: .negative)]
+        let reviewers = [Person(name: "Erin", review: .approved), Person(name: "Dave", review: .changesRequested)]
         let spoken = ItemRow.spokenExtras(participants: reviewers, prep: prep, help: nil)
         #expect(spoken.first == "Reviewers: Erin, approved and Dave, changes requested")
         #expect(spoken.contains { $0.hasPrefix("Review: about ") && $0.hasSuffix("minutes, 2 files") })

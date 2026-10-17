@@ -146,15 +146,15 @@ extension LinearPlugin {
             case 1:
                 badges.append(
                     Badge(
-                        id: "priority.urgent", label: L("Urgent"), symbol: "exclamationmark.3", tone: .negative,
+                        id: .priorityUrgent, label: L("Urgent"), symbol: "exclamationmark.3", tone: .negative,
                         notify: .init(title: L("Urgent issue"))))
             case 2:
-                badges.append(Badge(id: "priority.high", label: L("High"), symbol: "exclamationmark.2", tone: .warning))
+                badges.append(Badge(id: .priorityHigh, label: L("High"), symbol: "exclamationmark.2", tone: .warning))
             default: break
             }
             let due = DueDate.parse(dueDate)
             if let due { badges.append(DueDate.badge(for: due)) }
-            if let state { badges.append(Badge(id: "status", label: state.name, tone: .neutral)) }
+            if let state { badges.append(Badge(id: .status, label: state.name, tone: .neutral)) }
             let priority = itemPriority
             return InboxItem(
                 id: "\(accountID.uuidString)/\(id)",

@@ -1979,7 +1979,7 @@ mod tests {
         let mut inbox = inbox();
         let mut mine = item("m", InboxBundle::awaiting());
         mine.date = Utc::now() - Duration::days(3);
-        mine.participants = vec![remora_core::Person { name: "erin".into(), avatar_url: None, tone: None }];
+        mine.participants = vec![remora_core::Person { name: "erin".into(), avatar_url: None, review: None }];
         inbox.apply(snapshot(vec![mine]), Utc::now());
         let draft = inbox.waiting_draft("m", Utc::now(), &|key| key.to_string()).expect("a nudge");
         assert!(draft.contains("@erin") && draft.contains("3 days"), "{draft}");

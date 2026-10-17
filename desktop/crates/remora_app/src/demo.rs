@@ -1,5 +1,6 @@
 //! Sample items for `--demo`, so the app can be explored without connecting anything. The same inbox as
 //! the macOS demo (made-up people and repositories), with Linear for tasks.
+use remora_core::badge;
 
 use crate::{Inbox, Managed, MemoryVault};
 use chrono::{DateTime, Duration, Utc};
@@ -40,8 +41,8 @@ impl Demo {
         people: &[&str],
         preview: Option<&str>,
     ) {
-        let needs_action =
-            bundle != InboxBundle::authored() || badges.iter().any(|b| b.id == "approved" || b.id == "changes");
+        let needs_action = bundle != InboxBundle::authored()
+            || badges.iter().any(|b| b.id == badge::APPROVED || b.id == badge::CHANGES);
         self.items.entry(plugin.into()).or_default().push(InboxItem {
             id: format!("demo/{n}"),
             account_id: plugin.into(),
@@ -77,8 +78,8 @@ impl Demo {
 
 /// `t` translates the titles and previews, as the interface's other text (English text → the system's language).
 pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
-    let passing = || Badge::new("checks.passing", "Checks", Tone::Positive);
-    let diff = |a: u32, d: u32| Badge::new("diff", &format!("+{a} −{d}"), Tone::Neutral);
+    let passing = || Badge::new(badge::CHECKS_PASSING, "Checks", Tone::Positive);
+    let diff = |a: u32, d: u32| Badge::new(badge::DIFF, &format!("+{a} −{d}"), Tone::Neutral);
     let mut demo = Demo { now, items: HashMap::new() };
     demo.add(
         1,
@@ -100,7 +101,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         "acme/platform !1290",
         95,
         "dave",
-        vec![Badge::new("checks.failing", "Checks failed", Tone::Negative), diff(88, 120)],
+        vec![Badge::new(badge::CHECKS_FAILING, "Checks failed", Tone::Negative), diff(88, 120)],
         &["you"],
         None,
     );
@@ -136,7 +137,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         "acme/inbox #77",
         8,
         "you",
-        vec![Badge::new("approved", "Approved", Tone::Accent), passing(), diff(320, 12)],
+        vec![Badge::new(badge::APPROVED, "Approved", Tone::Accent), passing(), diff(320, 12)],
         &["erin", "dave"],
         None,
     );
@@ -148,7 +149,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         "acme/inbox #75",
         400,
         "you",
-        vec![Badge::new("changes", "Changes requested", Tone::Negative), passing()],
+        vec![Badge::new(badge::CHANGES, "Changes requested", Tone::Negative), passing()],
         &["frank"],
         None,
     );
@@ -160,7 +161,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         "acme/inbox #79",
         1_500,
         "you",
-        vec![Badge::new("draft", "Draft", Tone::Neutral)],
+        vec![Badge::new(badge::DRAFT, "Draft", Tone::Neutral)],
         &[],
         None,
     );
@@ -172,7 +173,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         "ENG-31",
         2_000,
         "Linear",
-        vec![Badge::new("due.today", "Due today", Tone::Warning)],
+        vec![Badge::new(badge::DUE_TODAY, "Due today", Tone::Warning)],
         &[],
         None,
     );

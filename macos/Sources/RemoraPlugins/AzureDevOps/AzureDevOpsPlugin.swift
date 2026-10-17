@@ -187,7 +187,7 @@ public struct AzureDevOpsPlugin: SourcePlugin {
             let vote = reviewer.vote ?? 0
             return Person(
                 name: reviewer.displayName,
-                tone: vote >= 5 ? ReviewerTone.approved : vote < 0 ? ReviewerTone.changes : ReviewerTone.waiting)
+                review: vote >= 5 ? ReviewState.approved : vote < 0 ? ReviewState.changesRequested : nil)
         }
         let repository = pr.repository
         let files = (changes ?? []).compactMap { change -> ChangedFile? in
@@ -356,11 +356,11 @@ extension AzureDevOpsPlugin {
             let priority = itemPriority
             var badges: [Badge] = []
             if priority == .high {
-                badges.append(Badge(id: "priority.high", label: L("High"), symbol: "exclamationmark.2", tone: .warning))
+                badges.append(Badge(id: .priorityHigh, label: L("High"), symbol: "exclamationmark.2", tone: .warning))
             }
             let due = DueDate.parse(fields.due)
             if let due { badges.append(DueDate.badge(for: due)) }
-            if let state = fields.state { badges.append(Badge(id: "status", label: state, tone: .neutral)) }
+            if let state = fields.state { badges.append(Badge(id: .status, label: state, tone: .neutral)) }
             let kind = [fields.type, String(id)].compactMap { $0 }.joined(separator: " ")
             return InboxItem(
                 id: "\(accountID.uuidString)/workitem/\(id)",

@@ -72,13 +72,13 @@ struct GitHubPluginTests {
 
         let authored = try #require(snapshot.items.first { $0.bundle == .authored })
         #expect(authored.context == "acme/app #7")
-        #expect(authored.hasBadge("approved") && authored.hasBadge("checks.failing"))
-        #expect(authored.badges.first { $0.id == "approved" }?.notify != nil)
+        #expect(authored.hasBadge(.approved) && authored.hasBadge(.checksFailing))
+        #expect(authored.badges.first { $0.id == .approved }?.notify != nil)
         #expect(authored.participants.map(\.name) == ["erin", "platform-team"])
         #expect(authored.needsAction, "approved with failing checks: your turn")
 
         let review = try #require(snapshot.items.first { $0.bundle == .reviews })
-        #expect(review.hasBadge("conflicts"))
+        #expect(review.hasBadge(.conflicts))
         #expect(review.changes?.files.map(\.path) == ["src/search/index.ts", "src/search/index.test.ts"])
         #expect(review.changes?.fileCount == 3)
         #expect(authored.changes == nil, "your own PRs don't need a review prep")

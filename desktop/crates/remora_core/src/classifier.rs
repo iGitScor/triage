@@ -1,3 +1,4 @@
+use crate::badge;
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -316,11 +317,14 @@ impl VerbClassifier {
     }
 
     fn verb_for_authored(item: &InboxItem) -> InboxBundle {
-        if item.has_badge("draft") {
+        if item.has_badge(badge::DRAFT) {
             InboxBundle::awaiting()
-        } else if item.has_badge("changes") || item.has_badge("checks.failing") || item.has_badge("conflicts") {
+        } else if item.has_badge(badge::CHANGES)
+            || item.has_badge(badge::CHECKS_FAILING)
+            || item.has_badge(badge::CONFLICTS)
+        {
             InboxBundle::fix()
-        } else if item.has_badge("approved") {
+        } else if item.has_badge(badge::APPROVED) {
             InboxBundle::merge()
         } else {
             InboxBundle::awaiting()

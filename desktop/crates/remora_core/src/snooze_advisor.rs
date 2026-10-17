@@ -1,3 +1,4 @@
+use crate::badge;
 use crate::{InboxBundle, InboxItem, ItemState, SnoozeClock, SnoozeReason};
 use chrono::{DateTime, Datelike, Days, Duration, Local, NaiveTime, TimeZone, Timelike, Utc, Weekday};
 use serde::{Deserialize, Serialize};
@@ -414,7 +415,7 @@ pub fn context_key(context: &str) -> String {
 impl InboxItem {
     /// Lines changed, read from the "+a −d" badge.
     pub(crate) fn diff_size(&self) -> Option<u64> {
-        let label = &self.badges.iter().find(|b| b.id == "diff")?.label;
+        let label = &self.badges.iter().find(|b| b.id == badge::DIFF)?.label;
         let numbers: Vec<u64> = label.split(|c: char| !c.is_numeric()).filter_map(|n| n.parse().ok()).collect();
         if numbers.is_empty() {
             None

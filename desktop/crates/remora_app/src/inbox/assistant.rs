@@ -1,6 +1,7 @@
 //! The assistant coordinator: what the assistant wrote (the brief, each group's summary, the triage of the snoozed
 //! pile), whether it is still fresh, and its files. The inbox decides who may be asked and whether an answer may
 //! still be kept (`Inbox::still_answers`). Ported from the macOS app's `AssistantCoordinator`.
+use remora_core::badge;
 
 use super::persistence::{Persistence, BRIEF, SUMMARIES, USAGE};
 use super::{AssistantJob, Inbox};
@@ -223,7 +224,7 @@ impl Inbox {
     pub fn brief_items(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
         let layout = self.layout(now, "");
         let started = layout.in_progress.into_iter().map(|mut item| {
-            item.badges.push(remora_core::Badge::new("inProgress", "In progress", remora_core::Tone::Accent));
+            item.badges.push(remora_core::Badge::new(badge::IN_PROGRESS, "In progress", remora_core::Tone::Accent));
             item
         });
         let items: Vec<InboxItem> =

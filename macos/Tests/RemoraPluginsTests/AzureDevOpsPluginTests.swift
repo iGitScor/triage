@@ -94,15 +94,15 @@ struct AzureDevOpsPluginTests {
         #expect(mine.title == "Speed up CI")
         #expect(mine.context == "Acme/app !12")
         #expect(mine.url?.absoluteString == "https://dev.azure.com/acme/Acme/_git/app/pullrequest/12")
-        #expect(mine.hasBadge("approved") && mine.hasBadge("checks.failing") && mine.needsAction)
-        #expect(mine.participants.first { $0.name == "Erin" }?.tone == .accent)
-        #expect(mine.participants.first { $0.name == "Frank" }?.tone == nil)
+        #expect(mine.hasBadge(.approved) && mine.hasBadge(.checksFailing) && mine.needsAction)
+        #expect(mine.participants.first { $0.name == "Erin" }?.review == .approved)
+        #expect(mine.participants.first { $0.name == "Frank" }?.review == nil)
         #expect(mine.changes == nil, "your own pull requests don't need a review prep")
 
         let review = snapshot.items[1]
         #expect(review.author?.name == "Bob")
-        #expect(review.hasBadge("changes") && review.hasBadge("conflicts") && !review.hasBadge("approved"))
-        #expect(review.participants.first { $0.name == "Erin" }?.tone == .negative)
+        #expect(review.hasBadge(.changes) && review.hasBadge(.conflicts) && !review.hasBadge(.approved))
+        #expect(review.participants.first { $0.name == "Erin" }?.review == .changesRequested)
         #expect(review.changes?.files == [ChangedFile(path: "src/db/add_avatars.sql")])
         #expect(review.date == Date(iso8601: "2026-10-10T07:00:00Z"), "the latest push")
 
@@ -110,8 +110,8 @@ struct AzureDevOpsPluginTests {
         #expect(bug.title == "Export CSV")
         #expect(bug.context == "Acme · Bug 42")
         #expect(bug.url?.absoluteString == "https://dev.azure.com/acme/Acme/_workitems/edit/42")
-        #expect(bug.priority == .high && bug.hasBadge("priority.high") && bug.hasBadge("overdue"))
-        #expect(bug.hasBadge("status") && bug.needsAction)
+        #expect(bug.priority == .high && bug.hasBadge(.priorityHigh) && bug.hasBadge(.overdue))
+        #expect(bug.hasBadge(.status) && bug.needsAction)
         let task = snapshot.items[3]
         #expect(task.priority == .low && !task.needsAction)
     }

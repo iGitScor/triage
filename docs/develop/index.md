@@ -20,9 +20,10 @@ flowchart TB
 **Domain** (`Sources/RemoraCore/Domain`)
 
 - `InboxItem`: anything that needs attention. It belongs to a `bundle`, carries `badges`
-  (status chips) and `participants` (e.g. reviewers). `needsAction` marks items that ask
+  (status chips) and `participants` (e.g. reviewers, each with a `review` state). `needsAction` marks items that ask
   something of you, so their arrival is announced.
-- `Badge`: a chip with a `Tone`. A badge with `notify` set triggers a notification the first
+- `Badge`: a chip with a `Tone` and a `BadgeID` (`badge::` constants on Windows): the ids rules read back are declared
+  once, never typed as strings. A badge with `notify` set triggers a notification the first
   time it appears on an item (e.g. *Approved* on your own MR).
 - `InboxBundle`: shared categories (`reviews`, `mentions`, `directMessages`, `authored`, `asked`, `answered`,
   `tasks`, `reminders`). Plugins choose one; they never invent UI. `finished` (a conversation that needs nothing

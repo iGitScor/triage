@@ -17,8 +17,8 @@ enum DemoData {
 
     static func items() -> [UUID: [InboxItem]] {
         let account = UUID()
-        func person(_ name: String, _ tone: Tone? = nil) -> Person {
-            Person(name: name, avatarURL: URL(string: "https://i.pravatar.cc/64?u=\(name)"), tone: tone)
+        func person(_ name: String, _ review: ReviewState? = nil) -> Person {
+            Person(name: name, avatarURL: URL(string: "https://i.pravatar.cc/64?u=\(name)"), review: review)
         }
         func item(
             _ n: Int, _ bundle: InboxBundle, _ title: String, _ context: String, minutes: Double,
@@ -30,17 +30,17 @@ enum DemoData {
                 context: context, preview: preview, url: URL(string: "https://github.com"),
                 author: person(author), participants: people, badges: badges,
                 date: .now.addingTimeInterval(-minutes * 60),
-                needsAction: bundle != .authored || badges.contains { ["approved", "changes"].contains($0.id) }
+                needsAction: bundle != .authored || badges.contains { [.approved, .changes].contains($0.id) }
             )
         }
-        let approved = Badge(id: "approved", label: L("Approved"), symbol: "checkmark", tone: .accent)
-        let passing = Badge(id: "checks.passing", label: L("Checks"), symbol: "checkmark.circle.fill", tone: .positive)
+        let approved = Badge(id: .approved, label: L("Approved"), symbol: "checkmark", tone: .accent)
+        let passing = Badge(id: .checksPassing, label: L("Checks"), symbol: "checkmark.circle.fill", tone: .positive)
         let failing = Badge(
-            id: "checks.failing", label: L("Checks failed"), symbol: "xmark.octagon.fill", tone: .negative)
+            id: .checksFailing, label: L("Checks failed"), symbol: "xmark.octagon.fill", tone: .negative)
         let changes = Badge(
-            id: "changes", label: L("Changes requested"), symbol: "exclamationmark.bubble", tone: .negative)
-        let draft = Badge(id: "draft", label: L("Draft"), symbol: "pencil", tone: .neutral)
-        func diff(_ a: Int, _ d: Int) -> Badge { Badge(id: "diff", label: "+\(a) −\(d)", tone: .neutral) }
+            id: .changes, label: L("Changes requested"), symbol: "exclamationmark.bubble", tone: .negative)
+        let draft = Badge(id: .draft, label: L("Draft"), symbol: "pencil", tone: .neutral)
+        func diff(_ a: Int, _ d: Int) -> Badge { Badge(id: .diff, label: "+\(a) −\(d)", tone: .neutral) }
 
         let passkeyFiles = ChangeSet(
             files: [
@@ -69,10 +69,10 @@ enum DemoData {
             item(
                 5, .authored, L("Snooze reminders for review requests"), "acme/inbox #77", minutes: 8,
                 author: "you", badges: [approved, passing, diff(320, 12)],
-                people: [person("erin", .accent), person("dave", .accent)]),
+                people: [person("erin", .approved), person("dave", .approved)]),
             item(
                 6, .authored, L("Cache GraphQL responses per account"), "acme/inbox #75", minutes: 400,
-                author: "you", badges: [changes, passing], people: [person("frank", .negative)]),
+                author: "you", badges: [changes, passing], people: [person("frank", .changesRequested)]),
             item(
                 7, .authored, L("WIP: Notion tasks bundle"), "acme/inbox #79", minutes: 1_500,
                 author: "you", badges: [draft]),

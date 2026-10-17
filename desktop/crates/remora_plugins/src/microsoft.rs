@@ -6,6 +6,7 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Local, NaiveDateTime, Utc};
 use regex::Regex;
+use remora_core::badge;
 use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, SignIn, Tone};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -340,7 +341,7 @@ impl Message {
             app_url: None,
             author: self.from.as_ref().and_then(Recipient::person),
             participants: vec![],
-            badges: if important { vec![Badge::new("priority.high", "High", Tone::Warning)] } else { vec![] },
+            badges: if important { vec![Badge::new(badge::PRIORITY_HIGH, "High", Tone::Warning)] } else { vec![] },
             date: graph_date(self.received_date_time.as_deref()).unwrap_or_else(Utc::now),
             needs_action: true,
             priority: important.then_some(Priority::High),
@@ -356,7 +357,7 @@ impl Message {
     /// Flagged: a task you set yourself, with its due date if it has one.
     fn flagged_item(&self, account_id: &str) -> InboxItem {
         let mut item = self.base(account_id, InboxBundle::tasks());
-        item.badges.push(Badge::new("flagged", "Flagged", Tone::Accent));
+        item.badges.push(Badge::new(badge::FLAGGED, "Flagged", Tone::Accent));
         item.due =
             self.flag.as_ref().and_then(|f| f.due_date_time.as_ref()).and_then(|d| graph_date(Some(&d.date_time)));
         if let Some(due) = item.due {
@@ -410,10 +411,10 @@ impl Event {
 
     fn item(&self, account_id: &str) -> InboxItem {
         let start = self.start();
-        let mut badges = vec![Badge::new("invitation", "Invitation", Tone::Accent)];
+        let mut badges = vec![Badge::new(badge::INVITATION, "Invitation", Tone::Accent)];
         if let Some(start) = start {
             badges.push(Badge::new(
-                "event",
+                badge::EVENT,
                 &start.with_timezone(&Local).format("%Y-%m-%d %H:%M").to_string(),
                 Tone::Neutral,
             ));

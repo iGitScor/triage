@@ -75,11 +75,11 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
 
     /// Changes whenever something noteworthy happens, so Done or snoozed items can resurface.
     public var fingerprint: String {
-        let badgeIDs = badges.map(\.id).sorted().joined(separator: ",")
+        let badgeIDs = badges.map(\.id.rawValue).sorted().joined(separator: ",")
         return "\(date.timeIntervalSince1970)|\(badgeIDs)"
     }
 
-    public func hasBadge(_ id: String) -> Bool { badges.contains { $0.id == id } }
+    public func hasBadge(_ id: BadgeID) -> Bool { badges.contains { $0.id == id } }
 }
 
 public struct ChangeSet: Hashable, Codable, Sendable {
@@ -110,14 +110,42 @@ public struct ChangedFile: Hashable, Codable, Sendable {
 public struct Person: Hashable, Codable, Sendable, Identifiable {
     public var name: String
     public var avatarURL: URL?
-    public var tone: Tone?
+    /// A reviewer's stand; nil while they haven't reviewed. The interface draws its colour and glyph from it.
+    public var review: ReviewState?
 
     public var id: String { name }
 
-    public init(name: String, avatarURL: URL? = nil, tone: Tone? = nil) {
+    public init(name: String, avatarURL: URL? = nil, review: ReviewState? = nil) {
         self.name = name
         self.avatarURL = avatarURL
-        self.tone = tone
+        self.review = review
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name, avatarURL, review
+        /// Before 0.10 a reviewer's stand was only the colour of their avatar: read in saved inboxes, never written.
+        case tone
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        avatarURL = try container.decodeIfPresent(URL.self, forKey: .avatarURL)
+        review = try container.decodeIfPresent(ReviewState.self, forKey: .review)
+        if review == nil {
+            switch try container.decodeIfPresent(Tone.self, forKey: .tone) {
+            case .accent, .positive: review = .approved
+            case .negative: review = .changesRequested
+            default: break
+            }
+        }
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(avatarURL, forKey: .avatarURL)
+        try container.encodeIfPresent(review, forKey: .review)
     }
 
     public var initials: String {
@@ -126,9 +154,56 @@ public struct Person: Hashable, Codable, Sendable, Identifiable {
     }
 }
 
+/// Where a reviewer stands on a pull request.
+public enum ReviewState: String, Hashable, Codable, Sendable {
+    case approved, changesRequested
+}
+
+/// A badge's id: the ones plugins write and the rules read back are declared here, so a typo is a compile error,
+/// not an item quietly in the wrong verb. Open, not an enum: a saved inbox holding an id this version doesn't know
+/// still loads. Saved as the plain string, so renaming one is a format change.
+public struct BadgeID: RawRepresentable, Hashable, Codable, Sendable {
+    public let rawValue: String
+    public init(rawValue: String) { self.rawValue = rawValue }
+
+    public init(from decoder: any Decoder) throws {
+        rawValue = try decoder.singleValueContainer().decode(String.self)
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
+
+    public static let approved = BadgeID(rawValue: "approved")
+    public static let changes = BadgeID(rawValue: "changes")
+    public static let draft = BadgeID(rawValue: "draft")
+    public static let conflicts = BadgeID(rawValue: "conflicts")
+    public static let checksPassing = BadgeID(rawValue: "checks.passing")
+    public static let checksFailing = BadgeID(rawValue: "checks.failing")
+    public static let checksRunning = BadgeID(rawValue: "checks.running")
+    public static let comments = BadgeID(rawValue: "comments")
+    public static let diff = BadgeID(rawValue: "diff")
+    public static let status = BadgeID(rawValue: "status")
+    public static let priorityHigh = BadgeID(rawValue: "priority.high")
+    public static let priorityUrgent = BadgeID(rawValue: "priority.urgent")
+    public static let due = BadgeID(rawValue: "due")
+    public static let dueToday = BadgeID(rawValue: "due.today")
+    public static let overdue = BadgeID(rawValue: "overdue")
+    public static let inProgress = BadgeID(rawValue: "inProgress")
+    public static let invitation = BadgeID(rawValue: "invitation")
+    public static let flagged = BadgeID(rawValue: "flagged")
+    public static let event = BadgeID(rawValue: "event")
+    public static let reminder = BadgeID(rawValue: "reminder")
+    public static let reason = BadgeID(rawValue: "reason")
+    public static let times = BadgeID(rawValue: "times")
+    public static let started = BadgeID(rawValue: "started")
+    public static let link = BadgeID(rawValue: "link")
+}
+
 /// A status chip. When `notify` is set, its first appearance on an item triggers a notification.
 public struct Badge: Hashable, Codable, Sendable, Identifiable {
-    public var id: String
+    public var id: BadgeID
     public var label: String
     public var symbol: String?
     public var tone: Tone
@@ -139,7 +214,7 @@ public struct Badge: Hashable, Codable, Sendable, Identifiable {
         public init(title: String) { self.title = title }
     }
 
-    public init(id: String, label: String, symbol: String? = nil, tone: Tone, notify: Notify? = nil) {
+    public init(id: BadgeID, label: String, symbol: String? = nil, tone: Tone, notify: Notify? = nil) {
         self.id = id
         self.label = label
         self.symbol = symbol

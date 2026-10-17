@@ -101,7 +101,9 @@ struct MicrosoftPluginTests {
         #expect(budget.preview == "Can you check the numbers?")
         #expect(budget.author?.name == "Bob Stone")
         #expect(budget.priority == .high)
-        #expect(budget.badges.map(\.id).contains("flagged") && budget.badges.map(\.id).contains("priority.high"))
+        #expect(
+            budget.badges.map(\.id.rawValue).contains("flagged")
+                && budget.badges.map(\.id.rawValue).contains("priority.high"))
         #expect(budget.due == Date(iso8601: "2026-10-20T00:00:00Z"))
         #expect(snapshot.items.filter { $0.id.hasSuffix("/mail/m1") }.count == 1, "flagged and unread: once")
     }
@@ -121,7 +123,7 @@ struct MicrosoftPluginTests {
         #expect(review.author?.name == "Dan")
         let start = Date(iso8601: "2026-10-14T13:00:00Z")
         #expect(review.due == start && review.expires == start)
-        #expect(review.badges.map(\.id) == ["invitation", "event"])
+        #expect(review.badges.map(\.id.rawValue) == ["invitation", "event"])
         #expect(snapshot.items.filter { $0.id.contains("/event/") }.count == 1, "answered, yours, cancelled or started")
     }
 
