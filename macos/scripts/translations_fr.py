@@ -1,6 +1,11 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
+    # Why a message is sorted where it is, and putting it in To reply
+    "No clear sign, kept here to be safe": "Pas d’indice clair, gardé ici par prudence",
+    "No clear sign": "Pas d’indice clair",
+    "You put it here": "Mis ici par vous",
+    "Put in To reply": "Mettre dans À répondre",
     # Agents
     "Agents on this Mac": "Agents sur ce Mac",
     "Agents on this computer": "Agents sur cet ordinateur",

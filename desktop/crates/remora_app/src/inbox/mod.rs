@@ -469,6 +469,16 @@ impl Inbox {
         self.update(id, |s| s.pinned = !s.pinned);
     }
 
+    /// The user says a message Remora sorted elsewhere waits on them: it stays in To reply, whatever its words say.
+    /// Only towards To reply, so a correction never hides a request; Undo puts it back.
+    pub fn move_to_reply(&mut self, id: &str, now: DateTime<Utc>) {
+        if !self.item(id).is_some_and(|item| item.can_move_to_reply()) {
+            return;
+        }
+        self.remember();
+        self.update(id, |s| s.moved_to_reply_at = Some(now));
+    }
+
     pub fn snooze(
         &mut self,
         id: &str,
@@ -812,6 +822,32 @@ mod tests {
 
     fn snapshot(items: Vec<InboxItem>) -> Vec<FetchResult> {
         vec![("a1".into(), Ok(SourceSnapshot { identity: "alice".into(), items, remarks: vec![] }))]
+    }
+
+    /// Put in To reply by the user: it stays there across refreshes, says so, and Undo puts it back. A message already
+    /// there, or what the source sorted, can't be moved.
+    #[test]
+    fn a_message_put_in_to_reply_stays_there_until_undone() {
+        let mut inbox = inbox();
+        let mut news = item("n", InboxBundle::mentions());
+        news.title = "FYI the build is green".into();
+        inbox.apply(snapshot(vec![news.clone(), item("r", InboxBundle::reviews())]), now());
+        let bundle = |inbox: &Inbox| {
+            let layout = inbox.layout(now(), "");
+            let found = layout.my_turn_items().find(|i| i.id == "n").cloned().expect("shown");
+            (found.bundle, found.reason.map(|r| r.code))
+        };
+        assert_eq!(bundle(&inbox), (InboxBundle::read(), Some("info".to_string())));
+
+        inbox.move_to_reply("n", now());
+        inbox.move_to_reply("r", now());
+        assert_eq!(bundle(&inbox), (InboxBundle::reply(), Some("moved".to_string())));
+        assert!(!inbox.states.contains_key("r"), "the source sorted it: nothing to correct");
+        inbox.apply(snapshot(vec![news, item("r", InboxBundle::reviews())]), now());
+        assert_eq!(bundle(&inbox).0, InboxBundle::reply(), "still there after a refresh");
+
+        assert!(inbox.undo());
+        assert_eq!(bundle(&inbox).0, InboxBundle::read());
     }
 
     /// After a launch, the first sync compares with the saved copy: what arrived meanwhile is announced.

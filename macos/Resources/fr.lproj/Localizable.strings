@@ -356,6 +356,8 @@
 "Next week" = "Semaine prochaine";
 "No Notion user with the email %@." = "Aucun utilisateur Notion avec l’e-mail %@.";
 "No agent has asked yet." = "Aucun agent n’a encore rien demandé.";
+"No clear sign" = "Pas d’indice clair";
+"No clear sign, kept here to be safe" = "Pas d’indice clair, gardé ici par prudence";
 "No end" = "Sans fin";
 "No keyring is running: Remora keeps tokens in the system keyring (GNOME Keyring, KWallet or KeePassXC). Start or install one, then open Remora again." = "Aucun trousseau ne tourne : Remora garde les jetons dans le trousseau du système (GNOME Keyring, KWallet ou KeePassXC). Démarrez-en ou installez-en un, puis rouvrez Remora.";
 "No limit" = "Aucune limite";
@@ -445,6 +447,7 @@
 "Pull requests you opened and those you review. Bitbucket Cloud or Data Center." = "Les pull requests que vous avez ouvertes et celles que vous relisez. Bitbucket Cloud ou Data Center.";
 "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise." = "Vos pull requests, les demandes de relecture et les tickets qui vous sont assignés. Compatible GitHub Enterprise.";
 "Pull requests you review or opened, with votes and policy checks, and work items assigned to you. Works with Azure DevOps Server." = "Les pull requests à relire et les vôtres, avec votes et vérifications de stratégie, et les éléments de travail qui vous sont assignés. Compatible Azure DevOps Server.";
+"Put in To reply" = "Mettre dans À répondre";
 "Puts each item’s title and where it comes from in this Mac’s Spotlight index, never previews or people. Tools whose content is hidden stay out. Turning this off, disconnecting a tool or erasing removes them." = "Met le titre de chaque élément et sa provenance dans l’index Spotlight de ce Mac, jamais les aperçus ni les personnes. Les outils dont le contenu est masqué en restent exclus. Désactiver ce réglage, déconnecter un outil ou tout effacer les retire.";
 "Quit" = "Quitter";
 "Quit Remora" = "Quitter Remora";
@@ -684,6 +687,7 @@
 "Written %@" = "Écrit %@";
 "Written on this Mac. Remora doesn’t send it: paste it in Slack, GitHub or GitLab." = "Rédigé sur ce Mac. Remora ne l’envoie pas : collez-le dans Slack, GitHub ou GitLab.";
 "You often put off %@" = "Vous repoussez souvent %@";
+"You put it here" = "Mis ici par vous";
 "You usually handle %@ items quickly." = "Vous traitez souvent vite les éléments %@.";
 "You usually handle %@ quickly." = "Vous traitez souvent vite %@.";
 "You usually handle items from %@ quickly." = "Vous traitez souvent vite les éléments de %@.";

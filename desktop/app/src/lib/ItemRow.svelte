@@ -8,6 +8,7 @@ import { avatarSrc, describe, mark, shown } from './people'
 import { reasonLabel } from './reasons'
 import { shownReactions, spokenReactions } from './reactions'
 import { repeatLabel } from './recurrence'
+import { canMoveToReply, whyLabel } from './sorting'
 import { t, translateMessage } from './i18n'
 import { ago, relative, when } from './time'
 
@@ -42,6 +43,13 @@ const initial = (name: string) => name.trim().charAt(0).toUpperCase() || '·'
 const done = $derived(Boolean(itemState?.done))
 const snoozed = $derived(itemState?.snooze?.until)
 const reviewers = $derived(shown(item.participants ?? []))
+const why = $derived(whyLabel(item))
+
+/** In To reply, with Undo for a few seconds. */
+async function moveToReply() {
+  await api.moveToReply(item.id)
+  offer(t('Put in To reply'), t('Undo'), api.undo)
+}
 
 /** Done, with Undo for a few seconds. Moving an item back to the inbox needs none. */
 async function markDone() {
@@ -88,7 +96,7 @@ function open(event: MouseEvent) {
           {#if reviewers.more}<span class="more muted">+{reviewers.more}</span>{/if}
         </span>
       {/if}
-      {#if item.badges.length || item.reactions?.length || itemState?.remindedAt || itemState?.startedAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2}
+      {#if item.badges.length || item.reactions?.length || itemState?.remindedAt || itemState?.startedAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2 || why}
         <span class="chips">
           {#if itemState?.snooze?.reason}<span class="chip">{t(reasonLabel(itemState.snooze.reason))}</span>{/if}
           {#if (extras?.snoozedTimes ?? 0) >= 2}<span class="chip warning">{t('Snoozed %d×', extras?.snoozedTimes ?? 0)}</span>{/if}
@@ -96,6 +104,8 @@ function open(event: MouseEvent) {
           {#if itemState?.remindedAt}<span class="chip accent">{t('Reminder')}</span>{/if}
           {#if itemState?.pinned}<span class="chip">{t('Pinned')}</span>{/if}
           {#each item.badges as badge (badge.id)}<span class="chip {badge.tone}">{t(badge.label)}</span>{/each}
+          <!-- Why it is in this tab, when it was a guess or your correction. -->
+          {#if why}<span class="chip why">{why}</span>{/if}
           {#if item.reactions?.length}
             {@const reactions = shownReactions(item.reactions)}
             <!-- As in Slack: each emoji (a workspace's own as its picture) and how many, yours outlined. -->
@@ -153,7 +163,7 @@ function open(event: MouseEvent) {
     </div>
   {/if}
   <div class="actions">
-    <!-- Pin and Stop repeating are icons only, so the bar fits on one line in French too. -->
+    <!-- Pin, Put in To reply and Stop repeating are icons only, so the bar fits on one line in French too. -->
     <button type="button" class="action" data-action="pin" onclick={() => api.togglePin(item.id)} aria-label={t(itemState?.pinned ? 'Unpin' : 'Pin')} title={t(itemState?.pinned ? 'Unpin' : 'Pin')}><Icon name="pin" size={14} /></button>
     {#if itemState?.startedAt}
       <button type="button" class="action" onclick={() => api.stop(item.id)}><Icon name="stop" size={14} />{t('Stop')}</button>
@@ -164,6 +174,9 @@ function open(event: MouseEvent) {
       <button type="button" class="action" onclick={() => api.unsnooze(item.id)}><Icon name="moon" size={14} />{t('Unsnooze')}</button>
     {:else}
       <button type="button" class="action" data-action="snooze" onclick={() => onsnooze(item)}><Icon name="moon" size={14} />{t('Snooze…')}</button>
+    {/if}
+    {#if canMoveToReply(item)}
+      <button type="button" class="action" data-action="to-reply" onclick={moveToReply} aria-label={t('Put in To reply')} title={t('Put in To reply')}><Icon name="reply" size={14} /></button>
     {/if}
     {#if item.recurrence}
       <button type="button" class="action" onclick={() => api.stopRepeating(item.id)} aria-label={t('Stop repeating')} title={t('Stop repeating')}><Icon name="repeat" size={14} /></button>

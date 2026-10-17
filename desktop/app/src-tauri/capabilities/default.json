@@ -10,6 +10,7 @@
     "allow-refresh",
     "allow-toggle-done",
     "allow-toggle-pin",
+    "allow-move-to-reply",
     "allow-start",
     "allow-stop",
     "allow-clear-done",

@@ -22,11 +22,17 @@ struct RemoraCommandTests {
         var layout = InboxLayout()
         layout.myTurn = [
             .init(bundle: .reviews, items: [item("1", "github", .reviews, "Fix login", "acme/app #12")]),
-            .init(bundle: .mentions, items: [item("2", "slack", .mentions, "Salary review at 3?", "#general")]),
+            .init(bundle: .mentions, items: [mention]),
         ]
         layout.waiting = [.init(bundle: .awaiting, items: [item("3", "gitlab", .awaiting, "Bump deps", "acme/api !4")])]
         layout.done = [item("4", "linear", .reviews, "Ship it", "ENG-1")]
         return layout
+    }
+
+    var mention: InboxItem {
+        var mention = item("2", "slack", .mentions, "Salary review at 3?", "#general")
+        mention.reason = SortReason(.keyword, "salary")
+        return mention
     }
 
     final class Saved { var reminders: [(String, Date)] = [] }
@@ -65,7 +71,10 @@ struct RemoraCommandTests {
         #expect(rows[1]["title"] is NSNull, "Slack's content is hidden")
         #expect(rows[1]["context"] as? String == "#general", "where, not what")
         #expect(rows[1]["hidden"] as? Bool == true)
-        #expect(!"\(answer)".contains("Salary"))
+        #expect(rows[0]["why"] is NSNull, "the source sorted it")
+        let why = rows[1]["why"] as? [String: Any]
+        #expect(why?["code"] as? String == "keyword" && why?["detail"] is NSNull, "why, without the hidden words")
+        #expect(!"\(answer)".lowercased().contains("salary"))
 
         #expect(items(ask(#"{"command":"list","tab":"Waiting"}"#).0).first?["title"] as? String == "Bump deps")
         let (nowhere, _) = ask(#"{"command":"list","tab":"mine"}"#)

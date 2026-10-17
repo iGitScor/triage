@@ -35,9 +35,10 @@ list, the `remora` command asks the running app:
 | `remora list --tab waiting` | A tab's items, one per line: `in-progress`, `my-turn` (the default), `waiting`, `snoozed` or `done` |
 | `remora remind "Call Erin" --at 15:00` | Saves a reminder: `15:00` is the next 15:00, or a date as in a link |
 
-`--json` prints the answer as JSON (each item's id, source, kind, title, context and link), for Raycast or Alfred.
+`--json` prints the answer as JSON (each item's id, source, kind, title, context and link, and for a chat message
+`why`, the reason Remora sorted it there), for Raycast or Alfred.
 A tool you ticked in **Hide message content** keeps its titles: its items come with `"title": null` and
-`"hidden": true` (*(content hidden)* in the list), only where and what kind. Like links, the command never marks an
+`"hidden": true` (*(content hidden)* in the list), only where and what kind (`why` keeps its code, not the words). Like links, the command never marks an
 item done, snoozes it or deletes anything; a reminder is the one thing it saves. It speaks to the app only, through a
 socket (a named pipe on Windows) that only your user account can open: nothing goes over the network, and with Remora
 closed it says so (exit code 3).

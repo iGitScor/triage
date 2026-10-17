@@ -163,6 +163,7 @@ pub fn run() {
             commands::refresh,
             commands::toggle_done,
             commands::toggle_pin,
+            commands::move_to_reply,
             commands::start,
             commands::stop,
             commands::clear_done,

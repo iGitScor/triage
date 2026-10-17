@@ -45,6 +45,13 @@ pub async fn toggle_pin(app: AppHandle, state: State<'_, AppState>, id: String) 
 }
 
 #[tauri::command]
+pub async fn move_to_reply(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
+    state.inbox.lock().await.move_to_reply(&id, Utc::now());
+    changed(&app).await;
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn start(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
     state.inbox.lock().await.start(&id, Utc::now());
     changed(&app).await;

@@ -42,6 +42,12 @@ of an event leaves the inbox once the event starts (unless you pinned or started
 On Windows, only the keyword rules run (the language model is Apple's): a message without one of those words goes
 to *To reply*.
 
+When nothing clear decided, the message says so in a chip on its row (and to VoiceOver): *No clear sign, kept here
+to be safe*. If a
+message waits on you but went elsewhere, **Put in To reply** (right-click on a Mac, the arrow button on Windows and
+Linux) keeps it there, whatever its words say; Undo puts it back. It only goes that way: Done already takes care of
+the rest, and a correction can never hide a question.
+
 ## When a Slack conversation is over
 
 Remora follows each Slack conversation (a direct message, a thread, the thread of a mention) and asks whose turn it

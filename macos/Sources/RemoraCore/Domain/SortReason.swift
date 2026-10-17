@@ -48,3 +48,18 @@ public struct SortReason: Hashable, Codable, Sendable {
         public static let moved = Code(rawValue: "moved")
     }
 }
+
+extension SortReason {
+    /// What the row says, in the interface's language, and VoiceOver with it: only a guess or the user's correction.
+    /// Clear words ("can you", "fyi") or the model's reading go without saying on the row; agents get every reason.
+    /// `bundle` is where the item is now: a guess kept in To reply says it was kept there to be safe.
+    public func label(in bundle: InboxBundle) -> String? {
+        switch code {
+        case .unsure: bundle == .reply ? L("No clear sign, kept here to be safe") : L("No clear sign")
+        case .moved: L("You put it here")
+        default: nil
+        }
+    }
+
+    public var symbol: String { code == .moved ? "hand.point.right" : "questionmark.circle" }
+}

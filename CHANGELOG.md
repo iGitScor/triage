@@ -3,6 +3,16 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Added
+
+- A chat message Remora wasn't sure about says so on its row and to VoiceOver: *No clear sign, kept here to be
+  safe*. **Put in To reply** keeps a message that waits on you there, whatever its words say, with Undo; only that
+  way, so a correction never hides a question. The `remora` command and the MCP server tell agents why each message
+  is where it is (`why`: the words found, a question, a guess…), without the words for a tool whose content is
+  hidden.
+
 ## 0.10.0 (2026-10-17)
 
 ### Changed

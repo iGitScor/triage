@@ -72,6 +72,11 @@ struct ItemRow: View {
             withAnimation(.snappy) { model.toggleDone(item) }
         }
         .accessibilityAction(named: L("Snooze…"), onSnooze)
+        .accessibilityActions {
+            if item.canMoveToReply {
+                Button(L("Put in To reply")) { withAnimation(.snappy) { model.moveToReply(item) } }
+            }
+        }
         .accessibilityAction(named: L(state.pinned ? "Unpin" : "Pin")) { model.togglePin(item) }
         .accessibilityAction(named: L(state.startedAt == nil ? "Start" : "Stop")) {
             withAnimation(.snappy) { state.startedAt == nil ? model.start(item) : model.stop(item) }
@@ -120,6 +125,7 @@ struct ItemRow: View {
             parts.append(L("Snoozed until %@", snooze.until.formatted(.dateTime.weekday(.wide).hour().minute())))
         }
         parts += item.badges.map(\.label)
+        parts.append(item.reason?.label(in: item.bundle))
         if let reactions = item.reactions, !reactions.isEmpty { parts.append(ReactionChips.spoken(reactions)) }
         parts += Self.spokenExtras(
             participants: item.participants,
@@ -226,8 +232,9 @@ struct ItemRow: View {
         let linked = model.linkedItems(item)
         let times = state.snooze == nil ? 0 : model.snoozeCount(item)
         let reactions = item.reactions ?? []
+        let why = item.reason.flatMap { reason in reason.label(in: item.bundle).map { (reason, $0) } }
         if !badges.isEmpty || !reactions.isEmpty || !item.participants.isEmpty || state.remindedAt != nil
-            || state.startedAt != nil
+            || state.startedAt != nil || why != nil
             || state.pinned || reason != nil || times >= 2 || !linked.isEmpty
         {
             HStack(spacing: 4) {
@@ -251,6 +258,10 @@ struct ItemRow: View {
                             tone: .warning))
                 }
                 ForEach(badges) { BadgeChip(badge: $0) }
+                // Why it is in this tab, when it was a guess or your correction.
+                if let (reason, label) = why {
+                    BadgeChip(badge: Badge(id: .why, label: label, symbol: reason.symbol, tone: .neutral))
+                }
                 if !reactions.isEmpty { ReactionChips(reactions: reactions) }
                 ForEach(linked) { other in
                     Button {
@@ -319,6 +330,9 @@ struct ItemRow: View {
         if state.snooze != nil { Button("Unsnooze") { model.unsnooze(item) } }
         if item.recurrence != nil { Button("Stop repeating") { model.stopRepeating(item) } }
         Button(L(state.done == nil ? "Mark as done" : "Move to inbox")) { model.toggleDone(item) }
+        // A message Remora sorted elsewhere by its words: the user says it waits on them. Only this way, so a
+        // correction never hides a request (Done does the rest).
+        if item.canMoveToReply { Button("Put in To reply") { model.moveToReply(item) } }
         // In Done by your mark, your ✅ in the tool or a finished conversation: each can be cleared.
         if state.done != nil || item.bundle == .finished || item.yourReaction == .done {
             Button("Clear") { model.clear([item]) }

@@ -43,6 +43,11 @@ dans *À lire*, et le rappel d’un événement envoyé par une application quit
 Sur Windows, seules les règles de mots-clés s’appliquent (le modèle de langue est celui d’Apple) : un message sans
 l’un de ces mots va dans *À répondre*.
 
+Quand rien de clair n’a tranché, le message le dit dans une pastille sur sa ligne (lue aussi par VoiceOver) : *Pas
+d’indice clair, gardé ici par prudence*. Si un message vous attend mais est allé ailleurs, **Mettre dans À répondre** (clic
+droit sur Mac, le bouton flèche sur Windows et Linux) l’y garde, quels que soient ses mots ; Annuler le remet. Seulement
+dans ce sens : Terminé s’occupe déjà du reste, et une correction ne peut jamais cacher une question.
+
 ## Quand une conversation Slack est terminée
 
 Remora suit chaque conversation Slack (un message direct, un fil, le fil d’une mention) et se demande à qui c’est le

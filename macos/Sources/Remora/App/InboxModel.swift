@@ -749,6 +749,13 @@ final class InboxModel {
         update(item) { $0.pinned.toggle() }
     }
 
+    /// The user says a message Remora sorted elsewhere waits on them: it stays in To reply, whatever its words say.
+    func moveToReply(_ item: InboxItem) {
+        guard item.canMoveToReply else { return }
+        remember(L("Put in To reply"))
+        update(item) { $0.movedToReplyAt = .now }
+    }
+
     func snooze(
         _ item: InboxItem,
         until date: Date,

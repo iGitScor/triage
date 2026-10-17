@@ -6,6 +6,7 @@ pub const COMMANDS: &[&str] = &[
     "refresh",
     "toggle_done",
     "toggle_pin",
+    "move_to_reply",
     "start",
     "stop",
     "clear_done",

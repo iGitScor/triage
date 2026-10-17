@@ -183,6 +183,16 @@ struct InboxModelTests {
         #expect(model.layout.groups.flatMap(\.items).contains { $0.id == item.id })
     }
 
+    /// Only a message Remora sorted by its words can be put in To reply; what the source sorted keeps its place.
+    /// Where a moved message lands is `VerbClassifierTests.aMessagePutInToReplyStaysThere`.
+    @Test func onlyMessagesCanBePutInToReply() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        model.moveToReply(try issue(model))
+        #expect(model.state(of: try issue(model)).movedToReplyAt == nil, "the source sorted it: nothing to correct")
+        #expect(model.undoPoint == nil, "nothing to undo either")
+    }
+
     /// The search narrows what the inbox shows, never the count or what the assistant reads.
     @Test func searchingOnlyNarrowsWhatIsShown() async throws {
         let harness = Harness()

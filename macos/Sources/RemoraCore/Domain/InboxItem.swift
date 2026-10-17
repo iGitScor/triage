@@ -230,6 +230,7 @@ public struct BadgeID: RawRepresentable, Hashable, Codable, Sendable {
     public static let times = BadgeID(rawValue: "times")
     public static let started = BadgeID(rawValue: "started")
     public static let link = BadgeID(rawValue: "link")
+    public static let why = BadgeID(rawValue: "why")
 }
 
 /// A status chip. When `notify` is set, its first appearance on an item triggers a notification.

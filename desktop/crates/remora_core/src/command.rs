@@ -90,7 +90,9 @@ fn tab_items<'a>(layout: &'a InboxLayout, tab: &str) -> Vec<&'a InboxItem> {
     }
 }
 
-/// Where and what kind, always; what was written (the title) only when the tool's content isn't hidden.
+/// Where and what kind, always; what was written (the title) only when the tool's content isn't hidden. `why`: why
+/// Remora sorted a message there (`SortReason`), its words left out when the content is hidden; null for what the
+/// source sorted.
 fn row(item: &InboxItem, hides: &dyn Fn(&str) -> bool) -> Value {
     let hidden = hides(&item.plugin_id);
     json!({
@@ -101,6 +103,10 @@ fn row(item: &InboxItem, hides: &dyn Fn(&str) -> bool) -> Value {
         "context": item.context,
         "url": item.url,
         "hidden": hidden,
+        "why": item.reason.as_ref().map(|r| json!({
+            "code": r.code,
+            "detail": if hidden { None } else { r.detail.as_deref() },
+        })),
     })
 }
 
@@ -223,7 +229,8 @@ mod tests {
     /// Two items your turn (one from Slack, whose content is hidden), one waiting, one done.
     fn layout() -> InboxLayout {
         let review = item("1", "github", InboxBundle::reviews(), "Fix login", "acme/app #12");
-        let mention = item("2", "slack", InboxBundle::mentions(), "Salary review at 3?", "#general");
+        let mut mention = item("2", "slack", InboxBundle::mentions(), "Salary review at 3?", "#general");
+        mention.reason = Some(crate::SortReason::new(crate::sort_reason::KEYWORD, Some("salary")));
         let waiting = item("3", "gitlab", InboxBundle::awaiting(), "Bump deps", "acme/api !4");
         let done = item("4", "linear", InboxBundle::reviews(), "Ship it", "ENG-1");
         InboxLayout {
@@ -269,7 +276,9 @@ mod tests {
         assert_eq!(items[1]["title"], Value::Null, "Slack's content is hidden");
         assert_eq!(items[1]["context"], "#general", "where, not what");
         assert_eq!(items[1]["hidden"], true);
-        assert!(!answer.to_string().contains("Salary"));
+        assert_eq!(items[0]["why"], Value::Null, "the source sorted it");
+        assert_eq!(items[1]["why"], json!({ "code": "keyword", "detail": null }), "why, without the hidden words");
+        assert!(!answer.to_string().to_lowercase().contains("salary"));
 
         let (waiting, _) = ask(r#"{"command":"list","tab":"Waiting"}"#);
         assert_eq!(waiting["items"][0]["title"], "Bump deps");

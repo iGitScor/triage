@@ -152,3 +152,49 @@ describe('a row', () => {
     invoke.mockImplementation(() => Promise.resolve(null))
   })
 })
+
+describe('a row, why it is sorted there', () => {
+  const message = (given: Partial<Item>): Item => ({
+    ...item,
+    id: 'slack/1',
+    pluginId: 'slack',
+    bundle: { id: 'verb.read', title: 'To read', rank: 8 },
+    title: 'FYI the build is green',
+    ...given,
+  })
+
+  it('says when it was a guess or a correction, not the words that decided', () => {
+    const fyi = row({ item: message({ reason: { code: 'info', detail: 'fyi' } }) })
+    expect(fyi.container.querySelector('.chip.why')).toBeNull()
+    cleanup()
+    const moved = row({
+      item: message({ bundle: { id: 'verb.reply', title: 'To reply', rank: 1 }, reason: { code: 'moved' } }),
+    })
+    expect(moved.getByText('You put it here')).toBeTruthy()
+    cleanup()
+    const unsure = row({
+      item: message({ bundle: { id: 'verb.reply', title: 'To reply', rank: 1 }, reason: { code: 'unsure' } }),
+    })
+    expect(unsure.getByText('No clear sign, kept here to be safe')).toBeTruthy()
+    cleanup()
+    const review = row({})
+    expect(review.container.querySelector('.chip.why')).toBeNull()
+  })
+
+  it('puts a message in To reply, with an Undo, and only towards To reply', async () => {
+    const offers: Offer[] = []
+    const stop = onOffer((o) => offers.push(o))
+    const { button } = row({ item: message({ reason: { code: 'info', detail: 'fyi' } }) })
+    await fireEvent.click(button('Put in To reply'))
+    expect(invoke).toHaveBeenLastCalledWith('move_to_reply', { id: 'slack/1' })
+    await waitFor(() => expect(offers.map((o) => o.message)).toEqual(['Put in To reply']))
+    stop()
+    cleanup()
+    const already = row({
+      item: message({ bundle: { id: 'verb.reply', title: 'To reply', rank: 1 }, reason: { code: 'question' } }),
+    })
+    expect(already.queryByRole('button', { name: 'Put in To reply' })).toBeNull()
+    cleanup()
+    expect(row({}).queryByRole('button', { name: 'Put in To reply' })).toBeNull()
+  })
+})

@@ -97,6 +97,7 @@ export const api = {
   /** The next occurrence when the item is a repeating reminder. */
   toggleDone: (id: string) => call<string | null>('toggle_done', { id }),
   togglePin: (id: string) => call<void>('toggle_pin', { id }),
+  moveToReply: (id: string) => call<void>('move_to_reply', { id }),
   start: (id: string) => call<void>('start', { id }),
   stop: (id: string) => call<void>('stop', { id }),
   clearDone: () => call<void>('clear_done'),
