@@ -70,6 +70,17 @@ struct LinkFinderTests {
         #expect(links["3"] == nil, "sharing the ordinary word “address” is not a link")
     }
 
+    /// A first name or a typo shared by two unrelated titles is no link; a product or library name still is.
+    @Test(.enabled(if: NLEmbedding.wordEmbedding(for: .english) != nil))
+    func typosAndNamesAreNotDistinctive() {
+        let rare = RareTokenSimilarity()
+        #expect(rare.isTypo("recieve") && !rare.isTypo("nanoid") && !rare.isTypo("dotfile"))
+        #expect(!rare.similar("Payments recieve the wrong currency", "Did you recieve the new office badges?"))
+        #expect(!rare.similar("Onboarding call with Sacha on Monday", "Sacha shared photos of the team offsite"))
+        #expect(rare.similar("Migrate Dotfile cases to the new queue", "Dotfile webhook fails since Monday"))
+        #expect(rare.similar("Upgrade nanoid in checkout", "nanoid collisions in order ids"))
+    }
+
     /// Two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
     @Test func versionsDoNotLinkButALowerCaseKnownKeyDoes() {
         let issue = item("1", "linear", "Close Dotfile cases", context: "CE-1380")
