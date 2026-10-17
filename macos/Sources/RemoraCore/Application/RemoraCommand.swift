@@ -85,7 +85,7 @@ public enum RemoraCommand {
 
     /// Where and what kind, always; what was written (the title) only when the tool's content isn't hidden. `why`:
     /// why Remora sorted a message there (`SortReason`), its words left out when the content is hidden; null for what
-    /// the source sorted.
+    /// the source sorted. `bot`: written by an app, a bot or an agent account, as the source says.
     static func row(_ item: InboxItem, hides: (String) -> Bool) -> [String: Any] {
         let hidden = hides(item.pluginID)
         let why: Any =
@@ -96,6 +96,7 @@ public enum RemoraCommand {
             "id": item.id, "source": item.pluginID, "kind": item.bundle.title,
             "title": hidden ? NSNull() as Any : item.title, "context": item.context,
             "url": item.url.map { $0.absoluteString as Any } ?? NSNull(), "hidden": hidden, "why": why,
+            "bot": item.fromBot,
         ]
     }
 

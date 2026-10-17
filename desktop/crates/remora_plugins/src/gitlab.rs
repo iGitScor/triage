@@ -164,6 +164,7 @@ impl GitLabPlugin {
                 name: r.username.clone(),
                 avatar_url: avatar(&r.avatar_url),
                 review: approvers.contains(&r.username).then_some(ReviewState::Approved),
+                bot: false,
             })
             .collect();
         for approver in approvals.approved_by.iter().flatten() {
@@ -172,6 +173,7 @@ impl GitLabPlugin {
                     name: approver.user.username.clone(),
                     avatar_url: avatar(&approver.user.avatar_url),
                     review: Some(ReviewState::Approved),
+                    bot: false,
                 });
             }
         }
@@ -194,6 +196,7 @@ impl GitLabPlugin {
                 name: mr.author.username.clone(),
                 avatar_url: avatar(&mr.author.avatar_url),
                 review: None,
+                bot: false,
             }),
             participants,
             badges: review.badges(authored),
@@ -368,7 +371,7 @@ impl Todo {
             app_url: None,
             author: self.author.as_ref().and_then(|a| {
                 let name = a.username.clone().or_else(|| a.name.clone())?;
-                Some(Person { name, avatar_url: a.avatar_url.clone(), review: None })
+                Some(Person { name, avatar_url: a.avatar_url.clone(), review: None, bot: false })
             }),
             participants: vec![],
             badges: vec![],

@@ -142,6 +142,11 @@ impl InboxItem {
         self.badges.iter().any(|b| b.id == id)
     }
 
+    /// Written by an app, a bot or an agent account, as the source declares it.
+    pub fn from_bot(&self) -> bool {
+        self.author.as_ref().is_some_and(|a| a.bot)
+    }
+
     /// Whether the user can put it in To reply: a chat message Remora sorted elsewhere by its text.
     pub fn can_move_to_reply(&self) -> bool {
         self.reason.is_some() && self.bundle != InboxBundle::reply() && self.bundle != InboxBundle::awaiting()
@@ -190,6 +195,10 @@ pub struct Person {
     /// A reviewer's stand; none while they haven't reviewed. The interface draws its colour and glyph from it.
     #[serde(default)]
     pub review: Option<ReviewState>,
+    /// An app, a bot or an agent account, as the source declares it (GitHub's `Bot`, a Slack app, a Teams application,
+    /// a Jira app account): never guessed from a name. Shown next to the author; the inbox can group their items apart.
+    #[serde(default)]
+    pub bot: bool,
 }
 
 /// Where a reviewer stands on a pull request.
@@ -211,6 +220,8 @@ struct SavedPerson {
     review: Option<ReviewState>,
     #[serde(default)]
     tone: Option<Tone>,
+    #[serde(default)]
+    bot: bool,
 }
 
 impl From<SavedPerson> for Person {
@@ -220,13 +231,13 @@ impl From<SavedPerson> for Person {
             Some(Tone::Negative) => Some(ReviewState::ChangesRequested),
             _ => None,
         });
-        Person { name: saved.name, avatar_url: saved.avatar_url, review }
+        Person { name: saved.name, avatar_url: saved.avatar_url, review, bot: saved.bot }
     }
 }
 
 impl Person {
     pub fn named(name: &str) -> Self {
-        Person { name: name.to_string(), avatar_url: None, review: None }
+        Person { name: name.to_string(), avatar_url: None, review: None, bot: false }
     }
 }
 
@@ -338,6 +349,11 @@ impl InboxBundle {
     /// A conversation that needs nothing more from you: placed in Done until someone writes again.
     pub fn finished() -> Self {
         Self::of("verb.finished", "Finished", 10)
+    }
+    /// Not a verb: where items written by apps, bots and agents go when the user groups them apart, last in My turn
+    /// and still counted. Each item keeps its own verb.
+    pub fn bots() -> Self {
+        Self::of("group.bots", "Bots and agents", 11)
     }
     pub fn mentions() -> Self {
         Self::of("chat.mentions", "Mentions", 6)
@@ -589,6 +605,6 @@ mod tests {
         assert_eq!(read(r#"{"name":"a","review":"changesRequested"}"#), Some(ReviewState::ChangesRequested));
         let saved =
             serde_json::to_string(&Person { review: Some(ReviewState::Approved), ..Person::named("a") }).unwrap();
-        assert_eq!(saved, r#"{"name":"a","avatarUrl":null,"review":"approved"}"#);
+        assert_eq!(saved, r#"{"name":"a","avatarUrl":null,"review":"approved","bot":false}"#);
     }
 }

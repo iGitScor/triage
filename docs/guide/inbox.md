@@ -48,6 +48,10 @@ message waits on you but went elsewhere, **Put in To reply** (right-click on a M
 Linux) keeps it there, whatever its words say; Undo puts it back. It only goes that way: Done already takes care of
 the rest, and a correction can never hide a question.
 
+What an app, a bot or an agent account wrote (Dependabot, a Slack or Teams app, Automation for Jira) carries a **Bot**
+mark next to where it comes from, as the tool says it: Remora never guesses from a name. **Settings → General → Group
+bots and agents apart** puts those items last in *My turn*, still counted, so people come first.
+
 ## When a Slack conversation is over
 
 Remora follows each Slack conversation (a direct message, a thread, the thread of a mention) and asks whose turn it

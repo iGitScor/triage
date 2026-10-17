@@ -72,7 +72,10 @@ struct MicrosoftPluginTests {
             "from": {"user": {"id": "u-erin", "displayName": "Erin"}}}},
           {"id": "c6", "chatType": "oneOnOne",
            "lastMessagePreview": {"createdDateTime": "2026-10-01T08:50:00Z", "body": {"content": "old"},
-            "from": {"user": {"id": "u-erin", "displayName": "Erin"}}}}
+            "from": {"user": {"id": "u-erin", "displayName": "Erin"}}}},
+          {"id": "c7", "chatType": "oneOnOne",
+           "lastMessagePreview": {"createdDateTime": "2026-10-13T08:45:00Z", "body": {"content": "Build 42 passed"},
+            "from": {"user": null, "application": {"id": "app-ci", "displayName": "CI Bot"}}}}
         ]}
         """
 
@@ -136,7 +139,10 @@ struct MicrosoftPluginTests {
         #expect(erin.context == "Erin")
         let launch = try item(snapshot, "chat/c2")
         #expect(launch.bundle == .mentions && launch.context == "Launch")
-        #expect(snapshot.items.filter { $0.id.contains("/chat/") }.count == 2, "read, yours, a meeting's or old")
+        let app = try item(snapshot, "chat/c7")
+        #expect(app.author?.bot == true, "an app wrote it, Teams says so")
+        #expect(app.bundle == .read && !app.needsAction, "to read, as Slack's apps")
+        #expect(snapshot.items.filter { $0.id.contains("/chat/") }.count == 3, "read, yours, a meeting's or old")
     }
 
     @Test func needsTheTenantTheAppAndASignIn() {

@@ -600,6 +600,12 @@ private struct GeneralPane: View {
             Section("Snooze") {
                 Toggle("Bring snoozed items back early on new activity", isOn: $model.preferences.wakeOnActivity)
             }
+            Section("Bots and agents") {
+                Toggle("Group bots and agents apart", isOn: $model.preferences.groupBots)
+                Text("Their items go last in My turn, still counted, so people come first.")
+                    .font(Myna.font(11.5))
+                    .foregroundStyle(Myna.muted)
+            }
             Section("Appearance") {
                 Picker("Theme", selection: $model.preferences.appearance) {
                     ForEach(Preferences.Appearance.allCases) { Text($0.label).tag($0) }

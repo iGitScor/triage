@@ -262,13 +262,8 @@ impl Inbox {
     pub fn layout(&self, now: DateTime<Utc>, query: &str) -> InboxLayout {
         // Your habits break ties inside each group, once there are enough of them.
         let score = |item: &InboxItem| self.learning.score(item);
-        InboxAssembler { wake_on_activity: self.preferences.wake_on_activity }.layout_ranked(
-            &self.all_items(),
-            &self.states,
-            now,
-            query,
-            Some(&score),
-        )
+        InboxAssembler { wake_on_activity: self.preferences.wake_on_activity, group_bots: self.preferences.group_bots }
+            .layout_ranked(&self.all_items(), &self.states, now, query, Some(&score))
     }
 
     pub fn sources(&self) -> Vec<SourceInfo> {
@@ -2040,7 +2035,8 @@ mod tests {
         let mut inbox = inbox();
         let mut mine = item("m", InboxBundle::awaiting());
         mine.date = Utc::now() - Duration::days(3);
-        mine.participants = vec![remora_core::Person { name: "erin".into(), avatar_url: None, review: None }];
+        mine.participants =
+            vec![remora_core::Person { name: "erin".into(), avatar_url: None, review: None, bot: false }];
         inbox.apply(snapshot(vec![mine]), Utc::now());
         let draft = inbox.waiting_draft("m", Utc::now(), &|key| key.to_string()).expect("a nudge");
         assert!(draft.contains("@erin") && draft.contains("3 days"), "{draft}");

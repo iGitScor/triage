@@ -36,7 +36,7 @@ compte ou la liste, la commande `remora` interroge l’app ouverte :
 | `remora remind "Appeler Erin" --at 15:00` | Enregistre un rappel : `15:00` est le prochain 15 h, ou une date comme dans un lien |
 
 `--json` affiche la réponse en JSON (identifiant, source, type, titre, contexte et lien de chaque élément, et pour un
-message `why`, la raison de son rangement), pour Raycast ou Alfred. Un outil coché dans **Masquer le contenu des messages** garde ses titres : ses éléments arrivent
+message `why`, la raison de son rangement ; `bot` quand une app ou un bot l’a écrit), pour Raycast ou Alfred. Un outil coché dans **Masquer le contenu des messages** garde ses titres : ses éléments arrivent
 avec `"title": null` et `"hidden": true` (*(content hidden)* dans la liste), seulement où et de quel type (`why` garde
 son code, pas les mots). Comme les
 liens, la commande ne marque jamais un élément comme terminé, ne le reporte pas et ne supprime rien ; un rappel est la

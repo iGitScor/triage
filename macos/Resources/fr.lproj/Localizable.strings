@@ -128,9 +128,12 @@
 "Blocked" = "Bloqué";
 "Blocked: %@ is not an allowed destination." = "Bloqué : %@ n’est pas une destination autorisée.";
 "Blocked: the server redirected to %@." = "Bloqué : le serveur a redirigé vers %@.";
+"Bot" = "Bot";
+"Bots and agents" = "Bots et agents";
 "Brief" = "Brief";
 "Bring snoozed items back early on new activity" = "Faire revenir les éléments reportés en cas de nouvelle activité";
 "Build status" = "l’état des builds";
+"Bump lodash from 4.17.20 to 4.17.21" = "Passer lodash de 4.17.20 à 4.17.21";
 "Cache GraphQL responses per account" = "Mettre en cache les réponses GraphQL par compte";
 "Calendar invitations" = "les invitations du calendrier";
 "Can someone proofread the new onboarding copy?" = "Quelqu’un peut relire les nouveaux textes d’accueil ?";
@@ -264,6 +267,7 @@
 "GitHub returned no data." = "GitHub n’a renvoyé aucune donnée.";
 "GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion or Microsoft 365. Remora only reads, and only talks to the tools you allow." = "GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion ou Microsoft 365. Remora ne fait que lire, et ne parle qu’aux outils autorisés.";
 "Got it" = "Compris";
+"Group bots and agents apart" = "Regrouper les bots et agents à part";
 "Group message" = "Message de groupe";
 "Group reminders by day" = "Regrouper les rappels par jour";
 "Group them at set times" = "Les regrouper à heures fixes";
@@ -605,6 +609,7 @@
 "The sign-in didn’t finish: %@." = "La connexion n’a pas abouti : %@.";
 "The token was rejected. Check it and its scopes." = "Le jeton a été refusé. Vérifiez-le ainsi que ses permissions.";
 "The tokens are still in the Keychain" = "Les jetons sont toujours dans le trousseau";
+"Their items go last in My turn, still counted, so people come first." = "Leurs éléments passent en dernier dans À moi, toujours comptés : les personnes d’abord.";
 "Theme" = "Thème";
 "Then adjust" = "Puis ajustez";
 "There is no program at %@. Run `where.exe claude` in a terminal and paste the path it shows." = "Aucun programme à %@. Lancez `where.exe claude` dans un terminal et collez le chemin affiché.";
@@ -687,6 +692,7 @@
 "Write Q4 hiring scorecard" = "Rédiger la grille d’évaluation des recrutements du T4";
 "Write a new brief" = "Écrire un nouveau brief";
 "Written %@" = "Écrit %@";
+"Written by a bot: %@" = "Écrit par un bot : %@";
 "Written on this Mac. Remora doesn’t send it: paste it in Slack, GitHub or GitLab." = "Rédigé sur ce Mac. Remora ne l’envoie pas : collez-le dans Slack, GitHub ou GitLab.";
 "You often put off %@" = "Vous repoussez souvent %@";
 "You usually handle %@ items quickly." = "Vous traitez souvent vite les éléments %@.";

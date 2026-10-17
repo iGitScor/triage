@@ -319,6 +319,8 @@ extension MicrosoftPlugin {
                     var displayName: String?
                 }
                 var user: Sender?
+                /// Set instead of `user` when an app or a bot wrote the message.
+                var application: Sender?
             }
             var createdDateTime: String?
             var isDeleted: Bool?
@@ -336,9 +338,12 @@ extension MicrosoftPlugin {
         /// The last message, when someone else wrote it this week and you haven't read it: one-to-one chats as
         /// direct messages, group chats as mentions. Meeting chats are left out.
         func item(me: Me, accountID: UUID, since: Date) -> InboxItem? {
-            guard let message = lastMessagePreview, message.isDeleted != true, let sender = message.from?.user,
+            // A person, or an app or bot (Teams says which): an app's message is to read, as Slack's apps.
+            guard let message = lastMessagePreview, message.isDeleted != true,
+                let sender = message.from?.user ?? message.from?.application,
                 let date = MicrosoftPlugin.graphDate(message.createdDateTime)
             else { return nil }
+            let app = message.from?.user == nil
             let bundle: InboxBundle
             switch chatType {
             case "oneOnOne": bundle = .directMessages
@@ -355,14 +360,14 @@ extension MicrosoftPlugin {
                 id: InboxItem.makeID(account: accountID, local: "chat/\(id)"),
                 accountID: accountID,
                 pluginID: MicrosoftPlugin.manifest.id,
-                bundle: bundle,
+                bundle: app ? .read : bundle,
                 title: lines.first ?? L("(no text)"),
                 context: topic?.trimmingCharacters(in: .whitespaces).nilIfEmpty ?? sender.displayName ?? "Teams",
                 preview: preview.nilIfEmpty,
                 url: URL(lenient: webUrl),
-                author: sender.displayName.map { Person(name: $0) },
+                author: sender.displayName.map { Person(name: $0, bot: app) },
                 date: date,
-                needsAction: true
+                needsAction: !app
             )
         }
     }

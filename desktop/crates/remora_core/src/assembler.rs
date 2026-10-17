@@ -64,6 +64,8 @@ impl InboxLayout {
 
 pub struct InboxAssembler {
     pub wake_on_activity: bool,
+    /// Items from apps, bots and agents in a group of their own, last in My turn, still counted: people first.
+    pub group_bots: bool,
 }
 
 impl InboxAssembler {
@@ -160,7 +162,9 @@ impl InboxAssembler {
                 Placement::Cleared => {}
                 Placement::Inbox if state.map(|s| s.pinned).unwrap_or(false) => layout.pinned.push(item.clone()),
                 Placement::Inbox if Self::is_my_turn(item, state) => {
-                    mine.entry(item.bundle.clone()).or_default().push(item.clone())
+                    let group =
+                        if self.group_bots && item.from_bot() { InboxBundle::bots() } else { item.bundle.clone() };
+                    mine.entry(group).or_default().push(item.clone())
                 }
                 Placement::Inbox => theirs.entry(item.bundle.clone()).or_default().push(item.clone()),
             }
@@ -217,7 +221,7 @@ mod tests {
     use chrono::Duration;
 
     fn assembler() -> InboxAssembler {
-        InboxAssembler { wake_on_activity: true }
+        InboxAssembler { wake_on_activity: true, group_bots: false }
     }
 
     fn snooze(item: &InboxItem, minutes: i64, mode: SnoozeMode, fingerprint: Option<&str>) -> ItemState {
@@ -262,7 +266,7 @@ mod tests {
         let item = item("1", InboxBundle::reviews());
         let stale = snooze(&item, 1, SnoozeMode::Hide, Some("stale"));
         assert_eq!(assembler().placement(&item, Some(&stale), now()), Placement::Inbox);
-        let off = InboxAssembler { wake_on_activity: false };
+        let off = InboxAssembler { wake_on_activity: false, group_bots: false };
         assert_eq!(off.placement(&item, Some(&stale), now()), Placement::Snoozed);
         let mut news = stale.clone();
         news.snooze.as_mut().unwrap().until_news = Some(true);
@@ -322,5 +326,22 @@ mod tests {
             "#22",
         );
         assert_eq!(layout.my_turn_items().count(), 1);
+    }
+
+    /// Grouped apart, what apps, bots and agents wrote goes last in My turn, still counted; off, it stays in its verb.
+    /// Same case as the Mac.
+    #[test]
+    fn bots_and_agents_can_be_grouped_last_and_still_count() {
+        let person = item("p", InboxBundle::reviews());
+        let mut bot = item("b", InboxBundle::reviews());
+        bot.author = Some(crate::Person { bot: true, ..crate::Person::named("dependabot") });
+        let items = [person, bot];
+        let apart =
+            InboxAssembler { wake_on_activity: true, group_bots: true }.layout(&items, &HashMap::new(), now(), "");
+        let groups: Vec<_> = apart.my_turn.iter().map(|g| (g.bundle.id.as_str(), g.items.len())).collect();
+        assert_eq!(groups, [("code.review", 1), ("group.bots", 1)]);
+        assert_eq!(apart.action_count(), 2, "still counted");
+        let mixed = assembler().layout(&items, &HashMap::new(), now(), "");
+        assert_eq!(mixed.my_turn.len(), 1);
     }
 }

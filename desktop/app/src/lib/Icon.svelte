@@ -34,6 +34,7 @@ const paths: Record<string, string> = {
   play: '<path d="M7 4.5v15l12-7.5z"/>',
   stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
   pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  bot: '<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V4M9 13h.01M15 13h.01M3 13v2M21 13v2"/><circle cx="12" cy="3.5" r="1"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
   offline:
     '<path d="M2 8.8a15 15 0 0 1 4.2-2.6M10.7 5.1A15 15 0 0 1 22 8.8M5 12.9a10 10 0 0 1 5.2-2.8M15.3 10.6A10 10 0 0 1 19 12.9M8.5 16.4a5 5 0 0 1 7 0M12 20h.01M3 3l18 18"/>',

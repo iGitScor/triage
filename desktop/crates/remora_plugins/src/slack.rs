@@ -787,7 +787,7 @@ impl Match {
             preview: (!preview.is_empty()).then_some(preview),
             url: self.permalink.clone(),
             app_url: self.app_url(team),
-            author: self.username.as_deref().map(Person::named),
+            author: self.username.as_deref().map(|name| Person { bot: from_app, ..Person::named(name) }),
             participants: vec![],
             badges: vec![],
             date: self.date(),
@@ -1071,7 +1071,7 @@ pub(crate) mod tests {
         assert_eq!(calendar.expires, Some(start()));
         assert_eq!(items.iter().find(|i| i.author.as_ref().is_some_and(|a| a.name == "carol")).unwrap().expires, None);
 
-        let assembler = remora_core::InboxAssembler { wake_on_activity: true };
+        let assembler = remora_core::InboxAssembler { wake_on_activity: true, group_bots: false };
         assert_eq!(assembler.placement(calendar, None, start() - Duration::seconds(30)), remora_core::Placement::Inbox);
         assert_eq!(assembler.placement(calendar, None, start()), remora_core::Placement::Cleared);
         let pinned = remora_core::ItemState { pinned: true, ..Default::default() };

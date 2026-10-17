@@ -303,6 +303,7 @@ impl Notification {
                 name: a.name.clone(),
                 avatar_url: a.avatar_url.clone(),
                 review: None,
+                bot: false,
             }),
             participants: vec![],
             badges: vec![],

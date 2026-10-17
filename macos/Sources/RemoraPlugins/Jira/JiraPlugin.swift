@@ -183,12 +183,16 @@ extension JiraPlugin {
 
     struct Person: Decodable {
         var accountId: String?
+        /// "app" for an app or automation account (Automation for Jira, an integration), as Jira Cloud says it.
+        var accountType: String?
         var name: String?
         var displayName: String?
         var avatarUrls: [String: String]?
 
         var person: RemoraCore.Person? {
-            displayName.map { RemoraCore.Person(name: $0, avatarURL: URL(lenient: avatarUrls?["48x48"])) }
+            displayName.map {
+                RemoraCore.Person(name: $0, avatarURL: URL(lenient: avatarUrls?["48x48"]), bot: accountType == "app")
+            }
         }
     }
 
@@ -357,6 +361,8 @@ extension JiraPlugin {
                     struct By: Decodable {
                         struct Picture: Decodable { var path: String? }
                         var accountId: String?
+                        /// "app" for an app or automation account, as Confluence says it.
+                        var accountType: String?
                         var displayName: String?
                         var profilePicture: Picture?
                     }
@@ -404,7 +410,9 @@ extension JiraPlugin {
                 context: resultGlobalContainer?.title ?? "Confluence",
                 preview: excerpt.isEmpty ? nil : excerpt,
                 url: URL(string: site + "/wiki" + link),
-                author: by?.displayName.map { RemoraCore.Person(name: $0, avatarURL: URL(lenient: avatar)) },
+                author: by?.displayName.map {
+                    RemoraCore.Person(name: $0, avatarURL: URL(lenient: avatar), bot: by?.accountType == "app")
+                },
                 date: lastModified.flatMap { Date(iso8601: $0) } ?? .now,
                 needsAction: true
             )

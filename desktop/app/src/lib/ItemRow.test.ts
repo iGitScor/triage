@@ -20,7 +20,7 @@ const item: Item = {
   preview: null,
   url: 'https://github.com/acme/app/pull/1',
   appUrl: null,
-  author: { name: 'erin', avatarUrl: null, review: null },
+  author: { name: 'erin', avatarUrl: null, review: null, bot: false },
   participants: [],
   badges: [],
   date: '2027-01-15T08:00:00Z',
@@ -142,7 +142,7 @@ describe('a row', () => {
     invoke.mockImplementation((command) => Promise.resolve(command === 'waiting_draft' ? 'Any news?' : null))
     const ondraft = vi.fn()
     const extras: ItemExtras = {
-      help: { kind: 'nudge', people: [{ name: 'dave', avatarUrl: null, review: null }], days: 3 },
+      help: { kind: 'nudge', people: [{ name: 'dave', avatarUrl: null, review: null, bot: false }], days: 3 },
     }
     const { button, container } = row({ extras, ondraft })
     expect(container.textContent).toContain('Waiting on dave for 3 d')

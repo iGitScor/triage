@@ -68,7 +68,7 @@
     "counts": {
       "done": 0,
       "inProgress": 0,
-      "myTurn": 10,
+      "myTurn": 11,
       "snoozed": 4,
       "waiting": 3
     },
@@ -86,11 +86,13 @@
           "people": [
             {
               "avatarUrl": null,
+              "bot": false,
               "name": "erin",
               "review": null
             },
             {
               "avatarUrl": null,
+              "bot": false,
               "name": "bob",
               "review": null
             }
@@ -101,6 +103,7 @@
       "demo/16": {},
       "demo/17": {},
       "demo/18": {},
+      "demo/19": {},
       "demo/2": {},
       "demo/3": {},
       "demo/4": {},
@@ -123,6 +126,7 @@
             "appUrl": null,
             "author": {
               "avatarUrl": null,
+              "bot": false,
               "name": "frank",
               "review": null
             },
@@ -133,7 +137,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-17T12:24:57.854776Z",
+            "date": "2026-10-17T12:51:44.395163Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -149,6 +153,7 @@
             "appUrl": null,
             "author": {
               "avatarUrl": null,
+              "bot": false,
               "name": "erin",
               "review": null
             },
@@ -172,7 +177,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-17T12:04:57.854776Z",
+            "date": "2026-10-17T12:31:44.395163Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -188,6 +193,7 @@
             "appUrl": null,
             "author": {
               "avatarUrl": null,
+              "bot": false,
               "name": "dave",
               "review": null
             },
@@ -205,7 +211,7 @@
               "title": "To review"
             },
             "context": "acme/search #77",
-            "date": "2026-10-17T02:04:57.854776Z",
+            "date": "2026-10-17T02:31:44.395163Z",
             "due": null,
             "id": "demo/11",
             "needsAction": true,
@@ -221,6 +227,7 @@
             "appUrl": null,
             "author": {
               "avatarUrl": null,
+              "bot": false,
               "name": "Linear",
               "review": null
             },
@@ -231,7 +238,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-19T22:24:57.854776Z",
+            "date": "2026-09-19T22:51:44.395163Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -253,6 +260,7 @@
             "appUrl": null,
             "author": {
               "avatarUrl": null,
+              "bot": false,
               "name": "frank",
               "review": null
             },
@@ -263,7 +271,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-17T12:24:57.854776Z",
+            "date": "2026-10-17T12:51:44.395163Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -279,6 +287,7 @@
             "appUrl": null,
             "author": {
               "avatarUrl": null,
+              "bot": false,
               "name": "erin",
               "review": null
             },
@@ -302,7 +311,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-17T12:04:57.854776Z",
+            "date": "2026-10-17T12:31:44.395163Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -324,6 +333,7 @@
             "appUrl": null,
             "author": {
               "avatarUrl": null,
+              "bot": false,
               "name": "Linear",
               "review": null
             },
@@ -334,7 +344,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-19T22:24:57.854776Z",
+            "date": "2026-09-19T22:51:44.395163Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -349,7 +359,7 @@
         "kind": "stale"
       }
     ],
-    "lastRefresh": "2026-10-17T17:04:57.905731Z",
+    "lastRefresh": "2026-10-17T17:31:44.433908Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -366,6 +376,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "Dana",
                 "review": null
               },
@@ -376,7 +387,7 @@
                 "title": "To reply"
               },
               "context": "#sales",
-              "date": "2026-10-17T16:44:57.854776Z",
+              "date": "2026-10-17T17:11:44.395163Z",
               "due": null,
               "id": "demo/16",
               "needsAction": true,
@@ -395,6 +406,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "Bob",
                 "review": null
               },
@@ -405,7 +417,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-17T16:34:57.854776Z",
+              "date": "2026-10-17T17:01:44.395163Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -433,6 +445,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "Carol",
                 "review": null
               },
@@ -443,7 +456,7 @@
                 "title": "To reply"
               },
               "context": "Message direct",
-              "date": "2026-10-17T14:44:57.854776Z",
+              "date": "2026-10-17T15:11:44.395163Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -470,6 +483,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "Frank",
                 "review": null
               },
@@ -480,7 +494,7 @@
                 "title": "To reply"
               },
               "context": "#product",
-              "date": "2026-10-17T13:44:57.854776Z",
+              "date": "2026-10-17T14:11:44.395163Z",
               "due": null,
               "id": "demo/18",
               "needsAction": true,
@@ -508,6 +522,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "erin",
                 "review": null
               },
@@ -531,18 +546,20 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-17T16:52:57.854776Z",
+              "date": "2026-10-17T17:19:44.395163Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
               "participants": [
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "you",
                   "review": null
                 },
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "frank",
                   "review": null
                 }
@@ -554,10 +571,51 @@
               "url": "https://github.com"
             },
             {
+              "accountId": "github",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "bot": true,
+                "name": "dependabot",
+                "review": null
+              },
+              "badges": [
+                {
+                  "id": "checks.passing",
+                  "label": "Checks",
+                  "notify": null,
+                  "tone": "positive"
+                },
+                {
+                  "id": "diff",
+                  "label": "+3 −3",
+                  "notify": null,
+                  "tone": "neutral"
+                }
+              ],
+              "bundle": {
+                "id": "code.review",
+                "rank": 2,
+                "title": "To review"
+              },
+              "context": "acme/web #495",
+              "date": "2026-10-17T16:46:44.395163Z",
+              "due": null,
+              "id": "demo/19",
+              "needsAction": true,
+              "participants": [],
+              "pluginId": "github",
+              "preview": null,
+              "priority": null,
+              "title": "Passer lodash de 4.17.20 à 4.17.21",
+              "url": "https://github.com"
+            },
+            {
               "accountId": "gitlab",
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "dave",
                 "review": null
               },
@@ -581,13 +639,14 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-17T15:29:57.854776Z",
+              "date": "2026-10-17T15:56:44.395163Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
               "participants": [
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "you",
                   "review": null
                 }
@@ -612,6 +671,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "you",
                 "review": null
               },
@@ -635,13 +695,14 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-17T10:24:57.854776Z",
+              "date": "2026-10-17T10:51:44.395163Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
               "participants": [
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "frank",
                   "review": null
                 }
@@ -666,6 +727,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "you",
                 "review": null
               },
@@ -695,18 +757,20 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-17T16:56:57.854776Z",
+              "date": "2026-10-17T17:23:44.395163Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
               "participants": [
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "erin",
                   "review": null
                 },
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "dave",
                   "review": null
                 }
@@ -731,6 +795,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "Linear",
                 "review": null
               },
@@ -748,7 +813,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-16T07:44:57.854776Z",
+              "date": "2026-10-16T08:11:44.395163Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -773,6 +838,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "Eve",
                 "review": null
               },
@@ -783,7 +849,7 @@
                 "title": "To read"
               },
               "context": "#ops",
-              "date": "2026-10-17T15:49:57.854776Z",
+              "date": "2026-10-17T16:16:44.395163Z",
               "due": null,
               "id": "demo/17",
               "needsAction": false,
@@ -808,6 +874,7 @@
           "appUrl": null,
           "author": {
             "avatarUrl": null,
+            "bot": false,
             "name": "frank",
             "review": null
           },
@@ -818,7 +885,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-17T12:24:57.854776Z",
+          "date": "2026-10-17T12:51:44.395163Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -834,6 +901,7 @@
           "appUrl": null,
           "author": {
             "avatarUrl": null,
+            "bot": false,
             "name": "erin",
             "review": null
           },
@@ -857,7 +925,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-17T12:04:57.854776Z",
+          "date": "2026-10-17T12:31:44.395163Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -873,6 +941,7 @@
           "appUrl": null,
           "author": {
             "avatarUrl": null,
+            "bot": false,
             "name": "dave",
             "review": null
           },
@@ -890,7 +959,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-17T02:04:57.854776Z",
+          "date": "2026-10-17T02:31:44.395163Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -906,6 +975,7 @@
           "appUrl": null,
           "author": {
             "avatarUrl": null,
+            "bot": false,
             "name": "Linear",
             "review": null
           },
@@ -916,7 +986,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-19T22:24:57.854776Z",
+          "date": "2026-09-19T22:51:44.395163Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -941,6 +1011,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "you",
                 "review": null
               },
@@ -951,7 +1022,7 @@
                 "title": "Waiting on others"
               },
               "context": "Fil dans #design",
-              "date": "2026-10-17T16:09:57.854776Z",
+              "date": "2026-10-17T16:36:44.395163Z",
               "due": null,
               "id": "demo/15",
               "needsAction": false,
@@ -975,6 +1046,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "you",
                 "review": null
               },
@@ -992,7 +1064,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-16T16:04:57.854776Z",
+              "date": "2026-10-16T16:31:44.395163Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -1008,6 +1080,7 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "bot": false,
                 "name": "you",
                 "review": null
               },
@@ -1031,18 +1104,20 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-15T15:04:57.854776Z",
+              "date": "2026-10-15T15:31:44.395163Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
               "participants": [
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "erin",
                   "review": null
                 },
                 {
                   "avatarUrl": null,
+                  "bot": false,
                   "name": "bob",
                   "review": null
                 }
@@ -1066,7 +1141,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792239897|",
+          "fingerprint": "1792241504|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -1079,7 +1154,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792202697|diff",
+          "fingerprint": "1792204304|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
@@ -1092,7 +1167,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789856697|",
+          "fingerprint": "1789858304|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -1102,7 +1177,7 @@
       },
       "demo/18": {
         "done": null,
-        "movedToReplyAt": "2026-10-17T17:04:57.854776Z",
+        "movedToReplyAt": "2026-10-17T17:31:44.395163Z",
         "pinned": false,
         "remindedAt": null,
         "snooze": null
@@ -1112,7 +1187,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792238697|checks.passing,diff",
+          "fingerprint": "1792240304|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -1161,6 +1236,7 @@
     "briefCacheMinutes": 30,
     "checkForUpdates": false,
     "focusWhileInProgress": true,
+    "groupBots": false,
     "hiddenContentPlugins": [],
     "notificationTimes": "10:00, 14:00, 17:00",
     "notifyArrivals": true,

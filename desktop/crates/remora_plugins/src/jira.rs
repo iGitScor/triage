@@ -286,6 +286,8 @@ impl SearchPage {
 #[serde(rename_all = "camelCase")]
 struct User {
     account_id: Option<String>,
+    /// "app" for an app or automation account (Automation for Jira, an integration), as Jira Cloud says it.
+    account_type: Option<String>,
     name: Option<String>,
     display_name: Option<String>,
     avatar_urls: Option<HashMap<String, String>>,
@@ -407,6 +409,7 @@ impl Comment {
                     name: name.clone(),
                     avatar_url: a.avatar_urls.as_ref().and_then(|u| u.get("48x48").cloned()),
                     review: None,
+                    bot: a.account_type.as_deref() == Some("app"),
                 })
             }),
             participants: vec![],
@@ -549,6 +552,8 @@ struct Version {
 #[serde(rename_all = "camelCase")]
 struct Editor {
     account_id: Option<String>,
+    /// "app" for an app or automation account, as Confluence says it.
+    account_type: Option<String>,
     display_name: Option<String>,
     profile_picture: Option<Picture>,
 }
@@ -603,6 +608,7 @@ impl ConfluenceResult {
                         }
                     }),
                     review: None,
+                    bot: b.account_type.as_deref() == Some("app"),
                 })
             }),
             participants: vec![],

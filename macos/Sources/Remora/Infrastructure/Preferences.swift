@@ -72,6 +72,8 @@ struct Preferences: Codable, Equatable {
     /// Sources whose items are never sent to the assistant (plugin IDs, or "reminders").
     var assistantExcludedSources: Set<String> = []
     var wakeOnActivity = true
+    /// Items from apps, bots and agents in a group of their own at the end of My turn (still counted).
+    var groupBots = false
     var appearance = Appearance.system
     var textSize = TextSize.standard
     var openShortcut = OpenShortcut.controlOptionR
@@ -115,6 +117,7 @@ struct Preferences: Codable, Equatable {
             try container.decodeIfPresent(Set<String>.self, forKey: .assistantExcludedSources)
             ?? defaults.assistantExcludedSources
         wakeOnActivity = try container.decodeIfPresent(Bool.self, forKey: .wakeOnActivity) ?? defaults.wakeOnActivity
+        groupBots = try container.decodeIfPresent(Bool.self, forKey: .groupBots) ?? defaults.groupBots
         appearance = try container.decodeIfPresent(Appearance.self, forKey: .appearance) ?? defaults.appearance
         textSize = try container.decodeIfPresent(TextSize.self, forKey: .textSize) ?? defaults.textSize
         openShortcut =

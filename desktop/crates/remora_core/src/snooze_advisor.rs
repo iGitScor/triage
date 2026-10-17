@@ -647,7 +647,7 @@ mod tests {
             }),
             ..Default::default()
         };
-        let assembler = InboxAssembler { wake_on_activity: false };
+        let assembler = InboxAssembler { wake_on_activity: false, group_bots: false };
         assert_eq!(assembler.placement(&item, Some(&state), crate::fixtures::now()), Placement::Inbox);
     }
 

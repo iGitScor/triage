@@ -92,7 +92,7 @@ fn tab_items<'a>(layout: &'a InboxLayout, tab: &str) -> Vec<&'a InboxItem> {
 
 /// Where and what kind, always; what was written (the title) only when the tool's content isn't hidden. `why`: why
 /// Remora sorted a message there (`SortReason`), its words left out when the content is hidden; null for what the
-/// source sorted.
+/// source sorted. `bot`: written by an app, a bot or an agent account, as the source says.
 fn row(item: &InboxItem, hides: &dyn Fn(&str) -> bool) -> Value {
     let hidden = hides(&item.plugin_id);
     json!({
@@ -107,6 +107,7 @@ fn row(item: &InboxItem, hides: &dyn Fn(&str) -> bool) -> Value {
             "code": r.code,
             "detail": if hidden { None } else { r.detail.as_deref() },
         })),
+        "bot": item.from_bot(),
     })
 }
 

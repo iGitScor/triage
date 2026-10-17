@@ -76,6 +76,7 @@ const icons: Record<string, string> = {
   'chat.mentions': 'at',
   'chat.direct': 'chat',
   'code.authored': 'pull',
+  'group.bots': 'bot',
 }
 /** Five at a time: never more than can be taken in at a glance. */
 const LIMIT = 5

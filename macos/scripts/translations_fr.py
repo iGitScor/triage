@@ -1,6 +1,13 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
+    # Bots and agents
+    "Bot": "Bot",
+    "Bump lodash from 4.17.20 to 4.17.21": "Passer lodash de 4.17.20 à 4.17.21",
+    "Bots and agents": "Bots et agents",
+    "Group bots and agents apart": "Regrouper les bots et agents à part",
+    "Their items go last in My turn, still counted, so people come first.": "Leurs éléments passent en dernier dans À moi, toujours comptés : les personnes d’abord.",
+    "Written by a bot: %@": "Écrit par un bot : %@",
     # Why a message is sorted where it is, and putting it in To reply
     "The client is still waiting for the quote": "Le client attend toujours le devis",
     "FYI the staging database restarts at 6 pm": "Pour info, la base de staging redémarre à 18 h",

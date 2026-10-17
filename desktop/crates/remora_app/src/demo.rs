@@ -287,6 +287,20 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         };
         states.insert(item.id.clone(), ItemState { snooze: Some(snooze), ..ItemState::default() });
     }
+    // A pull request from Dependabot: GitHub says it's a bot.
+    demo.add(
+        19,
+        "github",
+        InboxBundle::reviews(),
+        &t("Bump lodash from 4.17.20 to 4.17.21"),
+        "acme/web #495",
+        45,
+        "dependabot",
+        vec![passing(), diff(3, 3)],
+        &[],
+        None,
+    );
+    demo.edit(19, |i| i.author = Some(Person { bot: true, ..Person::named("dependabot") }));
     states.insert("demo/18".into(), ItemState { moved_to_reply_at: Some(now), ..ItemState::default() });
     let accounts = ["github", "gitlab", "slack", "linear"].iter().map(|p| account(p, p)).collect();
     inbox.load_demo(accounts, demo.items, states);

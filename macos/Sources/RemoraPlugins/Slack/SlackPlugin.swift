@@ -622,7 +622,7 @@ extension SlackPlugin {
                 context: channel.label,
                 preview: lines.dropFirst().joined(separator: " ").nilIfEmpty,
                 url: URL(lenient: permalink),
-                author: username.map { Person(name: $0) },
+                author: username.map { Person(name: $0, bot: isFromApp) },
                 date: date,
                 needsAction: !isFromApp,
                 appURL: appURL(teamID: teamID)

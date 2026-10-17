@@ -49,10 +49,15 @@ public enum Placement: Equatable, Sendable {
 public struct InboxAssembler: Sendable {
     public var wakeOnActivity: Bool
     public var personal: (@Sendable (InboxItem) -> Double)?
+    /// Items from apps, bots and agents in a group of their own, last in My turn, still counted: people first.
+    public var groupBots: Bool
 
-    public init(wakeOnActivity: Bool = true, personal: (@Sendable (InboxItem) -> Double)? = nil) {
+    public init(
+        wakeOnActivity: Bool = true, personal: (@Sendable (InboxItem) -> Double)? = nil, groupBots: Bool = false
+    ) {
         self.wakeOnActivity = wakeOnActivity
         self.personal = personal
+        self.groupBots = groupBots
     }
 
     public func placement(of item: InboxItem, state: ItemState?, now: Date) -> Placement {
@@ -112,7 +117,8 @@ public struct InboxAssembler: Sendable {
             case .done: layout.done.append(item)
             case .cleared: break
             case .inbox where state?.pinned == true: layout.pinned.append(item)
-            case .inbox where isMyTurn(item, state: state): myTurn[item.bundle, default: []].append(item)
+            case .inbox where isMyTurn(item, state: state):
+                myTurn[groupBots && item.fromBot ? .bots : item.bundle, default: []].append(item)
             case .inbox: waiting[item.bundle, default: []].append(item)
             }
         }

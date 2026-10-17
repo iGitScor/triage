@@ -74,6 +74,8 @@ function open(event: MouseEvent) {
       <span class="row meta">
         <Logo id={item.pluginId} size={12} />
         <span class="context">{translateMessage(item.context)}{item.recurrence ? ` · ${repeatLabel(item.recurrence)}` : ''}{account ? ` · ${account}` : ''}</span>
+        <!-- Written by an app, a bot or an agent, as the source says. -->
+        {#if item.author?.bot}<span class="bot" title={t('Written by a bot: %@', item.author.name)}><Icon name="bot" size={11} />{t('Bot')}<span class="visually-hidden">: {item.author.name}</span></span>{/if}
         <span class="spacer"></span>
         {#if snoozed}<span class="back"><Icon name="moon" size={12} /> {when(snoozed)}</span>{:else}
           {#if extras?.ranking}<span class="star" title={extras.ranking} aria-hidden="true">★</span><span class="visually-hidden">{extras.ranking}</span>{/if}
@@ -320,6 +322,18 @@ function open(event: MouseEvent) {
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .bot {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 3px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--line, rgba(0, 0, 0, 0.06));
+    color: var(--ink-soft);
+    font-size: 10.5px;
+    font-weight: 600;
   }
   .why {
     display: flex;

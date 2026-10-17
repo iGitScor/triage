@@ -83,6 +83,9 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
 
     public func hasBadge(_ id: BadgeID) -> Bool { badges.contains { $0.id == id } }
 
+    /// Written by an app, a bot or an agent account, as the source declares it.
+    public var fromBot: Bool { author?.bot == true }
+
     /// Whether the user can put it in To reply: a chat message Remora sorted elsewhere by its text.
     public var canMoveToReply: Bool { reason != nil && bundle != .reply && bundle != .awaiting }
 
@@ -143,17 +146,21 @@ public struct Person: Hashable, Codable, Sendable, Identifiable {
     public var avatarURL: URL?
     /// A reviewer's stand; nil while they haven't reviewed. The interface draws its colour and glyph from it.
     public var review: ReviewState?
+    /// An app, a bot or an agent account, as the source declares it (GitHub's `Bot`, a Slack app, a Teams application,
+    /// a Jira app account): never guessed from a name. Shown next to the author; the inbox can group their items apart.
+    public var bot: Bool
 
     public var id: String { name }
 
-    public init(name: String, avatarURL: URL? = nil, review: ReviewState? = nil) {
+    public init(name: String, avatarURL: URL? = nil, review: ReviewState? = nil, bot: Bool = false) {
         self.name = name
         self.avatarURL = avatarURL
         self.review = review
+        self.bot = bot
     }
 
     private enum CodingKeys: String, CodingKey {
-        case name, avatarURL, review
+        case name, avatarURL, review, bot
         /// Before 0.10 a reviewer's stand was only the colour of their avatar: read in saved inboxes, never written.
         case tone
     }
@@ -163,6 +170,7 @@ public struct Person: Hashable, Codable, Sendable, Identifiable {
         name = try container.decode(String.self, forKey: .name)
         avatarURL = try container.decodeIfPresent(URL.self, forKey: .avatarURL)
         review = try container.decodeIfPresent(ReviewState.self, forKey: .review)
+        bot = try container.decodeIfPresent(Bool.self, forKey: .bot) ?? false
         if review == nil {
             switch try container.decodeIfPresent(Tone.self, forKey: .tone) {
             case .accent, .positive: review = .approved
@@ -177,6 +185,7 @@ public struct Person: Hashable, Codable, Sendable, Identifiable {
         try container.encode(name, forKey: .name)
         try container.encodeIfPresent(avatarURL, forKey: .avatarURL)
         try container.encodeIfPresent(review, forKey: .review)
+        if bot { try container.encode(bot, forKey: .bot) }
     }
 
     public var initials: String {

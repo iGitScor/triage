@@ -108,14 +108,14 @@ impl GitHubPlugin {
     fragment Issue on Issue {
       id number title url updatedAt
       repository { nameWithOwner }
-      author { login avatarUrl }
+      author { __typename login avatarUrl }
     }
     fragment PR on PullRequest {
       id number title url isDraft updatedAt additions deletions mergeable reviewDecision
       repository { nameWithOwner }
-      author { login avatarUrl }
+      author { __typename login avatarUrl }
       comments { totalCount }
-      latestOpinionatedReviews(first: 20) { nodes { state author { login avatarUrl } } }
+      latestOpinionatedReviews(first: 20) { nodes { state author { __typename login avatarUrl } } }
       reviewRequests(first: 20) {
         nodes { requestedReviewer { ... on User { login avatarUrl } ... on Team { name avatarUrl } } }
       }
@@ -238,6 +238,9 @@ struct Connection<T> {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Actor {
+    /// "Bot" for an app account (Dependabot, Renovate, an agent): GitHub says it, no name is guessed.
+    #[serde(rename = "__typename")]
+    typename: Option<String>,
     login: Option<String>,
     name: Option<String>,
     avatar_url: Option<String>,
@@ -249,6 +252,7 @@ impl Actor {
             name: self.login.clone().or_else(|| self.name.clone()).unwrap_or_else(|| "?".into()),
             avatar_url: self.avatar_url.clone(),
             review: None,
+            bot: self.typename.as_deref() == Some("Bot") || self.login.as_deref().is_some_and(|l| l.ends_with("[bot]")),
         }
     }
 }
@@ -425,6 +429,16 @@ impl PullRequest {
 pub(crate) mod tests {
     use super::*;
     use crate::stub::*;
+
+    /// An app account is a bot as GitHub says it: its `Bot` type, or a `[bot]` login; a person never is. As the Mac.
+    #[test]
+    fn app_accounts_are_bots() {
+        let actor = |json: &str| serde_json::from_str::<Actor>(json).unwrap().person().bot;
+        assert!(actor(r#"{"__typename": "Bot", "login": "dependabot"}"#));
+        assert!(actor(r#"{"login": "renovate[bot]"}"#));
+        assert!(!actor(r#"{"__typename": "User", "login": "alice"}"#));
+        assert!(!actor(r#"{"login": "robotics-team"}"#), "a name alone says nothing");
+    }
 
     const RESPONSE: &str = r#"{"data": {
       "viewer": {"login": "alice"},

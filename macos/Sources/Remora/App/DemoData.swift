@@ -119,6 +119,12 @@ enum DemoData {
                 18, .mentions, L("FYI, the slides from today’s demo are in the shared drive"), "#product", minutes: 200,
                 author: "Frank", plugin: "slack"),
         ]
+        // A pull request from Dependabot: GitHub says it's a bot. As on Windows.
+        var bump = item(
+            19, .reviews, L("Bump lodash from 4.17.20 to 4.17.21"), "acme/web #495", minutes: 45,
+            author: "dependabot", badges: [passing, diff(3, 3)])
+        bump.author = Person(name: "dependabot", bot: true)
+        items.append(bump)
         items[0].changes = passkeyFiles
         items[1].changes = queueFiles
         return [account: items]

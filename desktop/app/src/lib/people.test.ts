@@ -6,7 +6,12 @@ vi.mock('@tauri-apps/api/core', () => ({
 }))
 const { describe, mark, shown, avatarSrc } = await import('./people')
 
-const person = (name: string, review: Person['review'] = null): Person => ({ name, avatarUrl: null, review })
+const person = (name: string, review: Person['review'] = null): Person => ({
+  name,
+  avatarUrl: null,
+  review,
+  bot: false,
+})
 
 group('reviewers on a row', () => {
   it('says each state in words, not only in colour', () => {

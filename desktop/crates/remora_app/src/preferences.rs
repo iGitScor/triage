@@ -57,6 +57,8 @@ pub struct Preferences {
     pub hidden_content_plugins: Vec<String>,
     /// Bring snoozed items back early on new activity.
     pub wake_on_activity: bool,
+    /// Items from apps, bots and agents in a group of their own at the end of My turn (still counted).
+    pub group_bots: bool,
     pub appearance: Appearance,
     pub text_size: TextSize,
     pub open_in_apps: bool,
@@ -97,6 +99,7 @@ impl Default for Preferences {
             notification_times: remora_core::DEFAULT_NOTIFICATION_TIMES.into(),
             hidden_content_plugins: vec![],
             wake_on_activity: true,
+            group_bots: false,
             appearance: Appearance::System,
             text_size: TextSize::Standard,
             open_in_apps: true,

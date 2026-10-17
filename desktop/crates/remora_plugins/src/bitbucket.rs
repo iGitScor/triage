@@ -359,6 +359,7 @@ impl CloudUser {
             name: self.display_name.clone().or(self.nickname.clone()).unwrap_or_else(|| "?".into()),
             avatar_url: self.links.as_ref().and_then(|l| l.avatar.as_ref()).and_then(|a| a.href.clone()),
             review,
+            bot: false,
         }
     }
 }
@@ -503,6 +504,7 @@ impl DataCenterUser {
             name: self.display_name.clone().or(self.name.clone()).unwrap_or_else(|| "?".into()),
             avatar_url: None,
             review,
+            bot: false,
         }
     }
 }

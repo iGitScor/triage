@@ -474,6 +474,8 @@ struct Sender {
 #[derive(Deserialize)]
 struct From {
     user: Option<Sender>,
+    /// Set instead of `user` when an app or a bot wrote the message.
+    application: Option<Sender>,
 }
 
 #[derive(Deserialize)]
@@ -502,7 +504,13 @@ impl Chat {
     /// messages, group chats as mentions. Meeting chats are left out.
     fn item(&self, me: &Me, account_id: &str, since: DateTime<Utc>) -> Option<InboxItem> {
         let message = self.last_message_preview.as_ref().filter(|m| !m.is_deleted)?;
-        let sender = message.from.as_ref()?.user.as_ref()?;
+        let from = message.from.as_ref()?;
+        // A person, or an app or bot (Teams says which): an app's message is to read, as Slack's apps.
+        let (sender, app) = match (&from.user, &from.application) {
+            (Some(user), _) => (user, false),
+            (None, Some(app)) => (app, true),
+            (None, None) => return None,
+        };
         let date = graph_date(message.created_date_time.as_deref())?;
         let viewpoint = self.viewpoint.as_ref();
         let read = viewpoint.and_then(|v| graph_date(v.last_message_read_date_time.as_deref()));
@@ -527,17 +535,17 @@ impl Chat {
             id: InboxItem::make_id(account_id, format!("chat/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "microsoft".into(),
-            bundle,
+            bundle: if app { InboxBundle::read() } else { bundle },
             title,
             context: self.topic.clone().filter(|t| !t.trim().is_empty()).or(name.clone()).unwrap_or("Teams".into()),
             preview: (!preview.is_empty()).then_some(preview),
             url: self.web_url.clone(),
             app_url: None,
-            author: name.as_deref().map(Person::named),
+            author: name.as_deref().map(|name| Person { bot: app, ..Person::named(name) }),
             participants: vec![],
             badges: vec![],
             date,
-            needs_action: true,
+            needs_action: !app,
             priority: None,
             due: None,
             expires: None,
@@ -625,7 +633,10 @@ pub(crate) mod tests {
           "from": {"user": {"id": "u-erin", "displayName": "Erin"}}}},
         {"id": "c6", "chatType": "oneOnOne",
          "lastMessagePreview": {"createdDateTime": "2026-10-01T08:50:00Z", "body": {"content": "old"},
-          "from": {"user": {"id": "u-erin", "displayName": "Erin"}}}}
+          "from": {"user": {"id": "u-erin", "displayName": "Erin"}}}},
+        {"id": "c7", "chatType": "oneOnOne",
+         "lastMessagePreview": {"createdDateTime": "2026-10-13T08:45:00Z", "body": {"content": "Build 42 passed"},
+          "from": {"user": null, "application": {"id": "app-ci", "displayName": "CI Bot"}}}}
     ]}"#;
 
     fn snapshot() -> SourceSnapshot {
@@ -683,8 +694,11 @@ pub(crate) mod tests {
         assert_eq!(erin.context, "Erin");
         let launch = item(&snapshot, "chat/c2");
         assert_eq!((launch.bundle.clone(), launch.context.as_str()), (InboxBundle::mentions(), "Launch"));
+        let app = item(&snapshot, "chat/c7");
+        assert!(app.author.as_ref().is_some_and(|a| a.bot), "an app wrote it, Teams says so");
+        assert!(app.bundle == InboxBundle::read() && !app.needs_action, "to read, as Slack's apps");
         let chats: Vec<_> = snapshot.items.iter().filter(|i| i.id.starts_with("acc/chat/")).collect();
-        assert_eq!(chats.len(), 2, "read, yours, a meeting's or old: left out");
+        assert_eq!(chats.len(), 3, "read, yours, a meeting's or old: left out");
     }
 
     #[test]

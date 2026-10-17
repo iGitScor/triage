@@ -5,6 +5,17 @@ import Testing
 @testable import RemoraPlugins
 
 struct GitHubPluginTests {
+    /// An app account is a bot as GitHub says it: its `Bot` type, or a `[bot]` login; a person never is. As Windows.
+    @Test func appAccountsAreBots() throws {
+        func bot(_ json: String) throws -> Bool {
+            try JSONDecoder().decode(PullRequest.Actor.self, from: Data(json.utf8)).person.bot
+        }
+        #expect(try bot(#"{"__typename": "Bot", "login": "dependabot"}"#))
+        #expect(try bot(#"{"login": "renovate[bot]"}"#))
+        #expect(try !bot(#"{"__typename": "User", "login": "alice"}"#))
+        #expect(try !bot(#"{"login": "robotics-team"}"#), "a name alone says nothing")
+    }
+
     let response = """
         {"data": {
           "viewer": {"login": "alice"},

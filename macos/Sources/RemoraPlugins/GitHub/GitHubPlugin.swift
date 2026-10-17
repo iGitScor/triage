@@ -106,14 +106,14 @@ public struct GitHubPlugin: SourcePlugin {
         fragment Issue on Issue {
           id number title url updatedAt
           repository { nameWithOwner }
-          author { login avatarUrl }
+          author { __typename login avatarUrl }
         }
         fragment PR on PullRequest {
           id number title url isDraft updatedAt additions deletions mergeable reviewDecision
           repository { nameWithOwner }
-          author { login avatarUrl }
+          author { __typename login avatarUrl }
           comments { totalCount }
-          latestOpinionatedReviews(first: 20) { nodes { state author { login avatarUrl } } }
+          latestOpinionatedReviews(first: 20) { nodes { state author { __typename login avatarUrl } } }
           reviewRequests(first: 20) {
             nodes { requestedReviewer { ... on User { login avatarUrl } ... on Team { name avatarUrl } } }
           }
@@ -194,10 +194,21 @@ struct AssignedIssue: Decodable {
 
 struct PullRequest: Decodable {
     struct Actor: Decodable {
+        /// "Bot" for an app account (Dependabot, Renovate, an agent): GitHub says it, no name is guessed.
+        var typename: String?
         var login: String?
         var name: String?
         var avatarUrl: String?
-        var person: Person { Person(name: login ?? name ?? "?", avatarURL: URL(lenient: avatarUrl)) }
+        var person: Person {
+            Person(
+                name: login ?? name ?? "?", avatarURL: URL(lenient: avatarUrl),
+                bot: typename == "Bot" || login?.hasSuffix("[bot]") == true)
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case typename = "__typename"
+            case login, name, avatarUrl
+        }
     }
 
     struct Review: Decodable {

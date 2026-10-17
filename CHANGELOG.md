@@ -12,6 +12,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
   way, so a correction never hides a question. The `remora` command and the MCP server tell agents why each message
   is where it is (`why`: the words found, a question, a guess…), without the words for a tool whose content is
   hidden.
+- What an app, a bot or an agent account wrote (Dependabot, a Slack or Teams app, Automation for Jira) carries a
+  **Bot** mark, as the tool says it. **Group bots and agents apart** (Settings → General) puts those items last in
+  *My turn*, still counted. Teams messages from apps now show, in *To read*, as Slack's do.
 
 ## 0.10.0 (2026-10-17)
 

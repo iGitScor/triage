@@ -117,4 +117,16 @@ struct InboxAssemblerTests {
             layout.countsBySource(actionableOnly: true).map(\.pluginID) == ["slack", "github"],
             "to reply comes before to review")
     }
+
+    /// Grouped apart, what apps, bots and agents wrote goes last in My turn, still counted; off, it stays in its verb.
+    /// Same case as Windows.
+    @Test func botsAndAgentsCanBeGroupedLastAndStillCount() {
+        var bot = makeItem("b", bundle: .reviews, needsAction: true)
+        bot.author = Person(name: "dependabot", bot: true)
+        let items = [makeItem("p", bundle: .reviews, needsAction: true), bot]
+        let apart = InboxAssembler(groupBots: true).layout(items: items, states: [:], now: now)
+        #expect(apart.myTurn.map { "\($0.bundle.id) \($0.items.count)" } == ["code.review 1", "group.bots 1"])
+        #expect(apart.actionCount == 2, "still counted")
+        #expect(assembler.layout(items: items, states: [:], now: now).myTurn.count == 1)
+    }
 }

@@ -257,7 +257,7 @@ impl AzureDevOpsPlugin {
                 } else {
                     None
                 };
-                Person { name: r.display_name.clone(), avatar_url: None, review }
+                Person { name: r.display_name.clone(), avatar_url: None, review, bot: false }
             })
             .collect();
         let files: Vec<ChangedFile> = changes
@@ -281,7 +281,7 @@ impl AzureDevOpsPlugin {
             preview: None,
             url: web_url(host, &[&repository.project.name, "_git", &repository.name, "pullrequest", &id]),
             app_url: None,
-            author: pr.created_by.map(|c| Person { name: c.display_name, avatar_url: None, review: None }),
+            author: pr.created_by.map(|c| Person { name: c.display_name, avatar_url: None, review: None, bot: false }),
             participants,
             badges: review.badges(authored),
             // The list has no last-updated date: the latest push stands for it when known.

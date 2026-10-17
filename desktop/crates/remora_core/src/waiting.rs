@@ -74,7 +74,7 @@ impl WaitingAssistant {
             .flatten()
             .chain(ranked)
             .filter(|p| !excluded.contains(&p.name.to_lowercase()) && seen.insert(p.name.to_lowercase()))
-            .map(|p| Person { name: p.name.clone(), avatar_url: p.avatar_url.clone(), review: None })
+            .map(|p| Person { name: p.name.clone(), avatar_url: p.avatar_url.clone(), review: None, bot: false })
             .take(limit)
             .collect()
     }

@@ -343,7 +343,12 @@ export type Person = { name: string, avatarUrl: string | null,
 /**
  * A reviewer's stand; none while they haven't reviewed. The interface draws its colour and glyph from it.
  */
-review: ReviewState | null, };
+review: ReviewState | null, 
+/**
+ * An app, a bot or an agent account, as the source declares it (GitHub's `Bot`, a Slack app, a Teams application,
+ * a Jira app account): never guessed from a name. Shown next to the author; the inbox can group their items apart.
+ */
+bot: boolean, };
 
 /**
  * The user's settings, as in the macOS app. Missing keys keep their defaults, so adding one never
@@ -369,7 +374,11 @@ hiddenContentPlugins: Array<string>,
 /**
  * Bring snoozed items back early on new activity.
  */
-wakeOnActivity: boolean, appearance: Appearance, textSize: TextSize, openInApps: boolean, 
+wakeOnActivity: boolean, 
+/**
+ * Items from apps, bots and agents in a group of their own at the end of My turn (still counted).
+ */
+groupBots: boolean, appearance: Appearance, textSize: TextSize, openInApps: boolean, 
 /**
  * Privacy: plugins allowed to connect (None = all), avatars. External AI has no plugin yet on Windows.
  */

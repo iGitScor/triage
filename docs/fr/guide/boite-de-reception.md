@@ -48,6 +48,11 @@ gardé ici par prudence*. Si un message vous attend mais est allé ailleurs, **M
 droit sur Mac, le bouton flèche sur Windows et Linux) l’y garde, quels que soient ses mots ; Annuler le remet. Seulement
 dans ce sens : Terminé s’occupe déjà du reste, et une correction ne peut jamais cacher une question.
 
+Ce qu’a écrit une app, un bot ou un compte d’agent (Dependabot, une app Slack ou Teams, Automation for Jira) porte
+la marque **Bot** à côté de sa provenance, telle que l’outil la donne : Remora ne devine jamais d’après un nom.
+**Réglages → Général → Regrouper les bots et agents à part** les place en dernier dans *À moi*, toujours comptés :
+les personnes d’abord.
+
 ## Quand une conversation Slack est terminée
 
 Remora suit chaque conversation Slack (un message direct, un fil, le fil d’une mention) et se demande à qui c’est le

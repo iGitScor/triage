@@ -191,7 +191,7 @@ mod tests {
     /// Your ✅ is Done, your 👀 In progress; a pin or a reminder keeps the item where you put it.
     #[test]
     fn your_reaction_places_the_item() {
-        let assembler = InboxAssembler { wake_on_activity: true };
+        let assembler = InboxAssembler { wake_on_activity: true, group_bots: false };
         let at = |item: &InboxItem, state: Option<&ItemState>| assembler.placement(item, state, now());
         assert_eq!(at(&reacted(vec![yours("white_check_mark")]), None), Placement::Done);
         assert_eq!(at(&reacted(vec![yours("eyes"), yours("white_check_mark")]), None), Placement::Done);
@@ -226,7 +226,10 @@ mod tests {
         update.title = "Deployed to staging, FYI".into();
         let cleared = VerbClassifier::classify(update);
         assert_eq!(cleared.expires, Some(cleared.date));
-        assert_eq!(InboxAssembler { wake_on_activity: true }.placement(&cleared, None, now()), Placement::Cleared);
+        assert_eq!(
+            InboxAssembler { wake_on_activity: true, group_bots: false }.placement(&cleared, None, now()),
+            Placement::Cleared
+        );
     }
 
     #[test]

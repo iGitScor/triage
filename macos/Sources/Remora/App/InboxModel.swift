@@ -66,7 +66,9 @@ final class InboxModel {
     var preferences: Preferences {
         didSet {
             persistence.save(preferences, to: persistence.preferences)
-            if oldValue.wakeOnActivity != preferences.wakeOnActivity { layoutChanged() }
+            if oldValue.wakeOnActivity != preferences.wakeOnActivity || oldValue.groupBots != preferences.groupBots {
+                layoutChanged()
+            }
             Myna.textScale = preferences.textSize.scale
             if oldValue.allowedPlugins != preferences.allowedPlugins
                 || oldValue.allowExternalAI != preferences.allowExternalAI
@@ -192,8 +194,10 @@ final class InboxModel {
         if let cached = cachedLayouts.byQuery[query] { return cached }
         let ranker = learning.ranker
         // The real time, not `now`: items fetched since may have expired already.
-        let layout = InboxAssembler(wakeOnActivity: preferences.wakeOnActivity, personal: { ranker.score($0) })
-            .layout(items: itemsWithLinkedPriority, states: states, now: .now, query: query)
+        let layout = InboxAssembler(
+            wakeOnActivity: preferences.wakeOnActivity, personal: { ranker.score($0) }, groupBots: preferences.groupBots
+        )
+        .layout(items: itemsWithLinkedPriority, states: states, now: .now, query: query)
         // The whole inbox and the current search: an earlier search isn't asked for again.
         cachedLayouts.byQuery = cachedLayouts.byQuery.filter { $0.key.isEmpty }
         cachedLayouts.byQuery[query] = layout

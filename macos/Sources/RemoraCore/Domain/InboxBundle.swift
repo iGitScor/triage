@@ -46,6 +46,9 @@ extension InboxBundle {
     /// A conversation that needs nothing more from you: placed in Done until someone writes again.
     public static let finished = InboxBundle(
         id: "verb.finished", title: "Finished", symbol: "checkmark.circle", rank: 10)
+    /// Not a verb: where items written by apps, bots and agents go when the user groups them apart, last in My turn
+    /// and still counted. Each item keeps its own verb.
+    public static let bots = InboxBundle(id: "group.bots", title: "Bots and agents", symbol: "cpu", rank: 11)
 }
 
 // MARK: Kinds, as reported by plugins

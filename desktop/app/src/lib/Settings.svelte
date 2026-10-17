@@ -257,6 +257,10 @@ onMount(() => {
 
       <h2 class="section-title">{t('Snooze')}</h2>
       <label class="toggle"><input type="checkbox" checked={p.wakeOnActivity} onchange={(e) => save({ wakeOnActivity: e.currentTarget.checked })} />{t('Bring snoozed items back early on new activity')}</label>
+
+      <h2 class="section-title">{t('Bots and agents')}</h2>
+      <label class="toggle"><input type="checkbox" checked={p.groupBots} onchange={(e) => save({ groupBots: e.currentTarget.checked })} aria-describedby="bots-help" />{t('Group bots and agents apart')}</label>
+      <p class="help" id="bots-help">{t('Their items go last in My turn, still counted, so people come first.')}</p>
       {#if settings.shortcutRegistered}<p class="help">{t('New reminder from anywhere: %@', settings.shortcut.replace('CommandOrControl', 'Ctrl'))}</p>{/if}
 
       {#if hasAssistant}

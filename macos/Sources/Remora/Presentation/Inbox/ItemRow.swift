@@ -117,7 +117,8 @@ struct ItemRow: View {
     /// What VoiceOver reads: where, what, who, when, then the item's status and badges.
     private var accessibilityText: String {
         var parts = [
-            model.accountLabel(for: item), item.shownContext, item.title, item.preview, item.author?.name,
+            model.accountLabel(for: item), item.shownContext, item.title, item.preview,
+            item.fromBot ? item.author.map { L("Written by a bot: %@", $0.name) } : item.author?.name,
             // In words: VoiceOver reads the corner's "5m" as metres.
             item.date.formatted(.relative(presentation: .named)),
         ]
@@ -209,6 +210,16 @@ struct ItemRow: View {
                 .font(Myna.font(11, .medium))
                 .foregroundStyle(Myna.muted)
                 .lineLimit(1)
+            // Written by an app, a bot or an agent, as the source says.
+            if item.fromBot {
+                Label(L("Bot"), systemImage: "cpu")
+                    .font(Myna.font(10, .semibold))
+                    .foregroundStyle(Myna.inkSoft)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 1)
+                    .background(Myna.line, in: Capsule())
+                    .fixedSize()
+            }
             Spacer(minLength: 4)
             if let snooze = state.snooze {
                 Label(

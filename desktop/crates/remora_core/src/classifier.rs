@@ -545,7 +545,7 @@ mod conversation_tests {
     /// A finished conversation is in Done until someone writes again; a pin keeps it where it is.
     #[test]
     fn a_finished_conversation_is_done() {
-        let assembler = InboxAssembler { wake_on_activity: true };
+        let assembler = InboxAssembler { wake_on_activity: true, group_bots: false };
         let finished = item("f", InboxBundle::finished());
         assert_eq!(assembler.placement(&finished, None, now()), Placement::Done);
         let pinned = ItemState { pinned: true, ..Default::default() };
@@ -586,7 +586,7 @@ mod conversation_tests {
     /// Put in To reply by the user: there whatever its words say, until it's done; never the other way.
     #[test]
     fn a_message_put_in_to_reply_stays_there() {
-        let assembler = InboxAssembler { wake_on_activity: true };
+        let assembler = InboxAssembler { wake_on_activity: true, group_bots: false };
         let news = classified("FYI the build is green", InboxBundle::mentions());
         let thanks = classified("Thanks!", InboxBundle::direct_messages());
         let mine = classified("Here is the link", InboxBundle::asked());
