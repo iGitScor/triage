@@ -257,6 +257,15 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         i.needs_action = false;
         i.reactions = Some(vec![Reaction::new("+1", 1, false)]);
     });
+    // A message without a clear sign (kept in To reply to be safe), an FYI that can be put in To reply, and one the
+    // user already put there (the states below). As on macOS.
+    for (n, title, context, minutes, author) in [
+        (16, "The client is still waiting for the quote", "#sales", 20, "Dana"),
+        (17, "FYI the staging database restarts at 6 pm", "#ops", 75, "Eve"),
+        (18, "FYI, the slides from today’s demo are in the shared drive", "#product", 200, "Frank"),
+    ] {
+        demo.add(n, "slack", InboxBundle::mentions(), &t(title), context, minutes, author, vec![], &[], None);
+    }
 
     let monday = SnoozeClock::presets(now.with_timezone(&chrono::Local))
         .into_iter()
@@ -278,6 +287,7 @@ pub fn load(inbox: &mut Inbox, now: DateTime<Utc>, t: &dyn Fn(&str) -> String) {
         };
         states.insert(item.id.clone(), ItemState { snooze: Some(snooze), ..ItemState::default() });
     }
+    states.insert("demo/18".into(), ItemState { moved_to_reply_at: Some(now), ..ItemState::default() });
     let accounts = ["github", "gitlab", "slack", "linear"].iter().map(|p| account(p, p)).collect();
     inbox.load_demo(accounts, demo.items, states);
 }

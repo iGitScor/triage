@@ -106,6 +106,19 @@ enum DemoData {
         question.needsAction = false
         question.reactions = [Reaction(name: "+1", count: 1, mine: false)]
         items.append(question)
+        // A message without a clear sign (kept in To reply to be safe), an FYI that can be put in To reply, and one the
+        // user already put there (`snoozes`). As on Windows.
+        items += [
+            item(
+                16, .mentions, L("The client is still waiting for the quote"), "#sales", minutes: 20, author: "Dana",
+                plugin: "slack"),
+            item(
+                17, .mentions, L("FYI the staging database restarts at 6 pm"), "#ops", minutes: 75, author: "Eve",
+                plugin: "slack"),
+            item(
+                18, .mentions, L("FYI, the slides from today’s demo are in the shared drive"), "#product", minutes: 200,
+                author: "Frank", plugin: "slack"),
+        ]
         items[0].changes = passkeyFiles
         items[1].changes = queueFiles
         return [account: items]
@@ -131,6 +144,8 @@ enum DemoData {
                         item: item, reason: reason, at: now.addingTimeInterval(Double(-day) * .day), until: monday))
             }
         }
+        // An FYI the user put in To reply.
+        states["demo/18"] = ItemState(movedToReplyAt: now)
         return (states, history)
     }
 }

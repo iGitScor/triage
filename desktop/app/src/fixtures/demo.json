@@ -68,7 +68,7 @@
     "counts": {
       "done": 0,
       "inProgress": 0,
-      "myTurn": 7,
+      "myTurn": 10,
       "snoozed": 4,
       "waiting": 3
     },
@@ -98,6 +98,9 @@
         }
       },
       "demo/15": {},
+      "demo/16": {},
+      "demo/17": {},
+      "demo/18": {},
       "demo/2": {},
       "demo/3": {},
       "demo/4": {},
@@ -130,7 +133,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-17T12:13:07.770892Z",
+            "date": "2026-10-17T12:24:57.282276Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -169,7 +172,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-17T11:53:07.770892Z",
+            "date": "2026-10-17T12:04:57.282276Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -202,7 +205,7 @@
               "title": "To review"
             },
             "context": "acme/search #77",
-            "date": "2026-10-17T01:53:07.770892Z",
+            "date": "2026-10-17T02:04:57.282276Z",
             "due": null,
             "id": "demo/11",
             "needsAction": true,
@@ -228,7 +231,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-19T22:13:07.770892Z",
+            "date": "2026-09-19T22:24:57.282276Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -260,7 +263,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-17T12:13:07.770892Z",
+            "date": "2026-10-17T12:24:57.282276Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -299,7 +302,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-17T11:53:07.770892Z",
+            "date": "2026-10-17T12:04:57.282276Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -331,7 +334,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-19T22:13:07.770892Z",
+            "date": "2026-09-19T22:24:57.282276Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -346,7 +349,7 @@
         "kind": "stale"
       }
     ],
-    "lastRefresh": "2026-10-17T16:53:07.835143Z",
+    "lastRefresh": "2026-10-17T17:04:57.329384Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -363,6 +366,35 @@
               "appUrl": null,
               "author": {
                 "avatarUrl": null,
+                "name": "Dana",
+                "review": null
+              },
+              "badges": [],
+              "bundle": {
+                "id": "verb.reply",
+                "rank": 1,
+                "title": "To reply"
+              },
+              "context": "#sales",
+              "date": "2026-10-17T16:44:57.282276Z",
+              "due": null,
+              "id": "demo/16",
+              "needsAction": true,
+              "participants": [],
+              "pluginId": "slack",
+              "preview": null,
+              "priority": null,
+              "reason": {
+                "code": "unsure"
+              },
+              "title": "The client is still waiting for the quote",
+              "url": "https://slack.com"
+            },
+            {
+              "accountId": "slack",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
                 "name": "Bob",
                 "review": null
               },
@@ -373,7 +405,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-17T16:23:07.770892Z",
+              "date": "2026-10-17T16:34:57.282276Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -411,7 +443,7 @@
                 "title": "To reply"
               },
               "context": "Direct message",
-              "date": "2026-10-17T14:33:07.770892Z",
+              "date": "2026-10-17T14:44:57.282276Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -431,6 +463,35 @@
                 "code": "question"
               },
               "title": "Lunch tomorrow? 🍜",
+              "url": "https://slack.com"
+            },
+            {
+              "accountId": "slack",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "Frank",
+                "review": null
+              },
+              "badges": [],
+              "bundle": {
+                "id": "verb.reply",
+                "rank": 1,
+                "title": "To reply"
+              },
+              "context": "#product",
+              "date": "2026-10-17T13:44:57.282276Z",
+              "due": null,
+              "id": "demo/18",
+              "needsAction": true,
+              "participants": [],
+              "pluginId": "slack",
+              "preview": null,
+              "priority": null,
+              "reason": {
+                "code": "moved"
+              },
+              "title": "FYI, the slides from today’s demo are in the shared drive",
               "url": "https://slack.com"
             }
           ]
@@ -470,7 +531,7 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-17T16:41:07.770892Z",
+              "date": "2026-10-17T16:52:57.282276Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
@@ -520,7 +581,7 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-17T15:18:07.770892Z",
+              "date": "2026-10-17T15:29:57.282276Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
@@ -574,7 +635,7 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-17T10:13:07.770892Z",
+              "date": "2026-10-17T10:24:57.282276Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
@@ -634,7 +695,7 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-17T16:45:07.770892Z",
+              "date": "2026-10-17T16:56:57.282276Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
@@ -687,7 +748,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-16T07:33:07.770892Z",
+              "date": "2026-10-16T07:44:57.282276Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -697,6 +758,45 @@
               "priority": null,
               "title": "Write Q4 hiring scorecard",
               "url": "https://linear.com"
+            }
+          ]
+        },
+        {
+          "bundle": {
+            "id": "verb.read",
+            "rank": 8,
+            "title": "To read"
+          },
+          "items": [
+            {
+              "accountId": "slack",
+              "appUrl": null,
+              "author": {
+                "avatarUrl": null,
+                "name": "Eve",
+                "review": null
+              },
+              "badges": [],
+              "bundle": {
+                "id": "verb.read",
+                "rank": 8,
+                "title": "To read"
+              },
+              "context": "#ops",
+              "date": "2026-10-17T15:49:57.282276Z",
+              "due": null,
+              "id": "demo/17",
+              "needsAction": false,
+              "participants": [],
+              "pluginId": "slack",
+              "preview": null,
+              "priority": null,
+              "reason": {
+                "code": "info",
+                "detail": "fyi"
+              },
+              "title": "FYI the staging database restarts at 6 pm",
+              "url": "https://slack.com"
             }
           ]
         }
@@ -718,7 +818,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-17T12:13:07.770892Z",
+          "date": "2026-10-17T12:24:57.282276Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -757,7 +857,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-17T11:53:07.770892Z",
+          "date": "2026-10-17T12:04:57.282276Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -790,7 +890,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-17T01:53:07.770892Z",
+          "date": "2026-10-17T02:04:57.282276Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -816,7 +916,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-19T22:13:07.770892Z",
+          "date": "2026-09-19T22:24:57.282276Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -851,7 +951,7 @@
                 "title": "Waiting on others"
               },
               "context": "Thread in #design",
-              "date": "2026-10-17T15:58:07.770892Z",
+              "date": "2026-10-17T16:09:57.282276Z",
               "due": null,
               "id": "demo/15",
               "needsAction": false,
@@ -892,7 +992,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-16T15:53:07.770892Z",
+              "date": "2026-10-16T16:04:57.282276Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -931,7 +1031,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-15T14:53:07.770892Z",
+              "date": "2026-10-15T15:04:57.282276Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
@@ -966,7 +1066,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792239187|",
+          "fingerprint": "1792239897|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -979,7 +1079,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792201987|diff",
+          "fingerprint": "1792202697|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
@@ -992,7 +1092,7 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789855987|",
+          "fingerprint": "1789856697|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
@@ -1000,12 +1100,19 @@
           "untilNews": null
         }
       },
+      "demo/18": {
+        "done": null,
+        "movedToReplyAt": "2026-10-17T17:04:57.282276Z",
+        "pinned": false,
+        "remindedAt": null,
+        "snooze": null
+      },
       "demo/9": {
         "done": null,
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792237987|checks.passing,diff",
+          "fingerprint": "1792238697|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
