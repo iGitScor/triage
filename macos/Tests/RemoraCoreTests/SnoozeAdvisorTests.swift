@@ -177,4 +177,20 @@ struct SnoozeAdvisorTests {
         let state = try JSONDecoder().decode(ItemState.self, from: Data(json.utf8))
         #expect(state.snooze?.reason == nil)
     }
+
+    /// Set aside, an insight stays away for a month, across launches; one more snoozed item doesn't bring a cluster back,
+    /// a mostly new cluster does. Same cases on Windows.
+    @Test func aDismissalCoversItsInsightForAMonth() throws {
+        let now = Date.now
+        let it = { (id: String) in makeItem(id, bundle: .reviews) }
+        let cluster = SnoozeInsight.cluster([it("a"), it("b")])
+        let dismissal = InsightDismissal(cluster, now: now)
+        #expect(dismissal.covers(cluster, now: now))
+        #expect(!dismissal.covers(cluster, now: now.addingTimeInterval(31 * 24 * 3600)), "a month later it comes back")
+        #expect(dismissal.covers(.cluster([it("a"), it("b"), it("c")]), now: now), "one more")
+        #expect(!dismissal.covers(.cluster([it("a"), it("c"), it("d")]), now: now), "mostly new")
+        #expect(!dismissal.covers(.stale([it("a"), it("b")]), now: now), "another kind")
+        let saved = try JSONDecoder().decode(InsightDismissal.self, from: JSONEncoder().encode(dismissal))
+        #expect(saved == dismissal)
+    }
 }

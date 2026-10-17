@@ -12,6 +12,8 @@ pub(super) const REMINDERS: &str = "reminders";
 pub(super) const PREFERENCES: &str = "preferences";
 /// Every snooze, kept on this computer to learn habits and spot patterns.
 pub(super) const HISTORY: &str = "snooze-history";
+/// Insights set aside ("Not now"), each for a month.
+pub(super) const DISMISSALS: &str = "insight-dismissals";
 /// What you handle quickly or put off, to rank by your habits.
 pub(super) const LEARNING: &str = "learning";
 /// Timed reviews against their estimate, for review prep's pace.

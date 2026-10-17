@@ -32,8 +32,8 @@ pub use sync::SyncEngine;
 use crate::{JsonStore, Managed, Preferences, Vault};
 use chrono::{DateTime, Utc};
 use persistence::{
-    ACCOUNTS, AGENT_READS, BRIEF, CACHE, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES, SUMMARIES,
-    USAGE,
+    ACCOUNTS, AGENT_READS, BRIEF, CACHE, DISMISSALS, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES,
+    SUMMARIES, USAGE,
 };
 use remora_core::{
     Account, CompliancePolicy, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder,
@@ -147,7 +147,11 @@ impl Inbox {
             preferences: files.load(PREFERENCES).unwrap_or_default(),
             accounts: AccountsService::new(files.load(ACCOUNTS).unwrap_or_default(), vault, files.clone()),
             sync: SyncEngine::default(),
-            snoozes: SnoozeService::new(files.load(HISTORY).unwrap_or_default(), files.clone()),
+            snoozes: SnoozeService::new(
+                files.load(HISTORY).unwrap_or_default(),
+                files.load(DISMISSALS).unwrap_or_default(),
+                files.clone(),
+            ),
             assistant: AssistantCoordinator::new(
                 files.load(BRIEF).unwrap_or_default(),
                 files.load(SUMMARIES).unwrap_or_default(),
@@ -183,7 +187,7 @@ impl Inbox {
         Inbox {
             accounts: AccountsService::new(vec![], vault, persistence.clone()),
             sync: SyncEngine::default(),
-            snoozes: SnoozeService::new(vec![], persistence.clone()),
+            snoozes: SnoozeService::new(vec![], vec![], persistence.clone()),
             assistant: AssistantCoordinator::new(None, HashMap::new(), Default::default(), persistence.clone()),
             learning: LearningService::new(vec![], vec![], persistence.clone()),
             managed,
@@ -1677,7 +1681,7 @@ mod tests {
         assert_eq!(inbox.snooze_count("x", Utc::now()), 3);
         let insights = inbox.insights(Utc::now());
         let id = insights.iter().map(|i| i.id()).find(|id| id.starts_with("loop/")).expect("a loop");
-        inbox.dismiss_insight(&id);
+        inbox.dismiss_insight(&id, Utc::now());
         assert!(inbox.insights(Utc::now()).iter().all(|i| i.id() != id), "Not now");
         assert!(inbox.suggested_return(SnoozeReason::NoTime, Utc::now()) > Utc::now());
         inbox.toggle_done("x", Utc::now());

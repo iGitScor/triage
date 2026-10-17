@@ -9,7 +9,8 @@ final class SnoozeService {
     private(set) var history: [SnoozeRecord] { didSet { cachedCounts = nil } }
     /// Patterns in the snoozed pile; recomputed when snoozes change, shown one at a time.
     private(set) var insights: [SnoozeInsight] = []
-    private(set) var dismissed: Set<String> = []
+    /// Insights set aside ("Not now"), saved, each for `InsightDismissal.days`.
+    private(set) var dismissals: [InsightDismissal]
     @ObservationIgnored let advisor = SnoozeAdvisor(similarity: [KeywordSimilarity(), EmbeddingSimilarity()])
     @ObservationIgnored private var cachedCounts: (day: Date, counts: [String: Int])?
     @ObservationIgnored private var generation = 0
@@ -17,8 +18,9 @@ final class SnoozeService {
     @ObservationIgnored private(set) var insightsTask: Task<Void, Never>?
     @ObservationIgnored private let persistence: Persistence
 
-    init(history: [SnoozeRecord], persistence: Persistence) {
+    init(history: [SnoozeRecord], dismissals: [InsightDismissal] = [], persistence: Persistence) {
         self.history = history
+        self.dismissals = dismissals
         self.persistence = persistence
     }
 
@@ -46,6 +48,7 @@ final class SnoozeService {
     func reset() {
         history = []
         insights = []
+        dismissals = []
     }
 
     private func save() {
@@ -77,7 +80,8 @@ final class SnoozeService {
     }
 
     var visibleInsights: [SnoozeInsight] {
-        insights.filter { !dismissed.contains($0.id) }
+        let now = Date.now
+        return insights.filter { insight in !dismissals.contains { $0.covers(insight, now: now) } }
     }
 
     /// Patterns in the snoozed pile, worked out off the main thread: clustering compares every pair of titles.
@@ -95,7 +99,10 @@ final class SnoozeService {
         }
     }
 
+    /// Set aside until `InsightDismissal.days` from now, across launches; the expired ones go.
     func dismiss(_ insight: SnoozeInsight) {
-        dismissed.insert(insight.id)
+        let now = Date.now
+        dismissals = dismissals.filter { $0.until > now } + [InsightDismissal(insight, now: now)]
+        persistence.save(dismissals, to: persistence.dismissals)
     }
 }

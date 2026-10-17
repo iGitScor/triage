@@ -55,6 +55,46 @@ pub enum SnoozeInsight {
     Stale { items: Vec<InboxItem> },
 }
 
+/// An insight the user set aside ("Not now"): kept on disk until `until`, so it doesn't come back at the next launch.
+/// It covers the same insight, and a cluster or a stale pile that kept at least half of its items: one more snoozed
+/// item doesn't bring it back, a mostly new one does. Same on macOS (`InsightDismissal`).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InsightDismissal {
+    pub id: String,
+    /// The insight's items, by id.
+    pub items: Vec<String>,
+    pub until: DateTime<Utc>,
+}
+
+impl InsightDismissal {
+    /// How long a dismissal lasts: a pattern still there a month later is worth a second look.
+    pub const DAYS: i64 = 30;
+
+    pub fn new(insight: &SnoozeInsight, now: DateTime<Utc>) -> Self {
+        let mut items: Vec<String> = insight.items().iter().map(|i| i.id.clone()).collect();
+        items.sort();
+        InsightDismissal { id: insight.id(), items, until: now + chrono::Duration::days(Self::DAYS) }
+    }
+
+    pub fn covers(&self, insight: &SnoozeInsight, now: DateTime<Utc>) -> bool {
+        if self.until <= now {
+            return false;
+        }
+        let id = insight.id();
+        if id == self.id {
+            return true;
+        }
+        let kind = |id: &str| id.split('/').next().unwrap_or_default().to_string();
+        let mine = kind(&self.id);
+        if mine != kind(&id) || !(mine == "cluster" || mine == "stale") {
+            return false;
+        }
+        let items = insight.items();
+        items.iter().filter(|i| self.items.contains(&i.id)).count() * 2 >= items.len()
+    }
+}
+
 impl SnoozeInsight {
     /// Stable across refreshes, so a dismissed insight stays dismissed.
     pub fn id(&self) -> String {
@@ -673,5 +713,25 @@ mod tests {
         let pile = SnoozeInsight::PileUp { at: morning(), items: vec![] };
         assert_eq!(pile.id(), format!("pileUp/{}.0", morning().timestamp()));
         assert_eq!(SnoozeInsight::Stale { items: vec![make_item("b"), make_item("a")] }.id(), "stale/a,b");
+    }
+
+    /// Set aside, an insight stays away for a month, across launches; one more snoozed item doesn't bring a cluster back,
+    /// a mostly new cluster does. Same cases on the Mac.
+    #[test]
+    fn a_dismissal_covers_its_insight_for_a_month() {
+        let now = Utc::now();
+        let it = |id: &str| crate::fixtures::item(id, InboxBundle::reviews());
+        let cluster = SnoozeInsight::Cluster { items: vec![it("a"), it("b")] };
+        let dismissal = InsightDismissal::new(&cluster, now);
+        assert!(dismissal.covers(&cluster, now));
+        assert!(!dismissal.covers(&cluster, now + Duration::days(31)), "a month later it comes back");
+        assert!(dismissal.covers(&SnoozeInsight::Cluster { items: vec![it("a"), it("b"), it("c")] }, now), "one more");
+        assert!(
+            !dismissal.covers(&SnoozeInsight::Cluster { items: vec![it("a"), it("c"), it("d")] }, now),
+            "mostly new"
+        );
+        assert!(!dismissal.covers(&SnoozeInsight::Stale { items: vec![it("a"), it("b")] }, now), "another kind");
+        let saved: InsightDismissal = serde_json::from_str(&serde_json::to_string(&dismissal).unwrap()).unwrap();
+        assert_eq!(saved, dismissal);
     }
 }

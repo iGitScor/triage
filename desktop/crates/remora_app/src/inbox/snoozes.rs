@@ -2,11 +2,11 @@
 //! usual reason, patterns in the pile). The history is saved here on every change. Ported from the macOS app's
 //! `SnoozeService`.
 
-use super::persistence::{Persistence, HISTORY};
+use super::persistence::{Persistence, DISMISSALS, HISTORY};
 use super::Inbox;
 use chrono::{DateTime, Utc};
-use remora_core::{InboxItem, ItemState, SnoozeAdvisor, SnoozeInsight, SnoozeReason, SnoozeRecord};
-use std::collections::{HashMap, HashSet};
+use remora_core::{InboxItem, InsightDismissal, ItemState, SnoozeAdvisor, SnoozeInsight, SnoozeReason, SnoozeRecord};
+use std::collections::HashMap;
 
 /// The history kept: the last 500 snoozes.
 const KEPT: usize = 500;
@@ -14,14 +14,14 @@ const KEPT: usize = 500;
 pub struct SnoozeService {
     /// Every snooze with its reason and, once done, when: the advisor's input.
     history: Vec<SnoozeRecord>,
-    /// Insights the user set aside ("Not now"), by id, for this session.
-    dismissed: HashSet<String>,
+    /// Insights the user set aside ("Not now"), saved, each for `InsightDismissal::DAYS`.
+    dismissals: Vec<InsightDismissal>,
     persistence: Persistence,
 }
 
 impl SnoozeService {
-    pub(super) fn new(history: Vec<SnoozeRecord>, persistence: Persistence) -> Self {
-        SnoozeService { history, dismissed: HashSet::new(), persistence }
+    pub(super) fn new(history: Vec<SnoozeRecord>, dismissals: Vec<InsightDismissal>, persistence: Persistence) -> Self {
+        SnoozeService { history, dismissals, persistence }
     }
 
     pub fn history(&self) -> &[SnoozeRecord] {
@@ -70,12 +70,15 @@ impl SnoozeService {
         SnoozeAdvisor::new()
             .insights(snoozed, states, &self.history, now)
             .into_iter()
-            .filter(|insight| !self.dismissed.contains(&insight.id()))
+            .filter(|insight| !self.dismissals.iter().any(|d| d.covers(insight, now)))
             .collect()
     }
 
-    pub fn dismiss(&mut self, insight_id: &str) {
-        self.dismissed.insert(insight_id.to_string());
+    /// Set aside until `InsightDismissal::DAYS` from now, across launches; the expired ones go.
+    pub fn dismiss(&mut self, insight: &SnoozeInsight, now: DateTime<Utc>) {
+        self.dismissals.retain(|d| d.until > now);
+        self.dismissals.push(InsightDismissal::new(insight, now));
+        self.persistence.save(DISMISSALS, &self.dismissals);
     }
 
     fn save(&self) {
@@ -106,8 +109,10 @@ impl Inbox {
         self.snoozes.insights(&self.layout(now, "").snoozed, &self.states, now)
     }
 
-    pub fn dismiss_insight(&mut self, id: &str) {
-        self.snoozes.dismiss(id);
+    pub fn dismiss_insight(&mut self, id: &str, now: DateTime<Utc>) {
+        if let Some(insight) = self.insights(now).into_iter().find(|i| i.id() == id) {
+            self.snoozes.dismiss(&insight, now);
+        }
     }
 
     /// A pile-up, 30 minutes apart from its slot.

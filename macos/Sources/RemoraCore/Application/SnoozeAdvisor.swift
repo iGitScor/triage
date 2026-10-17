@@ -54,6 +54,34 @@ public enum SnoozeInsight: Equatable, Sendable, Identifiable {
     }
 }
 
+/// An insight the user set aside ("Not now"): kept on disk until `until`, so it doesn't come back at the next launch.
+/// It covers the same insight, and a cluster or a stale pile that kept at least half of its items: one more snoozed
+/// item doesn't bring it back, a mostly new one does. Same on Windows (`InsightDismissal`).
+public struct InsightDismissal: Codable, Hashable, Sendable {
+    public var id: String
+    /// The insight's items, by id.
+    public var items: [String]
+    public var until: Date
+    /// How long a dismissal lasts: a pattern still there a month later is worth a second look.
+    public static let days = 30
+
+    public init(_ insight: SnoozeInsight, now: Date) {
+        id = insight.id
+        items = insight.items.map(\.id).sorted()
+        until = now.addingTimeInterval(Double(Self.days) * 24 * 3600)
+    }
+
+    public func covers(_ insight: SnoozeInsight, now: Date) -> Bool {
+        guard until > now else { return false }
+        if insight.id == id { return true }
+        let kind = String(id.prefix { $0 != "/" })
+        guard kind == String(insight.id.prefix { $0 != "/" }), kind == "cluster" || kind == "stale" else {
+            return false
+        }
+        return insight.items.filter { items.contains($0.id) }.count * 2 >= insight.items.count
+    }
+}
+
 /// Tells whether two titles are about the same thing.
 public protocol SimilarityModel: Sendable {
     func similar(_ a: String, _ b: String) -> Bool

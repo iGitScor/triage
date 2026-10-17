@@ -156,7 +156,8 @@ final class InboxModel {
             assistant = AssistantCoordinator(
                 brief: files.brief.load() ?? nil, bundleSummaries: files.bundleSummaries.load() ?? [:],
                 usage: files.assistantUsage.load() ?? AssistantUsage(), persistence: files)
-            snoozes = SnoozeService(history: read(files.history) ?? [], persistence: files)
+            snoozes = SnoozeService(
+                history: read(files.history) ?? [], dismissals: read(files.dismissals) ?? [], persistence: files)
             learning = LearningService(
                 records: read(files.learning) ?? [], reviewTimings: read(files.reviewTimes) ?? [], persistence: files)
             agentReads = files.agentReads.load() ?? []

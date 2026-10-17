@@ -12,6 +12,7 @@ final class Persistence {
     let preferences: JSONStore<Preferences>
     let brief: JSONStore<Brief?>
     let history: JSONStore<[SnoozeRecord]>
+    let dismissals: JSONStore<[InsightDismissal]>
     let learning: JSONStore<[ActionRecord]>
     let reviewTimes: JSONStore<[ReviewTiming]>
     let bundleSummaries: JSONStore<[String: BundleSummary]>
@@ -31,6 +32,7 @@ final class Persistence {
         preferences = JSONStore("preferences", in: folder)
         brief = JSONStore("brief", in: folder, backedUp: false)
         history = JSONStore("snooze-history", in: folder)
+        dismissals = JSONStore("insight-dismissals", in: folder)
         learning = JSONStore("learning", in: folder)
         reviewTimes = JSONStore("review-times", in: folder)
         bundleSummaries = JSONStore("bundle-summaries", in: folder, backedUp: false)

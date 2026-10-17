@@ -474,7 +474,7 @@ pub async fn snooze_advice(state: State<'_, AppState>, id: String) -> Result<Sno
 
 #[tauri::command]
 pub async fn dismiss_insight(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
-    state.inbox.lock().await.dismiss_insight(&id);
+    state.inbox.lock().await.dismiss_insight(&id, Utc::now());
     changed(&app).await;
     Ok(())
 }
