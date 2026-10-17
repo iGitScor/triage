@@ -89,7 +89,7 @@ jobs:
 
   # Pull requests (mostly Dependabot's) stop after the tests: the installer, the Linux packages and the licence
   # notices are built on pushes, and by every release.
-  # The same Rust on Linux (LINUX-04): the `cfg(unix)` and `not(windows)` paths (the Secret Service vault, the policy
+  # The same Rust on Linux: the `cfg(unix)` and `not(windows)` paths (the Secret Service vault, the policy
   # file, Claude Code's ownership check, notifications with a click), with the GTK/WebKitGTK stack, and the
   # AppImage and .deb built as a smoke test.
   linux:
@@ -138,7 +138,7 @@ jobs:
             desktop/target/debug/bundle/appimage/*.AppImage
             desktop/target/debug/bundle/deb/*.deb
 
-  # The licences the packages ship (DEP-07): one file for Windows and Linux, so one job, beside the others. The
+  # The licences the packages ship: one file for Windows and Linux, so one job, beside the others. The
   # release builds it again on each system.
   notices:
     if: github.event_name != 'pull_request'

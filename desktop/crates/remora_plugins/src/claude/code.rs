@@ -17,7 +17,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use std::time::SystemTime;
 
 pub const ID: &str = "claude-code";
-/// The same as the API's (one constant per role, AI-02).
+/// The same as the API's (one constant per role).
 pub const DEFAULT_DIGEST_MODEL: &str = super::api::DEFAULT_DIGEST_MODEL;
 
 /// The same words as the macOS app, which the shared French dictionary translates.
@@ -141,7 +141,7 @@ impl SearchEnv {
     /// Where Windows installs put `claude`, in order: Anthropic's installer (recommended) and its older local
     /// install, npm's global folder, Volta, Bun, Scoop and mise, the Node.js that nvm-windows or Node's own installer
     /// made active, then the user's PATH (a tray app gets the full one, unlike a Mac app opened from the Dock), only its
-    /// folders in your profile or Program Files (SEC-30).
+    /// folders in your profile or Program Files.
     pub fn windows_folders(&self) -> Vec<PathBuf> {
         let under = |base: &Option<PathBuf>, path: &str| {
             base.as_ref().map(|b| path.split('/').fold(b.clone(), |p, part| p.join(part)))
@@ -318,8 +318,8 @@ fn only_you_can_change(path: &Path) -> bool {
 }
 
 /// On Windows, owners and modes don't say who may change a file: access lists do. As on macOS, the program, its
-/// folder and, through a link, the real file and its folder must be owned by and writable only by you or the system
-/// (SEC-30), and not on a network share. The `--version` check then runs as on macOS.
+/// folder and, through a link, the real file and its folder must be owned by and writable only by you or the system,
+/// and not on a network share. The `--version` check then runs as on macOS.
 #[cfg(windows)]
 fn only_you_can_change(path: &Path) -> bool {
     let Ok(real) = std::fs::canonicalize(path).map(plain) else { return false };
@@ -588,7 +588,7 @@ pub fn command(message: &str, system: &str, schema: &Schema, model: &str) -> Com
         arguments.extend(["--model".to_string(), model.to_string()]);
     }
     // As the API: a brief needs no long thinking, and the user's own (often high) effort would spend their plan and
-    // can run past the time limit (AI-25).
+    // can run past the time limit.
     arguments.extend(EFFORT.iter().map(|s| s.to_string()));
     Command { arguments, input: message.as_bytes().to_vec() }
 }
@@ -788,7 +788,7 @@ mod tests {
         &arguments[arguments.iter().position(|a| a == flag).unwrap() + 1]
     }
 
-    /// LINUX-12: Linux also looks in Linuxbrew, the system's `/usr/bin` and the session's PATH, once each. Unix paths:
+    /// Linux also looks in Linuxbrew, the system's `/usr/bin` and the session's PATH, once each. Unix paths:
     /// on Windows `/nix/profile/bin` isn't absolute.
     #[cfg(unix)]
     #[test]
@@ -930,7 +930,7 @@ mod tests {
         assert_eq!(items[0].snooze.reason, Some(SnoozeReason::Motivation));
     }
 
-    /// AI-03: Claude Code's `usage`, as the Messages API words it.
+    /// Claude Code's `usage`, as the Messages API words it.
     #[tokio::test]
     async fn the_tokens_used_are_reported() {
         let runner = RecordingRunner::new(
@@ -1025,7 +1025,7 @@ mod tests {
         assert!(folders.contains(&home.join("AppData").join("Roaming").join("npm")));
         assert!(folders.contains(&program_files.join("nodejs")));
         assert_eq!(folders.last(), Some(&git), "PATH last, relative folders left out");
-        assert!(!folders.contains(&root.join("tools")), "SEC-30: not outside your profile and Program Files");
+        assert!(!folders.contains(&root.join("tools")), "Not outside your profile and Program Files");
         assert!(SearchEnv::default().windows_folders().is_empty());
     }
 

@@ -16,7 +16,7 @@ final class Persistence {
     let reviewTimes: JSONStore<[ReviewTiming]>
     let bundleSummaries: JSONStore<[String: BundleSummary]>
     let assistantUsage: JSONStore<AssistantUsage>
-    /// What agents asked through the MCP server (V15-01).
+    /// What agents asked through the MCP server.
     let agentReads: JSONStore<[AgentRead]>
     /// Saves the files off the main thread, each once per burst of changes.
     let writer = DiskWriter()

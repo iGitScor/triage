@@ -1,6 +1,6 @@
 import Foundation
 
-/// The `remora` command (IDEA-22): what a launcher, a status bar or a script may ask the running app, over a socket
+/// The `remora` command: what a launcher, a status bar or a script may ask the running app, over a socket
 /// only this user can open (`LocalSocket`). The count, a tab's items, a new reminder: never Done, a snooze or anything
 /// that removes. Items whose tool hides message content come without their title. One JSON object per line each way.
 /// Same rule on Windows and Linux (`command.rs`), with the same tests.

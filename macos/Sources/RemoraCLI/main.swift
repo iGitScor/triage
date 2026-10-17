@@ -1,8 +1,8 @@
 import Foundation
 import RemoraCore
 
-// `remora count`, `remora list --tab waiting --json`, `remora remind "Call Erin" --at 15:00` (IDEA-22): asks the Remora
-// app running on this Mac, over its socket, and prints the answer. `remora mcp` (V15-01) serves the agents on this
+// `remora count`, `remora list --tab waiting --json`, `remora remind "Call Erin" --at 15:00`: asks the Remora
+// app running on this Mac, over its socket, and prints the answer. `remora mcp` serves the agents on this
 // Mac instead. The app bundles it as Contents/Helpers/remora.
 let arguments = Array(CommandLine.arguments.dropFirst())
 if arguments.first == "mcp" {

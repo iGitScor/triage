@@ -47,7 +47,7 @@ struct GitLabPluginTests {
     }
 
     /// Approvals that can't be read are said, not passed over; a rate limit there fails the fetch, so the backoff
-    /// waits it out and the last items stay (CODE-02).
+    /// waits it out and the last items stay.
     @Test func failedDetailsAreSaidAndARateLimitIsWaitedOut() async throws {
         struct Limited: HTTPClient {
             let base: StubHTTP
@@ -75,7 +75,7 @@ struct GitLabPluginTests {
         await #expect(throws: HTTPError.rateLimited(nil)) { try await limited.fetch() }
     }
 
-    /// CODE-06: a merge request of yours where you are also a reviewer comes once, as yours. Same on Windows.
+    /// A merge request of yours where you are also a reviewer comes once, as yours. Same on Windows.
     @Test func yourMergeRequestYouAlsoReviewComesOnce() async throws {
         let http = StubHTTP(routes: ["/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[\(mr)]"])
         let snapshot = try await GitLabPlugin(config: config(["host": "gitlab.acme.io", "token": "t"]), http: http)
@@ -112,7 +112,7 @@ struct GitLabPluginTests {
         #expect(review.changes?.files == [ChangedFile(path: "app/models/user.rb", additions: 12, deletions: 3)])
     }
 
-    /// MISS-06: To-Dos other than merge requests, already listed: assigned issues to do, mentions to answer. Same
+    /// To-Dos other than merge requests, already listed: assigned issues to do, mentions to answer. Same
     /// case as Windows.
     @Test func toDosBringIssuesAndMentionsButNotMergeRequestsAgain() async throws {
         let todos = """
@@ -140,7 +140,7 @@ struct GitLabPluginTests {
         #expect(snapshot.remarks.isEmpty)
     }
 
-    /// PERF-09: who the token belongs to is asked once, not at every refresh.
+    /// Who the token belongs to is asked once, not at every refresh.
     @Test func theUserIsAskedOnceAcrossRefreshes() async throws {
         let http = RecordingHTTP(
             StubHTTP(routes: ["/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[]"]))

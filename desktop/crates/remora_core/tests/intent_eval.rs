@@ -1,4 +1,4 @@
-//! ML-06: the keyword classifier measured on the labelled messages shared with the Mac (`eval/intents.json`), against
+//! The keyword classifier measured on the labelled messages shared with the Mac (`eval/intents.json`), against
 //! the floors of `eval/baseline.json`. Same metrics as `IntentEvaluationTests.swift`. `make eval` prints the report.
 use remora_core::{KeywordIntentClassifier, TextIntent};
 use serde::Deserialize;

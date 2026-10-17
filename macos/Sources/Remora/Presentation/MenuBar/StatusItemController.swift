@@ -67,7 +67,7 @@ final class StatusItemController: NSObject {
         }
     }
 
-    /// The shortcut that opens the inbox from any app, registered again when the preference changes (MISS-04).
+    /// The shortcut that opens the inbox from any app, registered again when the preference changes.
     private func updateShortcut() {
         let shortcut = withObservationTracking {
             model.preferences.openShortcut
@@ -249,7 +249,7 @@ final class StatusItemController: NSObject {
     }
 
     /// What the menu calls the task in progress: its title, or where it's from ("Slack · #general") when that tool's
-    /// content is hidden, as its notifications do (SEC-23).
+    /// content is hidden, as its notifications do.
     static func taskLabel(_ task: InboxItem, hidden: Bool) -> String {
         guard hidden else { return task.title }
         let context = task.shownContext.trimmingCharacters(in: .whitespacesAndNewlines)

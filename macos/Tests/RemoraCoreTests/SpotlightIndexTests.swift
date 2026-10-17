@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// IDEA-38: what goes to Spotlight, and what leaves it.
+/// What goes to Spotlight, and what leaves it.
 struct SpotlightIndexTests {
     let account = UUID()
     let names = ["github": "GitHub", "slack": "Slack", "reminders": "Reminder"]

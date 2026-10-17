@@ -18,7 +18,7 @@ errorKind: FailureKind | null,
 remarks: Array<Message>, id: string, pluginId: string, name: string | null, settings: { [key in string]: string }, identity: string | null, };
 
 /**
- * An agent asked the app something through `remora mcp` (V15-01): who it said it was, what, when. Kept on this
+ * An agent asked the app something through `remora mcp`: who it said it was, what, when. Kept on this
  * computer for Settings, erased with the rest; the name is the agent's own claim, not verified.
  */
 export type AgentRead = { agent: string, 
@@ -246,7 +246,7 @@ export type LinkedView = { id: string, title: string, context: string, pluginId:
  * `/etc/remora/policy.json` (Ansible, Puppet, Salt…), with the same names.
  * `AllowedPlugins` (REG_MULTI_SZ of plugin IDs), `AllowExternalAI` and `AllowRemoteImages` (REG_DWORD 0/1), and
  * `AutomaticUpdates` (REG_DWORD 0/1): 1 checks every day, locked on; 0 turns updating off entirely, Check now included.
- * For the OpenAI-compatible assistant (AI-23): `AllowedAIServers` (REG_MULTI_SZ of URL prefixes), `AIServer`
+ * For the OpenAI-compatible assistant: `AllowedAIServers` (REG_MULTI_SZ of URL prefixes), `AIServer`
  * (REG_SZ, the server, locked in Settings) and `AllowLocalAI` (REG_DWORD 0/1, a server on this computer).
  * For every assistant, as on macOS: `AIExcludedSources` (REG_MULTI_SZ of plugin IDs, or `reminders`), added to the
  * user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs). And the Mac's other
@@ -254,7 +254,7 @@ export type LinkedView = { id: string, title: string, context: string, pluginId:
  * `OpenInApps` (REG_DWORD 0/1), `ClaudeCodePath` (REG_SZ) and `AIDailyLimit` (REG_DWORD, assistant requests a day,
  * 1 to 10000). A source's settings (REG_SZ, `SETTINGS`): what the organization registered for Microsoft 365,
  * `MicrosoftTenant` and `MicrosoftClientID`, locked in the form. `AllowLocalAPI` (REG_DWORD 0/1): 0 turns off the
- * `remora` command and the MCP server for agents (V15-10), so nothing on the computer can read the inbox but the app.
+ * `remora` command and the MCP server for agents, so nothing on the computer can read the inbox but the app.
  * A key that is set wins over the user's own choice.
  *
  * It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -292,11 +292,11 @@ refreshMinutes: number | null, openInApps: boolean | null,
  */
 claudeCodePath: string | null, 
 /**
- * Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored (AI-03).
+ * Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored.
  */
 aiDailyLimit: number | null, 
 /**
- * The `remora` command and the MCP server (V15-10). Unset: allowed; unreadable: off.
+ * The `remora` command and the MCP server. Unset: allowed; unreadable: off.
  */
 allowLocalApi: boolean | null, 
 /**
@@ -346,7 +346,7 @@ export type Preferences = { refreshMinutes: number, trayCount: TrayCount,
  */
 focusWhileInProgress: boolean, notifyArrivals: boolean, notifyStatusChanges: boolean, 
 /**
- * What arrives and changes waits for the next of `notification_times`, then comes grouped (IDEA-26).
+ * What arrives and changes waits for the next of `notification_times`, then comes grouped.
  */
 batchNotifications: boolean, 
 /**
@@ -375,7 +375,7 @@ checkForUpdates: boolean,
  */
 wholeInboxBrief: boolean, briefCacheMinutes: number, assistantExcludedSources: Array<string>, 
 /**
- * Assistant requests a day; 0 is no limit (AI-03).
+ * Assistant requests a day; 0 is no limit.
  */
 assistantDailyLimit: number, 
 /**
@@ -449,15 +449,15 @@ wayland: boolean,
  */
 notificationsOff: 'app' | 'all' | 'policy' | null, 
 /**
- * What the assistant used today and this month (AI-03).
+ * What the assistant used today and this month.
  */
 usageToday: UsageDay, usageMonth: UsageDay, 
 /**
- * The agents' last requests through `remora mcp`, most recent first (V15-01).
+ * The agents' last requests through `remora mcp`, most recent first.
  */
 agentReads: Array<AgentRead>, 
 /**
- * The organization's `AllowLocalAPI` (V15-10).
+ * The organization's `AllowLocalAPI`.
  */
 localApiAllowed: boolean, };
 
@@ -516,7 +516,7 @@ assistant: boolean, };
 export type SourcesHealth = { "state": "fine" } | { "state": "offline" } | { "state": "reconnect", accounts: Array<string>, } | { "state": "failing", count: number, };
 
 /**
- * The text size, as on the Mac (A11Y-25): the window's content is zoomed by `scale`, and the window grows with it.
+ * The text size, as on the Mac: the window's content is zoomed by `scale`, and the window grows with it.
  */
 export type TextSize = "standard" | "large" | "larger";
 

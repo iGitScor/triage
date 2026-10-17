@@ -1,5 +1,5 @@
 //! The brief through any server that speaks OpenAI's Chat Completions: OpenAI, Azure OpenAI, Mistral, or one on this
-//! computer (Ollama, LM Studio, vLLM). Same prompts, answers, retries and timeout as the Claude API (AI-23). A port
+//! computer (Ollama, LM Studio, vLLM). Same prompts, answers, retries and timeout as the Claude API. A port
 //! of the macOS `OpenAIPlugin.swift`.
 
 use crate::assistant::{decode_reply, json_text, AssistantFailure, AssistantReply};
@@ -371,7 +371,7 @@ pub(crate) mod tests {
         assert!(body.get("max_tokens").is_none() && body.get("max_completion_tokens").is_none());
     }
 
-    /// AI-03: Chat Completions' `usage`; a server that leaves it out reports nothing.
+    /// Chat Completions' `usage`; a server that leaves it out reports nothing.
     #[tokio::test]
     async fn the_tokens_used_are_reported() {
         let mut body: serde_json::Value = serde_json::from_str(&answer(r#"{"summary":"s"}"#, "stop")).unwrap();

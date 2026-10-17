@@ -5,7 +5,7 @@ import Testing
 @testable import Remora
 
 /// VoiceOver hears what a row draws besides its text: reviewers and what they did, the review prep, the waiting
-/// help (A11Y-19).
+/// help.
 @MainActor
 struct ItemRowSpeechTests {
     @Test func reviewersPrepAndHelpAreSpoken() throws {

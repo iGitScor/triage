@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// IDEA-06: the same cases as Windows (`link.rs`).
+/// The same cases as Windows (`link.rs`).
 struct RemoraLinkTests {
     let now = Date(iso8601: "2026-10-13T12:00:00Z")!
 

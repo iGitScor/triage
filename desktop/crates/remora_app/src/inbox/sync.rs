@@ -24,7 +24,7 @@ pub struct SyncEngine {
     backoff: HashMap<String, Backoff>,
     /// Accounts fetched since launch: the first fetch announces what arrived while the app was closed.
     synced: HashSet<String>,
-    /// Notifications waiting for the next set time (IDEA-26), and when the last batch went out.
+    /// Notifications waiting for the next set time, and when the last batch went out.
     waiting: Vec<Notice>,
     batched_at: DateTime<Utc>,
     last_refresh: Option<DateTime<Utc>>,

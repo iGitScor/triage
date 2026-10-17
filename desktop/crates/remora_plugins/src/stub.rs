@@ -76,7 +76,7 @@ impl HttpClient for Recording {
     }
 }
 
-/// What `registry`'s egress test runs for one plugin (TEST-03): an account's settings, and a stub answering its
+/// What `registry`'s egress test runs for one plugin: an account's settings, and a stub answering its
 /// fetch with the plugin's own fixtures.
 pub struct EgressFixture {
     pub settings: Vec<(&'static str, &'static str)>,

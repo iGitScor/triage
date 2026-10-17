@@ -1,6 +1,6 @@
 # Evaluation set
 
-Labelled chat messages, in English and French, that both apps' tests sort and score (ML-06). They are made up, close
+Labelled chat messages, in English and French, that both apps' tests sort and score. They are made up, close
 to what arrives in Slack or Teams, and many say what they want without a keyword ("Le client attend toujours le
 devis", "ping").
 

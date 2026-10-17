@@ -24,7 +24,7 @@ struct AppEnvironment {
     var updates: UpdateSystem
     /// Whether the Mac has a network.
     var network: NetworkStatus
-    /// This Mac's Spotlight index, when the user turns it on (IDEA-38).
+    /// This Mac's Spotlight index, when the user turns it on.
     var spotlight: SpotlightIndexing
 
     static var live: AppEnvironment {

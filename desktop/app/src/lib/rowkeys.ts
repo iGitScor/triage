@@ -1,4 +1,4 @@
-// The inbox from the keyboard, as on the Mac (A11Y-24). One row holds the Tab stop; ↑ ↓ (or J K) move between rows,
+// The inbox from the keyboard, as on the Mac. One row holds the Tab stop; ↑ ↓ (or J K) move between rows,
 // Home and End to the first and last; → walks into a row's buttons and ← back, Esc returns to the row. On a row,
 // Enter opens it (Shift+Enter in the browser), E marks it done, S snoozes, P pins: the row's own buttons
 // (`data-action`) do the work, so Undo and the snooze sheet behave as with a click. When the row with the focus leaves

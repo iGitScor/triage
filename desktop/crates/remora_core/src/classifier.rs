@@ -211,7 +211,7 @@ impl KeywordIntentClassifier {
     pub fn intent(text: &str) -> Option<TextIntent> {
         let lowercased = text.to_lowercase();
         let text = NOT_PROSE.replace_all(&lowercased, " ");
-        // Nothing but code or links (a snippet, a URL pasted alone) asks nothing in words: to read (ML-05).
+        // Nothing but code or links (a snippet, a URL pasted alone) asks nothing in words: to read.
         if text.trim().is_empty() {
             return (!lowercased.trim().is_empty()).then_some(TextIntent::Info);
         }
@@ -416,7 +416,7 @@ mod tests {
         }
     }
 
-    /// ML-05: nothing but code or a link is to read, not to reply. Same cases as the Mac.
+    /// Nothing but code or a link is to read, not to reply. Same cases as the Mac.
     #[test]
     fn code_and_links_alone_are_to_read() {
         for (text, expected) in [

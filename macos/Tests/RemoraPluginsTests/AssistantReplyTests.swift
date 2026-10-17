@@ -4,7 +4,7 @@ import Testing
 
 @testable import RemoraPlugins
 
-/// AI-15: every assistant names why an answer is missing through `AssistantFailure`. Same cases on Windows.
+/// Every assistant names why an answer is missing through `AssistantFailure`. Same cases on Windows.
 struct AssistantReplyTests {
     private func failure(_ reply: some AssistantReply) -> AssistantFailure? {
         do {
@@ -62,7 +62,7 @@ struct AssistantReplyTests {
         #expect(try answer.decode(BriefPrompt.DigestOutput.self).summary == "s")
     }
 
-    /// AI-03: each provider's `usage`, cached prompt tokens counted as input; reported even for an answer cut off.
+    /// Each provider's `usage`, cached prompt tokens counted as input; reported even for an answer cut off.
     @Test func usageIsReadFromEveryProvider() throws {
         let claude = try claudeAPI(
             #"{"content": [], "stop_reason": "max_tokens", "usage": {"input_tokens": 100, "cache_creation_input_tokens": 20, "cache_read_input_tokens": 3, "output_tokens": 50}}"#

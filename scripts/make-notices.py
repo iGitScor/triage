@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes THIRD-PARTY-NOTICES.txt for the Windows and Linux app (DEP-07): what Remora bundles (the Outfit font, the
+"""Writes THIRD-PARTY-NOTICES.txt for the Windows and Linux app: what Remora bundles (the Outfit font, the
 Simple Icons logos), the npm packages the interface ships, and every Rust crate's licence through `cargo about`
 (desktop/about.toml, desktop/about.hbs). CI and the release run it before building; a local build without it ships
 a placeholder (build.rs). Needs cargo-about on PATH, or its path in CARGO_ABOUT, and `npm ci` done in desktop/app."""

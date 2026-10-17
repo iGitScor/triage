@@ -63,7 +63,7 @@ body {
   height: 100%;
 }
 
-/* Text worth copying stays selectable (A11Y-18): titles, previews, errors, notices, a source's hosts. */
+/* Text worth copying stays selectable: titles, previews, errors, notices, a source's hosts. */
 .title,
 .preview,
 .error,

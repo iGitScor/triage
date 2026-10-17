@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// AI-03: what the assistant used, per local day, and the daily limit. Same cases on Windows.
+/// What the assistant used, per local day, and the daily limit. Same cases on Windows.
 struct AssistantUsageTests {
     let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)

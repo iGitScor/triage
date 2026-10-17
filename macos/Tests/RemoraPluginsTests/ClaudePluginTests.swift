@@ -30,7 +30,7 @@ struct ClaudePluginTests {
         #expect(!json.contains("fallbacks"), "a Haiku brief")
     }
 
-    /// AI-02: Sonnet by default for the brief, and a model Anthropic doesn't offer names the field to fix.
+    /// Sonnet by default for the brief, and a model Anthropic doesn't offer names the field to fix.
     @Test func anUnknownModelNamesTheFieldToFix() async throws {
         #expect(ClaudePlugin.manifest.fields.map(\.defaultValue) == ["", "claude-sonnet-5-5", "claude-haiku-5-5"])
         // No route: every request answers 404, as Anthropic does for a model it doesn't offer.
@@ -91,7 +91,7 @@ struct ClaudePluginTests {
         }
     }
 
-    /// AI-04: overloaded and rate-limited answers are retried twice, then the error shows.
+    /// Overloaded and rate-limited answers are retried twice, then the error shows.
     @Test func retriesOverloadedAnswersTwice() async throws {
         final class Flaky: HTTPClient, @unchecked Sendable {
             var statuses: [Int]

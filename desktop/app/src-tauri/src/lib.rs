@@ -43,7 +43,7 @@ pub const REMINDER_SHORTCUT: &str = "CommandOrControl+Alt+R";
 /// False when another app holds the shortcut: Settings says so.
 pub static SHORTCUT_REGISTERED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
 /// The key a Wayland desktop bound through its portal, as it describes it; else `REMINDER_SHORTCUT`.
-/// The text size's zoom, as `f64` bits: `show` runs without the inbox lock (A11Y-25).
+/// The text size's zoom, as `f64` bits: `show` runs without the inbox lock.
 pub static TEXT_SCALE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0x3FF0_0000_0000_0000);
 /// The window at the default text size, in logical pixels, as tauri.conf.json declares it.
 const WINDOW_SIZE: (f64, f64) = (460.0, 700.0);
@@ -72,7 +72,7 @@ struct TrayLook {
 }
 
 static TRAY_LOOK: std::sync::Mutex<Option<TrayLook>> = std::sync::Mutex::new(None);
-/// Raised when a focus session starts, so the fish's swim loop sleeps the rest of the time (PERF-14).
+/// Raised when a focus session starts, so the fish's swim loop sleeps the rest of the time.
 static FOCUS_STARTED: std::sync::LazyLock<Notify> = std::sync::LazyLock::new(Notify::new);
 /// The icon the tray shows: set again only when it changes (or after the fish swam).
 static TRAY_ICON: std::sync::Mutex<Option<TrayImage>> = std::sync::Mutex::new(None);
@@ -317,7 +317,7 @@ pub fn set_text_scale(window: &WebviewWindow, scale: f64) {
 }
 
 /// The window's size for the text size, never larger than the screen's usable area: a 700-pixel window above the
-/// taskbar of a 1080p screen at 150 % would run off the top, where Refresh and Settings are (A11Y-25).
+/// taskbar of a 1080p screen at 150 % would run off the top, where Refresh and Settings are.
 fn fit(window: &WebviewWindow) {
     let scale = f64::from_bits(TEXT_SCALE.load(std::sync::atomic::Ordering::Relaxed));
     let (mut width, mut height) = (WINDOW_SIZE.0 * scale, WINDOW_SIZE.1 * scale);
@@ -341,7 +341,7 @@ fn toggle(app: &AppHandle) {
     }
 }
 
-/// `remora://` links (IDEA-06): the one Remora was launched with, and those that come while it runs. The installer
+/// `remora://` links: the one Remora was launched with, and those that come while it runs. The installer
 /// and the .deb register the scheme; an AppImage (or a development build) registers it at launch.
 fn links(app: &tauri::App) -> tauri::Result<()> {
     use tauri_plugin_deep_link::DeepLinkExt;
@@ -382,14 +382,14 @@ fn follow(app: &AppHandle, url: &str) {
     }
 }
 
-/// The `remora` command (IDEA-22): `remora count`, `list`, `remind` ask the app here, on a socket (a named pipe on
+/// The `remora` command: `remora count`, `list`, `remind` ask the app here, on a socket (a named pipe on
 /// Windows) only this user can open. A demo run answers only where REMORA_SOCKET says, never in the real app's place.
 fn listen(app: &AppHandle, demo: bool) {
     use remora_app::local_api;
     if demo && std::env::var_os(local_api::ENDPOINT_VARIABLE).is_none() {
         return;
     }
-    // The organization turned the command and the MCP server off (V15-10): nothing listens at all.
+    // The organization turned the command and the MCP server off: nothing listens at all.
     if !remora_app::Managed::read().local_api_allowed() {
         return;
     }
@@ -511,7 +511,7 @@ async fn background(app: AppHandle) {
                         changed(&app).await;
                     } else if tray_look().task.is_some() {
                         // Keeps the elapsed time of a task in progress current; with none, nothing moves, so the
-                        // tray stays as it is and the inbox lock is left alone (PERF-17).
+                        // tray stays as it is and the inbox lock is left alone.
                         update_tray(&app).await;
                     }
                     if tokio::time::Instant::now() >= deadline { break }
@@ -525,7 +525,7 @@ pub async fn refresh(app: &AppHandle, manual: bool) {
     let state = app.state::<AppState>();
     if !state.demo {
         // The policy is read again each time: a change from Group Policy or Intune applies without a restart. Read
-        // before taking the lock (CODE-07); a read that panicked keeps the last one.
+        // before taking the lock; a read that panicked keeps the last one.
         if let Ok(managed) = tokio::task::spawn_blocking(remora_app::Managed::read).await {
             state.inbox.lock().await.set_managed(managed);
         }
@@ -661,7 +661,7 @@ fn toast_app_id(app: &AppHandle) -> String {
 }
 
 /// Why Windows won't show Remora's notifications, if it won't: turned off for Remora, for every app, or by the
-/// organization. Settings says so, with a way to the fix (EASE-09).
+/// organization. Settings says so, with a way to the fix.
 #[cfg(windows)]
 pub fn notifications_off(app: &AppHandle) -> Option<&'static str> {
     use windows::core::HSTRING;

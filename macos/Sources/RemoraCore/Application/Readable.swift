@@ -35,7 +35,7 @@ public enum Readable {
 
     /// A mark opens after the start or a non-word character and before a non-space, and closes before the end or a
     /// non-word character, on one line: `snake_case`, `2*3*4` and `* bullet` keep theirs.
-    /// Compiled once: every title and Slack message goes through them, at each refresh (CODE-05).
+    /// Compiled once: every title and Slack message goes through them, at each refresh.
     static let marks: [(NSRegularExpression, String)] = [
         (#"```\n?"#, ""),
         (#"`([^`\n]+)`"#, "$1"),

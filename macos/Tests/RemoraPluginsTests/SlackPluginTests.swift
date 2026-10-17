@@ -169,7 +169,7 @@ struct SlackPluginTests {
         #expect(await http.repliesAsked == ["C1 1700000100.0 1700000200.0"], "one call, from your last message, no DM")
     }
 
-    /// FEAT-07: Slack sends the thread's first message whatever `oldest` says; it isn't a reply to you.
+    /// Slack sends the thread's first message whatever `oldest` says; it isn't a reply to you.
     @Test func theFirstMessageOfAThreadIsNotAReply() async throws {
         let mine = """
             {"ok": true, "messages": {"matches": [
@@ -405,7 +405,7 @@ struct SlackPluginTests {
         #expect(scopes == ["search:read", "channels:history", "groups:history", "reactions:read", "emoji:read"])
     }
 
-    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    /// Who the token belongs to is asked once across refreshes, as GitLab's.
     @Test func theIdentityIsAskedOnceAcrossRefreshes() async throws {
         let http = RecordingHTTP(
             StubHTTP(routes: [

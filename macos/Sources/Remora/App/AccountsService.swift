@@ -8,7 +8,7 @@ import RemoraPlugins
 @MainActor @Observable
 final class AccountsService {
     private(set) var accounts: [Account]
-    /// Per account, in memory: what a refresh may reuse from the last one (PERF-09).
+    /// Per account, in memory: what a refresh may reuse from the last one.
     @ObservationIgnored private var sessions: [UUID: AccountSession] = [:]
     @ObservationIgnored private let secrets: SecretStore
     @ObservationIgnored private let persistence: Persistence

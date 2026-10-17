@@ -1,4 +1,4 @@
-//! What the assistant used on this computer, per day (AI-03): requests and tokens, for the last `KEPT_DAYS` days with
+//! What the assistant used on this computer, per day: requests and tokens, for the last `KEPT_DAYS` days with
 //! any. Tokens only, no price: Remora doesn't know what each plan charges. A port of the macOS `AssistantUsage.swift`.
 
 use chrono::NaiveDate;

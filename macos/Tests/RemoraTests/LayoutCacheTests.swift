@@ -97,7 +97,7 @@ struct PolicyEnforcementTests {
     }
 }
 
-/// AI-23: the organization's AI server replaces the user's, and decides whether the assistant runs.
+/// The organization's AI server replaces the user's, and decides whether the assistant runs.
 @MainActor
 struct AIServerTests {
     @Test func theOrganizationsServerWins() {
@@ -186,7 +186,7 @@ struct MenuTitleTests {
         #expect(StatusItemController.menuTitle("First line\nsecond line") == "First line second line", "one line")
     }
 
-    /// SEC-23: a tool in "hide message content" shows where the task is from, not what it says.
+    /// A tool in "hide message content" shows where the task is from, not what it says.
     @Test func aHiddenToolsTaskShowsWhereItIsFrom() {
         var task = InboxItem(
             id: "s", accountID: UUID(), pluginID: "slack", bundle: .mentions, title: "Salaries", context: "#payroll",
@@ -292,7 +292,7 @@ struct CorruptStorageTests {
     }
 }
 
-/// SEC-27: the assistant can take a minute or more; what it answers after Erase or a disconnect isn't kept.
+/// The assistant can take a minute or more; what it answers after Erase or a disconnect isn't kept.
 @MainActor
 struct AssistantInFlightTests {
     let item = InboxItem(
@@ -337,7 +337,7 @@ struct AssistantInFlightTests {
         #expect(!harness.writtenText().contains("Two reviews wait."))
     }
 
-    /// AI-03: every request is counted with its tokens, and the daily limit refuses the next one without sending it.
+    /// Every request is counted with its tokens, and the daily limit refuses the next one without sending it.
     @Test func usageIsRecordedAndLimited() async throws {
         let harness = Harness()
         let (model, _) = try connected(harness)

@@ -2,7 +2,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// ML-21: versions and encodings are not ticket keys, so they link nothing.
+/// Versions and encodings are not ticket keys, so they link nothing.
 struct TicketKeysTests {
     @Test func versionsAndEncodingsAreNotKeys() {
         let text =

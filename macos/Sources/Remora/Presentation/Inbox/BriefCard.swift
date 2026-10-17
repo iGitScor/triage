@@ -86,7 +86,7 @@ private struct FocusRow: View {
 
     @State private var hovering = false
 
-    /// A button, not a tap: reachable from the keyboard and named for VoiceOver, as the inbox rows are (A11Y-27).
+    /// A button, not a tap: reachable from the keyboard and named for VoiceOver, as the inbox rows are.
     var body: some View {
         Button {
             model.open(item)

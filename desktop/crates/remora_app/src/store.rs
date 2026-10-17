@@ -10,7 +10,7 @@ use std::{fs, io, thread};
 /// so a crash never leaves half a file.
 ///
 /// `save` only encodes: one background thread writes the files, in the order they were saved, so callers holding
-/// the inbox lock never wait on the disk (PERF-07). A file whose content didn't change isn't written again.
+/// the inbox lock never wait on the disk. A file whose content didn't change isn't written again.
 #[derive(Clone, Debug)]
 pub struct JsonStore {
     dir: PathBuf,
@@ -205,7 +205,7 @@ mod tests {
         assert!(!folder.join("accounts.json").exists());
     }
 
-    /// LINUX-09: message text and titles are in these files; other accounts on the machine can't read them, even in
+    /// Message text and titles are in these files; other accounts on the machine can't read them, even in
     /// a folder that was created readable.
     #[cfg(unix)]
     #[test]

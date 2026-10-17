@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 
-/// What one account keeps between refreshes, in memory (PERF-09): what its plugin remembers (who the token belongs
+/// What one account keeps between refreshes, in memory: what its plugin remembers (who the token belongs
 /// to) and the answers its conditional requests can reuse. A new one starts whenever the account's settings or token
 /// change, so nothing learned with an old token or host is reused.
 pub struct AccountSession {
@@ -75,7 +75,7 @@ mod tests {
         assert_eq!(sessions.len(), 1);
     }
 
-    /// TEST-01: a new host starts a new session too, with nothing learned from the old one.
+    /// A new host starts a new session too, with nothing learned from the old one.
     #[test]
     fn a_new_host_starts_a_new_session() {
         let mut sessions = HashMap::new();

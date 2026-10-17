@@ -28,7 +28,7 @@ struct Preferences: Codable, Equatable {
         }
     }
 
-    /// The shortcut that opens the inbox from any app (MISS-04). ⌃⌥R by default, as Windows and Linux have
+    /// The shortcut that opens the inbox from any app. ⌃⌥R by default, as Windows and Linux have
     /// Ctrl+Alt+R.
     enum OpenShortcut: String, Codable, CaseIterable, Identifiable {
         case off, controlOptionR, controlOptionSpace, optionCommandI
@@ -63,7 +63,7 @@ struct Preferences: Codable, Equatable {
     var focusWhileInProgress = true
     var notifyArrivals = true
     var notifyStatusChanges = true
-    /// What arrives and changes waits for the next of `notificationTimes`, then comes grouped (IDEA-26).
+    /// What arrives and changes waits for the next of `notificationTimes`, then comes grouped.
     var batchNotifications = false
     /// "10:00, 14:00, 17:00", as typed: `NotificationBatch.times` reads it.
     var notificationTimes = NotificationBatch.defaultTimes
@@ -77,14 +77,14 @@ struct Preferences: Codable, Equatable {
     var openShortcut = OpenShortcut.controlOptionR
     var briefCacheMinutes = 30
     var wholeInboxBrief = true
-    /// Assistant requests a day; 0 is no limit (AI-03).
+    /// Assistant requests a day; 0 is no limit.
     var assistantDailyLimit = 0
     /// Privacy: plugins allowed to connect (nil = all), external AI (off by default), avatars.
     var allowedPlugins: [String]?
     var allowExternalAI = false
     var allowRemoteImages = true
     var openInApps = true
-    /// Inbox titles and where they come from in Spotlight (IDEA-38). Off until the user turns it on.
+    /// Inbox titles and where they come from in Spotlight. Off until the user turns it on.
     var spotlight = false
     /// Off until the user turns it on; nothing calls home before.
     var checkForUpdates = false

@@ -510,7 +510,7 @@ pub struct SignIn {
 mod tests {
     use super::*;
 
-    /// CODE-04: an inbox saved before 0.10 gave a reviewer's stand only as the colour of their avatar.
+    /// An inbox saved before 0.10 gave a reviewer's stand only as the colour of their avatar.
     #[test]
     fn a_saved_reviewer_colour_becomes_their_stand() {
         let read = |json: &str| serde_json::from_str::<Person>(json).expect("person").review;

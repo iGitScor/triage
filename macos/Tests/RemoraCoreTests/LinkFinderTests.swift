@@ -20,7 +20,7 @@ struct LinkFinderTests {
         #expect(links["1"] == ["2"] && links["2"] == ["1"])
     }
 
-    /// ML-10: a refresh where nothing changed compares no title again; a renamed item, only its own pairs. The links
+    /// A refresh where nothing changed compares no title again; a renamed item, only its own pairs. The links
     /// stay the same.
     @Test func onlyNewOrChangedTitlesAreComparedAgain() {
         final class Counting: SimilarityModel, @unchecked Sendable {
@@ -70,7 +70,7 @@ struct LinkFinderTests {
         #expect(links["3"] == nil, "sharing the ordinary word “address” is not a link")
     }
 
-    /// ML-21: two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
+    /// Two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
     @Test func versionsDoNotLinkButALowerCaseKnownKeyDoes() {
         let issue = item("1", "linear", "Close Dotfile cases", context: "CE-1380")
         let slack = item("2", "slack", "can someone look at ce-1380?")

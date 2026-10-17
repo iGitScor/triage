@@ -1,6 +1,6 @@
 import Foundation
 
-/// The MCP server behind `remora mcp` (V15-01): agents on this Mac ask what waits on the user, over standard input and
+/// The MCP server behind `remora mcp`: agents on this Mac ask what waits on the user, over standard input and
 /// output, and each tool call is relayed to the running app through the socket of the `remora` command. The contract
 /// (tools, protocol versions, recorded conversations) is `mcp/` at the root of the repository, shared with Windows
 /// and Linux (`mcp.rs`); this is the protocol only, the endpoint is `LocalSocket`.
@@ -183,7 +183,7 @@ public final class McpServer {
     }
 }
 
-/// An agent asked the app something through `remora mcp` (V15-01): who it said it was, what, when. Kept on this Mac
+/// An agent asked the app something through `remora mcp`: who it said it was, what, when. Kept on this Mac
 /// for Settings, erased with the rest; the name is the agent's own claim, not verified. Same as `AgentRead` in Rust.
 public struct AgentRead: Codable, Equatable, Sendable {
     public var agent: String
@@ -213,7 +213,7 @@ public struct AgentRead: Codable, Equatable, Sendable {
     }
 }
 
-/// `AllowLocalAPI` (V15-10), the organization's switch for the `remora` command and the MCP server. Read here, in
+/// `AllowLocalAPI`, the organization's switch for the `remora` command and the MCP server. Read here, in
 /// the core, because the `remora` helper needs it as much as the app: an MDM value forced in `fr.igitscor.remora`.
 public enum LocalAPIPolicy {
     public static let key = "AllowLocalAPI"

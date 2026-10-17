@@ -3,7 +3,7 @@ import Foundation
 /// Conditional requests: a GET whose last answer carried an `ETag` is sent with `If-None-Match`, and a 304 is answered
 /// with the copy kept from that last time, as a 200. Unchanged lists then cost the server no body. Only GETs are
 /// conditional: GitLab's REST lists and Notion's reads gain, but GitHub and Linear are read with one GraphQL POST
-/// each, which this doesn't cover (PERF-19). Sits behind the egress guard, so only allowed hosts are ever kept.
+/// each, which this doesn't cover. Sits behind the egress guard, so only allowed hosts are ever kept.
 public struct ConditionalHTTPClient: HTTPClient {
     private let base: HTTPClient
     private let store: ETagStore

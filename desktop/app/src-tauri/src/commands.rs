@@ -162,7 +162,7 @@ pub fn open_notification_settings(app: AppHandle) -> Result<()> {
     app.opener().open_url("ms-settings:notifications", None::<&str>).map_err(|e| Message::from(e.to_string()))
 }
 
-/// Settings → Updates: the licences of what the app bundles (DEP-07), shipped next to it.
+/// Settings → Updates: the licences of what the app bundles, shipped next to it.
 #[tauri::command]
 pub fn open_notices(app: AppHandle) -> Result<()> {
     use tauri::Manager;
@@ -170,7 +170,7 @@ pub fn open_notices(app: AppHandle) -> Result<()> {
     app.opener().open_path(path.to_string_lossy(), None::<&str>).map_err(|e| Message::from(e.to_string()))
 }
 
-/// The guide to connecting AI agents through `remora mcp` (V15-01), in the browser.
+/// The guide to connecting AI agents through `remora mcp`, in the browser.
 #[tauri::command]
 pub fn open_agents_guide(app: AppHandle) -> Result<()> {
     let page = if crate::i18n::translator().lang() == "fr" { "fr/guide/agents" } else { "guide/agents" };
@@ -332,12 +332,12 @@ pub struct SettingsView {
     /// Windows won't show Remora's notifications: `app` (off for Remora), `all` (off for every app) or `policy`.
     #[ts(type = "'app' | 'all' | 'policy' | null")]
     notifications_off: Option<&'static str>,
-    /// What the assistant used today and this month (AI-03).
+    /// What the assistant used today and this month.
     usage_today: UsageDay,
     usage_month: UsageDay,
-    /// The agents' last requests through `remora mcp`, most recent first (V15-01).
+    /// The agents' last requests through `remora mcp`, most recent first.
     agent_reads: Vec<remora_core::AgentRead>,
-    /// The organization's `AllowLocalAPI` (V15-10).
+    /// The organization's `AllowLocalAPI`.
     local_api_allowed: bool,
 }
 
@@ -521,7 +521,7 @@ pub async fn review_queue(state: State<'_, AppState>) -> Result<Vec<remora_core:
 
 // MARK: The assistant: brief, summaries, triage
 
-/// One request to the assistant, counted with the tokens it reports whether it answers or fails (AI-03).
+/// One request to the assistant, counted with the tokens it reports whether it answers or fails.
 async fn measured<T>(
     state: &AppState,
     request: impl std::future::Future<Output = std::result::Result<T, PluginError>>,

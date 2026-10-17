@@ -103,7 +103,7 @@ struct InboxView: View {
         .accessibilityHidden(isOverlaid)
         .overlay {
             // The time picker goes over the review session, which stays as it is: closing the picker returns to the
-            // same review, with its skipped items and its time (UX-23).
+            // same review, with its skipped items and its time.
             ZStack {
                 if reviewing {
                     Color.black.opacity(0.25)
@@ -148,7 +148,7 @@ struct InboxView: View {
             selection = nil
             focus = .list
         }
-        // A `remora://open?tab=…` link while the inbox is already open (IDEA-06).
+        // A `remora://open?tab=…` link while the inbox is already open.
         .onChange(of: model.requestedTab) { _, asked in
             guard asked != nil, let requested else { return }
             tab = requested

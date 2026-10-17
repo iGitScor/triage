@@ -13,7 +13,7 @@ use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-/// One page, asked for by every list request: a full page of merge requests means the list was cut (FEAT-05).
+/// One page, asked for by every list request: a full page of merge requests means the list was cut.
 const PAGE_SIZE: usize = 50;
 
 pub fn manifest() -> PluginManifest {
@@ -308,7 +308,7 @@ impl SourcePlugin for GitLabPlugin {
 }
 
 /// A GitLab To-Do: an issue assigned to you, a mention, something you marked. Merge requests are left out, already
-/// shown with their approvals and pipelines (MISS-06).
+/// shown with their approvals and pipelines.
 #[derive(Deserialize)]
 struct Todo {
     id: u64,
@@ -613,7 +613,7 @@ pub(crate) mod tests {
         assert!(!stored.contains("secret code"), "diff text is never kept");
     }
 
-    /// CODE-02: approvals that can't be read are said, not passed over; a rate limit there fails the fetch, so the
+    /// Approvals that can't be read are said, not passed over; a rate limit there fails the fetch, so the
     /// backoff waits it out and the last items stay.
     #[tokio::test]
     async fn failed_details_are_said_and_a_rate_limit_is_waited_out() {
@@ -648,7 +648,7 @@ pub(crate) mod tests {
         assert_eq!(limited.err(), Some(PluginError::RateLimited(None)));
     }
 
-    /// PERF-09: who the token belongs to is asked once, not at every refresh.
+    /// Who the token belongs to is asked once, not at every refresh.
     #[tokio::test]
     async fn the_user_is_asked_once_across_refreshes() {
         let stub = StubHttp::paths(&[("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", "[]")]);
@@ -660,7 +660,7 @@ pub(crate) mod tests {
         assert_eq!(http.paths().iter().filter(|p| p.ends_with("/user")).count(), 1);
     }
 
-    /// CODE-06: a merge request of yours where you are also a reviewer comes once, as yours. Same on macOS.
+    /// A merge request of yours where you are also a reviewer comes once, as yours. Same on macOS.
     #[tokio::test]
     async fn your_merge_request_you_also_review_comes_once() {
         let list = format!("[{MR}]");
@@ -718,7 +718,7 @@ pub(crate) mod tests {
         );
     }
 
-    /// MISS-06: To-Dos other than merge requests, already listed: assigned issues to do, mentions to answer.
+    /// To-Dos other than merge requests, already listed: assigned issues to do, mentions to answer.
     #[tokio::test]
     async fn to_dos_bring_issues_and_mentions_but_not_merge_requests_again() {
         let todos = r#"[

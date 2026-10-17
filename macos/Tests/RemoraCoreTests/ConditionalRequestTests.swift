@@ -4,7 +4,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// PERF-09: unchanged answers come back as 304 and are served from memory; identities are asked once an hour.
+/// Unchanged answers come back as 304 and are served from memory; identities are asked once an hour.
 struct ConditionalRequestTests {
     /// A server whose answer carries `ETag: "v1"`, and that answers 304 when asked with it.
     final class Server: HTTPClient, @unchecked Sendable {
@@ -102,7 +102,7 @@ struct ConditionalRequestTests {
         #expect(await cache.takeRenewed().isEmpty)
     }
 
-    /// TEST-01: through the real client and a socket, as Windows tests it: URLSession hands the 304 over (it isn't
+    /// Through the real client and a socket, as Windows tests it: URLSession hands the 304 over (it isn't
     /// turned into a 200 from its own cache, nor followed), and the answer comes from memory.
     @Test func aRealServersNotModifiedIsServedFromMemory() async throws {
         let server = try await LocalServer.start()

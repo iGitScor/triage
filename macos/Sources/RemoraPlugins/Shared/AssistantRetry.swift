@@ -3,7 +3,7 @@ import RemoraCore
 
 /// Retries for the assistants that call an API (Claude, OpenAI-compatible). Same rule on Windows (`assistant_retry`).
 enum AssistantRetry {
-    /// Retries an overloaded or rate-limited answer up to twice (AI-04): 429, 408, 409 and 5xx (529 is "overloaded").
+    /// Retries an overloaded or rate-limited answer up to twice: 429, 408, 409 and 5xx (529 is "overloaded").
     /// A rate limit waits as long as `retry-after` says, up to a minute; beyond that, or without it, 2 s then 4 s.
     /// Nil: give up and show the error.
     static func delay(after error: Error, attempt: Int, now: Date = .now) -> TimeInterval? {

@@ -3,7 +3,7 @@ import RemoraCore
 
 /// A part of a fetch that may fail while the rest comes through (approvals, thread replies, notifications…).
 /// A failure becomes a remark, so the inbox doesn't look complete when it isn't; a rate limit is never best-effort:
-/// it fails the whole fetch, so the backoff waits it out and the last items stay shown (CODE-02).
+/// it fails the whole fetch, so the backoff waits it out and the last items stay shown.
 enum BestEffort {
     /// The work's result, or nil after adding a remark naming `what` (a fixed English phrase).
     static func value<T>(

@@ -82,7 +82,7 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         }
     }
 
-    /// Guards `models` and `answers`, held only to read or write them (ML-09): a model loads, and a message is
+    /// Guards `models` and `answers`, held only to read or write them: a model loads, and a message is
     /// classified, outside it.
     private let lock = NSLock()
     /// Loading a model (possibly downloaded the first time) happens once per language, here.
@@ -182,7 +182,7 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         return (2 * max(0, 1 - cosine)).squareRoot()
     }
 
-    /// English or French, or nil for a message clearly in another language (ML-05): the English examples would only
+    /// English or French, or nil for a message clearly in another language: the English examples would only
     /// guess at German or Spanish, so the message stays unsure. Short words ("ok", "PR") read as English.
     static func language(of text: String) -> NLLanguage? {
         let recognizer = NLLanguageRecognizer()

@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// AI-23: the policy's rules for an assistant whose server the user chooses.
+/// The policy's rules for an assistant whose server the user chooses.
 struct AIServerPolicyTests {
     let manifest = PluginManifest(
         id: "openai", name: "OpenAI-compatible", symbol: "sparkles", summary: "",

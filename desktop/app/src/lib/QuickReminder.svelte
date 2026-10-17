@@ -13,7 +13,7 @@ let {
 }: {
   onclose: () => void
   shortcut: string
-  /** A `remora://remind` link's text and time: shown for the user to save, never saved for them (IDEA-06). */
+  /** A `remora://remind` link's text and time: shown for the user to save, never saved for them. */
   filled?: { text: string; at: string | null } | null
 } = $props()
 let title = $state(untrack(() => filled?.text ?? ''))

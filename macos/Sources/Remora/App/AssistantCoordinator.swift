@@ -17,7 +17,7 @@ final class AssistantCoordinator {
     private(set) var triageSuggestions: [TriageSuggestion] = []
     private(set) var triageError: String?
     private(set) var isTriaging = false
-    /// What the assistant used, per day (AI-03).
+    /// What the assistant used, per day.
     private(set) var usage: AssistantUsage
     /// Assistant requests a day, 0 for no limit: the user's or the organization's (`AIDailyLimit`).
     @ObservationIgnored var dailyLimit: () -> Int = { 0 }
@@ -38,7 +38,7 @@ final class AssistantCoordinator {
         "Today’s assistant limit is reached. It starts again tomorrow, or raise it in Settings.")
 
     /// One request to the assistant, within today's limit, counted with the tokens it reports whether it answers or
-    /// fails (AI-03). Same on Windows (`Inbox::assistant`, `record_usage`).
+    /// fails. Same on Windows (`Inbox::assistant`, `record_usage`).
     private func ask<Answer>(
         _ assistant: () throws -> any AssistantPlugin, _ request: (any AssistantPlugin) async throws -> Answer
     ) async throws -> Answer {
@@ -59,7 +59,7 @@ final class AssistantCoordinator {
     }
 
     /// Writes a new brief from `items`, unless one is being written. `stillAnswers` says, once it is written,
-    /// whether it may be kept (SEC-27).
+    /// whether it may be kept.
     func makeBrief(
         from items: [InboxItem], assistant: () throws -> any AssistantPlugin, stillAnswers: () -> Bool
     ) async {

@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 pub const ID: &str = "claude";
-/// Sonnet: a brief or a triage is a short answer at low effort, which Opus writes no better for far more (AI-02).
+/// Sonnet: a brief or a triage is a short answer at low effort, which Opus writes no better for far more.
 pub const DEFAULT_MODEL: &str = "claude-sonnet-5-5";
 pub const DEFAULT_DIGEST_MODEL: &str = "claude-haiku-5-5";
 const ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
@@ -199,7 +199,7 @@ impl ClaudePlugin {
         )
     }
 
-    /// A model Anthropic doesn't offer answers 404: the field to fix, not "the server couldn't find" (AI-02). The
+    /// A model Anthropic doesn't offer answers 404: the field to fix, not "the server couldn't find". The
     /// connection test sends the model, so a typo shows when connecting.
     fn unknown_model(&self, error: PluginError, model: &str) -> PluginError {
         if error != PluginError::Status(404) {
@@ -239,7 +239,7 @@ impl ClaudePlugin {
     }
 }
 
-/// Retries an overloaded or rate-limited answer up to twice (AI-04): 429, 408, 409 and 5xx (529 is "overloaded").
+/// Retries an overloaded or rate-limited answer up to twice: 429, 408, 409 and 5xx (529 is "overloaded").
 /// A rate limit waits as long as `retry-after` says, up to a minute; beyond that, or without it, 2 s then 4 s.
 /// `None`: give up and show the error. Same rule on macOS (`ClaudePlugin.retryDelay`).
 pub fn retry_delay(error: &PluginError, attempt: u32, now: DateTime<Utc>) -> Option<Duration> {
@@ -400,7 +400,7 @@ pub(crate) mod tests {
         assert!(!request.headers.iter().any(|(k, _)| k == "anthropic-beta"));
     }
 
-    /// AI-03: `usage` is read, cached prompt tokens counted as input, even from an answer cut off.
+    /// `usage` is read, cached prompt tokens counted as input, even from an answer cut off.
     #[tokio::test]
     async fn the_tokens_used_are_reported() {
         let body = r#"{"content": [], "stop_reason": "max_tokens", "usage": {"input_tokens": 100, "cache_creation_input_tokens": 20, "cache_read_input_tokens": 3, "output_tokens": 50}}"#;
@@ -503,7 +503,7 @@ pub(crate) mod tests {
         assert_eq!(plugin(ArcClient(rejected)).brief(&[item("a")], now()).await.err(), Some(PluginError::Unauthorized));
     }
 
-    /// AI-02: a model Anthropic doesn't offer names the field to fix.
+    /// A model Anthropic doesn't offer names the field to fix.
     #[tokio::test]
     async fn an_unknown_model_names_the_field_to_fix() {
         let unknown = || Recorder::new(404, Ok(r#"{"type": "error", "error": {"type": "not_found_error"}}"#));

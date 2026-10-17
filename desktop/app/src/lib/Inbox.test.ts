@@ -55,7 +55,7 @@ describe('Inbox tabs', () => {
     expect(document.activeElement?.id).toBe('tab-snoozed')
   })
 
-  it('opens the tab a remora:// link asks for (IDEA-06)', () => {
+  it('opens the tab a remora:// link asks for', () => {
     const { container } = render(Inbox, { props: { ...props(view()), requestedTab: { tab: 'done', at: 1 } } })
     expect(selected(container)).toBe('tab-done')
   })

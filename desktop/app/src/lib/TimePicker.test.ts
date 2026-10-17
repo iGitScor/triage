@@ -25,7 +25,7 @@ describe('Time picker', () => {
   it('says the time on the slider, and which preset is chosen', async () => {
     const { container, getByText } = render(TimePicker, { props: { confirm: 'Snooze', onpick: () => {} } })
     const slider = container.querySelector('input[type=range]') as HTMLInputElement
-    // The slider starts an hour out, computed here without asking Rust (PERF-14).
+    // The slider starts an hour out, computed here without asking Rust.
     await waitFor(() => expect(slider.getAttribute('aria-valuetext')).toBe(when(sliderDate(6 / 18, null))))
 
     const preset = getByText('Tomorrow') as HTMLButtonElement

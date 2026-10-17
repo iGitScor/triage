@@ -83,7 +83,7 @@ public struct NotionPlugin: SourcePlugin {
             }
         }
         // One database moved or out of reach no longer hides the others' tasks; when none could be read, the
-        // account fails with the first reason (FEAT-09).
+        // account fails with the first reason.
         if found.isEmpty, let firstError { throw firstError }
         if found.contains(where: \.more) { remarks.insert(SourceSnapshot.truncated("Notion"), at: 0) }
         return SourceSnapshot(identity: me.label, items: found.flatMap(\.items), remarks: remarks)
@@ -94,7 +94,7 @@ public struct NotionPlugin: SourcePlugin {
     {
         let database: Database = try await send(.get(api.appending(path: "databases/\(databaseID)"), headers: headers))
         let pages = try await database.dataSources.concurrentMap(limit: 2) { source -> Results<Page> in
-            // Finished tasks are left out by Notion itself, or they would use up the 50 places (FEAT-08).
+            // Finished tasks are left out by Notion itself, or they would use up the 50 places.
             let schema: Schema = try await self.cache.value("schema \(source.id)", lifetime: CacheLifetime.identity) {
                 try await self.send(.get(self.api.appending(path: "data_sources/\(source.id)"), headers: self.headers))
             }

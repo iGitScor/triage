@@ -1,4 +1,4 @@
-//! The `remora` command (IDEA-22): `remora count`, `remora list --tab waiting --json`, `remora remind … --at 15:00`
+//! The `remora` command: `remora count`, `remora list --tab waiting --json`, `remora remind … --at 15:00`
 //! ask the running app over a socket only this user can open: a Unix socket (0600) in the runtime folder on Linux, a
 //! named pipe whose only access is this user's on Windows. Nothing listens on the network. The rules (what may be
 //! asked, what is hidden) are `remora_core::command`'s; this is the endpoint, both ends of it, and the inbox's answer.
@@ -64,7 +64,7 @@ pub fn run_command(args: &[String]) -> i32 {
     }
 }
 
-/// `remora mcp` (V15-01): an MCP server on standard input and output for the agents on this computer, each tool call
+/// `remora mcp`: an MCP server on standard input and output for the agents on this computer, each tool call
 /// relayed to the app as a request line. It runs until the agent closes its end. With `AllowLocalAPI` off it still
 /// answers, so the agent can say why, but refuses every call (`McpSession`).
 fn run_mcp(allowed: bool) -> i32 {
@@ -90,7 +90,7 @@ fn run_mcp(allowed: bool) -> i32 {
 /// What the app answers a request line with: the inbox as it is now, without the titles of the tools whose content
 /// is hidden (Settings, or the organization's policy). True when a reminder was saved, for the window to show it.
 pub fn answer(inbox: &mut Inbox, line: &str, now: DateTime<Utc>) -> (String, bool) {
-    // A policy that changed since the app started listening: refuse rather than answer (V15-10).
+    // A policy that changed since the app started listening: refuse rather than answer.
     if !inbox.local_api_allowed() {
         return (serde_json::json!({ "ok": false, "error": MCP_DISABLED }).to_string(), false);
     }
@@ -396,8 +396,8 @@ mod tests {
         assert!(!list.contains("Call Erin"), "{list}");
     }
 
-    /// V15-01: what an agent asks through `remora mcp` is logged under its declared name; the `remora` command isn't.
-    /// V15-10: with `AllowLocalAPI` off, the app refuses even a request that reached it.
+    /// What an agent asks through `remora mcp` is logged under its declared name; the `remora` command isn't.
+    /// With `AllowLocalAPI` off, the app refuses even a request that reached it.
     #[test]
     fn agents_reads_are_logged_and_the_policy_can_refuse() {
         let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());

@@ -39,7 +39,7 @@ let {
   welcome?: { shortcut: string | null; autostart: boolean } | null
   onwelcomed?: () => void
   onautostart?: (enabled: boolean) => void
-  /** A `remora://open?tab=…` link's tab (IDEA-06). */
+  /** A `remora://open?tab=…` link's tab. */
   requestedTab?: { tab: string; at: number } | null
 } = $props()
 
@@ -113,7 +113,7 @@ let reviewing = $state(false)
 /// What a brief is written from (pinned and My turn): an item done or snoozed since leaves its list.
 const briefItems = $derived(view ? [...view.layout.pinned, ...view.layout.myTurn.flatMap((g) => g.items)] : [])
 
-// After Refresh, the next inbox says what came back (A11Y-17): the refresh itself runs in the background.
+// After Refresh, the next inbox says what came back: the refresh itself runs in the background.
 let announceNext = false
 async function refresh() {
   refreshing = true
@@ -149,7 +149,7 @@ const empty: Record<Tab, string> = {
 }
 
 /** Nothing could be read from the tools (offline at launch, every token rejected): the empty inbox says so
-    instead of "Nothing needs you", which would look like there is nothing to do (UX-26). */
+    instead of "Nothing needs you", which would look like there is nothing to do. */
 const unread = $derived.by(() => {
   if (!view || view.health.state === 'fine') return false
   const { inProgress, pinned, myTurn, waiting, snoozed, done } = view.layout

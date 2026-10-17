@@ -61,7 +61,7 @@ struct ComplianceTests {
             // A list cut at 50 may be said; a part that couldn't be read may not.
             let failures = snapshot.remarks.filter { $0 != SourceSnapshot.truncated(manifest.name) }
             #expect(!snapshot.items.isEmpty && failures.isEmpty, "\(id): \(failures)")
-            // CODE-06: ids start with the account's, so two accounts never share an item, and are unique.
+            // Ids start with the account's, so two accounts never share an item, and are unique.
             for item in snapshot.items {
                 #expect(item.accountID == account.accountID && item.localID?.isEmpty == false, "\(id): \(item.id)")
             }

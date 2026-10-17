@@ -32,7 +32,7 @@ public enum AssistantFailure: Error, Equatable, Sendable {
 /// `decode` turns the answer into a brief, a digest or triage suggestions the same way for all of them.
 protocol AssistantReply {
     func answer() throws(AssistantFailure) -> Data
-    /// The tokens it used, when the provider says (AI-03).
+    /// The tokens it used, when the provider says.
     var usage: TokenUsage? { get }
 }
 

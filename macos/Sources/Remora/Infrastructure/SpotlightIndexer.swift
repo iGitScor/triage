@@ -2,7 +2,7 @@ import CoreSpotlight
 import RemoraCore
 import UniformTypeIdentifiers
 
-/// This Mac's Spotlight index (IDEA-38): what the inbox puts there and takes back. A stand-in in tests.
+/// This Mac's Spotlight index: what the inbox puts there and takes back. A stand-in in tests.
 @MainActor
 protocol SpotlightIndexing {
     func apply(_ changes: SpotlightIndex.Changes)

@@ -53,7 +53,7 @@ function apply(next: SettingsData) {
 }
 
 // The first load at once, then a search once typing pauses.
-// Each screen takes focus when it opens (A11Y-17): its heading, or the reminder's field, which focuses itself.
+// Each screen takes focus when it opens: its heading, or the reminder's field, which focuses itself.
 let shown = false
 $effect(() => {
   const current = screen
@@ -89,7 +89,7 @@ onMount(() => {
       screen = e.payload === 'settings' || e.payload === 'inbox' ? e.payload : 'reminder'
       if (screen !== 'reminder') filled = null
     }),
-    // `remora://` links (IDEA-06): a tab to open, a reminder to fill in.
+    // `remora://` links: a tab to open, a reminder to fill in.
     listen<string>('open-tab', (e) => (requestedTab = { tab: e.payload, at: Date.now() })),
     listen<{ text: string; at: string | null }>('reminder-filled', (e) => {
       filled = e.payload
@@ -107,7 +107,7 @@ onMount(() => {
   // Relative times ("12m") stay current while the popup is open.
   // Keeps relative times current while the window shows; when it comes back, one reload catches up.
   const timer = setInterval(() => document.visibilityState === 'visible' && reload(), 60_000)
-  // The search doesn't outlive the window: hidden, it opens again on the whole inbox, as on the Mac (UX-25).
+  // The search doesn't outlive the window: hidden, it opens again on the whole inbox, as on the Mac.
   const onVisible = () => {
     if (document.visibilityState === 'hidden') query = ''
     else reload()

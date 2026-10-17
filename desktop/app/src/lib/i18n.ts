@@ -28,7 +28,7 @@ export type { Message }
 
 /**
  * Each code's English, the key its French is found by. Wording lives here, not in the Rust that raised it, so
- * changing a Rust sentence can't break a translation, and no message is matched by pattern (CODE-01).
+ * changing a Rust sentence can't break a translation, and no message is matched by pattern.
  */
 const MESSAGES: Record<string, string> = {
   // t-keys

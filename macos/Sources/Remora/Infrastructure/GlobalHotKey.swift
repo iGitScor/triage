@@ -1,7 +1,7 @@
 import Carbon.HIToolbox
 import Foundation
 
-/// A shortcut that works from any app (MISS-04), through Carbon's hot keys: no accessibility permission needed. One
+/// A shortcut that works from any app, through Carbon's hot keys: no accessibility permission needed. One
 /// at a time; registering another replaces it.
 @MainActor
 final class GlobalHotKey {

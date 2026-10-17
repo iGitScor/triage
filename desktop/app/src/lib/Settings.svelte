@@ -31,7 +31,7 @@ let erasing = $state(false)
 let reconnecting: string | null = $state(null)
 let update: UpdateStatus = $state({ state: 'idle' })
 
-/** Esc closes the innermost thing open (a confirmation, a rename, a form) before leaving Settings (UX-25). */
+/** Esc closes the innermost thing open (a confirmation, a rename, a form) before leaving Settings. */
 function onkey(event: KeyboardEvent) {
   if (event.key !== 'Escape') return
   if (confirming) confirming = null
@@ -79,7 +79,7 @@ const notifying = $derived([
   { id: 'reminders', name: t('Reminders') },
 ])
 
-/** The daily limits offered, as on the Mac; the managed key allows any value from 1 to 10000 (AI-03). */
+/** The daily limits offered, as on the Mac; the managed key allows any value from 1 to 10000. */
 const DAILY_LIMITS = [0, 20, 50, 100, 200, 500]
 const limitLabel = (limit: number) => (limit === 0 ? t('No limit') : t('%d requests', limit))
 /** Requests and tokens, tokens only as the providers reported them. */
@@ -89,7 +89,7 @@ function usageLabel(day: UsageDay): string {
   return `${requests} · ${t('%@ tokens', (day.inputTokens + day.outputTokens).toLocaleString(lang))}`
 }
 
-/** What an agent asked, in the words of the tabs (V15-01). */
+/** What an agent asked, in the words of the tabs. */
 function asked(read: AgentRead): string {
   if (read.command === 'count') return t('the count')
   if (read.command === 'remind') return t('a reminder')
@@ -202,7 +202,7 @@ onMount(() => {
         {t('Check every')}
         <span class="spacer"></span>
         <select class="field small" value={settings.managed.refreshMinutes ?? p.refreshMinutes} disabled={settings.managed.refreshMinutes != null} title={settings.managed.refreshMinutes != null ? t('Managed by your organization') : undefined} onchange={(e) => save({ refreshMinutes: Number(e.currentTarget.value) })}>
-          <!-- The same choices as on the Mac (CONS-03). -->
+          <!-- The same choices as on the Mac. -->
           {#each [1, 2, 5, 10, 15, 30, 60] as m}<option value={m}>{m < 60 ? t('%d min', m) : t('%d h', m / 60)}</option>{/each}
         </select>
       </label>
@@ -226,7 +226,7 @@ onMount(() => {
       <label class="toggle"><input type="checkbox" checked={p.focusWhileInProgress} onchange={(e) => save({ focusWhileInProgress: e.currentTarget.checked })} />{t('Only show the task in progress while one runs')}</label>
 
       <h2 class="section-title">{t('Notifications')}</h2>
-      <!-- Notifications Windows won't show are said here, with the way to turn them back on (EASE-09). -->
+      <!-- Notifications Windows won't show are said here, with the way to turn them back on. -->
       {#if settings.notificationsOff === 'policy'}<p class="notice warn" role="status">{t('Your organization has turned notifications off on this computer.')}</p>
       {:else if settings.notificationsOff}
         <p class="notice warn" role="status">
@@ -272,7 +272,7 @@ onMount(() => {
           </select>
         </label>
         <p class="help">{t('While fresh, Remora shows it again instead of asking the assistant.')}</p>
-        <!-- AI-03: what the assistant used, and an optional cap on it. -->
+        <!-- What the assistant used, and an optional cap on it. -->
         <label class="row line">
           {t('Daily limit')}
           <span class="spacer"></span>

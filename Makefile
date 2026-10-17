@@ -18,7 +18,7 @@ setup: ## Install the Node packages (tooling, Windows interface, docs) and the p
 
 test: mac-test desktop-test ## Run every test suite
 
-eval: ## How each classifier sorts the labelled messages of eval/ (ML-06), with its wrong answers
+eval: ## How each classifier sorts the labelled messages of eval/, with its wrong answers
 	@command -v swift >/dev/null && (cd macos && swift test --filter IntentEvaluation 2>&1 | grep -vE '^(\[|Building|Build |Compiling|Write)') || true
 	cd desktop && cargo test -p remora_core --test intent_eval -- --nocapture
 

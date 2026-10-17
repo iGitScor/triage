@@ -59,7 +59,7 @@ struct VerbClassifierTests {
         #expect(KeywordIntentClassifier().intent(of: "Lunch tomorrow") == nil)
     }
 
-    /// ML-05: nothing but code or a link is to read, not to reply. Same cases as Windows.
+    /// Nothing but code or a link is to read, not to reply. Same cases as Windows.
     @Test(
         arguments: [
             ("```\nlet total = items.count\n```", TextIntent.info),
@@ -72,7 +72,7 @@ struct VerbClassifierTests {
         #expect(KeywordIntentClassifier().intent(of: text) == expected)
     }
 
-    /// ML-05: a message clearly in another language isn't read with the English examples; short words still are.
+    /// A message clearly in another language isn't read with the English examples; short words still are.
     @Test func otherLanguagesStayUnsure() {
         #expect(EmbeddingIntentClassifier.language(of: "Kannst du dir das bitte ansehen?") == nil)
         #expect(EmbeddingIntentClassifier.language(of: "¿Puedes revisar esto hoy?") == nil)
@@ -175,7 +175,7 @@ struct VerbClassifierTests {
         #expect(correct >= 6, "correct: \(correct) of \(cases.count)")
     }
 
-    /// ML-09: messages classified at the same time, while the models load, get the answers they get one at a time.
+    /// Messages classified at the same time, while the models load, get the answers they get one at a time.
     @Test(
         .enabled(
             if: NLEmbedding.sentenceEmbedding(for: .english) != nil

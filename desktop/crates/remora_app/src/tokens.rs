@@ -1,4 +1,4 @@
-//! Every change to the tokens goes through one sequence (PERF-07, SEC-09): take the write lock, work out the new
+//! Every change to the tokens goes through one sequence: take the write lock, work out the new
 //! tokens under the inbox lock, save them without it (the credential store can be slow), then apply them under the
 //! inbox lock again. The write lock is held from the first step to the last, so two changes never race: the second
 //! one starts from what the first one saved.
@@ -77,7 +77,7 @@ impl Tokens {
     }
 
     /// Reads the tokens once per launch, without the inbox lock. Kept only if nothing read them meanwhile. A failed
-    /// read is every account's error, and is tried again the next time (CODE-07).
+    /// read is every account's error, and is tried again the next time.
     pub async fn load_once(&self, inbox: &Mutex<Inbox>) -> Result<(), Message> {
         if !inbox.lock().await.needs_secrets() {
             return Ok(());
@@ -287,7 +287,7 @@ mod tests {
         }
     }
 
-    /// PERF-07, SEC-09: a second change that starts while the first one saves waits for it, and starts from what it
+    /// A second change that starts while the first one saves waits for it, and starts from what it
     /// saved. Without the write lock it would start from the old tokens and put back the disconnected account's.
     #[test]
     fn a_second_change_waits_for_the_first_save() {
@@ -387,7 +387,7 @@ mod tests {
         (vault.clone(), Mutex::new(inbox), Tokens::new(Arc::new(InPlace(vault))))
     }
 
-    /// CODE-07: a failed read is every account's error, and nothing under the lock reads the vault again: no fetch
+    /// A failed read is every account's error, and nothing under the lock reads the vault again: no fetch
     /// is built, and what needs the tokens says why it can't have them. The next read tries again.
     #[test]
     fn a_failed_read_is_each_accounts_error_and_not_repeated() {

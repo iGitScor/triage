@@ -49,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// `remora://` links (IDEA-06): open the inbox (on a tab), the reminder panel filled in, or refresh. Nothing is
+    /// `remora://` links: open the inbox (on a tab), the reminder panel filled in, or refresh. Nothing is
     /// done to an item without the user.
     func application(_ application: NSApplication, open urls: [URL]) {
         MainActor.assumeIsolated {
@@ -78,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// A Spotlight hit (IDEA-38): the item opens as a click in the inbox would; one gone since, the inbox.
+    /// A Spotlight hit: the item opens as a click in the inbox would; one gone since, the inbox.
     func application(
         _ application: NSApplication, continue userActivity: NSUserActivity,
         restorationHandler: @escaping ([any NSUserActivityRestoring]) -> Void

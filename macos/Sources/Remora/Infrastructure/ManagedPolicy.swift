@@ -65,7 +65,7 @@ enum ManagedPolicy {
         }
     }
 
-    /// The AI server the organization chose, which wins over the one in the account (AI-23).
+    /// The AI server the organization chose, which wins over the one in the account.
     static func aiServer(_ managed: ManagedValues = ManagedDefaults()) -> String? {
         (managed.forced(aiServerKey) as? String).flatMap {
             $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0.trimmingCharacters(in: .whitespaces)

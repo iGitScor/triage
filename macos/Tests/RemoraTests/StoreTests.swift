@@ -67,7 +67,7 @@ struct PreferencesTests {
         #expect(preferences == expected, "a new preference never resets the others")
     }
 
-    /// MISS-04: ⌃⌥R opens the inbox by default; each choice is a key with modifiers, Off none.
+    /// ⌃⌥R opens the inbox by default; each choice is a key with modifiers, Off none.
     @Test func theOpenShortcutDefaultsToControlOptionR() throws {
         #expect(Preferences().openShortcut == .controlOptionR)
         let old = try JSONDecoder().decode(Preferences.self, from: Data(#"{"refreshMinutes": 5}"#.utf8))
@@ -118,7 +118,7 @@ struct ManagedPolicyTests {
         #expect(!ManagedPolicy.isManaged(managed), "the Privacy settings stay the user's")
     }
 
-    /// AI-23: the AI server keys.
+    /// The AI server keys.
     @Test func aiServerKeys() {
         var managed = ManagedDictionary(values: [
             "AllowedAIServers": ["https://acme.openai.azure.com/openai/", " "], "AllowLocalAI": "true",
@@ -190,7 +190,7 @@ struct ManagedPolicyTests {
                 .refreshMinutes == 30)
     }
 
-    /// AI-03: the organization's daily limit wins over the user's; a value out of range is ignored.
+    /// The organization's daily limit wins over the user's; a value out of range is ignored.
     @Test func theOrganizationCanSetTheAssistantsDailyLimit() {
         var preferences = Preferences()
         #expect(preferences.assistantDailyLimit == 0, "no limit by default")

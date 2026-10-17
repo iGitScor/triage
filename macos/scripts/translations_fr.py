@@ -1,7 +1,7 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
-    # Agents (V15-01)
+    # Agents
     "Agents on this Mac": "Agents sur ce Mac",
     "Agents on this computer": "Agents sur cet ordinateur",
     "AI agents such as Claude Desktop, Claude Code or Gemini CLI can ask Remora what waits on you, through MCP. They read the inbox; they never write to your tools.": "Les agents d’IA comme Claude Desktop, Claude Code ou Gemini CLI peuvent demander à Remora ce qui vous attend, par MCP. Ils lisent la boîte ; ils n’écrivent jamais dans vos outils.",
@@ -514,7 +514,7 @@ FR = {
     "API token": "Jeton d’API",
     "Jira Cloud: an API token. Data Center: a personal access token.": "Jira Cloud : un jeton d’API. Data Center : un jeton d’accès personnel.",
     "Set your Jira host first, for example your-company.atlassian.net.": "Indiquez d’abord votre hôte Jira, par exemple votre-entreprise.atlassian.net.",
-    # Azure DevOps (IDEA-04)
+    # Azure DevOps
     "Pull requests you review or opened, with votes and policy checks, and work items assigned to you. Works with Azure DevOps Server.": "Les pull requests à relire et les vôtres, avec votes et vérifications de stratégie, et les éléments de travail qui vous sont assignés. Compatible Azure DevOps Server.",
     "Reads your pull requests, votes, policy checks, changed file paths and assigned work items from your Azure DevOps organization or server.": "Lit vos pull requests, votes, vérifications de stratégie, chemins des fichiers modifiés et éléments de travail assignés dans votre organisation ou serveur Azure DevOps.",
     "Organization URL": "URL de l’organisation",
@@ -704,7 +704,7 @@ FR = {
     "%@ isn’t Claude Code. Run `which claude` in a terminal and paste the path it shows.": "%@ n’est pas Claude Code. Lancez `which claude` dans un terminal et collez le chemin affiché.",
     "Claude Code returned an unexpected answer. Run `claude` in a terminal to check it’s signed in.": "Claude Code a renvoyé une réponse inattendue. Lancez `claude` dans un terminal pour vérifier qu’il est connecté.",
     "Claude Code isn’t signed in. Run `claude` in a terminal once to sign in.": "Claude Code n’est pas connecté. Lancez `claude` une fois dans un terminal pour vous connecter.",
-    # AI-23: the OpenAI-compatible assistant.
+    # The OpenAI-compatible assistant.
     "The brief through OpenAI, Azure OpenAI, Mistral or a server on this computer. Item titles and context are sent to that server.": "Le brief via OpenAI, Azure OpenAI, Mistral ou un serveur sur cet ordinateur. Les titres et le contexte des éléments sont envoyés à ce serveur.",
     "Server": "Serveur",
     "The API's address, up to /v1. A server on this computer can use http, e.g. http://localhost:11434/v1.": "L’adresse de l’API, jusqu’à /v1. Un serveur sur cet ordinateur peut utiliser http, par exemple http://localhost:11434/v1.",
@@ -759,7 +759,7 @@ FR = {
     "Show snooze reasons in notifications": "Afficher la raison du report dans les notifications",
     "Group reminders by day": "Regrouper les rappels par jour",
     "Can someone proofread the new onboarding copy?": "Quelqu’un peut relire les nouveaux textes d’accueil ?",
-    # AI-03: what the assistant used, and its daily limit.
+    # What the assistant used, and its daily limit.
     "Today’s assistant limit is reached. It starts again tomorrow, or raise it in Settings.": "La limite du jour de l’assistant est atteinte. Elle repart demain, ou augmentez-la dans les Réglages.",
     "Daily limit": "Limite par jour",
     "No limit": "Aucune limite",

@@ -469,7 +469,7 @@ private struct GeneralPane: View {
                         .help(L("Managed by your organization"))
                 } else {
                     Picker("Check every", selection: $model.preferences.refreshMinutes) {
-                        // The same choices as on Windows (CONS-03); the managed key allows any value from 1 to 60.
+                        // The same choices as on Windows; the managed key allows any value from 1 to 60.
                         ForEach([1, 2, 5, 10, 15, 30, 60], id: \.self) { minutes in
                             Text(minutes < 60 ? L("%d min", minutes) : L("%d h", minutes / 60)).tag(minutes)
                         }
@@ -526,7 +526,7 @@ private struct GeneralPane: View {
                 Toggle(
                     "Status changes (approved, changes requested, checks failed)",
                     isOn: $model.preferences.notifyStatusChanges)
-                // IDEA-26: they wait for the next set time, then come grouped.
+                // They wait for the next set time, then come grouped.
                 Toggle("Group them at set times", isOn: $model.preferences.batchNotifications)
                 if model.preferences.batchNotifications {
                     TextField(
@@ -566,7 +566,7 @@ private struct GeneralPane: View {
                 Text("While fresh, Remora shows it again instead of asking the assistant.")
                     .font(Myna.font(11.5))
                     .foregroundStyle(Myna.muted)
-                // AI-03: what the assistant used, and an optional cap on it.
+                // What the assistant used, and an optional cap on it.
                 if ManagedPolicy.isForced(ManagedPolicy.aiDailyLimitKey) {
                     LabeledContent(L("Daily limit"), value: limitLabel(model.effectivePreferences.assistantDailyLimit))
                         .help(L("Managed by your organization"))
@@ -609,7 +609,7 @@ private struct GeneralPane: View {
                     ForEach(Preferences.TextSize.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                // MISS-04: opens the inbox from any app.
+                // Opens the inbox from any app.
                 Picker("Open Remora from anywhere", selection: $model.preferences.openShortcut) {
                     ForEach(Preferences.OpenShortcut.allCases) { Text($0.label).tag($0) }
                 }

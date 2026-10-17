@@ -4,7 +4,7 @@ import SwiftUI
 
 /// Myna design tokens (see site/public/site/tokens.css), resolved for light and dark appearance.
 enum Myna {
-    // Each token has a high-contrast variant, used when Increase Contrast is on (UI-04):
+    // Each token has a high-contrast variant, used when Increase Contrast is on:
     // darker inks and borders on light, lighter ones on dark, and stronger hairlines.
     static let backdrop = Color(light: 0xF0F0E8, dark: 0x0E0E14)
     static let surface = Color(light: 0xF7F7F1, dark: 0x13131C, contrast: (0xFFFFFF, 0x000000))

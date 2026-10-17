@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// CODE-04: a reviewer's stand is a state, not a colour. Same cases as Windows.
+/// A reviewer's stand is a state, not a colour. Same cases as Windows.
 struct ReviewStateTests {
     func read(_ json: String) throws -> ReviewState? {
         try JSONDecoder().decode(Person.self, from: Data(json.utf8)).review

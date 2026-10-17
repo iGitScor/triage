@@ -1,4 +1,4 @@
-//! What an assistant's reply can say, whoever wrote it (AI-15): the Claude API, Claude Code and an OpenAI-compatible
+//! What an assistant's reply can say, whoever wrote it: the Claude API, Claude Code and an OpenAI-compatible
 //! server each implement `AssistantReply` for their raw answer, and `decode_reply` turns any of them into the brief,
 //! a summary or triage suggestions, or into an `AssistantFailure` that names the cause in the same words for all.
 //! Transport errors (status, timeout, retries, a program that fails before answering) stay with each plugin.
@@ -61,7 +61,7 @@ impl From<AssistantFailure> for PluginError {
 /// A provider's raw reply: its answer as JSON, or why there is none.
 pub trait AssistantReply {
     fn answer(self) -> Result<serde_json::Value, AssistantFailure>;
-    /// The tokens it used, when the provider says (AI-03).
+    /// The tokens it used, when the provider says.
     fn usage(&self) -> Option<TokenUsage> {
         None
     }
@@ -139,7 +139,7 @@ mod tests {
         assert_eq!(json_text(None), Err(AssistantFailure::UnexpectedAnswer));
     }
 
-    /// AI-03: what every answer within a request reports adds up; outside of a request it's dropped.
+    /// What every answer within a request reports adds up; outside of a request it's dropped.
     #[tokio::test]
     async fn the_meter_adds_up_what_its_request_reports() {
         let meter = AssistantMeter::default();

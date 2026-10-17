@@ -35,7 +35,7 @@ invoke.mockImplementation((command: string) => Promise.resolve(replies[command] 
 const pressEscape = (target: Element) => fireEvent.keyDown(target, { key: 'Escape' })
 
 describe('Settings', () => {
-  it('Esc closes a rename first, Enter saves one, and the screen stays (UX-25)', async () => {
+  it('Esc closes a rename first, Enter saves one, and the screen stays', async () => {
     const onclose = vi.fn()
     const { container, getAllByRole } = render(Settings, { props: { onclose, onchange: () => {} } })
     await waitFor(() => expect(container.querySelector('.account')).not.toBeNull())
@@ -179,7 +179,7 @@ describe('Settings the organization set', () => {
   })
 })
 
-describe('Settings, agents on this computer (V15-01, V15-10)', () => {
+describe('Settings, agents on this computer', () => {
   afterEach(() => {
     cleanup()
     invoke.mockClear()
@@ -208,7 +208,7 @@ describe('Settings, agents on this computer (V15-01, V15-10)', () => {
   })
 })
 
-describe('Settings, what the assistant used (AI-03)', () => {
+describe('Settings, what the assistant used', () => {
   const withAssistant = {
     ...unmanaged,
     usageToday: { day: '2026-10-15', requests: 1, inputTokens: 1200, outputTokens: 34 },

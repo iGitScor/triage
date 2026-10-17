@@ -44,7 +44,7 @@ struct NotionPluginTests {
         #expect(items.first?.hasBadge(.overdue) == true)
     }
 
-    /// Notion leaves finished tasks out, so they don't use up the 50 places (FEAT-08): every status in the Complete
+    /// Notion leaves finished tasks out, so they don't use up the 50 places: every status in the Complete
     /// group, in any language, the done values, and a ticked Done checkbox.
     @Test func asksNotionForOpenTasksOnly() throws {
         let schema = try JSONDecoder.api(snakeCase: true).decode(
@@ -78,7 +78,7 @@ struct NotionPluginTests {
     }
 
     /// A database that moved or lost its access is named in a remark; the others' tasks still show. When none can
-    /// be read, the account fails as before (FEAT-09).
+    /// be read, the account fails as before.
     @Test func oneDatabaseThatFailsHidesNothingElse() async throws {
         let gone = "fedcba9876543210fedcba9876543210"
         let routes = [
@@ -104,7 +104,7 @@ struct NotionPluginTests {
         await #expect(throws: HTTPError.status(404)) { try await none.fetch() }
     }
 
-    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    /// Who the token belongs to is asked once across refreshes, as GitLab's.
     @Test func theIdentityIsAskedOnceAcrossRefreshes() async throws {
         let http = RecordingHTTP(
             StubHTTP(routes: [

@@ -4,7 +4,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// ML-06: the classifiers measured on the labelled messages shared with Windows (`eval/intents.json`), against the
+/// The classifiers measured on the labelled messages shared with Windows (`eval/intents.json`), against the
 /// floors of `eval/baseline.json`. Same metrics as `intent_eval.rs`. `make eval` prints the reports.
 struct IntentEvaluationTests {
     struct Case: Decodable {

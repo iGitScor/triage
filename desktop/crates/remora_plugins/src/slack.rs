@@ -1266,7 +1266,7 @@ pub(crate) mod tests {
         );
     }
 
-    /// FEAT-07: Slack sends the thread's first message whatever `oldest` says; it isn't a reply to you.
+    /// Slack sends the thread's first message whatever `oldest` says; it isn't a reply to you.
     #[tokio::test]
     async fn the_first_message_of_a_thread_is_not_a_reply() {
         let mine = r#"{"ok": true, "messages": {"matches": [
@@ -1508,7 +1508,7 @@ pub(crate) mod tests {
         assert!(!snapshot.items.iter().any(|i| i.context.starts_with("Thread")));
     }
 
-    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    /// Who the token belongs to is asked once across refreshes, as GitLab's.
     #[tokio::test]
     async fn the_identity_is_asked_once_across_refreshes() {
         let stub = StubHttp::paths(&[

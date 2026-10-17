@@ -4,7 +4,7 @@ import Testing
 
 @testable import Remora
 
-/// IDEA-38: inbox titles in Spotlight only while the user wants them, and out again on every way out.
+/// Inbox titles in Spotlight only while the user wants them, and out again on every way out.
 @MainActor
 struct SpotlightTests {
     @Test func nothingGoesToSpotlightUntilTurnedOn() async throws {

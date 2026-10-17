@@ -1,7 +1,7 @@
 # Remora's MCP server: the contract
 
 `remora mcp` lets the agents on this computer (Claude Desktop, Claude Code, Gemini CLI, an IDE assistant) ask Remora
-what waits on the user, without being given the user's tokens to GitHub, Jira, Slack or Teams (roadmap V15-01). It
+what waits on the user, without being given the user's tokens to GitHub, Jira, Slack or Teams. It
 speaks the [Model Context Protocol](https://modelcontextprotocol.io) over standard input and output, and relays each
 call to the Remora app already running, through the socket the `remora` command uses. Nothing listens on the network.
 
@@ -32,7 +32,7 @@ This folder is the contract both apps follow; each implements it next to its soc
 - **Read-only towards the tools.** No tool marks an item done, snoozes it, or writes to GitHub, Jira, Slack or any
   other tool; `remind` saves a reminder in Remora, as the `remora` command does.
 - **Untrusted content.** Titles are written by other people: `waiting_on_me` says so before the data, and the
-  server's `instructions` repeat it (as the assistant's prompts do, AI-08).
+  server's `instructions` repeat it (as the assistant's prompts do).
 - **Hidden content stays hidden.** A tool the user or the organization ticked in Hide message content comes with
   `"title": null`, as in the `remora` command.
 - **The agent's name** (`clientInfo.name`, cleaned: control characters become spaces, at most 64 characters,

@@ -4,7 +4,7 @@ import Testing
 
 @testable import Remora
 
-/// UI-04: tokens follow Increase Contrast.
+/// Tokens follow Increase Contrast.
 @MainActor
 @Suite(.serialized)
 struct ThemeTests {
@@ -57,7 +57,7 @@ struct ThemeTests {
         #expect(abs(Myna.textSize(8) - 14.3) < 0.001, "the floor applies before scaling")
     }
 
-    /// The undo bar is dark in both themes, so its lime Undo and its message read well (A11Y-21).
+    /// The undo bar is dark in both themes, so its lime Undo and its message read well.
     @Test(arguments: [false, true])
     func theUndoBarReadsInBothThemes(dark: Bool) {
         let bar = resolve(Myna.dark, dark: dark, contrast: false)

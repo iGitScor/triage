@@ -24,7 +24,7 @@ pub struct AccountsService {
     secrets: Option<Secrets>,
     /// Why the last read failed, while nothing was read.
     unreadable: Option<Message>,
-    /// Per account, in memory: what a refresh may reuse from the last one (PERF-09).
+    /// Per account, in memory: what a refresh may reuse from the last one.
     sessions: HashMap<String, AccountSession>,
     persistence: Persistence,
 }
@@ -58,7 +58,7 @@ impl AccountsService {
     // MARK: Tokens
 
     /// Every account's tokens, once `Tokens::load_once` read them. Never read here: the vault can be slow, and this
-    /// runs under the inbox lock (CODE-07).
+    /// runs under the inbox lock.
     pub fn secrets(&self) -> Result<&Secrets, Message> {
         self.secrets.as_ref().ok_or_else(|| self.unreadable.clone().unwrap_or_else(|| TOKENS_NOT_READ.into()))
     }
@@ -206,7 +206,7 @@ impl AccountsService {
 
 // MARK: The inbox's accounts
 
-// The credential store can be slow: the app reads and writes it without holding the inbox lock (PERF-07), through
+// The credential store can be slow: the app reads and writes it without holding the inbox lock, through
 // `Tokens` (tokens.rs): `needs_secrets` and `provide_secrets` for the read, then `secrets_after` (or a method built on
 // it) and a `…_saved` method for each change. Those are for `Tokens` alone.
 impl Inbox {

@@ -35,7 +35,7 @@ extension InboxView {
     }
 
     /// When nothing could be read from the tools (offline at launch, every token rejected), the empty inbox says
-    /// so instead of "All done!", which would look like there is nothing to do (UX-26).
+    /// so instead of "All done!", which would look like there is nothing to do.
     var unreadState: EmptyState? {
         guard model.allItems.allSatisfy({ $0.bundle == .reminders }) else { return nil }
         switch model.sync.health {

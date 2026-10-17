@@ -14,7 +14,7 @@ public final class EmbeddingSimilarity: SimilarityModel, @unchecked Sendable {
     private let threshold: Double
     private let lock = NSLock()
     private var embeddings: [NLLanguage: NLEmbedding] = [:]
-    /// Word-to-word distances already measured (ML-10): the same words come back across titles and refreshes.
+    /// Word-to-word distances already measured: the same words come back across titles and refreshes.
     /// Emptied past `wordPairLimit`, so it can't grow without bound.
     private var wordDistances: [String: Double] = [:]
     static let wordPairLimit = 50_000

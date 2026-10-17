@@ -17,7 +17,7 @@ public struct GitHubPlugin: SourcePlugin {
             ),
         ],
         setupSteps: [
-            // EASE-07: read-only and limited to what Remora reads, rather than the whole `repo` scope.
+            // Read-only and limited to what Remora reads, rather than the whole `repo` scope.
             "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues.",
             "Pick the owner (you, or your organization) and All repositories, set an expiration, generate it and paste it below.",
             "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org.",
@@ -137,7 +137,7 @@ struct GraphQLResponse: Decodable {
         var viewer: Login
         var authored: Search
         var reviewing: Search
-        /// Issues assigned to you (MISS-06). Absent from an answer to the older query.
+        /// Issues assigned to you. Absent from an answer to the older query.
         var assigned: IssueSearch?
     }
 

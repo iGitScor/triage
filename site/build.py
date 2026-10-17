@@ -104,7 +104,7 @@ T = {
     "en": {
         "locale": "en_US",
         "tagline": "Everything that needs you. Nothing that doesn’t.",
-        # Short enough to show whole in search results (MKT-04).
+        # Short enough to show whole in search results.
         "description": "Remora: one inbox in your menu bar or tray for code reviews, Slack, Linear, Jira, Notion and Microsoft 365, sorted by what you have to do. On-device.",
         "skip": "Skip to content",
         "nav": {"features": "Features", "privacy": "Privacy & compliance"},
@@ -1889,7 +1889,7 @@ def bilingual_head(title: str, description: str, extra: str = "", lang: str = "f
 def picker() -> str:
     return (
         # The x-default page every unmatched visitor gets: English first, both languages side by side, and a
-        # description short enough to show whole in results (MKT-04).
+        # description short enough to show whole in results.
         bilingual_head(
             "Remora — Choose your language · Choisissez votre langue",
             PICKER_DESCRIPTION,
@@ -1963,7 +1963,7 @@ PICKER_DESCRIPTION = (
 
 def copy_date() -> str:
     """When the pages' copy last changed (this file, in git), not the build date: a lastmod that changes at every
-    build tells search engines nothing (MKT-04)."""
+    build tells search engines nothing."""
     try:
         date = subprocess.run(
             ["git", "log", "-1", "--format=%cs", "--", __file__], capture_output=True, text=True, check=True

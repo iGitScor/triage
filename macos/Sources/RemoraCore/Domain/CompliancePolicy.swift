@@ -107,7 +107,7 @@ public struct CompliancePolicy: Equatable, Sendable {
         return L("External AI is turned off in Privacy settings.")
     }
 
-    /// Why an account is blocked: its plugin, then its AI server (AI-23).
+    /// Why an account is blocked: its plugin, then its AI server.
     public func refusal(for manifest: PluginManifest, settings: [String: String]) -> String? {
         guard let server = manifest.server(in: settings) else { return refusal(for: manifest) }
         if let allowedPlugins, !allowedPlugins.contains(manifest.id) { return L("Not allowed by your privacy policy.") }

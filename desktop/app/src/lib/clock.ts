@@ -1,5 +1,5 @@
 // The time slider's scale, as SnoozeClock has it in remora_core (clock.rs): computed here, so dragging asks Rust
-// nothing (PERF-14). A test keeps the table equal to Rust's.
+// nothing. A test keeps the table equal to Rust's.
 
 /** Each step of the slider, in minutes: small moves give minutes, long ones days. */
 export const STEPS_MINUTES = [

@@ -4,7 +4,7 @@ import Testing
 
 @testable import Remora
 
-/// PERF-06: changes are saved off the main thread, each file once per burst, and nothing pending is lost.
+/// Changes are saved off the main thread, each file once per burst, and nothing pending is lost.
 @MainActor
 struct DiskWriterTests {
     /// The files written from now on, in order: `flushWrites` reports its own writes before returning.

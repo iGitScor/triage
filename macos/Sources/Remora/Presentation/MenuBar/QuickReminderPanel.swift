@@ -19,7 +19,7 @@ final class QuickReminderPanel {
         }
     }
 
-    /// `text`: what a `remora://remind` link filled in, for the user to save (IDEA-06).
+    /// `text`: what a `remora://remind` link filled in, for the user to save.
     func show(at point: NSPoint, date: Date, text: String = "") {
         panel.host(
             QuickReminderView(

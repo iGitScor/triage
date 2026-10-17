@@ -1,6 +1,6 @@
 import Foundation
 
-/// One inbox item as this Mac's Spotlight index may hold it (IDEA-38): its title and where it comes from, never the
+/// One inbox item as this Mac's Spotlight index may hold it: its title and where it comes from, never the
 /// message preview, the people or the link.
 public struct SpotlightEntry: Equatable, Hashable, Sendable {
     /// The item's id, which a Spotlight hit gives back to open it.

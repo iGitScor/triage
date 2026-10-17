@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// IDEA-26: the same cases as Windows (`batch.rs`).
+/// The same cases as Windows (`batch.rs`).
 struct NotificationBatchTests {
     let calendar = Calendar.current
 

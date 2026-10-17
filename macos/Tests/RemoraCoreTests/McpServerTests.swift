@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// V15-01: the MCP server against the shared contract of `mcp/` (same conversations as `mcp.rs` on Windows and
+/// The MCP server against the shared contract of `mcp/` (same conversations as `mcp.rs` on Windows and
 /// Linux).
 struct McpServerTests {
     static let folder = URL(fileURLWithPath: #filePath)
@@ -98,7 +98,7 @@ struct McpServerTests {
         #expect(Self.same(McpServer(version: "", allowed: true).tools, file))
     }
 
-    /// V15-10: unset is allowed; off, or a value that can't be read, is off.
+    /// Unset is allowed; off, or a value that can't be read, is off.
     @Test func theOrganizationDecidesLocalAccess() {
         #expect(LocalAPIPolicy.allowed(forced: { _ in nil }))
         #expect(!LocalAPIPolicy.allowed(forced: { _ in false as NSNumber }))

@@ -1,4 +1,4 @@
-// Accessibility check of the built website and docs (CI-10): every page of site/public, in light and dark,
+// Accessibility check of the built website and docs: every page of site/public, in light and dark,
 // against WCAG 2.1 A and AA with axe. Build the docs first (`make docs-build`); `make a11y` does both.
 // Usage: node scripts/a11y.mjs [folder]   Exits 1 when a page has a violation.
 

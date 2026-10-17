@@ -13,7 +13,7 @@ public struct TokenUsage: Codable, Equatable, Sendable {
     public var total: Int { input + output }
 }
 
-/// What the assistant used on this Mac, per day (AI-03): requests and tokens, for the last `keptDays` days with any.
+/// What the assistant used on this Mac, per day: requests and tokens, for the last `keptDays` days with any.
 /// Tokens only, no price: Remora doesn't know what each plan charges. Same on Windows (`AssistantUsage`).
 public struct AssistantUsage: Codable, Equatable, Sendable {
     public struct Day: Codable, Equatable, Sendable {

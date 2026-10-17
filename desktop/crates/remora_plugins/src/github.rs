@@ -22,7 +22,7 @@ pub fn manifest() -> PluginManifest {
             ),
         ],
         setup_steps: vec![
-            // EASE-07: read-only and limited to what Remora reads, rather than the whole `repo` scope.
+            // Read-only and limited to what Remora reads, rather than the whole `repo` scope.
             "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues.".into(),
             "Pick the owner (you, or your organization) and All repositories, set an expiration, generate it and paste it below.".into(),
             "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org.".into(),
@@ -161,7 +161,7 @@ struct Payload {
     viewer: Login,
     authored: Search,
     reviewing: Search,
-    /// Issues assigned to you (MISS-06). Absent from an answer to the older query.
+    /// Issues assigned to you. Absent from an answer to the older query.
     #[serde(default)]
     assigned: IssueSearch,
 }
@@ -570,7 +570,7 @@ pub(crate) mod tests {
         );
     }
 
-    /// MISS-06: issues assigned to you are things to do; a list past 50 says so too.
+    /// Issues assigned to you are things to do; a list past 50 says so too.
     #[tokio::test]
     async fn issues_assigned_to_you_are_things_to_do() {
         let issue = r#""assigned": {"issueCount": 60, "nodes": [{"id": "I_1", "number": 31, "title": "Crash on *launch*",

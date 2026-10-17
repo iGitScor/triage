@@ -19,7 +19,7 @@ pub struct AssistantCoordinator {
     summaries: HashMap<String, BundleSummary>,
     /// Claude's proposal for the snoozed pile, until applied or discarded.
     triage: Vec<TriageSuggestion>,
-    /// What the assistant used, per day (AI-03).
+    /// What the assistant used, per day.
     usage: AssistantUsage,
     persistence: Persistence,
 }
@@ -184,7 +184,7 @@ impl Inbox {
     }
 
     /// The assistant to ask now, with its account's id for `keep_*`, or None when there is none or it isn't allowed.
-    /// Past today's limit, it refuses (AI-03). The request is then measured (`AssistantMeter`) and `record_usage`d.
+    /// Past today's limit, it refuses. The request is then measured (`AssistantMeter`) and `record_usage`d.
     pub fn assistant(&mut self, http: Arc<dyn HttpClient>, language: &str) -> Option<AssistantJob> {
         let account = self.assistant_account()?;
         let limit = self.effective_preferences().assistant_daily_limit;
@@ -220,7 +220,7 @@ impl Inbox {
     }
 
     /// What a brief is written from: the task in progress (marked so), the pinned items and My turn, as the
-    /// assistant may see them (AI-20).
+    /// assistant may see them.
     pub fn brief_items(&self, now: DateTime<Utc>) -> Vec<InboxItem> {
         let layout = self.layout(now, "");
         let started = layout.in_progress.into_iter().map(|mut item| {

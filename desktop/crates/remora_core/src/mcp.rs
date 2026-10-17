@@ -1,4 +1,4 @@
-//! The MCP server behind `remora mcp` (V15-01): agents on this computer ask what waits on the user, over standard
+//! The MCP server behind `remora mcp`: agents on this computer ask what waits on the user, over standard
 //! input and output, and each tool call is relayed to the running app through the socket of the `remora` command.
 //! The contract (tools, protocol versions, recorded conversations) is `mcp/` at the root of the repository, shared
 //! with the Mac (`McpServer.swift`); this is the protocol only, the endpoint is `remora_app::local_api`.
@@ -24,7 +24,7 @@ const INSTRUCTIONS: &str =
 /// How many agent reads the app keeps: the most recent, for Settings.
 pub const AGENT_READS_KEPT: usize = 200;
 
-/// An agent asked the app something through `remora mcp` (V15-01): who it said it was, what, when. Kept on this
+/// An agent asked the app something through `remora mcp`: who it said it was, what, when. Kept on this
 /// computer for Settings, erased with the rest; the name is the agent's own claim, not verified.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]

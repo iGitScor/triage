@@ -64,8 +64,8 @@ fn explain(error: keyring::Error) -> String {
 /// Shown when Linux has no Secret Service running.
 pub const NO_KEYRING: &str = "No keyring is running: Remora keeps tokens in the system keyring (GNOME Keyring, KWallet or KeePassXC). Start or install one, then open Remora again.";
 
-/// One entry per account (user = the account's id), and an index of the ids, since the store can't list its entries
-/// (SEC-10). A Windows entry holds at most 2,560 bytes, and a corrupt one loses only its account. The single entry
+/// One entry per account (user = the account's id), and an index of the ids, since the store can't list its entries.
+/// A Windows entry holds at most 2,560 bytes, and a corrupt one loses only its account. The single entry
 /// of earlier versions is moved over once.
 pub struct CredentialVault {
     store: Box<dyn CredentialStore>,
@@ -294,7 +294,7 @@ mod tests {
         Secrets::from([("a1".into(), token("t1")), ("a2".into(), token("t2"))])
     }
 
-    /// SEC-10: each account gets its own entry, listed in the index, and the old single entry goes.
+    /// Each account gets its own entry, listed in the index, and the old single entry goes.
     #[test]
     fn the_single_entry_is_split_once() {
         let store = FakeStore::with(&[(VAULT_LEGACY, LEGACY)]);

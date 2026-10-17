@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 
-/// Where the `remora` command (IDEA-22) and the app meet: a Unix socket in this user's temporary folder (0700, this
+/// Where the `remora` command and the app meet: a Unix socket in this user's temporary folder (0700, this
 /// user's alone), itself 0600, and a client must be this user. Nothing listens on the network. The rules are
 /// `RemoraCommand`'s; this is both ends of the socket. Windows and Linux have theirs (`local_api.rs`), with the same
 /// protocol.

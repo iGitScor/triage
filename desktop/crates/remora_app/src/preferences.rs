@@ -18,7 +18,7 @@ pub enum Appearance {
     Dark,
 }
 
-/// The text size, as on the Mac (A11Y-25): the window's content is zoomed by `scale`, and the window grows with it.
+/// The text size, as on the Mac: the window's content is zoomed by `scale`, and the window grows with it.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum TextSize {
@@ -49,7 +49,7 @@ pub struct Preferences {
     pub focus_while_in_progress: bool,
     pub notify_arrivals: bool,
     pub notify_status_changes: bool,
-    /// What arrives and changes waits for the next of `notification_times`, then comes grouped (IDEA-26).
+    /// What arrives and changes waits for the next of `notification_times`, then comes grouped.
     pub batch_notifications: bool,
     /// "10:00, 14:00, 17:00", as typed: `remora_core::parse_times` reads it.
     pub notification_times: String,
@@ -71,7 +71,7 @@ pub struct Preferences {
     pub whole_inbox_brief: bool,
     pub brief_cache_minutes: i64,
     pub assistant_excluded_sources: Vec<String>,
-    /// Assistant requests a day; 0 is no limit (AI-03).
+    /// Assistant requests a day; 0 is no limit.
     pub assistant_daily_limit: u32,
     /// The first-run tip (the tray, the reminder shortcut, start with Windows) was dismissed.
     pub welcomed: bool,

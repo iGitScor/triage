@@ -4,7 +4,7 @@ import Testing
 
 @testable import RemoraPlugins
 
-/// AI-23: the OpenAI-compatible assistant.
+/// The OpenAI-compatible assistant.
 struct OpenAIPluginTests {
     let item = InboxItem(
         id: "a", accountID: UUID(), pluginID: "github", bundle: .reviews,

@@ -1,4 +1,4 @@
-//! The `remora` command (IDEA-22): what a launcher, a status bar or a script may ask the running app, over a socket
+//! The `remora` command: what a launcher, a status bar or a script may ask the running app, over a socket
 //! only this user can open (a named pipe on Windows). The count, a tab's items, a new reminder: never Done, a snooze or
 //! anything that removes. Items whose tool hides message content come without their title. One JSON object per
 //! line each way. Same rule on macOS (`RemoraCommand.swift`), with the same tests.

@@ -119,7 +119,7 @@ impl TraySummary {
 }
 
 /// What the menu calls the task in progress: its title, or where it's from ("Slack · #general") when that tool's
-/// content is hidden, as its notifications do (SEC-23).
+/// content is hidden, as its notifications do.
 pub fn task_label(item: &InboxItem, hidden: bool, t: &Translator) -> String {
     if !hidden {
         return item.title.clone();
@@ -312,7 +312,7 @@ mod tests {
         );
     }
 
-    /// SEC-23: a tool in "hide message content" shows where the task is from in the menu, not what it says.
+    /// A tool in "hide message content" shows where the task is from in the menu, not what it says.
     #[test]
     fn a_hidden_tools_task_shows_where_it_is_from() {
         let (mut inbox, ids) = inbox_with_reminders(&["Call the bank about the loan"]);

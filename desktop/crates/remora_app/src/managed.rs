@@ -9,7 +9,7 @@ use ts_rs::TS;
 /// `/etc/remora/policy.json` (Ansible, Puppet, Salt…), with the same names.
 /// `AllowedPlugins` (REG_MULTI_SZ of plugin IDs), `AllowExternalAI` and `AllowRemoteImages` (REG_DWORD 0/1), and
 /// `AutomaticUpdates` (REG_DWORD 0/1): 1 checks every day, locked on; 0 turns updating off entirely, Check now included.
-/// For the OpenAI-compatible assistant (AI-23): `AllowedAIServers` (REG_MULTI_SZ of URL prefixes), `AIServer`
+/// For the OpenAI-compatible assistant: `AllowedAIServers` (REG_MULTI_SZ of URL prefixes), `AIServer`
 /// (REG_SZ, the server, locked in Settings) and `AllowLocalAI` (REG_DWORD 0/1, a server on this computer).
 /// For every assistant, as on macOS: `AIExcludedSources` (REG_MULTI_SZ of plugin IDs, or `reminders`), added to the
 /// user's own choice and locked in Settings, and `AllowedAIModels` (REG_MULTI_SZ of model IDs). And the Mac's other
@@ -17,7 +17,7 @@ use ts_rs::TS;
 /// `OpenInApps` (REG_DWORD 0/1), `ClaudeCodePath` (REG_SZ) and `AIDailyLimit` (REG_DWORD, assistant requests a day,
 /// 1 to 10000). A source's settings (REG_SZ, `SETTINGS`): what the organization registered for Microsoft 365,
 /// `MicrosoftTenant` and `MicrosoftClientID`, locked in the form. `AllowLocalAPI` (REG_DWORD 0/1): 0 turns off the
-/// `remora` command and the MCP server for agents (V15-10), so nothing on the computer can read the inbox but the app.
+/// `remora` command and the MCP server for agents, so nothing on the computer can read the inbox but the app.
 /// A key that is set wins over the user's own choice.
 ///
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -47,9 +47,9 @@ pub struct Managed {
     pub open_in_apps: Option<bool>,
     /// Where Claude Code is, locked in Settings. Empty: unreadable, so Claude Code is refused.
     pub claude_code_path: Option<String>,
-    /// Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored (AI-03).
+    /// Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored.
     pub ai_daily_limit: Option<u32>,
-    /// The `remora` command and the MCP server (V15-10). Unset: allowed; unreadable: off.
+    /// The `remora` command and the MCP server. Unset: allowed; unreadable: off.
     pub allow_local_api: Option<bool>,
     /// Sources' settings by policy name (`ConfigField::managed_key`), replacing what the user typed. Empty:
     /// unreadable, so the source can't sign in.
@@ -59,7 +59,7 @@ pub struct Managed {
 }
 
 pub const POLICY_KEY: &str = r"SOFTWARE\Policies\Remora";
-/// Linux: the same values as a root-owned JSON file (LINUX-05).
+/// Linux: the same values as a root-owned JSON file.
 pub const POLICY_FILE: &str = "/etc/remora/policy.json";
 /// The sources' settings an organization may set (`ConfigField::managed_key`).
 pub const SETTINGS: [&str; 2] = ["MicrosoftTenant", "MicrosoftClientID"];
@@ -531,7 +531,7 @@ mod tests {
         assert!(forced.updates_allowed() && forced.checks_for_updates(&Preferences::default()));
     }
 
-    /// AI-23: the OpenAI-compatible assistant's keys, read and failed closed like the others.
+    /// The OpenAI-compatible assistant's keys, read and failed closed like the others.
     #[test]
     fn ai_server_keys_are_read_and_fail_closed() {
         let it = Managed::from_values(values(&[
@@ -579,7 +579,7 @@ mod tests {
         );
     }
 
-    /// SEC-29: the organization keeps sources from the assistant and limits its models, as on macOS.
+    /// The organization keeps sources from the assistant and limits its models, as on macOS.
     #[test]
     fn a_sources_settings_are_read_and_fail_closed() {
         let it = Managed::from_values(values(&[
@@ -627,7 +627,7 @@ mod tests {
         }
     }
 
-    /// LINUX-05: the policy file, read with the registry's rules: it fails closed when it can't be trusted or read.
+    /// The policy file, read with the registry's rules: it fails closed when it can't be trusted or read.
     #[test]
     fn the_policy_file_is_read_and_fails_closed() {
         let dir = tempfile::tempdir().unwrap();
@@ -672,7 +672,7 @@ mod tests {
         assert_eq!(Managed::read_file(&file, false).unreadable.len(), VALUES.len(), "writable by others");
     }
 
-    /// SEC-20 on Windows and Linux: the Mac's other managed settings, with the same rules.
+    /// On Windows and Linux: the Mac's other managed settings, with the same rules.
     #[test]
     fn the_macs_other_settings_are_read() {
         let it = Managed::from_values(values(&[
@@ -694,7 +694,7 @@ mod tests {
         assert!(odd.unreadable.is_empty());
     }
 
-    /// AI-03: the organization's daily limit wins over the user's; a number out of range is ignored.
+    /// The organization's daily limit wins over the user's; a number out of range is ignored.
     #[test]
     fn the_organization_can_set_the_assistants_daily_limit() {
         let user = Preferences { assistant_daily_limit: 50, ..Preferences::default() };

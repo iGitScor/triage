@@ -172,7 +172,7 @@ mod tests {
         assert!(!links.contains_key("5"), "reminders are never linked");
     }
 
-    /// ML-21: two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
+    /// Two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
     #[test]
     fn versions_do_not_link_but_a_lower_case_known_key_does() {
         let items = [

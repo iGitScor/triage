@@ -16,7 +16,7 @@ APP=build/Remora.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Helpers"
 cp "$BIN/Remora" "$APP/Contents/MacOS/Remora"
-# The `remora` command (IDEA-22): a link to it on the PATH runs it (docs/guide/links.md).
+# The `remora` command: a link to it on the PATH runs it (docs/guide/links.md).
 cp "$BIN/RemoraCLI" "$APP/Contents/Helpers/remora"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/Outfit.woff2 "$APP/Contents/Resources/"

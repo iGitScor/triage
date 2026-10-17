@@ -1,4 +1,4 @@
-//! Notifications grouped at set times (IDEA-26): what arrives and what changes waits for the next time the user
+//! Notifications grouped at set times: what arrives and what changes waits for the next time the user
 //! chose, then comes as it is, or as one notification when there is more. Reminders and snoozes coming back keep
 //! their own time. Same rule on macOS (`NotificationBatch.swift`).
 

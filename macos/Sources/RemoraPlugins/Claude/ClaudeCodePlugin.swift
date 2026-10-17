@@ -189,7 +189,7 @@ public struct ClaudeCodePlugin: AssistantPlugin {
         ]
         if !model.isEmpty { arguments += ["--model", model] }
         // As the API: a brief needs no long thinking, and the user's own (often high) effort would spend their plan
-        // and can run past the time limit (AI-25).
+        // and can run past the time limit.
         arguments += effort
         return (arguments, Data(message.utf8))
     }

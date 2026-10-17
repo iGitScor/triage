@@ -26,7 +26,7 @@ public struct ClaudePlugin: AssistantPlugin {
         )
     )
 
-    /// Sonnet: a brief or a triage is a short answer at low effort, which Opus writes no better for far more (AI-02).
+    /// Sonnet: a brief or a triage is a short answer at low effort, which Opus writes no better for far more.
     /// One constant per role, used by the form and the plugin (and by Claude Code for summaries). Same on Windows.
     static let defaultModel = "claude-sonnet-5-5"
     static let defaultDigestModel = "claude-haiku-5-5"
@@ -92,7 +92,7 @@ public struct ClaudePlugin: AssistantPlugin {
                 Response.self, from: request, http: http,
                 tooSlow: L("Claude took too long to answer. Try again later."), sleep: sleep)
         } catch HTTPError.status(404) {
-            // A model Anthropic doesn't offer: the field to fix, not "the server couldn't find" (AI-02). The connection
+            // A model Anthropic doesn't offer: the field to fix, not "the server couldn't find". The connection
             // test sends the model, so a typo shows when connecting.
             let summaries = body.model == digestModel && body.model != model
             throw PluginError.invalidField(L(summaries ? "Model for bundle summaries" : "Model for the brief"))

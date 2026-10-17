@@ -44,7 +44,7 @@ struct GitHubPluginTests {
         #expect(try await plugin(cut).fetch().remarks == [SourceSnapshot.truncated("GitHub")])
     }
 
-    /// MISS-06: issues assigned to you are things to do; a list past 50 says so too. Same case as Windows.
+    /// Issues assigned to you are things to do; a list past 50 says so too. Same case as Windows.
     @Test func issuesAssignedToYouAreThingsToDo() async throws {
         let issue = """
             "assigned": {"issueCount": 60, "nodes": [{"id": "I_1", "number": 31, "title": "Crash on *launch*",

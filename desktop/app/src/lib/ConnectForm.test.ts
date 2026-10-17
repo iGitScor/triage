@@ -140,7 +140,7 @@ describe('ConnectForm', () => {
     expect(invoke).toHaveBeenCalledWith('reconnect', { accountId: 'acc-1', secrets: { token: 'glpat-new' } })
   })
 
-  // AI-23: the organization's AIServer is shown and can't be changed.
+  // The organization's AIServer is shown and can't be changed.
   it('signs in through the browser, then connects with what it gave', async () => {
     let comeBack: (secrets: Record<string, string>) => void = () => {}
     invoke.mockImplementation((command: string) =>

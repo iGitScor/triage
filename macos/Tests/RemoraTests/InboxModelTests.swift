@@ -58,8 +58,8 @@ struct InboxModelTests {
         #expect(!acme.isSame(as: org("globex"), identity: "alice"))
     }
 
-    /// V15-01: what an agent asks through `remora mcp` is logged under its declared name, the `remora` command isn't,
-    /// and Erase empties the log. V15-10: with `AllowLocalAPI` off, a request that reached the app is refused.
+    /// What an agent asks through `remora mcp` is logged under its declared name, the `remora` command isn't,
+    /// and Erase empties the log. With `AllowLocalAPI` off, a request that reached the app is refused.
     @Test func agentReadsAreLoggedAndThePolicyCanRefuse() async throws {
         let harness = Harness()
         let model = try await harness.connected()
@@ -76,7 +76,7 @@ struct InboxModelTests {
         #expect(model.agentReads.isEmpty)
     }
 
-    /// IDEA-22: the `remora` command reads the inbox as it is, without hidden titles, saves reminders, and finds
+    /// The `remora` command reads the inbox as it is, without hidden titles, saves reminders, and finds
     /// nothing once erased.
     @Test func theCommandAnswersFromTheInboxAndHidesWhatIsHidden() async throws {
         let harness = Harness()
@@ -121,7 +121,7 @@ struct InboxModelTests {
     }
 
     /// From the diff: starting moves an item to In progress and cancels its pending notification; stopping puts it back.
-    /// TEST-01: the identity a session learned is reused across refreshes, and asked again where it may have
+    /// The identity a session learned is reused across refreshes, and asked again where it may have
     /// changed: connecting always tests the token, a new token starts over, and so does connecting again after a
     /// disconnect. Same case as Windows.
     @Test func theIdentityIsAskedOncePerSession() async throws {
@@ -367,7 +367,7 @@ struct InboxModelTests {
         #expect(harness.notifier.posted.count == 1, "later syncs compare with the last one")
     }
 
-    /// IDEA-26: grouped at set times, an arrival waits for the next one, then is posted. Same case as Windows.
+    /// Grouped at set times, an arrival waits for the next one, then is posted. Same case as Windows.
     @Test func notificationsGroupedAtSetTimesWaitForTheNextOne() async throws {
         let harness = Harness()
         let model = try await harness.connected()
@@ -419,7 +419,7 @@ struct InboxModelTests {
         #expect(harness.model().accounts.isEmpty, "saved")
     }
 
-    /// SEC-26: a refresh started before Erase finishes after it, and used to write the inbox back.
+    /// A refresh started before Erase finishes after it, and used to write the inbox back.
     @Test func aRefreshThatFinishesAfterEraseWritesNothing() async throws {
         let harness = Harness()
         let model = try await harness.connected()
@@ -564,7 +564,7 @@ struct InboxModelTests {
         let harness = Harness()
         let model = harness.model()
         model.addReminder("Call the bank", at: .now.addingTimeInterval(60))
-        // Its notification says "Reminder" once, as its title (UX-24).
+        // Its notification says "Reminder" once, as its title.
         let notice = try #require(harness.notifier.scheduled.last?.notice)
         #expect(notice.title == "Reminder" && notice.subtitle.isEmpty && notice.body == "Call the bank")
         let reminder = try #require(model.reminders.first)

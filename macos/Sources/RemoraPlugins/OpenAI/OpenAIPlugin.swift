@@ -2,7 +2,7 @@ import Foundation
 import RemoraCore
 
 /// The assistant through any server that speaks OpenAI's Chat Completions: OpenAI, Azure OpenAI, Mistral, or one on
-/// this computer such as Ollama (AI-23). The same prompts and schemas as the Claude API, as a strict JSON schema.
+/// this computer such as Ollama. The same prompts and schemas as the Claude API, as a strict JSON schema.
 public struct OpenAIPlugin: AssistantPlugin {
     public static let manifest = PluginManifest(
         id: "openai",

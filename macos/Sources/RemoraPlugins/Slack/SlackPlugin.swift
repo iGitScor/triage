@@ -742,7 +742,7 @@ enum SlackText {
     }
 
     /// Slack's tokens ({time}, {date_short}, {date_pretty}, {ago}…) in place; an unknown one gives the fallback.
-    /// Compiled once, as `dateTag` (CODE-05).
+    /// Compiled once, as `dateTag`.
     static let dateTokens = try! NSRegularExpression(pattern: #"\{([a-z_]+)\}"#)
 
     static func formatted(_ date: Date, _ format: String, fallback: String?, style: SlackDateStyle) -> String {

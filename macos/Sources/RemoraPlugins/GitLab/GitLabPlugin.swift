@@ -118,7 +118,7 @@ public struct GitLabPlugin: SourcePlugin {
         return (item, failed)
     }
 
-    /// One page, asked for by every list request: a full page of merge requests means the list was cut (FEAT-05).
+    /// One page, asked for by every list request: a full page of merge requests means the list was cut.
     static let pageSize = 50
     static let perPage = String(pageSize)
 
@@ -226,7 +226,7 @@ extension GitLabPlugin {
     }
 
     /// A GitLab To-Do: an issue assigned to you, a mention, something you marked. Merge requests are left out,
-    /// already shown with their approvals and pipelines (MISS-06). Same as Windows (`gitlab.rs`).
+    /// already shown with their approvals and pipelines. Same as Windows (`gitlab.rs`).
     struct Todo: Decodable, Sendable {
         struct Target: Decodable, Sendable {
             var title: String?

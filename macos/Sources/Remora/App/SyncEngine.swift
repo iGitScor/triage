@@ -20,7 +20,7 @@ final class SyncEngine {
     @ObservationIgnored private var backoff: [UUID: Backoff] = [:]
     /// Accounts fetched since launch: the first fetch announces what arrived while Remora was closed.
     @ObservationIgnored private var synced: Set<UUID> = []
-    /// Notifications waiting for the next set time (IDEA-26), and when the last batch went out.
+    /// Notifications waiting for the next set time, and when the last batch went out.
     @ObservationIgnored private var waitingNotices: [Notice] = []
     @ObservationIgnored private var batchedAt = Date.now
     @ObservationIgnored private var polling: Task<Void, Never>?
@@ -50,7 +50,7 @@ final class SyncEngine {
     /// One refresh, unless one is running or the Mac is offline: every tool would fail the same way, so it waits for
     /// the network (`networkChanged`). `jobs` makes the fetches, told which accounts sit this one out; they run at
     /// once, each item classified off the main actor. Fetches run while the main actor is free: a result is kept only
-    /// while `keeps` still finds its account (SEC-26), and `apply` stores it. True when one was kept.
+    /// while `keeps` still finds its account, and `apply` stores it. True when one was kept.
     func refresh(
         manual: Bool, interval: TimeInterval, classifier: VerbClassifier,
         jobs: (_ waits: (UUID) -> Bool) -> [FetchJob],
@@ -80,8 +80,8 @@ final class SyncEngine {
                 }
             }
             for await (id, result) in group {
-                // An account erased, disconnected or blocked by the policy meanwhile must not come back (as SEC-09
-                // on Windows). A reconnected account has a new id.
+                // An account erased, disconnected or blocked by the policy meanwhile must not come back (as on
+                // Windows). A reconnected account has a new id.
                 guard let account = keeps(id) else { continue }
                 kept += 1
                 switch result {
@@ -162,7 +162,7 @@ final class SyncEngine {
 
     // MARK: Notifications
 
-    /// Grouped at set times: what arrived or changed waits for `release` (IDEA-26). Returns what goes now.
+    /// Grouped at set times: what arrived or changed waits for `release`. Returns what goes now.
     func hold(_ notices: [Notice], batching: Bool) -> [Notice] {
         let held = batching ? notices.filter(NotificationBatch.waits) : []
         waitingNotices += held

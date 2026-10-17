@@ -3,7 +3,7 @@ import Testing
 
 @testable import RemoraCore
 
-/// IDEA-22: the same cases as Windows and Linux (`command.rs`).
+/// The same cases as Windows and Linux (`command.rs`).
 struct RemoraCommandTests {
     let now = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 15, hour: 12))!
 

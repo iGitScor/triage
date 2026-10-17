@@ -130,7 +130,7 @@ impl NotionPlugin {
         let mut pages: Vec<Results<Page>> = vec![];
         for chunk in database.data_sources.chunks(2) {
             let requests = chunk.iter().map(|source| async {
-                // Finished tasks are left out by Notion itself, or they would use up the 50 places (FEAT-08).
+                // Finished tasks are left out by Notion itself, or they would use up the 50 places.
                 let schema: Schema = self
                     .cache
                     .value(&format!("schema {}", source.id), IDENTITY_LIFETIME, || {
@@ -229,7 +229,7 @@ impl SourcePlugin for NotionPlugin {
             }
         }
         // One database moved or out of reach no longer hides the others' tasks; when none could be read, the
-        // account fails with the first reason (FEAT-09).
+        // account fails with the first reason.
         if found.is_empty() {
             if let Some((_, error)) = failed.first() {
                 return Err(error.clone());
@@ -589,7 +589,7 @@ pub(crate) mod tests {
     }
 
     /// A database that moved or lost its access is named in a remark; the others' tasks still show. When none can
-    /// be read, the account fails as before (FEAT-09).
+    /// be read, the account fails as before.
     #[tokio::test]
     async fn one_database_that_fails_hides_nothing_else() {
         const GONE: &str = "fedcba9876543210fedcba9876543210";
@@ -648,7 +648,7 @@ pub(crate) mod tests {
         assert_eq!(snapshot.remarks, [crate::truncated("Notion")], "a second page means more tasks than shown");
         let sent: serde_json::Value = serde_json::from_str(&http.0.lock().unwrap()[0]).unwrap();
         assert_eq!(sent["page_size"], 50);
-        // Yours, and not finished: Notion leaves out every status in the Complete group, whatever its name (FEAT-08).
+        // Yours, and not finished: Notion leaves out every status in the Complete group, whatever its name.
         assert_eq!(
             sent["filter"],
             serde_json::json!({"and": [
@@ -773,7 +773,7 @@ pub(crate) mod tests {
         );
     }
 
-    /// TEST-01: who the token belongs to is asked once across refreshes, as GitLab's (PERF-09).
+    /// Who the token belongs to is asked once across refreshes, as GitLab's.
     #[tokio::test]
     async fn the_identity_is_asked_once_across_refreshes() {
         let query = format!(r#"{{"results": [{}]}}"#, page("a", "In progress"));

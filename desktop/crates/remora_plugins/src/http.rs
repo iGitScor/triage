@@ -70,7 +70,7 @@ impl Request {
     }
 }
 
-/// `base` + `path` + encoded query parameters. A base that isn't a URL is the setting's fault, not a crash (DEV-08).
+/// `base` + `path` + encoded query parameters. A base that isn't a URL is the setting's fault, not a crash.
 pub fn url_with_query(base: &str, path: &str, query: &[(&str, &str)]) -> Result<String, PluginError> {
     let mut url = reqwest::Url::parse(&format!("{}/{}", base.trim_end_matches('/'), path.trim_start_matches('/')))
         .map_err(|_| PluginError::InvalidField(base.into()))?;
@@ -208,7 +208,7 @@ pub trait HttpClient: Send + Sync {
 /// The real network, through the operating system's TLS (it trusts the company's root certificates).
 pub struct ReqwestClient {
     /// Why there is none, when the system's TLS couldn't be set up: every request then fails with it, and the app
-    /// still opens (DEV-08).
+    /// still opens.
     client: Result<reqwest::Client, String>,
 }
 
@@ -396,10 +396,10 @@ impl HttpClient for GuardedHttpClient {
     }
 }
 
-/// Conditional requests (PERF-09): a GET whose last answer carried an `ETag` is sent with `If-None-Match`, and a 304
+/// Conditional requests: a GET whose last answer carried an `ETag` is sent with `If-None-Match`, and a 304
 /// is answered with the copy kept from that last time, as a 200. Unchanged lists then cost the server no body. Only
 /// GETs are conditional: GitLab's REST lists and Notion's reads gain, but GitHub and Linear are read with one GraphQL
-/// POST each, which this doesn't cover (PERF-19). Sits behind the egress guard, so only allowed hosts are kept.
+/// POST each, which this doesn't cover. Sits behind the egress guard, so only allowed hosts are kept.
 pub struct ConditionalHttpClient {
     base: Arc<dyn HttpClient>,
     store: Arc<ETagStore>,

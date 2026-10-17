@@ -100,7 +100,7 @@ mod tests {
 
     #[test]
     fn the_interface_uses_the_same_steps() {
-        // The Windows and Linux interface draws the slider itself (PERF-14): its table must be this one.
+        // The Windows and Linux interface draws the slider itself: its table must be this one.
         let interface = include_str!("../../../app/src/lib/clock.ts");
         let table = interface.split("STEPS_MINUTES = [").nth(1).and_then(|rest| rest.split(']').next()).unwrap();
         // However the formatter lays the array out: one number per comma, a trailing comma allowed.

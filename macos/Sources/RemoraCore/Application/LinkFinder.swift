@@ -6,7 +6,7 @@ public struct LinkFinder: Sendable {
     public var similarity: [any SimilarityModel]
     /// At most this many links per item, most certain first.
     public var limit: Int
-    /// What the similarity models said of each pair of titles at the last search (ML-10): a refresh where nothing
+    /// What the similarity models said of each pair of titles at the last search: a refresh where nothing
     /// changed compares nothing again, and a new or renamed item only its own pairs. Shared by copies of the finder.
     let remembered = SimilarityMemory()
 

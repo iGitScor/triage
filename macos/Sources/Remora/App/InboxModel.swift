@@ -32,7 +32,7 @@ final class InboxModel {
             updateSpotlight()
         }
     }
-    /// What agents asked through `remora mcp`, oldest first (V15-01), for Settings.
+    /// What agents asked through `remora mcp`, oldest first, for Settings.
     private(set) var agentReads: [AgentRead] = []
     private(set) var reminders: [InboxItem] {
         didSet {
@@ -59,9 +59,9 @@ final class InboxModel {
     var query = ""
     /// Bumped each time the menu bar popover opens, so the inbox can pick its starting tab.
     var popoverOpenings = 0
-    /// The open-the-inbox shortcut is held by another app (MISS-04): Settings says so.
+    /// The open-the-inbox shortcut is held by another app: Settings says so.
     var openShortcutTaken = false
-    /// The tab a `remora://open?tab=…` link asked for (`myTurn`, `waiting`…), until the inbox shows it (IDEA-06).
+    /// The tab a `remora://open?tab=…` link asked for (`myTurn`, `waiting`…), until the inbox shows it.
     var requestedTab: String?
     var preferences: Preferences {
         didSet {
@@ -109,7 +109,7 @@ final class InboxModel {
     init(environment: AppEnvironment) {
         let embeddings = EmbeddingIntentClassifier()
         classifier = VerbClassifier([KeywordIntentClassifier(), embeddings])
-        // The sentence models load in the background at launch, so the first refresh doesn't wait for them (ML-09).
+        // The sentence models load in the background at launch, so the first refresh doesn't wait for them.
         Task.detached(priority: .utility) { embeddings.warmUp() }
         self.environment = environment
         http = environment.http
@@ -147,7 +147,7 @@ final class InboxModel {
             accountsService = AccountsService(
                 accounts: read(files.accounts) ?? [], secrets: environment.secrets, persistence: files)
             // Fetched again at the next refresh: a broken cache or brief is just started again. Cached items keep
-            // the verbs the refresh gave them, with the full classifier (ML-16).
+            // the verbs the refresh gave them, with the full classifier.
             itemsByAccount = files.cache.load() ?? [:]
             reminders = read(files.reminders) ?? []
             states = read(files.states) ?? [:]
@@ -219,7 +219,7 @@ final class InboxModel {
     }
 
     /// One link search at a time: a new one cancels the last, and only the newest result is kept, so an older
-    /// search finishing late can't bring back links to items already gone (PERF-18).
+    /// search finishing late can't bring back links to items already gone.
     private func recomputeLinks() {
         let items = allItems
         let finder = linkFinder
@@ -314,7 +314,7 @@ final class InboxModel {
     }
 
     /// The only way to build a plugin: it must be allowed, and it can only reach its declared hosts. A refresh
-    /// reuses what the account kept (PERF-09); connecting starts from nothing, so the token is really tested.
+    /// reuses what the account kept; connecting starts from nothing, so the token is really tested.
     private func sourcePlugin(_ account: Account, secrets: [String: String], remembering: Bool = true) throws
         -> any SourcePlugin
     {
@@ -382,13 +382,13 @@ final class InboxModel {
     }
 
     /// Whether an answer from this account may still be kept. The assistant can take a minute or more: an answer that
-    /// comes back after Erase, a disconnect or a policy that turns AI off is dropped (SEC-27).
+    /// comes back after Erase, a disconnect or a policy that turns AI off is dropped.
     private func stillAnswers(_ account: Account) -> Bool {
         assistantAccount?.id == account.id
     }
 
     /// What a brief is written from: the task in progress (marked so), the pinned items and My turn, as the
-    /// assistant may see them (AI-20).
+    /// assistant may see them.
     var briefItems: [InboxItem] {
         let layout = layout
         let started = layout.inProgress.map { item in
@@ -520,7 +520,7 @@ final class InboxModel {
                 accountName: account.name ?? PluginRegistry.manifest(account.pluginID)?.name ?? account.pluginID)
         }
         let shown = notices.map { notice in notice.isSummary ? notice : respectingPrivacy(notice, from: pluginID) }
-        // Grouped at set times: what arrived or changed waits for `tick` (IDEA-26).
+        // Grouped at set times: what arrived or changed waits for `tick`.
         for notice in sync.hold(shown, batching: effectivePreferences.batchNotifications) {
             environment.notifications.post(notice)
         }
@@ -1084,7 +1084,7 @@ final class InboxModel {
         title: "Connection test", context: "Remora", date: .now
     )
 
-    /// Keeps an agent's request through the MCP server (V15-01): the most recent `AgentRead.kept`.
+    /// Keeps an agent's request through the MCP server: the most recent `AgentRead.kept`.
     func recordAgentRead(_ read: AgentRead) {
         agentReads = AgentRead.adding(read, to: agentReads)
         persistence.save(agentReads, to: persistence.agentReads)

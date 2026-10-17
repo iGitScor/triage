@@ -1,7 +1,7 @@
 import Foundation
 import RemoraCore
 
-/// The Spotlight service: what this launch put in Spotlight, and the difference sent at each change (IDEA-38).
+/// The Spotlight service: what this launch put in Spotlight, and the difference sent at each change.
 /// Spotlight holds the inbox's titles and where they come from only while the user wants it, and never a blocked
 /// tool's or one whose content is hidden. The demo indexes nothing. Mac only: Windows has no Spotlight.
 @MainActor

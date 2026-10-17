@@ -1,4 +1,4 @@
-//! `remora://` links (IDEA-06): what Shortcuts, Raycast, Alfred, a Stream Deck or a script may ask of Remora. Only
+//! `remora://` links: what Shortcuts, Raycast, Alfred, a Stream Deck or a script may ask of Remora. Only
 //! what the user then sees: open the inbox (on a tab), open the reminder panel filled in, refresh. Nothing that marks
 //! an item done or snoozes it without the user. Same rule on macOS (`RemoraLink.swift`).
 

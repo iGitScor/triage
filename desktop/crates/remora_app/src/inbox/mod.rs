@@ -135,7 +135,7 @@ pub struct Inbox {
     links: HashMap<String, Vec<String>>,
     /// The states and reminders before the last Done or Clear all, until the next one.
     undo_point: Option<(HashMap<String, ItemState>, Vec<InboxItem>)>,
-    /// What agents asked through the MCP server, oldest first (V15-01).
+    /// What agents asked through the MCP server, oldest first.
     agent_reads: Vec<remora_core::AgentRead>,
 }
 
@@ -154,7 +154,7 @@ impl Inbox {
                 files.load(USAGE).unwrap_or_default(),
                 files.clone(),
             ),
-            // Cached items keep the verbs the refresh gave them (ML-16).
+            // Cached items keep the verbs the refresh gave them.
             items: files.load(CACHE).unwrap_or_default(),
             states: files.load(STATES).unwrap_or_default(),
             reminders: files.load(REMINDERS).unwrap_or_default(),
@@ -674,7 +674,7 @@ impl Inbox {
         self.persistence.store()
     }
 
-    /// An agent's request through the MCP server (V15-01), kept for Settings: the most recent `AGENT_READS_KEPT`.
+    /// An agent's request through the MCP server, kept for Settings: the most recent `AGENT_READS_KEPT`.
     pub fn record_agent_read(&mut self, read: remora_core::AgentRead) {
         self.agent_reads.push(read);
         let excess = self.agent_reads.len().saturating_sub(remora_core::AGENT_READS_KEPT);
@@ -682,7 +682,7 @@ impl Inbox {
         self.persistence.save(AGENT_READS, &self.agent_reads);
     }
 
-    /// Whether the `remora` command and the MCP server may read the inbox (`AllowLocalAPI`, V15-10).
+    /// Whether the `remora` command and the MCP server may read the inbox (`AllowLocalAPI`).
     pub fn local_api_allowed(&self) -> bool {
         self.managed.local_api_allowed()
     }
@@ -1020,7 +1020,7 @@ mod tests {
         assert!(inbox.layout(now(), "").in_progress.is_empty());
     }
 
-    /// IDEA-26: grouped at set times, arrivals wait for the next one, then come as they are or as one; reminders
+    /// Grouped at set times, arrivals wait for the next one, then come as they are or as one; reminders
     /// don't wait, and turning grouping off sends what waited.
     #[test]
     fn notifications_grouped_at_set_times_wait_for_the_next_one() {
@@ -1295,7 +1295,7 @@ mod tests {
         }
     }
 
-    /// TEST-01: the identity a session learned is reused across refreshes, and asked again where it may have
+    /// The identity a session learned is reused across refreshes, and asked again where it may have
     /// changed: connecting always tests the token, a new token starts over, and so does connecting again after a
     /// disconnect.
     #[tokio::test]
@@ -1444,7 +1444,7 @@ mod tests {
         assert!(store.load::<Vec<Account>>(ACCOUNTS).is_none());
     }
 
-    /// A refresh that brings nothing new writes no file (PERF-07).
+    /// A refresh that brings nothing new writes no file.
     #[test]
     fn a_refresh_with_nothing_new_writes_nothing() {
         let dir = tempfile::tempdir().unwrap();
@@ -1684,7 +1684,7 @@ mod tests {
         inbox.prepare_assistant_connect("openai", None, settings, &secrets, Arc::new(NoNetwork), "en").map(|(a, _)| a)
     }
 
-    /// UX-03: the assistant's key can be replaced in place: same account, new key, still under the policy.
+    /// The assistant's key can be replaced in place: same account, new key, still under the policy.
     #[test]
     fn the_assistants_key_is_updated_in_place() {
         let mut inbox = inbox();
@@ -1705,7 +1705,7 @@ mod tests {
         );
     }
 
-    /// AI-23: the organization's server replaces the user's, everywhere the account is used or shown.
+    /// The organization's server replaces the user's, everywhere the account is used or shown.
     #[test]
     fn the_organizations_ai_server_is_locked_in() {
         let mut inbox = inbox();
@@ -1831,7 +1831,7 @@ mod tests {
         assert!(inbox.brief().is_none(), "what the assistant wrote goes with it");
     }
 
-    /// SEC-27: the assistant is asked without the lock; what it answers after Erase, a disconnect or AI being turned
+    /// The assistant is asked without the lock; what it answers after Erase, a disconnect or AI being turned
     /// off is dropped, on screen and on disk.
     #[test]
     fn an_assistant_answer_that_outlives_its_account_is_dropped() {
@@ -1883,7 +1883,7 @@ mod tests {
         assert!(inbox.brief().is_none());
     }
 
-    /// AI-03: every request is counted with its tokens and kept on disk, the daily limit refuses the next one, and
+    /// Every request is counted with its tokens and kept on disk, the daily limit refuses the next one, and
     /// Erase forgets it.
     #[test]
     fn the_assistants_usage_is_recorded_limited_and_erased() {

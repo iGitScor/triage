@@ -7,7 +7,7 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke }))
 import QuickReminder from './QuickReminder.svelte'
 
 describe('QuickReminder', () => {
-  it('shows what a remora://remind link filled in, and saves nothing by itself (IDEA-06)', () => {
+  it('shows what a remora://remind link filled in, and saves nothing by itself', () => {
     const { container } = render(QuickReminder, {
       props: { shortcut: 'Ctrl+Alt+R', onclose: () => {}, filled: { text: 'Call Erin back', at: null } },
     })

@@ -20,7 +20,7 @@ pub struct PluginConfig {
 pub const IDENTITY_LIFETIME: Duration = Duration::from_secs(3600);
 
 /// What a plugin may keep between refreshes of one account, such as who the token belongs to: asking for it every
-/// few minutes costs a request and counts against the tool's rate limit (PERF-09). In memory only, and dropped by the
+/// few minutes costs a request and counts against the tool's rate limit. In memory only, and dropped by the
 /// app when the account is reconnected, changed, disconnected or erased. A new one keeps nothing yet, so a plugin
 /// built outside a refresh (tests, connecting) asks every time.
 #[derive(Default)]
@@ -126,7 +126,7 @@ pub struct SourceSnapshot {
 pub const TRUNCATED: &str = "%@ has more than Remora shows: only the latest 50 of each list are listed.";
 
 /// A part of a fetch that failed while the rest came through (approvals, thread replies, notifications…): said as
-/// a remark, so the inbox doesn't look complete when it isn't (CODE-02). `what` is a fixed English phrase.
+/// a remark, so the inbox doesn't look complete when it isn't. `what` is a fixed English phrase.
 pub fn partial(what: &str, error: &crate::PluginError) -> remora_core::Message {
     remora_core::Message::new(
         "partial",

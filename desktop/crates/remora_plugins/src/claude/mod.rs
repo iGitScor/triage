@@ -19,7 +19,7 @@ use remora_core::{Account, PluginManifest};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// The assistants, Claude Code first, as in the macOS app; then any OpenAI-compatible server (AI-23).
+/// The assistants, Claude Code first, as in the macOS app; then any OpenAI-compatible server.
 pub fn assistant_manifests() -> Vec<PluginManifest> {
     vec![code::manifest(), api::manifest(), crate::openai::manifest()]
 }
