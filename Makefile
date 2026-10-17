@@ -58,6 +58,7 @@ deps-check: ## Known vulnerabilities and licences, as the Dependencies workflow 
 	cd desktop && cargo deny check advisories licenses sources bans
 	cd desktop/app && npm audit --omit=dev --audit-level=high
 	cd docs && npm audit --audit-level=high
+	cd site && npm audit --audit-level=high
 	npm audit --audit-level=critical
 
 # macOS (macos/): Swift 6 package, macOS 14+, Xcode 16.

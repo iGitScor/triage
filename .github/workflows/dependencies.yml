@@ -12,6 +12,7 @@ on:
       - "package-lock.json"
       - "desktop/app/package-lock.json"
       - "docs/package-lock.json"
+      - "site/package-lock.json"
       - ".github/workflows/dependencies.yml"
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - "package-lock.json"
       - "desktop/app/package-lock.json"
       - "docs/package-lock.json"
+      - "site/package-lock.json"
       - ".github/workflows/dependencies.yml"
 
 permissions:
@@ -54,6 +56,11 @@ jobs:
       - name: Documentation
         run: npm audit --audit-level=high
         working-directory: docs
+      # The website's deploy tool (wrangler): the release workflow runs it with the Cloudflare token, so a high or
+      # critical advisory fails.
+      - name: Website deploy tool
+        run: npm audit --audit-level=high
+        working-directory: site
       # Repository tooling (Biome, lefthook): never shipped.
       - name: Tooling
         run: npm audit --audit-level=critical
