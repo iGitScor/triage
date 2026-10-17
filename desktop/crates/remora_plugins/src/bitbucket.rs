@@ -444,7 +444,7 @@ impl CloudPullRequest {
             self.destination.as_ref().and_then(|d| d.repository.as_ref()).and_then(|r| r.full_name.clone());
         let repository = repository.unwrap_or_default();
         InboxItem {
-            id: format!("{account_id}/{repository}/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("{repository}/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "bitbucket".into(),
             bundle: if authored { InboxBundle::authored() } else { InboxBundle::reviews() },
@@ -607,7 +607,7 @@ impl DataCenterPullRequest {
         .collect::<Vec<_>>()
         .join("/");
         InboxItem {
-            id: format!("{account_id}/{path}/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("{path}/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "bitbucket".into(),
             bundle: if authored { InboxBundle::authored() } else { InboxBundle::reviews() },

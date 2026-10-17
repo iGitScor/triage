@@ -272,7 +272,7 @@ impl AzureDevOpsPlugin {
         let repository = &pr.repository;
         let id = pr.pull_request_id.to_string();
         InboxItem {
-            id: format!("{account_id}/pr/{id}"),
+            id: InboxItem::make_id(account_id, format!("pr/{id}")),
             account_id: account_id.into(),
             plugin_id: "azuredevops".into(),
             bundle: if authored { InboxBundle::authored() } else { InboxBundle::reviews() },
@@ -568,7 +568,7 @@ impl WorkItem {
         let context =
             [self.fields.project.as_deref(), Some(kind.as_str())].into_iter().flatten().collect::<Vec<_>>().join(" · ");
         InboxItem {
-            id: format!("{account_id}/workitem/{id}"),
+            id: InboxItem::make_id(account_id, format!("workitem/{id}")),
             account_id: account_id.into(),
             plugin_id: "azuredevops".into(),
             bundle: InboxBundle::tasks(),

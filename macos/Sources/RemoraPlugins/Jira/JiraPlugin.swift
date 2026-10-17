@@ -233,7 +233,7 @@ extension JiraPlugin {
             if let due { badges.append(DueDate.badge(for: due)) }
             if let status = fields.status { badges.append(Badge(id: .status, label: status.name, tone: .neutral)) }
             return InboxItem(
-                id: "\(accountID.uuidString)/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: JiraPlugin.manifest.id,
                 bundle: .tasks,
@@ -268,7 +268,7 @@ extension JiraPlugin {
         func item(issue: Issue, host: URL, accountID: UUID) -> InboxItem {
             let summary = issue.fields.summary ?? issue.key
             return InboxItem(
-                id: "\(accountID.uuidString)/comment/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "comment/\(id)"),
                 accountID: accountID,
                 pluginID: JiraPlugin.manifest.id,
                 bundle: .mentions,
@@ -396,7 +396,7 @@ extension JiraPlugin {
             // A profile picture's path is on the site: `/wiki/aa-avatar/…`.
             let avatar = by?.profilePicture?.path.map { $0.hasPrefix("/") ? site + $0 : $0 }
             return InboxItem(
-                id: "\(accountID.uuidString)/confluence/\(content.id)",
+                id: InboxItem.makeID(account: accountID, local: "confluence/\(content.id)"),
                 accountID: accountID,
                 pluginID: JiraPlugin.manifest.id,
                 bundle: .mentions,

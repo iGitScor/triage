@@ -219,7 +219,7 @@ extension MicrosoftPlugin {
             let preview = bodyPreview?.split(whereSeparator: \.isWhitespace).joined(separator: " ")
             let subject = subject?.trimmingCharacters(in: .whitespaces).nilIfEmpty ?? L("(no subject)")
             return InboxItem(
-                id: "\(accountID.uuidString)/mail/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "mail/\(id)"),
                 accountID: accountID,
                 pluginID: MicrosoftPlugin.manifest.id,
                 bundle: bundle,
@@ -286,7 +286,7 @@ extension MicrosoftPlugin {
                         symbol: "calendar", tone: .neutral))
             }
             var item = InboxItem(
-                id: "\(accountID.uuidString)/event/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "event/\(id)"),
                 accountID: accountID,
                 pluginID: MicrosoftPlugin.manifest.id,
                 bundle: .reply,
@@ -352,7 +352,7 @@ extension MicrosoftPlugin {
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
             let preview = lines.dropFirst().joined(separator: " ")
             return InboxItem(
-                id: "\(accountID.uuidString)/chat/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "chat/\(id)"),
                 accountID: accountID,
                 pluginID: MicrosoftPlugin.manifest.id,
                 bundle: bundle,

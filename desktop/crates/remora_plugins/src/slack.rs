@@ -605,7 +605,7 @@ impl Reply {
             .as_ref()
             .and_then(|p| [&p.display_name, &p.real_name].into_iter().flatten().find(|n| !n.is_empty()).cloned());
         InboxItem {
-            id: format!("{account_id}/{}/thread/{}", thread.channel.id, thread.thread_ts()),
+            id: InboxItem::make_id(account_id, format!("{}/thread/{}", thread.channel.id, thread.thread_ts())),
             account_id: account_id.into(),
             plugin_id: "slack".into(),
             bundle: InboxBundle::mentions(),
@@ -777,7 +777,7 @@ impl Match {
         let lines: Vec<&str> = plain.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
         let preview = lines.iter().skip(1).copied().collect::<Vec<_>>().join(" ");
         InboxItem {
-            id: format!("{account_id}/{id}"),
+            id: InboxItem::make_id(account_id, id),
             account_id: account_id.into(),
             plugin_id: "slack".into(),
             bundle: if from_app { InboxBundle::read() } else { bundle },

@@ -11,16 +11,24 @@ struct GitLabPluginTests {
          "reviewers": [{"username": "erin"}, {"username": "frank"}], "user_notes_count": 2, "has_conflicts": false,
          "references": {"full": "g/p!12"}, "detailed_merge_status": "mergeable"}
         """
+    /// The merge request to review: `mr` under another id, so its details come from the same routes.
+    var review: String { mr.replacingOccurrences(of: #""id": 101"#, with: #""id": 102"#) }
+    var lists: [String: String] {
+        [
+            "/api/v4/merge_requests?scope=created_by_me": "[\(mr)]",
+            "/api/v4/merge_requests?reviewer_username=": "[\(review)]",
+        ]
+    }
 
     @Test func mapsMergeRequestsWithApprovalsAndPipeline() async throws {
-        let http = StubHTTP(routes: [
-            "/api/v4/user": #"{"username": "alice"}"#,
-            "/api/v4/merge_requests": "[\(mr)]",
-            "/merge_requests/12/approvals": #"{"approved": true, "approved_by": [{"user": {"username": "erin"}}]}"#,
-            "/merge_requests/12": #"{"head_pipeline": {"status": "success"}}"#,
-            "/merge_requests/12/diffs":
-                #"[{"new_path": "db/migrate/add_avatars.rb", "old_path": "db/migrate/add_avatars.rb", "diff": "+ secret code"}]"#,
-        ])
+        let http = StubHTTP(
+            routes: lists.merging([
+                "/api/v4/user": #"{"username": "alice"}"#,
+                "/merge_requests/12/approvals": #"{"approved": true, "approved_by": [{"user": {"username": "erin"}}]}"#,
+                "/merge_requests/12": #"{"head_pipeline": {"status": "success"}}"#,
+                "/merge_requests/12/diffs":
+                    #"[{"new_path": "db/migrate/add_avatars.rb", "old_path": "db/migrate/add_avatars.rb", "diff": "+ secret code"}]"#,
+            ]) { a, _ in a })
         let plugin = try GitLabPlugin(config: config(["host": "gitlab.acme.io", "token": "t"]), http: http)
         let snapshot = try await plugin.fetch()
 
@@ -53,9 +61,7 @@ struct GitLabPluginTests {
                 return try await base.send(request)
             }
         }
-        let routes = [
-            "/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[\(mr)]", "/api/v4/todos": "[]",
-        ]
+        let routes = lists.merging(["/api/v4/user": #"{"username": "alice"}"#, "/api/v4/todos": "[]"]) { a, _ in a }
         // No approvals, pipeline or diffs routes: each answers 404.
         let plugin = try GitLabPlugin(
             config: config(["host": "gitlab.acme.io", "token": "t"]), http: StubHTTP(routes: routes))
@@ -69,24 +75,30 @@ struct GitLabPluginTests {
         await #expect(throws: HTTPError.rateLimited(nil)) { try await limited.fetch() }
     }
 
+    /// CODE-06: a merge request of yours where you are also a reviewer comes once, as yours. Same on Windows.
+    @Test func yourMergeRequestYouAlsoReviewComesOnce() async throws {
+        let http = StubHTTP(routes: ["/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[\(mr)]"])
+        let snapshot = try await GitLabPlugin(config: config(["host": "gitlab.acme.io", "token": "t"]), http: http)
+            .fetch()
+        #expect(snapshot.items.map(\.bundle) == [.authored])
+    }
+
     /// One GraphQL request instead of two or three REST calls per merge request.
     @Test func detailsComeFromOneGraphQLRequest() async throws {
         let graphQL = """
             {"data": {"currentUser": {
               "authored": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
                 "approvedBy": {"nodes": [{"username": "erin", "avatarUrl": null}]}, "headPipeline": {"status": "FAILED"}}]},
-              "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
+              "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/102", "approved": true,
                 "approvedBy": {"nodes": [{"username": "erin"}]}, "headPipeline": {"status": "FAILED"},
                 "diffStats": [{"path": "app/models/user.rb", "additions": 12, "deletions": 3}]}]}
             }}}
             """
         let http = RecordingHTTP(
-            StubHTTP(routes: [
-                "/api/v4/user": #"{"username": "alice"}"#,
-                "/api/v4/merge_requests": "[\(mr)]",
-                "/api/graphql": graphQL,
-                "/api/v4/todos": "[]",
-            ]))
+            StubHTTP(
+                routes: lists.merging([
+                    "/api/v4/user": #"{"username": "alice"}"#, "/api/graphql": graphQL, "/api/v4/todos": "[]",
+                ]) { a, _ in a }))
         let snapshot = try await GitLabPlugin(config: config(["host": "gitlab.acme.io", "token": "t"]), http: http)
             .fetch()
 

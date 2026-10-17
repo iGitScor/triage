@@ -498,7 +498,7 @@ extension SlackPlugin {
                     .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
                 let name = userProfile?.displayName?.nilIfEmpty ?? userProfile?.realName?.nilIfEmpty
                 return InboxItem(
-                    id: "\(accountID.uuidString)/\(thread.channel.id)/thread/\(thread.threadTS)",
+                    id: InboxItem.makeID(account: accountID, local: "\(thread.channel.id)/thread/\(thread.threadTS)"),
                     accountID: accountID,
                     pluginID: SlackPlugin.manifest.id,
                     bundle: .mentions,
@@ -614,7 +614,7 @@ extension SlackPlugin {
             let lines = SlackText.plain(words, me: me).split(separator: "\n", omittingEmptySubsequences: true)
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
             var item = InboxItem(
-                id: "\(accountID.uuidString)/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: SlackPlugin.manifest.id,
                 bundle: isFromApp ? .read : bundle,

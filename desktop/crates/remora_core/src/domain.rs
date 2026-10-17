@@ -96,6 +96,23 @@ impl InboxItem {
         self.badges.iter().any(|b| b.id == id)
     }
 
+    /// Item ids are the account's id, a slash, then the plugin's own id (Swift's `InboxItem.makeID`). Two accounts on
+    /// the same tool never share an item (Done, snoozes and pins are kept by id), and an account connected again finds
+    /// its items.
+    pub fn make_id(account_id: &str, local: impl std::fmt::Display) -> String {
+        format!("{}{local}", Self::account_prefix(account_id))
+    }
+
+    /// What starts the id of every item of this account.
+    pub fn account_prefix(account_id: &str) -> String {
+        format!("{account_id}/")
+    }
+
+    /// The plugin's own part of the id; none when the id doesn't start with this item's account.
+    pub fn local_id(&self) -> Option<&str> {
+        self.id.strip_prefix(self.account_id.as_str())?.strip_prefix('/')
+    }
+
     /// Counted in the tray and announced on arrival.
     pub fn counts(&self) -> bool {
         !self.bundle.is_quiet() && self.priority != Some(Priority::Low)

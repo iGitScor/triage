@@ -100,7 +100,8 @@ mod tests {
     }
 
     /// TEST-03: every source and assistant fetches its fixture through the guard, with the hosts the app allows it:
-    /// the fetch succeeds and every host it asked is declared. A plugin added without a fixture fails. Same on macOS.
+    /// the fetch succeeds, every host it asked is declared, and its item ids follow `InboxItem::make_id` (CODE-06).
+    /// A plugin added without a fixture fails. Same on macOS.
     #[tokio::test]
     async fn plugins_use_only_their_declared_hosts() {
         for manifest in manifests().into_iter().chain(claude::assistant_manifests()) {
@@ -130,6 +131,16 @@ mod tests {
                 // A list cut at 50 may be said; a part that couldn't be read may not.
                 let failures: Vec<_> = snapshot.remarks.iter().filter(|r| r.code != "truncated").collect();
                 assert!(!snapshot.items.is_empty() && failures.is_empty(), "{id}: {failures:?}");
+                // CODE-06: ids start with the account's, so two accounts never share an item, and are unique.
+                for item in &snapshot.items {
+                    assert!(
+                        item.account_id == account.id && item.local_id().is_some_and(|l| !l.is_empty()),
+                        "{id}: {}",
+                        item.id
+                    );
+                }
+                let ids: std::collections::HashSet<_> = snapshot.items.iter().map(|i| i.id.as_str()).collect();
+                assert_eq!(ids.len(), snapshot.items.len(), "{id} repeats an item id");
             }
             let hosts = http.hosts();
             assert!(!hosts.is_empty(), "{id}");

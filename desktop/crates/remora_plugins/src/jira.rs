@@ -355,7 +355,7 @@ impl Issue {
             badges.push(Badge::new(badge::STATUS, &status.name, Tone::Neutral));
         }
         InboxItem {
-            id: format!("{account_id}/{}", self.id),
+            id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "jira".into(),
             bundle: InboxBundle::tasks(),
@@ -392,7 +392,7 @@ impl Comment {
     fn item(&self, issue: &Issue, host: &str, account_id: &str) -> InboxItem {
         let text = self.body.text();
         InboxItem {
-            id: format!("{account_id}/comment/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("comment/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "jira".into(),
             bundle: InboxBundle::mentions(),
@@ -580,7 +580,7 @@ impl ConfluenceResult {
         let excerpt = confluence_excerpt(self.excerpt.as_deref().unwrap_or_default());
         let by = self.last_editor();
         Some(InboxItem {
-            id: format!("{account_id}/confluence/{}", content.id),
+            id: InboxItem::make_id(account_id, format!("confluence/{}", content.id)),
             account_id: account_id.into(),
             plugin_id: "jira".into(),
             bundle: InboxBundle::mentions(),

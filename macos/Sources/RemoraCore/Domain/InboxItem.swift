@@ -82,6 +82,21 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     public func hasBadge(_ id: BadgeID) -> Bool { badges.contains { $0.id == id } }
 }
 
+/// Item ids are the account's id, a slash, then the plugin's own id. Two accounts on the same tool never share an
+/// item (Done, snoozes and pins are kept by id), and an account connected again finds its items (`moved`).
+extension InboxItem {
+    public static func makeID(account: UUID, local: String) -> String { accountPrefix(account) + local }
+
+    /// What starts the id of every item of this account, to find them all (notifications at a disconnect).
+    public static func accountPrefix(_ account: UUID) -> String { "\(account.uuidString)/" }
+
+    /// The plugin's own part of the id; nil when the id doesn't start with this item's account.
+    public var localID: String? {
+        let prefix = Self.accountPrefix(accountID)
+        return id.hasPrefix(prefix) ? String(id.dropFirst(prefix.count)) : nil
+    }
+}
+
 public struct ChangeSet: Hashable, Codable, Sendable {
     public var files: [ChangedFile]
     /// All files changed, which can exceed the listed ones.

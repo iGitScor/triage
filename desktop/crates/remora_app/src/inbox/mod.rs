@@ -1343,7 +1343,7 @@ mod tests {
                 .prepare_connect("linear", name.map(Into::into), HashMap::new(), &secrets, Arc::new(NoNetwork))
                 .unwrap();
             let mut issue = item("x", InboxBundle::tasks());
-            issue.id = format!("{}/issue-1", account.id);
+            issue.id = InboxItem::make_id(&account.id, "issue-1");
             issue.account_id = account.id.clone();
             let snapshot = SourceSnapshot { identity: "Alice".into(), items: vec![issue], remarks: vec![] };
             saved!(*inbox, |tokens, shared| tokens.connect(&shared, account, secrets, snapshot, now())).unwrap();

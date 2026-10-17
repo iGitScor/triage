@@ -408,10 +408,10 @@ impl Inbox {
         if let Some(existing) = self.existing_account(&account, &snapshot.identity).map(|a| a.id.clone()) {
             let mut snapshot = snapshot;
             for item in &mut snapshot.items {
-                item.account_id = existing.clone();
-                if let Some(rest) = item.id.strip_prefix(account.id.as_str()) {
-                    item.id = format!("{existing}{rest}");
+                if let Some(local) = item.local_id().filter(|_| item.account_id == account.id) {
+                    item.id = InboxItem::make_id(&existing, local);
                 }
+                item.account_id = existing.clone();
             }
             if let Some(name) = account.name {
                 self.accounts.set_name(&existing, name);

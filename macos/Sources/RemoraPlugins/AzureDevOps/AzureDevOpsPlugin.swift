@@ -196,7 +196,7 @@ public struct AzureDevOpsPlugin: SourcePlugin {
         }
         let pushed = iteration.flatMap { $0.updatedDate ?? $0.createdDate }
         return InboxItem(
-            id: "\(accountID.uuidString)/pr/\(pr.pullRequestId)",
+            id: InboxItem.makeID(account: accountID, local: "pr/\(pr.pullRequestId)"),
             accountID: accountID,
             pluginID: manifest.id,
             bundle: authored ? .authored : .reviews,
@@ -363,7 +363,7 @@ extension AzureDevOpsPlugin {
             if let state = fields.state { badges.append(Badge(id: .status, label: state, tone: .neutral)) }
             let kind = [fields.type, String(id)].compactMap { $0 }.joined(separator: " ")
             return InboxItem(
-                id: "\(accountID.uuidString)/workitem/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "workitem/\(id)"),
                 accountID: accountID,
                 pluginID: AzureDevOpsPlugin.manifest.id,
                 bundle: .tasks,

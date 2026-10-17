@@ -43,7 +43,8 @@ struct ComplianceTests {
     }
 
     /// Every plugin in the registry fetches its fixture through the guard, with the hosts the app would allow it: the
-    /// fetch succeeds and every host it asked is declared. A plugin added without a fixture here fails.
+    /// fetch succeeds, every host it asked is declared, and its item ids follow `InboxItem.makeID`. A plugin added
+    /// without a fixture here fails.
     @Test(arguments: (PluginRegistry.manifests + PluginRegistry.assistantManifests).map(\.id))
     func pluginsUseOnlyTheirDeclaredHosts(id: String) async throws {
         let manifest = try #require(PluginRegistry.manifest(id))
@@ -55,10 +56,16 @@ struct ComplianceTests {
         let allowed = manifest.allowedHosts(in: settings)
         let http = HostRecorder(GuardedHTTPClient(stub, allowing: allowed))
         if let source = PluginRegistry.source(id) {
-            let snapshot = try await source.init(config: config(settings), http: http).fetch()
+            let account = config(settings)
+            let snapshot = try await source.init(config: account, http: http).fetch()
             // A list cut at 50 may be said; a part that couldn't be read may not.
             let failures = snapshot.remarks.filter { $0 != SourceSnapshot.truncated(manifest.name) }
             #expect(!snapshot.items.isEmpty && failures.isEmpty, "\(id): \(failures)")
+            // CODE-06: ids start with the account's, so two accounts never share an item, and are unique.
+            for item in snapshot.items {
+                #expect(item.accountID == account.accountID && item.localID?.isEmpty == false, "\(id): \(item.id)")
+            }
+            #expect(Set(snapshot.items.map(\.id)).count == snapshot.items.count, "\(id) repeats an item id")
         } else {
             let assistant = try #require(PluginRegistry.assistants.first { $0.manifest.id == id })
             let item = InboxItem(
@@ -88,19 +95,19 @@ struct ComplianceTests {
             return .fetch(
                 ["host": "github.com", "token": "t"], StubHTTP(routes: ["/graphql": GitHubPluginTests().response]))
         case "gitlab":
-            let mr = GitLabPluginTests().mr
             return .fetch(
                 ["host": "gitlab.com", "token": "t"],
-                StubHTTP(routes: [
-                    "/api/v4/user": #"{"username": "alice"}"#, "/api/v4/merge_requests": "[\(mr)]",
-                    "/api/v4/todos": "[]",
-                    "/api/graphql": """
-                    {"data": {"currentUser": {
-                      "authored": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true, "headPipeline": {"status": "SUCCESS"}}]},
-                      "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true, "diffStats": []}]}
-                    }}}
-                    """,
-                ]))
+                StubHTTP(
+                    routes: GitLabPluginTests().lists.merging([
+                        "/api/v4/user": #"{"username": "alice"}"#,
+                        "/api/v4/todos": "[]",
+                        "/api/graphql": """
+                        {"data": {"currentUser": {
+                          "authored": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true, "headPipeline": {"status": "SUCCESS"}}]},
+                          "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/102", "approved": true, "diffStats": []}]}
+                        }}}
+                        """,
+                    ]) { a, _ in a }))
         case "bitbucket":
             let tests = BitbucketPluginTests()
             return .fetch(

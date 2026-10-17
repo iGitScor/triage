@@ -82,8 +82,8 @@ Then:
 
 ## Mapping to inbox items
 
-- **`id`** must be stable across refreshes: `"\(accountID.uuidString)/<remote id>"`. Done, Pin and Snooze are keyed
-  on it.
+- **`id`** must be stable across refreshes and unique in the snapshot: `InboxItem.makeID(account: accountID, local:
+  "<remote id>")` (`InboxItem::make_id` on Windows). Done, Pin and Snooze are keyed on it; the plugin tests check it.
 - **`bundle`**: pick the *kind* the tool reported (`.reviews`, `.mentions`, `.directMessages`, `.authored`,
   `.tasks`). `VerbClassifier` then moves it to a verb (*To reply*, *To fix*…). Add a bundle to `InboxBundle.swift`
   only for a genuinely new kind of ask.

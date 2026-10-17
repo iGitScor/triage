@@ -42,6 +42,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- GitLab: a merge request of yours where you are also a reviewer shows once, in your merge requests, instead of
+  twice sharing its Done, snooze and pin.
 - "Merci d'accepter", "merci de relire" ask for something, and "merci de ton retour", "merci d'avoir regardé" thank:
   the first went to *Done* and the second to *To reply*, on every app.
 - Related items: a version or an encoding ("UTF-8", "SHA-256", "node-20") no longer counts as a ticket key, so two

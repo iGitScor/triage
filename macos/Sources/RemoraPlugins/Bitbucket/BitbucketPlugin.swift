@@ -300,7 +300,7 @@ extension BitbucketPlugin {
                 )
                 let repository = destination?.repository?.fullName ?? ""
                 return InboxItem(
-                    id: "\(accountID.uuidString)/\(repository)/\(id)",
+                    id: InboxItem.makeID(account: accountID, local: "\(repository)/\(id)"),
                     accountID: accountID,
                     pluginID: BitbucketPlugin.manifest.id,
                     bundle: authored ? .authored : .reviews,
@@ -394,7 +394,7 @@ extension BitbucketPlugin {
                 let repository = toRef?.repository
                 let path = [repository?.project?.key, repository?.slug].compactMap { $0 }.joined(separator: "/")
                 return InboxItem(
-                    id: "\(accountID.uuidString)/\(path)/\(id)",
+                    id: InboxItem.makeID(account: accountID, local: "\(path)/\(id)"),
                     accountID: accountID,
                     pluginID: BitbucketPlugin.manifest.id,
                     bundle: authored ? .authored : .reviews,

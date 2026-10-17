@@ -60,9 +60,11 @@ public struct GitLabPlugin: SourcePlugin {
         async let todos = BestEffort.attempt {
             try await get("todos", ["state": "pending", "per_page": Self.perPage]) as [Todo]
         }
-        let all = try await [(authored, true), (reviewing, false)].flatMap { list, isAuthored in
-            list.map { ($0, isAuthored) }
-        }
+        // A merge request of yours where you are also a reviewer comes once, as yours: the same id twice would share
+        // its Done, snooze and pin between two rows.
+        let mine = try await authored
+        let mineIDs = Set(mine.map(\.id))
+        let all = try await mine.map { ($0, true) } + reviewing.filter { !mineIDs.contains($0.id) }.map { ($0, false) }
         // Approvals, pipeline and changed files for every merge request in one GraphQL request, instead of two or
         // three REST calls each. An instance where it fails (older GitLab, GraphQL off) gets the REST calls.
         var details: [Int: GraphQL.Details] = [:]
@@ -175,7 +177,7 @@ public struct GitLabPlugin: SourcePlugin {
 
         let project = mr.references?.full.components(separatedBy: "!").first ?? "project \(mr.projectId)"
         return InboxItem(
-            id: "\(accountID.uuidString)/\(mr.id)",
+            id: InboxItem.makeID(account: accountID, local: "\(mr.id)"),
             accountID: accountID,
             pluginID: manifest.id,
             bundle: authored ? .authored : .reviews,
@@ -256,7 +258,7 @@ extension GitLabPlugin {
             let context = targetType == "Issue" && target?.iid != nil ? "\(project) #\(target!.iid!)" : project
             let preview = mention ? body.map(Readable.text).flatMap { $0.isEmpty || $0 == title ? nil : $0 } : nil
             return InboxItem(
-                id: "\(accountID.uuidString)/todo/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "todo/\(id)"),
                 accountID: accountID,
                 pluginID: GitLabPlugin.manifest.id,
                 bundle: mention ? .mentions : .tasks,

@@ -178,7 +178,7 @@ struct AssignedIssue: Decodable {
 
     func item(accountID: UUID) -> InboxItem {
         InboxItem(
-            id: "\(accountID.uuidString)/\(id)",
+            id: InboxItem.makeID(account: accountID, local: "\(id)"),
             accountID: accountID,
             pluginID: GitHubPlugin.manifest.id,
             bundle: .tasks,
@@ -250,7 +250,7 @@ struct PullRequest: Decodable {
             deletions: deletions
         )
         return InboxItem(
-            id: "\(accountID.uuidString)/\(id)",
+            id: InboxItem.makeID(account: accountID, local: "\(id)"),
             accountID: accountID,
             pluginID: GitHubPlugin.manifest.id,
             bundle: bundle,

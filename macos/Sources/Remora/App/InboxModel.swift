@@ -285,7 +285,7 @@ final class InboxModel {
             if itemsByAccount[account.id] != nil {
                 itemsByAccount[account.id] = nil
                 sync.unsynced(account.id)
-                environment.notifications.remove(itemsWithPrefix: "\(account.id.uuidString)/")
+                environment.notifications.remove(itemsWithPrefix: InboxItem.accountPrefix(account.id))
                 dropped = true
             }
         }
@@ -1147,7 +1147,7 @@ final class InboxModel {
         if PluginRegistry.isAssistant(account.pluginID) { assistant.disconnected() }
         itemsByAccount[account.id] = nil
         sync.forget(account.id)
-        environment.notifications.remove(itemsWithPrefix: "\(account.id.uuidString)/")
+        environment.notifications.remove(itemsWithPrefix: InboxItem.accountPrefix(account.id))
         persistence.save(itemsByAccount, to: persistence.cache)
         pruneStates()
     }
@@ -1187,11 +1187,11 @@ extension Account {
 }
 
 extension InboxItem {
-    /// The item as the account `to` fetched it: plugins put the account id at the start of item ids.
+    /// The item as the account `to` fetched it: its id starts with the new account's (`InboxItem.makeID`).
     func moved(from old: UUID, to new: UUID) -> InboxItem {
         var item = self
+        if accountID == old, let local = localID { item.id = Self.makeID(account: new, local: local) }
         item.accountID = new
-        if item.id.hasPrefix(old.uuidString) { item.id = new.uuidString + item.id.dropFirst(old.uuidString.count) }
         return item
     }
 }

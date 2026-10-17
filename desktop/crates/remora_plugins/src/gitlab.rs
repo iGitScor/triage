@@ -181,7 +181,7 @@ impl GitLabPlugin {
             .and_then(|r| r.full.split('!').next().map(str::to_string))
             .unwrap_or_else(|| format!("project {}", mr.project_id));
         InboxItem {
-            id: format!("{account_id}/{}", mr.id),
+            id: InboxItem::make_id(account_id, mr.id),
             account_id: account_id.into(),
             plugin_id: "gitlab".into(),
             bundle: if authored { InboxBundle::authored() } else { InboxBundle::reviews() },
@@ -242,8 +242,14 @@ impl SourcePlugin for GitLabPlugin {
         } else {
             vec![]
         };
-        let all: Vec<(MergeRequest, bool)> =
-            authored.into_iter().map(|mr| (mr, true)).chain(reviewing.into_iter().map(|mr| (mr, false))).collect();
+        // A merge request of yours where you are also a reviewer comes once, as yours: the same id twice would share
+        // its Done, snooze and pin between two rows. Same on macOS.
+        let mine: HashSet<u64> = authored.iter().map(|mr| mr.id).collect();
+        let all: Vec<(MergeRequest, bool)> = authored
+            .into_iter()
+            .map(|mr| (mr, true))
+            .chain(reviewing.into_iter().filter(|mr| !mine.contains(&mr.id)).map(|mr| (mr, false)))
+            .collect();
         // One GraphQL request for every merge request's details; an instance where it fails gets the REST calls.
         let details = if all.is_empty() {
             HashMap::new()
@@ -350,7 +356,7 @@ impl Todo {
         };
         let preview = if mention { self.body.as_deref().map(remora_core::text::readable) } else { None };
         Some(InboxItem {
-            id: format!("{account_id}/todo/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("todo/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "gitlab".into(),
             bundle: if mention { InboxBundle::mentions() } else { InboxBundle::tasks() },
@@ -556,12 +562,18 @@ pub(crate) mod tests {
      "reviewers": [{"username": "erin"}, {"username": "frank"}], "user_notes_count": 2, "has_conflicts": false,
      "references": {"full": "g/p!12"}, "detailed_merge_status": "mergeable"}"#;
 
+    /// The merge request to review: `MR` under another id, so its details come from the same routes.
+    fn review() -> String {
+        MR.replace(r#""id": 101"#, r#""id": 102"#)
+    }
+
     #[tokio::test]
     async fn maps_merge_requests_with_approvals_and_pipeline() {
-        let list = format!("[{MR}]");
+        let (mine, others) = (format!("[{MR}]"), format!("[{}]", review()));
         let http = StubHttp::paths(&[
             ("/api/v4/user", r#"{"username": "alice"}"#),
-            ("/api/v4/merge_requests", &list),
+            ("/api/v4/merge_requests?scope=created_by_me", &mine),
+            ("/api/v4/merge_requests?reviewer_username=", &others),
             ("/merge_requests/12/approvals", r#"{"approved": true, "approved_by": [{"user": {"username": "erin"}}]}"#),
             ("/projects/5/merge_requests/12", r#"{"head_pipeline": {"status": "success"}}"#),
             (
@@ -615,9 +627,13 @@ pub(crate) mod tests {
                 self.0.send(request).await
             }
         }
-        let list = format!("[{MR}]");
-        let routes =
-            [("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", list.as_str()), ("/todos", "[]")];
+        let (mine, others) = (format!("[{MR}]"), format!("[{}]", review()));
+        let routes = [
+            ("/api/v4/user", r#"{"username": "alice"}"#),
+            ("/api/v4/merge_requests?scope=created_by_me", mine.as_str()),
+            ("/api/v4/merge_requests?reviewer_username=", others.as_str()),
+            ("/todos", "[]"),
+        ];
         let plugin = |http: Arc<dyn crate::HttpClient>| {
             GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), http).unwrap()
         };
@@ -644,18 +660,29 @@ pub(crate) mod tests {
         assert_eq!(http.paths().iter().filter(|p| p.ends_with("/user")).count(), 1);
     }
 
+    /// CODE-06: a merge request of yours where you are also a reviewer comes once, as yours. Same on macOS.
+    #[tokio::test]
+    async fn your_merge_request_you_also_review_comes_once() {
+        let list = format!("[{MR}]");
+        let http = StubHttp::paths(&[("/api/v4/user", r#"{"username": "alice"}"#), ("/api/v4/merge_requests", &list)]);
+        let plugin = GitLabPlugin::new(&config(&[("host", "gitlab.acme.io"), ("token", "t")]), Arc::new(http)).unwrap();
+        let snapshot = plugin.fetch().await.unwrap();
+        assert_eq!(snapshot.items.iter().map(|i| i.bundle.clone()).collect::<Vec<_>>(), [InboxBundle::authored()]);
+    }
+
     /// The user, the lists, the To-Dos and one GraphQL request for the details.
     fn graphql_stub() -> StubHttp {
-        let list = format!("[{MR}]");
+        let (mine, others) = (format!("[{MR}]"), format!("[{}]", review()));
         let graphql = r#"{"data": {"currentUser": {
           "authored": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
             "approvedBy": {"nodes": [{"username": "erin", "avatarUrl": null}]}, "headPipeline": {"status": "FAILED"}}]},
-          "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/101", "approved": true,
+          "reviewing": {"nodes": [{"id": "gid://gitlab/MergeRequest/102", "approved": true,
             "approvedBy": {"nodes": [{"username": "erin"}]}, "headPipeline": {"status": "FAILED"},
             "diffStats": [{"path": "app/models/user.rb", "additions": 12, "deletions": 3}]}]}}}}"#;
         StubHttp::paths(&[
             ("/api/v4/user", r#"{"username": "alice"}"#),
-            ("/api/v4/merge_requests", &list),
+            ("/api/v4/merge_requests?scope=created_by_me", &mine),
+            ("/api/v4/merge_requests?reviewer_username=", &others),
             ("/api/graphql", graphql),
             ("/api/v4/todos", "[]"),
         ])

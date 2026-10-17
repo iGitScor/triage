@@ -85,8 +85,9 @@ Ensuite :
 
 ## Conversion en éléments de la boîte
 
-- **`id`** doit rester stable d’une actualisation à l’autre : `"\(accountID.uuidString)/<remote id>"`. Terminé,
-  Épingler et Reporter s’appuient dessus.
+- **`id`** doit rester stable d’une actualisation à l’autre et unique dans l’instantané :
+  `InboxItem.makeID(account: accountID, local: "<remote id>")` (`InboxItem::make_id` sous Windows). Terminé, Épingler
+  et Reporter s’appuient dessus ; les tests des extensions le vérifient.
 - **`bundle`** : choisissez le *type* signalé par l’outil (`.reviews`, `.mentions`, `.directMessages`, `.authored`,
   `.tasks`). `VerbClassifier` le fait ensuite passer à un verbe (*À répondre*, *À corriger*…). N’ajoutez un groupe
   à `InboxBundle.swift` que pour une demande d’un genre vraiment nouveau.

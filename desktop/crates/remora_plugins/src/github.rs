@@ -190,7 +190,7 @@ struct Issue {
 impl Issue {
     fn item(self, account_id: &str) -> InboxItem {
         InboxItem {
-            id: format!("{account_id}/{}", self.id),
+            id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "github".into(),
             bundle: InboxBundle::tasks(),
@@ -394,7 +394,7 @@ impl PullRequest {
             None
         };
         InboxItem {
-            id: format!("{account_id}/{}", self.id),
+            id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "github".into(),
             bundle,

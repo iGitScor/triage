@@ -209,7 +209,7 @@ impl Issue {
         }
         let priority = self.item_priority();
         InboxItem {
-            id: format!("{account_id}/{}", self.id),
+            id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "linear".into(),
             bundle: InboxBundle::tasks(),
@@ -289,7 +289,7 @@ impl Notification {
 
     fn item(&self, account_id: &str) -> InboxItem {
         InboxItem {
-            id: format!("{account_id}/notification/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("notification/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "linear".into(),
             bundle: InboxBundle::mentions(),

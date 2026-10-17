@@ -492,7 +492,7 @@ impl Page {
             badges.push(due_badge(due));
         }
         InboxItem {
-            id: format!("{account_id}/{}", self.id),
+            id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "notion".into(),
             bundle: InboxBundle::tasks(),

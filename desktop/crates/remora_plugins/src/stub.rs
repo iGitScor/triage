@@ -4,7 +4,8 @@ use async_trait::async_trait;
 use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 
-/// Answers by the end of the URL path, or by a word in the request body.
+/// Answers by the end of the URL path, or by a word in the request body. A path route with a `?` also needs that
+/// text in the query (`"/merge_requests?scope=created_by_me"`); the longest matching route wins.
 pub struct StubHttp {
     pub by_path: Vec<(&'static str, String)>,
     pub by_body: Vec<(&'static str, String)>,
@@ -23,11 +24,18 @@ impl StubHttp {
 #[async_trait]
 impl HttpClient for StubHttp {
     async fn send(&self, request: Request) -> Result<Response, PluginError> {
-        let path = reqwest::Url::parse(&request.url).map(|u| u.path().to_string()).unwrap_or_default();
+        let url = reqwest::Url::parse(&request.url).ok();
+        let path = url.as_ref().map(|u| u.path().to_string()).unwrap_or_default();
+        let query = url.as_ref().and_then(|u| u.query().map(str::to_string)).unwrap_or_default();
+        let matches = |route: &str| match route.split_once('?') {
+            Some((suffix, part)) => path.ends_with(suffix) && query.contains(part),
+            None => path.ends_with(route),
+        };
         let body = request.body.clone().unwrap_or_default();
-        let answer = self.by_body.iter().find(|(word, _)| body.contains(word)).or_else(|| {
-            self.by_path.iter().filter(|(suffix, _)| path.ends_with(suffix)).max_by_key(|(suffix, _)| suffix.len())
-        });
+        let answer =
+            self.by_body.iter().find(|(word, _)| body.contains(word)).or_else(|| {
+                self.by_path.iter().filter(|(route, _)| matches(route)).max_by_key(|(route, _)| route.len())
+            });
         Ok(match answer {
             Some((_, json)) => Response { status: 200, body: json.clone(), etag: None, reset: None },
             None => Response { status: 404, body: String::new(), etag: None, reset: None },

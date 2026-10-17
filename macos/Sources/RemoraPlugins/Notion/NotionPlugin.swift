@@ -323,7 +323,7 @@ extension NotionPlugin {
             if let status { badges.append(Badge(id: .status, label: status, tone: .neutral)) }
             if let due { badges.append(DueDate.badge(for: due)) }
             return InboxItem(
-                id: "\(accountID.uuidString)/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: NotionPlugin.manifest.id,
                 bundle: .tasks,

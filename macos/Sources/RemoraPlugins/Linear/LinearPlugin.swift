@@ -157,7 +157,7 @@ extension LinearPlugin {
             if let state { badges.append(Badge(id: .status, label: state.name, tone: .neutral)) }
             let priority = itemPriority
             return InboxItem(
-                id: "\(accountID.uuidString)/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: LinearPlugin.manifest.id,
                 bundle: .tasks,
@@ -208,7 +208,7 @@ extension LinearPlugin {
 
         func item(accountID: UUID) -> InboxItem {
             InboxItem(
-                id: "\(accountID.uuidString)/notification/\(id)",
+                id: InboxItem.makeID(account: accountID, local: "notification/\(id)"),
                 accountID: accountID,
                 pluginID: LinearPlugin.manifest.id,
                 bundle: .mentions,

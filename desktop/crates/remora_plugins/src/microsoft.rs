@@ -328,7 +328,7 @@ impl Message {
         let important = self.importance.as_deref() == Some("high");
         let preview = self.body_preview.as_deref().map(|p| p.split_whitespace().collect::<Vec<_>>().join(" "));
         InboxItem {
-            id: format!("{account_id}/mail/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("mail/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "microsoft".into(),
             bundle,
@@ -420,7 +420,7 @@ impl Event {
             ));
         }
         InboxItem {
-            id: format!("{account_id}/event/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("event/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "microsoft".into(),
             bundle: InboxBundle::reply(),
@@ -522,7 +522,7 @@ impl Chat {
         let preview = lines.collect::<Vec<_>>().join(" ");
         let name = sender.display_name.clone();
         Some(InboxItem {
-            id: format!("{account_id}/chat/{}", self.id),
+            id: InboxItem::make_id(account_id, format!("chat/{}", self.id)),
             account_id: account_id.into(),
             plugin_id: "microsoft".into(),
             bundle,
