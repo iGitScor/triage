@@ -33,6 +33,10 @@ static NOT_URGENT_WORDS: LazyLock<Regex> =
     LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::NOT_URGENT)));
 static CLOSER_WORDS: LazyLock<Regex> =
     LazyLock::new(|| word_pattern(&with_apostrophes(KeywordIntentClassifier::CLOSERS)));
+/// "merci de" or "merci d'" and the next words (Swift's `merciDe`).
+static MERCI_DE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(^|[^\p{L}\p{N}])merci (de\s+|d['’])((\p{L}+['’]?\s*){1,3})").expect("valid pattern")
+});
 /// Emoji codes (`:+1:`), which say no words.
 static EMOJI_CODES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[:][a-z0-9_+'-]+[:]").expect("valid pattern"));
 
@@ -76,7 +80,6 @@ impl KeywordIntentClassifier {
         "pouvez-vous",
         "pourriez-vous",
         "vous pouvez",
-        "merci de",
         "stp",
         "svp",
         "s'il te plaît",
@@ -214,7 +217,7 @@ impl KeywordIntentClassifier {
         let says_no_reply = NO_REPLY_WORDS.is_match(&text);
         let text = NO_REPLY_WORDS.replace_all(&text, "$1 $3");
         let text = NOT_URGENT_WORDS.replace_all(&text, "$1 $3");
-        if QUESTION.is_match(&text) || REQUEST_WORDS.is_match(&text) {
+        if QUESTION.is_match(&text) || REQUEST_WORDS.is_match(&text) || Self::asks_with_merci(&text) {
             return Some(TextIntent::Request);
         }
         // Explicit information wins over a closing word: "FYI, done", "nothing to do, thanks" are to read.
@@ -225,6 +228,26 @@ impl KeywordIntentClassifier {
             return Some(TextIntent::Closing);
         }
         None
+    }
+
+    /// "Merci de" and "merci d'" before something to do ask for it ("merci de relire", "merci d'accepter", "merci de
+    /// bien vouloir signer", "merci de ne pas merger"); before what was given or done they thank ("merci de ton
+    /// retour", "merci d'avoir regardé", "merci d'avance"). Something to do is an infinitive, after its pronouns.
+    fn asks_with_merci(text: &str) -> bool {
+        const SKIPPED: &[&str] = &[
+            "me", "m", "te", "t", "nous", "vous", "lui", "leur", "le", "la", "les", "l", "se", "s", "y", "en", "bien",
+        ];
+        const DETERMINERS: &[&str] = &["votre", "notre", "vos", "nos", "ton", "ta", "tes", "mon", "ma", "mes"];
+        MERCI_DE.captures_iter(text).any(|c| {
+            let Some(word) = c[3].split(|ch: char| !ch.is_alphabetic()).find(|w| !w.is_empty() && !SKIPPED.contains(w))
+            else {
+                return false;
+            };
+            word == "ne"
+                || (["er", "ir", "re", "oir"].iter().any(|end| word.ends_with(end))
+                    && !["avoir", "être", "etre"].contains(&word)
+                    && !DETERMINERS.contains(&word))
+        })
     }
 
     /// A short message with a closing word, or nothing but emoji and punctuation (a lone 👍).
@@ -342,6 +365,26 @@ mod tests {
             ("No need to reply, but can you check the doc", Some(TextIntent::Request)),
             ("Not urgent, but could you look at it", Some(TextIntent::Request)),
             ("Urgent: the deploy is broken", Some(TextIntent::Request)),
+        ];
+        for (text, expected) in cases {
+            assert_eq!(KeywordIntentClassifier::intent(text), expected, "{text}");
+        }
+    }
+
+    /// "Merci de" before something to do asks; before what was given or done it thanks. Same cases as the Mac.
+    #[test]
+    fn merci_de_asks_only_before_something_to_do() {
+        let cases = [
+            ("Invitation envoyée pour la rétro, merci d'accepter", Some(TextIntent::Request)),
+            ("Merci de relire avant midi", Some(TextIntent::Request)),
+            ("Merci de me renvoyer le fichier", Some(TextIntent::Request)),
+            ("Merci de bien vouloir signer le contrat", Some(TextIntent::Request)),
+            ("Merci de ne pas merger avant demain", Some(TextIntent::Request)),
+            ("Merci de la relire", Some(TextIntent::Request)),
+            ("Merci de ton retour", Some(TextIntent::Closing)),
+            ("Merci de votre aide !", Some(TextIntent::Closing)),
+            ("Merci d'avoir regardé si vite", Some(TextIntent::Closing)),
+            ("Merci d’avance", Some(TextIntent::Closing)),
         ];
         for (text, expected) in cases {
             assert_eq!(KeywordIntentClassifier::intent(text), expected, "{text}");

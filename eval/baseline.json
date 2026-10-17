@@ -1,41 +1,41 @@
 {
   "keywords": {
-    "accuracy": 0.99,
-    "coverage": 0.45,
-    "othersKept": 0.38,
-    "precision.closing": 0.97,
+    "accuracy": 1.0,
+    "coverage": 0.46,
+    "othersKept": 0.39,
+    "precision.closing": 1.0,
     "precision.info": 1.0,
     "precision.request": 1.0,
     "recall.closing": 0.8,
     "recall.info": 0.13,
-    "recall.request": 0.53,
-    "requestsKept": 0.99,
-    "verbAccuracy": 0.65
+    "recall.request": 0.54,
+    "requestsKept": 1.0,
+    "verbAccuracy": 0.66
   },
   "macos.embeddings": {
-    "accuracy": 0.92,
+    "accuracy": 0.91,
     "coverage": 0.56,
-    "othersKept": 0.5,
+    "othersKept": 0.49,
     "precision.closing": 0.94,
     "precision.info": 0.91,
-    "precision.request": 0.92,
-    "recall.closing": 0.56,
+    "precision.request": 0.91,
+    "recall.closing": 0.54,
     "recall.info": 0.42,
-    "recall.request": 0.58,
+    "recall.request": 0.57,
     "requestsKept": 0.97,
     "verbAccuracy": 0.69
   },
   "macos.chain": {
     "accuracy": 0.95,
     "coverage": 0.72,
-    "othersKept": 0.67,
-    "precision.closing": 0.96,
+    "othersKept": 0.68,
+    "precision.closing": 0.98,
     "precision.info": 0.94,
     "precision.request": 0.94,
-    "recall.closing": 0.86,
+    "recall.closing": 0.87,
     "recall.info": 0.54,
-    "recall.request": 0.71,
-    "requestsKept": 0.97,
+    "recall.request": 0.73,
+    "requestsKept": 0.98,
     "verbAccuracy": 0.8
   }
 }

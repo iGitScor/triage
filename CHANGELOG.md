@@ -42,6 +42,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- "Merci d'accepter", "merci de relire" ask for something, and "merci de ton retour", "merci d'avoir regardé" thank:
+  the first went to *Done* and the second to *To reply*, on every app.
 - Related items: a version or an encoding ("UTF-8", "SHA-256", "node-20") no longer counts as a ticket key, so two
   items that only mention it are no longer shown as related. A Linear or Jira key typed in lower case ("ce-1380")
   now is, and a CVE counts whole.

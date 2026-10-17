@@ -79,7 +79,7 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
         "can you", "could you", "would you", "will you", "please", "pls", "plz", "let me know", "lmk",
         "what do you think", "thoughts", "your opinion", "need you", "waiting for you", "asap", "urgent",
         "peux-tu", "pourrais-tu", "tu peux", "tu pourrais", "pouvez-vous", "pourriez-vous", "vous pouvez",
-        "merci de", "stp", "svp", "s'il te plaît", "s’il te plaît", "s'il vous plaît", "est-ce que",
+        "stp", "svp", "s'il te plaît", "s’il te plaît", "s'il vous plaît", "est-ce que",
         "qu'en penses", "qu’en penses", "dis-moi", "dites-moi", "ton avis", "votre avis", "besoin de toi",
     ]
     static let infos = [
@@ -125,12 +125,36 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
         let saysNoReply = Self.matches(Self.noReplyWords, text)
         text = Self.removing(Self.noReplyWords, from: text)
         text = Self.removing(Self.notUrgentWords, from: text)
-        if Self.matches(Self.question, text) || Self.matches(Self.requestWords, text) { return .request }
+        if Self.matches(Self.question, text) || Self.matches(Self.requestWords, text) || Self.asksWithMerci(text) {
+            return .request
+        }
         // Explicit information wins over a closing word: "FYI, done", "nothing to do, thanks" are to read.
         if saysNoReply || Self.matches(Self.infoWords, text) { return .info }
         if Self.closes(text) { return .closing }
         return nil
     }
+
+    /// "Merci de" and "merci d'" before something to do ask for it ("merci de relire", "merci d'accepter", "merci de
+    /// bien vouloir signer", "merci de ne pas merger"); before what was given or done they thank ("merci de ton
+    /// retour", "merci d'avoir regardé", "merci d'avance"). Something to do is an infinitive, after its pronouns.
+    static func asksWithMerci(_ text: String) -> Bool {
+        merciDe.matches(in: text, range: NSRange(text.startIndex..., in: text)).contains { match in
+            guard let range = Range(match.range(at: 3), in: text) else { return false }
+            let words = text[range].split { !$0.isLetter }.map(String.init)
+            guard let word = words.first(where: { !merciSkipped.contains($0) }) else { return false }
+            return word == "ne"
+                || (["er", "ir", "re", "oir"].contains { word.hasSuffix($0) }
+                    && !["avoir", "être", "etre"].contains(word) && !determiners.contains(word))
+        }
+    }
+
+    static let merciDe = try! NSRegularExpression(
+        pattern: #"(^|[^\p{L}\p{N}])merci (de\s+|d['’])((\p{L}+['’]?\s*){1,3})"#)
+    /// Pronouns and articles before the word that tells: "merci de me renvoyer", "merci de la relire".
+    static let merciSkipped: Set<String> = [
+        "me", "m", "te", "t", "nous", "vous", "lui", "leur", "le", "la", "les", "l", "se", "s", "y", "en", "bien",
+    ]
+    static let determiners: Set<String> = ["votre", "notre", "vos", "nos", "ton", "ta", "tes", "mon", "ma", "mes"]
 
     /// A short message with a closing word, or nothing but emoji and punctuation (a lone 👍).
     static func closes(_ text: String) -> Bool {

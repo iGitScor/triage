@@ -37,6 +37,24 @@ struct VerbClassifierTests {
         #expect(KeywordIntentClassifier().intent(of: text) == expected)
     }
 
+    /// "Merci de" before something to do asks; before what was given or done it thanks. Same cases as Windows.
+    @Test(
+        arguments: [
+            ("Invitation envoyée pour la rétro, merci d'accepter", TextIntent.request),
+            ("Merci de relire avant midi", .request),
+            ("Merci de me renvoyer le fichier", .request),
+            ("Merci de bien vouloir signer le contrat", .request),
+            ("Merci de ne pas merger avant demain", .request),
+            ("Merci de la relire", .request),
+            ("Merci de ton retour", .closing),
+            ("Merci de votre aide !", .closing),
+            ("Merci d'avoir regardé si vite", .closing),
+            ("Merci d’avance", .closing),
+        ] as [(String, TextIntent?)])
+    func merciDeAsksOnlyBeforeSomethingToDo(text: String, expected: TextIntent?) {
+        #expect(KeywordIntentClassifier().intent(of: text) == expected)
+    }
+
     @Test func keywordsStayQuietWhenUnsure() {
         #expect(KeywordIntentClassifier().intent(of: "Lunch tomorrow") == nil)
     }

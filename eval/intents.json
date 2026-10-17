@@ -280,5 +280,9 @@
   {"text": "Ça roule", "lang": "fr", "intent": "closing"},
   {"text": "Je note, merci", "lang": "fr", "intent": "closing"},
   {"text": "Bonne soirée", "lang": "fr", "intent": "closing"},
-  {"text": "Impec, merci", "lang": "fr", "intent": "closing"}
+  {"text": "Impec, merci", "lang": "fr", "intent": "closing"},
+  {"text": "Merci de me renvoyer le fichier signé", "lang": "fr", "intent": "request"},
+  {"text": "Merci de bien vouloir valider le devis", "lang": "fr", "intent": "request"},
+  {"text": "Merci de ton retour", "lang": "fr", "intent": "closing"},
+  {"text": "Merci d'avoir pris le temps", "lang": "fr", "intent": "closing"}
 ]
