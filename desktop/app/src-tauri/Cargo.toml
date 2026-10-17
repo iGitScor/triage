@@ -24,7 +24,8 @@ tauri-plugin-deep-link = "2.5.0"
 tauri-plugin-single-instance = { version = "2.5.2", features = ["deep-link"] }
 tauri-plugin-positioner = { version = "2.4.0", features = ["tray-icon"] }
 # Updates, opt-in: signed with the release key in tauri.conf.json.
-tauri-plugin-updater = "2.13.0"
+# Without "zip": updates are the signed .exe and .AppImage themselves, never archives (and zip 4 has advisories).
+tauri-plugin-updater = { version = "2.13.0", default-features = false, features = ["rustls-tls", "system-proxy"] }
 # Decodes the avatar URL in an avatar: request; already in the tree through url.
 percent-encoding = "2.3.2"
 serde = { version = "1.0.229", features = ["derive"] }
