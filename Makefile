@@ -3,7 +3,7 @@
 # See CONTRIBUTING.md. On Windows without make, run the commands from desktop/README.md directly.
 
 .DEFAULT_GOAL := help
-.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture desktop-bindings i18n i18n-check test-counts \
+.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture desktop-bindings i18n i18n-check test-counts eval \
 	policy-files docs docs-build docs-check a11y links site site-preview screenshots deploy clean
 
 help: ## List the targets
@@ -17,6 +17,10 @@ setup: ## Install the Node packages (tooling, Windows interface, docs) and the p
 	npx playwright install chromium
 
 test: mac-test desktop-test ## Run every test suite
+
+eval: ## How each classifier sorts the labelled messages of eval/ (ML-06), with its wrong answers
+	@command -v swift >/dev/null && (cd macos && swift test --filter IntentEvaluation 2>&1 | grep -vE '^(\[|Building|Build |Compiling|Write)') || true
+	cd desktop && cargo test -p remora_core --test intent_eval -- --nocapture
 
 check: format-check test desktop-check i18n-check docs-check ## Formatting, tests, lint, type-check, translations, policy files, docs and versions, as CI runs them
 	python3 scripts/make-policy-files.py --check

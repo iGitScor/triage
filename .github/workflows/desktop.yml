@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "desktop/**"
+      - "eval/**"
       - "macos/scripts/translations_fr.py"
       - "scripts/make-emoji.py"
       - "scripts/make-policy-files.py"
@@ -16,6 +17,7 @@ on:
   pull_request:
     paths:
       - "desktop/**"
+      - "eval/**"
       - "macos/scripts/translations_fr.py"
       - "scripts/make-emoji.py"
       - "scripts/make-policy-files.py"

@@ -60,6 +60,8 @@ flowchart TB
   A third intent, *closing* ("thanks!", a lone 👍), finishes a conversation. Your own message, last in a
   conversation, goes the same way: a request waits on others; anything else finishes it (`answered`) or, when nobody
   asked, is cleared (`asked`).
+  Both apps score these classifiers on the labelled messages of `eval/` and fail below the floors there; `make eval`
+  prints the numbers and the wrong answers.
 
 **Infrastructure**: `HTTPClient` (a protocol, so plugins are testable with a stub), `GuardedHTTPClient` (refuses
 hosts a plugin doesn’t declare), `ConditionalHTTPClient` (sends `If-None-Match` and serves a 304 from the last

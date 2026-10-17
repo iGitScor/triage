@@ -10,6 +10,7 @@
       "**/*.{ts,js,mjs,svelte,css,json,jsonc}",
       "!**/package-lock.json",
       "!desktop/app/src/i18n/fr.json",
+      "!eval/intents.json",
       "!desktop/app/src/lib/bindings.ts",
       "!policy",
       "!desktop/app/src-tauri/gen"

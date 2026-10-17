@@ -68,7 +68,8 @@ flowchart TB
   nettement plus proche que la suivante, sinon *À répondre*). Une troisième intention, la *clôture* (« merci ! »,
   un 👍 seul), termine une conversation. Votre propre message, dernier d’une conversation, suit le même chemin : une
   demande attend les autres ; le reste la termine (`answered`) ou, si personne n’avait rien demandé, est effacé
-  (`asked`).
+  (`asked`). Les deux apps notent ces classifieurs sur les messages étiquetés de `eval/` et échouent sous les
+  planchers qui s’y trouvent ; `make eval` affiche les chiffres et les mauvaises réponses.
 
 **Infrastructure** : `HTTPClient` (un protocole, pour tester les extensions avec un stub), `GuardedHTTPClient`
 (refuse les adresses qu’une extension ne déclare pas), `ConditionalHTTPClient` (envoie `If-None-Match` et répond à
