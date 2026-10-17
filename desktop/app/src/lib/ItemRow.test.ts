@@ -165,20 +165,20 @@ describe('a row, why it is sorted there', () => {
 
   it('says when it was a guess or a correction, not the words that decided', () => {
     const fyi = row({ item: message({ reason: { code: 'info', detail: 'fyi' } }) })
-    expect(fyi.container.querySelector('.chip.why')).toBeNull()
+    expect(fyi.container.querySelector('.why')).toBeNull()
     cleanup()
     const moved = row({
       item: message({ bundle: { id: 'verb.reply', title: 'To reply', rank: 1 }, reason: { code: 'moved' } }),
     })
-    expect(moved.getByText('You put it here')).toBeTruthy()
+    expect(moved.getByText('you put it here', { exact: false })).toBeTruthy()
     cleanup()
     const unsure = row({
       item: message({ bundle: { id: 'verb.reply', title: 'To reply', rank: 1 }, reason: { code: 'unsure' } }),
     })
-    expect(unsure.getByText('No clear sign, kept here to be safe')).toBeTruthy()
+    expect(unsure.getByText('no clear sign, kept here to be safe', { exact: false })).toBeTruthy()
     cleanup()
     const review = row({})
-    expect(review.container.querySelector('.chip.why')).toBeNull()
+    expect(review.container.querySelector('.why')).toBeNull()
   })
 
   it('puts a message in To reply, with an Undo, and only towards To reply', async () => {

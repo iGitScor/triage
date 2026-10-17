@@ -5,9 +5,10 @@ FR = {
     "The client is still waiting for the quote": "Le client attend toujours le devis",
     "FYI the staging database restarts at 6 pm": "Pour info, la base de staging redémarre à 18 h",
     "FYI, the slides from today’s demo are in the shared drive": "Pour info, les slides de la démo d’aujourd’hui sont sur le drive",
-    "No clear sign, kept here to be safe": "Pas d’indice clair, gardé ici par prudence",
-    "No clear sign": "Pas d’indice clair",
-    "You put it here": "Mis ici par vous",
+    "Remora:": "Remora :",
+    "no clear sign, kept here to be safe": "pas d’indice clair, gardé ici par prudence",
+    "no clear sign": "pas d’indice clair",
+    "you put it here": "mis ici par vous",
     "Put in To reply": "Mettre dans À répondre",
     # Agents
     "Agents on this Mac": "Agents sur ce Mac",

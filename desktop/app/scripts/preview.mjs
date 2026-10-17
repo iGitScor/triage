@@ -18,11 +18,7 @@ const shots = [
     'snooze-sheet',
     async (p) => {
       await p.locator('.item').first().hover()
-      await p
-        .locator('.action')
-        .filter({ hasText: /Snooze…|Reporter…/ })
-        .first()
-        .click()
+      await p.locator('[data-action="snooze"]').first().click()
     },
   ],
   ['hover', (p) => p.locator('.item').nth(2).hover()],

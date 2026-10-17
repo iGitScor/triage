@@ -37,6 +37,11 @@ struct ItemRow: View {
                         .foregroundStyle(Myna.inkSoft)
                 }
                 footer
+                // Remora's word on why it is in this tab, when it was a guess or your correction: a band of its own, as
+                // the waiting assistant's, so it doesn't read as one of the source's badges.
+                if let reason = item.reason, let label = reason.label(in: item.bundle) {
+                    WhyLine(symbol: reason.symbol, label: label)
+                }
                 if item.bundle == .reviews, let prep = ReviewPrep(item, pace: model.learning.reviewPace) {
                     ReviewPrepLine(prep: prep)
                 }
@@ -125,7 +130,7 @@ struct ItemRow: View {
             parts.append(L("Snoozed until %@", snooze.until.formatted(.dateTime.weekday(.wide).hour().minute())))
         }
         parts += item.badges.map(\.label)
-        parts.append(item.reason?.label(in: item.bundle))
+        parts.append(item.reason?.label(in: item.bundle).map { L("Remora:") + " " + $0 })
         if let reactions = item.reactions, !reactions.isEmpty { parts.append(ReactionChips.spoken(reactions)) }
         parts += Self.spokenExtras(
             participants: item.participants,
@@ -232,9 +237,8 @@ struct ItemRow: View {
         let linked = model.linkedItems(item)
         let times = state.snooze == nil ? 0 : model.snoozeCount(item)
         let reactions = item.reactions ?? []
-        let why = item.reason.flatMap { reason in reason.label(in: item.bundle).map { (reason, $0) } }
         if !badges.isEmpty || !reactions.isEmpty || !item.participants.isEmpty || state.remindedAt != nil
-            || state.startedAt != nil || why != nil
+            || state.startedAt != nil
             || state.pinned || reason != nil || times >= 2 || !linked.isEmpty
         {
             HStack(spacing: 4) {
@@ -258,10 +262,6 @@ struct ItemRow: View {
                             tone: .warning))
                 }
                 ForEach(badges) { BadgeChip(badge: $0) }
-                // Why it is in this tab, when it was a guess or your correction.
-                if let (reason, label) = why {
-                    BadgeChip(badge: Badge(id: .why, label: label, symbol: reason.symbol, tone: .neutral))
-                }
                 if !reactions.isEmpty { ReactionChips(reactions: reactions) }
                 ForEach(linked) { other in
                     Button {
@@ -348,6 +348,24 @@ struct ItemRow: View {
 }
 
 /// Under your waiting MRs: who could review, or how long the silence has lasted, with a draft one click away.
+/// "Remora: no clear sign, kept here to be safe": why Remora put a message where it is, in its own voice.
+private struct WhyLine: View {
+    let symbol: String
+    let label: String
+
+    var body: some View {
+        Label {
+            Text(L("Remora:")).font(Myna.font(11.5, .semibold)) + Text(" " + label).font(Myna.font(11.5))
+        } icon: {
+            Image(systemName: symbol).font(.system(size: 11))
+        }
+        .foregroundStyle(Myna.inkSoft)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Myna.accentSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
 private struct WaitingHelpLine: View {
     let help: WaitingAssistant.Help
     let draft: () -> Void

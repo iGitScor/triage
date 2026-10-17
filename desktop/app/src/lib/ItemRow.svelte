@@ -96,7 +96,7 @@ function open(event: MouseEvent) {
           {#if reviewers.more}<span class="more muted">+{reviewers.more}</span>{/if}
         </span>
       {/if}
-      {#if item.badges.length || item.reactions?.length || itemState?.remindedAt || itemState?.startedAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2 || why}
+      {#if item.badges.length || item.reactions?.length || itemState?.remindedAt || itemState?.startedAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2}
         <span class="chips">
           {#if itemState?.snooze?.reason}<span class="chip">{t(reasonLabel(itemState.snooze.reason))}</span>{/if}
           {#if (extras?.snoozedTimes ?? 0) >= 2}<span class="chip warning">{t('Snoozed %d×', extras?.snoozedTimes ?? 0)}</span>{/if}
@@ -104,8 +104,6 @@ function open(event: MouseEvent) {
           {#if itemState?.remindedAt}<span class="chip accent">{t('Reminder')}</span>{/if}
           {#if itemState?.pinned}<span class="chip">{t('Pinned')}</span>{/if}
           {#each item.badges as badge (badge.id)}<span class="chip {badge.tone}">{t(badge.label)}</span>{/each}
-          <!-- Why it is in this tab, when it was a guess or your correction. -->
-          {#if why}<span class="chip why">{why}</span>{/if}
           {#if item.reactions?.length}
             {@const reactions = shownReactions(item.reactions)}
             <!-- As in Slack: each emoji (a workspace's own as its picture) and how many, yours outlined. -->
@@ -121,6 +119,9 @@ function open(event: MouseEvent) {
           {/if}
         </span>
       {/if}
+      <!-- Remora's word on why it is in this tab, when it was a guess or your correction: a band of its own, as the
+           waiting assistant's, so it doesn't read as one of the source's badges. Inside the button: read with it. -->
+      {#if why}<span class="why"><Icon name="info" size={13} /><span><strong>{t('Remora:')}</strong> {why}</span></span>{/if}
     </span>
   </button>
   {#if extras?.linked?.length}
@@ -163,17 +164,18 @@ function open(event: MouseEvent) {
     </div>
   {/if}
   <div class="actions">
-    <!-- Pin, Put in To reply and Stop repeating are icons only, so the bar fits on one line in French too. -->
+    <!-- Icons only, named for screen readers and on hover: the bar sits in the card's top corner, over the time,
+         never over the title (as on the Mac). -->
     <button type="button" class="action" data-action="pin" onclick={() => api.togglePin(item.id)} aria-label={t(itemState?.pinned ? 'Unpin' : 'Pin')} title={t(itemState?.pinned ? 'Unpin' : 'Pin')}><Icon name="pin" size={14} /></button>
     {#if itemState?.startedAt}
-      <button type="button" class="action" onclick={() => api.stop(item.id)}><Icon name="stop" size={14} />{t('Stop')}</button>
+      <button type="button" class="action" onclick={() => api.stop(item.id)} aria-label={t('Stop')} title={t('Stop')}><Icon name="stop" size={14} /></button>
     {:else}
-      <button type="button" class="action" onclick={() => api.start(item.id)}><Icon name="play" size={14} />{t('Start')}</button>
+      <button type="button" class="action" onclick={() => api.start(item.id)} aria-label={t('Start')} title={t('Start')}><Icon name="play" size={14} /></button>
     {/if}
     {#if snoozed}
-      <button type="button" class="action" onclick={() => api.unsnooze(item.id)}><Icon name="moon" size={14} />{t('Unsnooze')}</button>
+      <button type="button" class="action" onclick={() => api.unsnooze(item.id)} aria-label={t('Unsnooze')} title={t('Unsnooze')}><Icon name="moon" size={14} /></button>
     {:else}
-      <button type="button" class="action" data-action="snooze" onclick={() => onsnooze(item)}><Icon name="moon" size={14} />{t('Snooze…')}</button>
+      <button type="button" class="action" data-action="snooze" onclick={() => onsnooze(item)} aria-label={t('Snooze…')} title={t('Snooze…')}><Icon name="moon" size={14} /></button>
     {/if}
     {#if canMoveToReply(item)}
       <button type="button" class="action" data-action="to-reply" onclick={moveToReply} aria-label={t('Put in To reply')} title={t('Put in To reply')}><Icon name="reply" size={14} /></button>
@@ -181,7 +183,7 @@ function open(event: MouseEvent) {
     {#if item.recurrence}
       <button type="button" class="action" onclick={() => api.stopRepeating(item.id)} aria-label={t('Stop repeating')} title={t('Stop repeating')}><Icon name="repeat" size={14} /></button>
     {/if}
-    <button type="button" class="action" data-action="done" onclick={markDone}><Icon name="done" size={14} />{t(done ? 'Move to inbox' : 'Done')}</button>
+    <button type="button" class="action" data-action="done" onclick={markDone} aria-label={t(done ? 'Move to inbox' : 'Done')} title={t(done ? 'Move to inbox' : 'Done')}><Icon name="done" size={14} /></button>
   </div>
 </article>
 
@@ -319,6 +321,18 @@ function open(event: MouseEvent) {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .why {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-self: start;
+    margin-top: 2px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
   .help-line {
     display: flex;
     align-items: center;
@@ -422,15 +436,15 @@ function open(event: MouseEvent) {
   /* Over the card's bottom-right corner on hover or keyboard focus: they take no room otherwise. */
   .actions {
     position: absolute;
+    top: 4px;
     right: 8px;
-    bottom: 8px;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
     max-width: calc(100% - 16px);
-    gap: 4px;
-    padding: 4px;
-    border-radius: 10px;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 9px;
     background: var(--card);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
     opacity: 0;
@@ -446,8 +460,8 @@ function open(event: MouseEvent) {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    height: 26px;
-    padding: 0 8px;
+    height: 24px;
+    padding: 0 6px;
     border: 0;
     border-radius: 8px;
     background: var(--card-2);
