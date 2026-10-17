@@ -67,7 +67,9 @@ sent: tokens, links, code, the rest of a message, notes, files.
   titles away from the assistant: that is *Send to the assistant*.
 - With Claude Code, Remora runs `claude` with no tools, no plugins, hooks or MCP servers, and nothing saved to the
   user’s session history, at low effort as with the API. The inbox content goes on its standard input, never on the command line, which other
-  processes can read. Data then goes wherever that Claude Code is set up to send it (normally Anthropic).
+  processes can read. Data then goes wherever that Claude Code is set up to send it (normally Anthropic). It gets
+  only what it needs from Remora's environment and its own setup (`ANTHROPIC_*`, `CLAUDE_*`, proxies), not other
+  tools' tokens, and a run that is cancelled or takes too long is stopped, killed if it doesn't quit.
   On macOS, Settings → Privacy shows which `claude` runs.
 
 ## Stored on this computer

@@ -115,10 +115,30 @@ public struct ClaudeCodePlugin: AssistantPlugin {
         ]
         let current = (base["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin").split(separator: ":").map(String.init)
         var seen = Set<String>()
-        var environment = base
+        var environment = base.filter { needed($0.key, in: base) }
         environment["PATH"] = (folders + current).filter { seen.insert($0).inserted }.joined(separator: ":")
         return environment
     }
+
+    /// What of Remora's environment `claude` gets: what it needs to run (home, user, PATH, language, temporary folder,
+    /// Windows' system folders, the Linux session's bus for its keyring) and its own setup (`ANTHROPIC_*`, `CLAUDE_*`,
+    /// proxies, certificates, and AWS or Google Cloud when the user runs it on Bedrock or Vertex). Other tools' tokens and
+    /// settings (`GITHUB_TOKEN`, `NPM_TOKEN`, database URLs…) stay out. Where its data goes is what the user's Claude Code is
+    /// set up for, which Remora doesn't change: the data flows page says so.
+    static func needed(_ name: String, in base: [String: String]) -> Bool {
+        let upper = name.uppercased()
+        if keptNames.contains(upper) || keptPrefixes.contains(where: upper.hasPrefix) { return true }
+        if base["CLAUDE_CODE_USE_BEDROCK"] != nil, upper.hasPrefix("AWS_") { return true }
+        return base["CLAUDE_CODE_USE_VERTEX"] != nil
+            && (upper.hasPrefix("GOOGLE_") || upper.hasPrefix("CLOUDSDK_") || upper == "CLOUD_ML_REGION")
+    }
+
+    static let keptNames: Set<String> = [
+        "HOME", "USER", "LOGNAME", "SHELL", "PATH", "TMPDIR", "TMP", "TEMP", "LANG", "TZ", "TERM",
+        "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY", "ALL_PROXY", "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR",
+        "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS",
+    ]
+    static let keptPrefixes = ["LC_", "ANTHROPIC_", "CLAUDE_"]
 
     private let path: String
     private let model: String

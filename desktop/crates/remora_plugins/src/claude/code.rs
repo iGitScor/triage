@@ -552,11 +552,67 @@ pub fn environment(executable: &Path, base: &HashMap<String, String>) -> HashMap
     folders.extend(std::env::split_paths(current).filter(|p| !p.as_os_str().is_empty()));
     let mut seen = HashSet::new();
     folders.retain(|f| seen.insert(f.clone()));
-    let mut environment = base.clone();
+    let mut environment: HashMap<String, String> =
+        base.iter().filter(|(k, _)| needed(k, base)).map(|(k, v)| (k.clone(), v.clone())).collect();
     if let Some(joined) = std::env::join_paths(folders).ok().and_then(|p| p.into_string().ok()) {
         environment.insert(key, joined);
     }
     environment
+}
+
+/// What of Remora's environment `claude` gets: what it needs to run (home, user, PATH, language, temporary folder,
+/// Windows' system folders, the Linux session's bus for its keyring) and its own setup (`ANTHROPIC_*`, `CLAUDE_*`,
+/// proxies, certificates, and AWS or Google Cloud when the user runs it on Bedrock or Vertex). Other tools' tokens and
+/// settings (`GITHUB_TOKEN`, `NPM_TOKEN`, database URLs…) stay out. Where its data goes is what the user's Claude Code is
+/// set up for, which Remora doesn't change: the data flows page says so. Same list as the Mac's.
+fn needed(name: &str, base: &HashMap<String, String>) -> bool {
+    const NAMES: &[&str] = &[
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "SHELL",
+        "PATH",
+        "TMPDIR",
+        "TMP",
+        "TEMP",
+        "LANG",
+        "TZ",
+        "TERM",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "NO_PROXY",
+        "ALL_PROXY",
+        "NODE_EXTRA_CA_CERTS",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "XDG_CONFIG_HOME",
+        "XDG_DATA_HOME",
+        "XDG_CACHE_HOME",
+        "XDG_RUNTIME_DIR",
+        "DBUS_SESSION_BUS_ADDRESS",
+        // Windows: where things are, and what runs a program.
+        "SYSTEMROOT",
+        "WINDIR",
+        "COMSPEC",
+        "PATHEXT",
+        "APPDATA",
+        "LOCALAPPDATA",
+        "USERPROFILE",
+        "USERNAME",
+        "HOMEDRIVE",
+        "HOMEPATH",
+        "PROGRAMDATA",
+        "PROGRAMFILES",
+        "PROGRAMFILES(X86)",
+        "SYSTEMDRIVE",
+    ];
+    let upper = name.to_ascii_uppercase();
+    let has = |key: &str| base.keys().any(|k| k.eq_ignore_ascii_case(key));
+    NAMES.contains(&upper.as_str())
+        || ["LC_", "ANTHROPIC_", "CLAUDE_"].iter().any(|p| upper.starts_with(p))
+        || (has("CLAUDE_CODE_USE_BEDROCK") && upper.starts_with("AWS_"))
+        || (has("CLAUDE_CODE_USE_VERTEX")
+            && (upper.starts_with("GOOGLE_") || upper.starts_with("CLOUDSDK_") || upper == "CLOUD_ML_REGION"))
 }
 
 /// The arguments and the standard input of one `claude` run.
@@ -967,6 +1023,36 @@ mod tests {
         assert_eq!(folders.iter().filter(|f| **f == folder).count(), 1);
         assert_eq!(folders[folders.len() - 2..], [PathBuf::from("/usr/bin"), PathBuf::from("/bin")]);
         assert_eq!(environment["HOME"], "/Users/x");
+    }
+
+    /// `claude` gets what it needs and its own setup, not other tools' tokens; AWS only when it runs on Bedrock. Same
+    /// cases as the Mac.
+    #[test]
+    fn claude_gets_its_own_setup_not_other_tools_tokens() {
+        let base: HashMap<String, String> = [
+            ("HOME", "/Users/x"),
+            ("ANTHROPIC_BASE_URL", "https://proxy.example"),
+            ("CLAUDE_CONFIG_DIR", "/Users/x/.c"),
+            ("HTTPS_PROXY", "http://proxy:3128"),
+            ("LC_ALL", "fr_FR.UTF-8"),
+            ("GITHUB_TOKEN", "ghp_x"),
+            ("NPM_TOKEN", "npm_x"),
+            ("DATABASE_URL", "postgres://x"),
+            ("AWS_PROFILE", "dev"),
+        ]
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect();
+        let given = environment(Path::new("/opt/claude/bin/claude"), &base);
+        for kept in ["HOME", "ANTHROPIC_BASE_URL", "CLAUDE_CONFIG_DIR", "HTTPS_PROXY", "LC_ALL"] {
+            assert!(given.contains_key(kept), "{kept} kept");
+        }
+        for gone in ["GITHUB_TOKEN", "NPM_TOKEN", "DATABASE_URL", "AWS_PROFILE"] {
+            assert!(!given.contains_key(gone), "{gone} left out");
+        }
+        let mut bedrock = base.clone();
+        bedrock.insert("CLAUDE_CODE_USE_BEDROCK".into(), "1".into());
+        assert!(environment(Path::new("/opt/claude/bin/claude"), &bedrock).contains_key("AWS_PROFILE"));
     }
 
     /// An npm `claude` is a link into node_modules and starts with `env node`: Node sits next to the link.

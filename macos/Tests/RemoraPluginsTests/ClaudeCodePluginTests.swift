@@ -75,6 +75,27 @@ struct ClaudeCodePluginTests {
 
     // MARK: Finding and running claude
 
+    /// `claude` gets what it needs and its own setup, not other tools' tokens; AWS only when it runs on Bedrock. Same
+    /// cases as Windows.
+    @Test func claudeGetsItsOwnSetupNotOtherToolsTokens() {
+        let base = [
+            "HOME": "/Users/x", "ANTHROPIC_BASE_URL": "https://proxy.example", "CLAUDE_CONFIG_DIR": "/Users/x/.c",
+            "HTTPS_PROXY": "http://proxy:3128", "LC_ALL": "fr_FR.UTF-8", "GITHUB_TOKEN": "ghp_x", "NPM_TOKEN": "npm_x",
+            "DATABASE_URL": "postgres://x", "AWS_PROFILE": "dev",
+        ]
+        let claude = URL(fileURLWithPath: "/opt/claude/bin/claude")
+        let environment = ClaudeCodePlugin.environment(for: claude, base: base)
+        for kept in ["HOME", "ANTHROPIC_BASE_URL", "CLAUDE_CONFIG_DIR", "HTTPS_PROXY", "LC_ALL"] {
+            #expect(environment[kept] != nil, "\(kept) kept")
+        }
+        for gone in ["GITHUB_TOKEN", "NPM_TOKEN", "DATABASE_URL", "AWS_PROFILE"] {
+            #expect(environment[gone] == nil, "\(gone) left out")
+        }
+        var bedrock = base
+        bedrock["CLAUDE_CODE_USE_BEDROCK"] = "1"
+        #expect(ClaudeCodePlugin.environment(for: claude, base: bedrock)["AWS_PROFILE"] != nil)
+    }
+
     @Test func runsClaudeWithItsOwnFoldersFirstOnPATH() async throws {
         let runner = RecordingRunner(output: #"{"is_error": false, "structured_output": {"summary": "ok"}}"#)
         let claude = fakeClaude()

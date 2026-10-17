@@ -71,7 +71,9 @@ reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un mes
 - Avec Claude Code, Remora lance `claude` sans outils, sans extensions, hooks ni serveurs MCP, et sans rien
   enregistrer dans l’historique de sessions, avec un effort faible comme par l’API. Le contenu de la boîte passe par son entrée standard, jamais par la
   ligne de commande, que d’autres processus peuvent lire. Les données vont là où ce Claude Code est configuré pour les envoyer
-  (normalement Anthropic). Sur macOS, Réglages → Confidentialité indique quel `claude` est lancé.
+  (normalement Anthropic). Il ne reçoit de l’environnement de Remora que ce dont il a besoin et sa propre configuration
+  (`ANTHROPIC_*`, `CLAUDE_*`, proxys), pas les jetons d’autres outils, et une exécution annulée ou trop longue est
+  arrêtée, tuée si elle ne s’arrête pas. Sur macOS, Réglages → Confidentialité indique quel `claude` est lancé.
 
 ## Ce qui est stocké sur l’ordinateur
 

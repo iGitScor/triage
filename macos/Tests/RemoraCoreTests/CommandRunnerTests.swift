@@ -45,4 +45,14 @@ struct CommandRunnerTests {
             shell, arguments: ["-c", "echo '{\"is_error\": true}'; exit 1"])
         #expect(!data.isEmpty)
     }
+
+    /// A program that ignores SIGTERM is killed after the grace period, so a timed-out run never stays behind.
+    @Test func aProgramThatIgnoresTheStopIsKilled() async {
+        let started = Date.now
+        await #expect(throws: CommandError.timedOut) {
+            try await ProcessCommandRunner(timeout: 0.3).run(
+                URL(fileURLWithPath: "/bin/sh"), arguments: ["-c", "trap '' TERM; exec sleep 30"])
+        }
+        #expect(Date.now.timeIntervalSince(started) < 10, "killed after the grace, not after 30 s")
+    }
 }

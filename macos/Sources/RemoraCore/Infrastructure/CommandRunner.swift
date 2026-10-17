@@ -51,14 +51,19 @@ public struct ProcessCommandRunner: CommandRunner {
         }
         let deadline = Task {
             try await Task.sleep(for: .seconds(timeout))
-            process.terminate()
+            Self.stop(process)
         }
         defer { deadline.cancel() }
 
-        // Both pipes are read at once: a program that fills one while we wait on the other would block.
-        async let standardOutput = Task.detached { try output.fileHandleForReading.readToEnd() ?? Data() }.value
-        async let standardError = Task.detached { try errors.fileHandleForReading.readToEnd() ?? Data() }.value
-        let (data, errorData) = try await (standardOutput, standardError)
+        // Both pipes are read at once: a program that fills one while we wait on the other would block. A cancelled
+        // request stops the program too, rather than leaving it running.
+        let (data, errorData) = try await withTaskCancellationHandler {
+            async let standardOutput = Task.detached { try output.fileHandleForReading.readToEnd() ?? Data() }.value
+            async let standardError = Task.detached { try errors.fileHandleForReading.readToEnd() ?? Data() }.value
+            return try await (standardOutput, standardError)
+        } onCancel: {
+            Self.stop(process)
+        }
         process.waitUntilExit()
         guard process.terminationReason == .exit else { throw CommandError.timedOut }
         // A failure with nothing on stdout: what the program said on stderr is the only explanation.
@@ -66,6 +71,21 @@ public struct ProcessCommandRunner: CommandRunner {
             throw CommandError.failed(process.terminationStatus, Self.tail(errorData))
         }
         return data
+    }
+
+    /// How long a program has to quit once asked (SIGTERM) before it is killed (SIGKILL).
+    static let grace: Duration = .seconds(3)
+
+    /// Asks the program to quit, and kills it if it's still running after `grace`: one that ignores SIGTERM doesn't
+    /// stay behind.
+    static func stop(_ process: Process) {
+        guard process.isRunning else { return }
+        process.terminate()
+        let pid = process.processIdentifier
+        Task.detached {
+            try? await Task.sleep(for: grace)
+            if process.isRunning { kill(pid, SIGKILL) }
+        }
     }
 
     /// The last few lines of a program's error output, short enough for an error message.
