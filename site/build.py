@@ -690,6 +690,10 @@ def home(lang: str) -> str:
                     "No. Sorting, ranking, snooze advice and review prep all run on your computer without generative AI. The assistant (Claude or an OpenAI-compatible model) only adds optional briefs and summaries, and it is off until you, and your organization, allow it.",
                 ),
                 (
+                    "Can my AI agent use Remora?",
+                    'Yes. Claude Desktop, Claude Code, Gemini CLI and other agents that speak MCP can ask Remora what waits on you, list a tab or add a reminder, through <code>remora mcp</code> on your computer. They never get your tokens, and they can’t write to your tools. Your organization can turn it off. <a href="/docs/guide/agents">Remora and your agents</a>.',
+                ),
+                (
                     "Does it work with GitHub Enterprise and self-hosted GitLab?",
                     'Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href="/docs/guide/connecting-tools">connecting your tools</a>.',
                 ),
@@ -906,6 +910,10 @@ def home(lang: str) -> str:
                 (
                     "Faut-il un assistant d’IA ?",
                     "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre ordinateur, sans IA générative. L’assistant (Claude ou un modèle OpenAI-compatible) n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas.",
+                ),
+                (
+                    "Mon agent d’IA peut-il utiliser Remora ?",
+                    'Oui. Claude Desktop, Claude Code, Gemini CLI et les autres agents qui parlent MCP peuvent demander à Remora ce qui vous attend, lister un onglet ou ajouter un rappel, grâce à <code>remora mcp</code> sur votre ordinateur. Ils ne reçoivent jamais vos jetons et ne peuvent pas écrire dans vos outils. Votre organisation peut le désactiver. <a href="/docs/fr/guide/agents">Remora et vos agents</a>.',
                 ),
                 (
                     "Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?",
