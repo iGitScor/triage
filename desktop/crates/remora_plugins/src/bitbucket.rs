@@ -469,6 +469,7 @@ impl CloudPullRequest {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -632,6 +633,7 @@ impl DataCenterPullRequest {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }

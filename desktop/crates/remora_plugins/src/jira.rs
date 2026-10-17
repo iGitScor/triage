@@ -376,6 +376,7 @@ impl Issue {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -419,6 +420,7 @@ impl Comment {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -614,6 +616,7 @@ impl ConfluenceResult {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         })
     }
 }

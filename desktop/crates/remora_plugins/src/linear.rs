@@ -230,6 +230,7 @@ impl Issue {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -314,6 +315,7 @@ impl Notification {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }

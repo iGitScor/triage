@@ -216,7 +216,11 @@ recurrence?: Recurrence | null,
 /**
  * Emoji reactions on the message (Slack); None for tools without them. Not in the fingerprint.
  */
-reactions?: Array<Reaction> | null, };
+reactions?: Array<Reaction> | null, 
+/**
+ * Why Remora put a chat message where it is; None for what the source sorted. Not in the fingerprint.
+ */
+reason?: SortReason, };
 
 export type ItemExtras = { prep?: PrepView, help?: HelpView, linked?: Array<LinkedView>, ranking?: string, snoozedTimes?: number, };
 
@@ -227,7 +231,12 @@ export type ItemState = { pinned: boolean, done: Mark | null, snooze: Snooze | n
 /**
  * Set while the user is working on it: the item leaves the inbox for the In progress view.
  */
-startedAt?: string, };
+startedAt?: string, 
+/**
+ * When the user put a message Remora sorted elsewhere in To reply: it stays there, whatever its words say. Only
+ * towards To reply, so a correction can never hide a request.
+ */
+movedToReplyAt?: string, };
 
 /**
  * What the UI shows: what you're on, pinned items, your turn, waiting on others, snoozed, done.
@@ -500,6 +509,19 @@ nudge?: string, } & ({ "kind": "loop", item: Item, times: number, } | { "kind": 
 export type SnoozeMode = "hide" | "remind";
 
 export type SnoozeReason = "waiting" | "noTime" | "focus" | "notUrgent" | "motivation";
+
+/**
+ * Why a message went where it is (Swift's `SortReason`): the words that decided, the model, nothing clear, or you.
+ * Shown on the row and given to agents, so a strong signal can be told from a guess. Set on chat messages, the items
+ * Remora sorts by their text; a source's own sort is told by its badges. `code` is one of `sort_reason`'s, kept as
+ * a string so a saved inbox holding a code this version doesn't know still loads.
+ */
+export type SortReason = { code: string, 
+/**
+ * The words that decided, as found in the message ("can you", "merci de", "fyi"), for `KEYWORD`, `NO_REPLY`,
+ * `INFO` and `CLOSING`.
+ */
+detail?: string, };
 
 /**
  * A source as the Settings screen lists it: its manifest, and why it can't be used, if it can't.

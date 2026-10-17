@@ -146,6 +146,13 @@ impl InboxAssembler {
 
         for item in matching {
             let state = states.get(&item.id);
+            let moved;
+            let item = if state.is_some_and(|s| s.moved_to_reply_at.is_some()) {
+                moved = item.clone().moved_to_reply();
+                &moved
+            } else {
+                item
+            };
             match self.placement(item, state, now) {
                 Placement::InProgress => layout.in_progress.push(item.clone()),
                 Placement::Snoozed => layout.snoozed.push(item.clone()),

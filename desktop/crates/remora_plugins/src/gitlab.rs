@@ -213,6 +213,7 @@ impl GitLabPlugin {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -380,6 +381,7 @@ impl Todo {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         })
     }
 }

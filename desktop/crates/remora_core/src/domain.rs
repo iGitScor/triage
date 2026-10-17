@@ -50,6 +50,52 @@ pub struct InboxItem {
     /// Emoji reactions on the message (Slack); None for tools without them. Not in the fingerprint.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reactions: Option<Vec<crate::Reaction>>,
+    /// Why Remora put a chat message where it is; None for what the source sorted. Not in the fingerprint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub reason: Option<SortReason>,
+}
+
+/// Why a message went where it is (Swift's `SortReason`): the words that decided, the model, nothing clear, or you.
+/// Shown on the row and given to agents, so a strong signal can be told from a guess. Set on chat messages, the items
+/// Remora sorts by their text; a source's own sort is told by its badges. `code` is one of `sort_reason`'s, kept as
+/// a string so a saved inbox holding a code this version doesn't know still loads.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+pub struct SortReason {
+    pub code: String,
+    /// The words that decided, as found in the message ("can you", "merci de", "fyi"), for `KEYWORD`, `NO_REPLY`,
+    /// `INFO` and `CLOSING`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub detail: Option<String>,
+}
+
+impl SortReason {
+    pub fn new(code: &str, detail: Option<&str>) -> Self {
+        Self { code: code.into(), detail: detail.map(Into::into) }
+    }
+}
+
+/// `SortReason` codes, the same strings as the Mac's.
+pub mod sort_reason {
+    /// A question mark ends a sentence.
+    pub const QUESTION: &str = "question";
+    /// Words that ask: "can you", "peux-tu", "merci de relire".
+    pub const KEYWORD: &str = "keyword";
+    /// Words that say nothing is expected: "no need to reply".
+    pub const NO_REPLY: &str = "noReply";
+    /// Words that announce: "fyi", "@here", "pour info".
+    pub const INFO: &str = "info";
+    /// A short thank-you or OK, or nothing but emoji.
+    pub const CLOSING: &str = "closing";
+    /// Nothing but code or a link.
+    pub const CODE_ONLY: &str = "codeOnly";
+    /// No words decided; a model read the meaning (the Mac's sentence embeddings; none yet on Windows and Linux).
+    pub const MODEL: &str = "model";
+    /// Nothing clear: a message to you stays in To reply to be safe, a message of yours isn't taken for a question.
+    pub const UNSURE: &str = "unsure";
+    /// You put it in To reply.
+    pub const MOVED: &str = "moved";
 }
 
 /// What a pull or merge request changes: paths and line counts only.
@@ -94,6 +140,22 @@ impl InboxItem {
 
     pub fn has_badge(&self, id: &str) -> bool {
         self.badges.iter().any(|b| b.id == id)
+    }
+
+    /// Whether the user can put it in To reply: a chat message Remora sorted elsewhere by its text.
+    pub fn can_move_to_reply(&self) -> bool {
+        self.reason.is_some() && self.bundle != InboxBundle::reply() && self.bundle != InboxBundle::awaiting()
+    }
+
+    /// As the user put it: in To reply, waiting on them, said so on the row.
+    pub fn moved_to_reply(mut self) -> Self {
+        if self.can_move_to_reply() {
+            self.bundle = InboxBundle::reply();
+            self.needs_action = true;
+            self.expires = None;
+            self.reason = Some(SortReason::new(sort_reason::MOVED, None));
+        }
+        self
     }
 
     /// Item ids are the account's id, a slash, then the plugin's own id (Swift's `InboxItem.makeID`). Two accounts on
@@ -322,6 +384,11 @@ pub struct ItemState {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub started_at: Option<DateTime<Utc>>,
+    /// When the user put a message Remora sorted elsewhere in To reply: it stays there, whatever its words say. Only
+    /// towards To reply, so a correction can never hide a request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub moved_to_reply_at: Option<DateTime<Utc>>,
 }
 
 impl ItemState {
@@ -331,6 +398,7 @@ impl ItemState {
             && self.snooze.is_none()
             && self.reminded_at.is_none()
             && self.started_at.is_none()
+            && self.moved_to_reply_at.is_none()
     }
 }
 

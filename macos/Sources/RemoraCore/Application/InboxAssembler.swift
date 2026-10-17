@@ -105,6 +105,7 @@ public struct InboxAssembler: Sendable {
 
         for item in matching {
             let state = states[item.id]
+            let item = state?.movedToReplyAt != nil ? item.movedToReply() : item
             switch placement(of: item, state: state, now: now) {
             case .inProgress: layout.inProgress.append(item)
             case .snoozed: layout.snoozed.append(item)

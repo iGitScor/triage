@@ -575,6 +575,7 @@ impl Inbox {
             suggested_people: None,
             recurrence,
             reactions: None,
+            reason: None,
         });
         self.persistence.save(REMINDERS, &self.reminders);
         self.snooze(&id, at, SnoozeMode::Hide, None, false);
@@ -793,6 +794,7 @@ mod tests {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 

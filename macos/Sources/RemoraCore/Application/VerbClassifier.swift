@@ -13,6 +13,14 @@ public enum TextIntent: Equatable, Sendable {
 /// Reads a message and guesses its intent. Returns nil when unsure.
 public protocol TextIntentClassifier: Sendable {
     func intent(of text: String) -> TextIntent?
+    /// The intent and why. By default the reason is the model's: a classifier that finds words says which.
+    func classified(_ text: String) -> (intent: TextIntent, reason: SortReason)?
+}
+
+extension TextIntentClassifier {
+    public func classified(_ text: String) -> (intent: TextIntent, reason: SortReason)? {
+        intent(of: text).map { ($0, SortReason(.model)) }
+    }
 }
 
 /// Moves items from the kind a plugin reported to the verb you have to perform.
@@ -32,15 +40,19 @@ public struct VerbClassifier: Sendable {
             item.bundle = verbForAuthored(item)
             item.needsAction = item.bundle != .awaiting
         case InboxBundle.directMessages.id, InboxBundle.mentions.id:
-            let fallback: TextIntent = .request
-            let intent = intent(of: [item.title, item.preview].compactMap { $0 }.joined(separator: "\n")) ?? fallback
+            // Unsure means To reply: a missed request costs more than a message read for nothing.
+            let found = classified([item.title, item.preview].compactMap { $0 }.joined(separator: "\n"))
+            let intent = found?.intent ?? .request
+            item.reason = found?.reason ?? SortReason(.unsure)
             item.bundle = intent == .request ? .reply : intent == .closing ? .finished : .read
             item.needsAction = intent == .request
         case InboxBundle.asked.id, InboxBundle.answered.id:
             // Your own message, last in the conversation: a question or request waits on the others. Anything else
             // waits on nobody: an answer of yours finishes the conversation (Done), and a message nobody asked for
             // (an FYI) is cleared. Unsure means not a question, so the Waiting tab doesn't fill with chatter.
-            let intent = intent(of: [item.title, item.preview].compactMap { $0 }.joined(separator: "\n"))
+            let found = classified([item.title, item.preview].compactMap { $0 }.joined(separator: "\n"))
+            let intent = found?.intent
+            item.reason = found?.reason ?? SortReason(.unsure)
             let answered = item.bundle == .answered
             item.needsAction = false
             if intent == .request {
@@ -58,7 +70,12 @@ public struct VerbClassifier: Sendable {
     }
 
     public func intent(of text: String) -> TextIntent? {
-        classifiers.lazy.compactMap { $0.intent(of: text) }.first
+        classified(text)?.intent
+    }
+
+    /// The first confident classifier's intent, and why.
+    public func classified(_ text: String) -> (intent: TextIntent, reason: SortReason)? {
+        classifiers.lazy.compactMap { $0.classified(text) }.first
     }
 
     private func verbForAuthored(_ item: InboxItem) -> InboxBundle {
@@ -118,19 +135,28 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
     public init() {}
 
     public func intent(of text: String) -> TextIntent? {
+        classified(text)?.intent
+    }
+
+    /// The intent and the words that decided it. The words asking are named before a question mark: "can you check?"
+    /// says "can you".
+    public func classified(_ text: String) -> (intent: TextIntent, reason: SortReason)? {
         let lowercased = text.lowercased()
         var text = Self.prose(lowercased)
         // Nothing but code or links (a snippet, a URL pasted alone) asks nothing in words: to read.
-        if text.allSatisfy(\.isWhitespace) { return lowercased.allSatisfy(\.isWhitespace) ? nil : .info }
-        let saysNoReply = Self.matches(Self.noReplyWords, text)
+        if text.allSatisfy(\.isWhitespace) {
+            return lowercased.allSatisfy(\.isWhitespace) ? nil : (.info, SortReason(.codeOnly))
+        }
+        let noReply = Self.found(Self.noReplyWords, text)
         text = Self.removing(Self.noReplyWords, from: text)
         text = Self.removing(Self.notUrgentWords, from: text)
-        if Self.matches(Self.question, text) || Self.matches(Self.requestWords, text) || Self.asksWithMerci(text) {
-            return .request
-        }
+        if let words = Self.found(Self.requestWords, text) { return (.request, SortReason(.keyword, words)) }
+        if Self.asksWithMerci(text) { return (.request, SortReason(.keyword, "merci de")) }
+        if Self.matches(Self.question, text) { return (.request, SortReason(.question)) }
         // Explicit information wins over a closing word: "FYI, done", "nothing to do, thanks" are to read.
-        if saysNoReply || Self.matches(Self.infoWords, text) { return .info }
-        if Self.closes(text) { return .closing }
+        if let noReply { return (.info, SortReason(.noReply, noReply)) }
+        if let words = Self.found(Self.infoWords, text) { return (.info, SortReason(.info, words)) }
+        if Self.closes(text) { return (.closing, SortReason(.closing, Self.found(Self.closerWords, text))) }
         return nil
     }
 
@@ -193,6 +219,14 @@ public struct KeywordIntentClassifier: TextIntentClassifier {
         let alternatives = keywords.sorted { $0.count > $1.count }.map(NSRegularExpression.escapedPattern(for:)).joined(
             separator: "|")
         return try! NSRegularExpression(pattern: "(^|[^\\p{L}\\p{N}])(\(alternatives))($|[^\\p{L}\\p{N}])")
+    }
+
+    /// The keyword a word pattern found first, as written in the message (lowercased).
+    static func found(_ pattern: NSRegularExpression, _ text: String) -> String? {
+        guard let match = pattern.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+            let range = Range(match.range(at: 2), in: text)
+        else { return nil }
+        return String(text[range])
     }
 
     static func matches(_ pattern: NSRegularExpression, _ text: String) -> Bool {

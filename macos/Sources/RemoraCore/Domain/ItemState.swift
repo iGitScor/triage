@@ -8,18 +8,25 @@ public struct ItemState: Hashable, Codable, Sendable {
     public var remindedAt: Date?
     /// Set while the user is working on it: the item leaves the inbox for the In progress view.
     public var startedAt: Date?
+    /// When the user put a message Remora sorted elsewhere in To reply: it stays there, whatever its words say. Only
+    /// towards To reply, so a correction can never hide a request.
+    public var movedToReplyAt: Date?
 
     public init(
-        pinned: Bool = false, done: Mark? = nil, snooze: Snooze? = nil, remindedAt: Date? = nil, startedAt: Date? = nil
+        pinned: Bool = false, done: Mark? = nil, snooze: Snooze? = nil, remindedAt: Date? = nil, startedAt: Date? = nil,
+        movedToReplyAt: Date? = nil
     ) {
         self.pinned = pinned
         self.done = done
         self.snooze = snooze
         self.remindedAt = remindedAt
         self.startedAt = startedAt
+        self.movedToReplyAt = movedToReplyAt
     }
 
-    public var isEmpty: Bool { !pinned && done == nil && snooze == nil && remindedAt == nil && startedAt == nil }
+    public var isEmpty: Bool {
+        !pinned && done == nil && snooze == nil && remindedAt == nil && startedAt == nil && movedToReplyAt == nil
+    }
 
     /// Remembers the item's fingerprint so new activity brings it back.
     public struct Mark: Hashable, Codable, Sendable {

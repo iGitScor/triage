@@ -294,6 +294,7 @@ impl AzureDevOpsPlugin {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -589,6 +590,7 @@ impl WorkItem {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }

@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::{InboxBundle, InboxItem};
+use crate::{sort_reason, InboxBundle, InboxItem, SortReason};
 
 /// What a chat message asks of you.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -49,6 +49,11 @@ fn with_apostrophes(phrases: &[&str]) -> Vec<String> {
 }
 
 /// Any of the keywords as whole words: not preceded or followed by a letter or a digit. One pattern, compiled once.
+/// The keyword a word pattern found first, as written in the message (lowercased).
+fn found(pattern: &Regex, text: &str) -> Option<String> {
+    pattern.captures(text).map(|c| c[2].to_string())
+}
+
 fn word_pattern<S: AsRef<str>>(keywords: &[S]) -> Regex {
     let mut keywords: Vec<&str> = keywords.iter().map(AsRef::as_ref).collect();
     keywords.sort_by_key(|k| std::cmp::Reverse(k.chars().count()));
@@ -209,24 +214,41 @@ impl KeywordIntentClassifier {
     const CLOSING_WORDS: usize = 12;
 
     pub fn intent(text: &str) -> Option<TextIntent> {
+        Self::classified(text).map(|(intent, _)| intent)
+    }
+
+    /// The intent and the words that decided it. The words asking are named before a question mark: "can you
+    /// check?" says "can you".
+    pub fn classified(text: &str) -> Option<(TextIntent, SortReason)> {
         let lowercased = text.to_lowercase();
         let text = NOT_PROSE.replace_all(&lowercased, " ");
         // Nothing but code or links (a snippet, a URL pasted alone) asks nothing in words: to read.
         if text.trim().is_empty() {
-            return (!lowercased.trim().is_empty()).then_some(TextIntent::Info);
+            return (!lowercased.trim().is_empty())
+                .then(|| (TextIntent::Info, SortReason::new(sort_reason::CODE_ONLY, None)));
         }
-        let says_no_reply = NO_REPLY_WORDS.is_match(&text);
+        let no_reply = found(&NO_REPLY_WORDS, &text);
         let text = NO_REPLY_WORDS.replace_all(&text, "$1 $3");
         let text = NOT_URGENT_WORDS.replace_all(&text, "$1 $3");
-        if QUESTION.is_match(&text) || REQUEST_WORDS.is_match(&text) || Self::asks_with_merci(&text) {
-            return Some(TextIntent::Request);
+        if let Some(words) = found(&REQUEST_WORDS, &text) {
+            return Some((TextIntent::Request, SortReason::new(sort_reason::KEYWORD, Some(&words))));
+        }
+        if Self::asks_with_merci(&text) {
+            return Some((TextIntent::Request, SortReason::new(sort_reason::KEYWORD, Some("merci de"))));
+        }
+        if QUESTION.is_match(&text) {
+            return Some((TextIntent::Request, SortReason::new(sort_reason::QUESTION, None)));
         }
         // Explicit information wins over a closing word: "FYI, done", "nothing to do, thanks" are to read.
-        if says_no_reply || INFO_WORDS.is_match(&text) {
-            return Some(TextIntent::Info);
+        if let Some(words) = no_reply {
+            return Some((TextIntent::Info, SortReason::new(sort_reason::NO_REPLY, Some(&words))));
+        }
+        if let Some(words) = found(&INFO_WORDS, &text) {
+            return Some((TextIntent::Info, SortReason::new(sort_reason::INFO, Some(&words))));
         }
         if Self::closes(&text) {
-            return Some(TextIntent::Closing);
+            let words = found(&CLOSER_WORDS, &text);
+            return Some((TextIntent::Closing, SortReason::new(sort_reason::CLOSING, words.as_deref())));
         }
         None
     }
@@ -282,7 +304,10 @@ impl VerbClassifier {
                     .flatten()
                     .collect::<Vec<_>>()
                     .join("\n");
-                let intent = KeywordIntentClassifier::intent(&text).unwrap_or(TextIntent::Request);
+                // Unsure means To reply: a missed request costs more than a message read for nothing.
+                let found = KeywordIntentClassifier::classified(&text);
+                let intent = found.as_ref().map_or(TextIntent::Request, |(intent, _)| *intent);
+                item.reason = Some(found.map_or_else(|| SortReason::new(sort_reason::UNSURE, None), |(_, r)| r));
                 item.bundle = match intent {
                     TextIntent::Request => InboxBundle::reply(),
                     TextIntent::Closing => InboxBundle::finished(),
@@ -300,7 +325,9 @@ impl VerbClassifier {
                     .flatten()
                     .collect::<Vec<_>>()
                     .join("\n");
-                let intent = KeywordIntentClassifier::intent(&text);
+                let found = KeywordIntentClassifier::classified(&text);
+                let intent = found.as_ref().map(|(intent, _)| *intent);
+                item.reason = Some(found.map_or_else(|| SortReason::new(sort_reason::UNSURE, None), |(_, r)| r));
                 item.needs_action = false;
                 if intent == Some(TextIntent::Request) {
                     item.bundle = InboxBundle::awaiting();
@@ -526,5 +553,53 @@ mod conversation_tests {
         let states = std::collections::HashMap::from([("f".to_string(), pinned)]);
         let layout = assembler.layout(&[finished], &states, now(), "");
         assert!(layout.pinned.len() == 1 && layout.action_count() == 0, "shown where you pinned it, not counted");
+    }
+
+    /// Each sort says why: the words that decided, a question, or nothing clear. Same cases as the Mac.
+    #[test]
+    fn each_sort_says_why() {
+        use crate::sort_reason::*;
+        for (text, code, detail) in [
+            ("Can you check the build?", KEYWORD, Some("can you")),
+            ("Tu peux regarder ?", KEYWORD, Some("tu peux")),
+            ("Merci de relire la PR", KEYWORD, Some("merci de")),
+            ("Is the build green?", QUESTION, None),
+            ("No need to reply, the build is green", NO_REPLY, Some("no need to reply")),
+            ("FYI the build is green", INFO, Some("fyi")),
+            ("Thanks!", CLOSING, Some("thanks")),
+            ("👍", CLOSING, None),
+            ("https://example.com/build/42", CODE_ONLY, None),
+        ] {
+            let (_, reason) = KeywordIntentClassifier::classified(text).expect(text);
+            assert_eq!(reason, SortReason::new(code, detail), "{text}");
+        }
+        assert_eq!(KeywordIntentClassifier::classified("The client is still waiting for the quote"), None);
+
+        let unsure = classified("The client is still waiting for the quote", InboxBundle::direct_messages());
+        assert_eq!(unsure.bundle, InboxBundle::reply());
+        assert_eq!(unsure.reason, Some(SortReason::new(UNSURE, None)), "kept in To reply, and says it's a guess");
+        let mut review = item("r", InboxBundle::reviews());
+        review.title = "Can you review?".into();
+        assert_eq!(VerbClassifier::classify(review).reason, None, "the source sorted it, its badges tell why");
+    }
+
+    /// Put in To reply by the user: there whatever its words say, until it's done; never the other way.
+    #[test]
+    fn a_message_put_in_to_reply_stays_there() {
+        let assembler = InboxAssembler { wake_on_activity: true };
+        let news = classified("FYI the build is green", InboxBundle::mentions());
+        let thanks = classified("Thanks!", InboxBundle::direct_messages());
+        let mine = classified("Here is the link", InboxBundle::asked());
+        assert!(news.can_move_to_reply() && thanks.can_move_to_reply() && !mine.can_move_to_reply());
+        let moved = ItemState { moved_to_reply_at: Some(now()), ..Default::default() };
+        let states =
+            std::collections::HashMap::from([(news.id.clone(), moved.clone()), ("t".to_string(), moved.clone())]);
+        let mut thanks = thanks;
+        thanks.id = "t".into();
+        let layout = assembler.layout(&[news, thanks], &states, now(), "");
+        let mine: Vec<_> = layout.my_turn_items().collect();
+        assert_eq!(mine.len(), 2, "both in To reply, the finished one too");
+        assert!(mine.iter().all(|i| i.bundle == InboxBundle::reply() && i.needs_action));
+        assert!(mine.iter().all(|i| i.reason == Some(SortReason::new(crate::sort_reason::MOVED, None))));
     }
 }

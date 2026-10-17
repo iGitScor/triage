@@ -65,6 +65,7 @@ impl Demo {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         });
     }
 

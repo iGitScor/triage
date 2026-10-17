@@ -32,6 +32,8 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     public var recurrence: Recurrence?
     /// Emoji reactions on the message (Slack); nil for tools without them. Not in the fingerprint.
     public var reactions: [Reaction]?
+    /// Why Remora put a chat message where it is; nil for what the source sorted. Not in the fingerprint.
+    public var reason: SortReason?
 
     public init(
         id: String,
@@ -80,6 +82,20 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     }
 
     public func hasBadge(_ id: BadgeID) -> Bool { badges.contains { $0.id == id } }
+
+    /// Whether the user can put it in To reply: a chat message Remora sorted elsewhere by its text.
+    public var canMoveToReply: Bool { reason != nil && bundle != .reply && bundle != .awaiting }
+
+    /// As the user put it: in To reply, waiting on them, said so on the row.
+    public func movedToReply() -> InboxItem {
+        guard canMoveToReply else { return self }
+        var item = self
+        item.bundle = .reply
+        item.needsAction = true
+        item.expires = nil
+        item.reason = SortReason(.moved)
+        return item
+    }
 }
 
 /// Item ids are the account's id, a slash, then the plugin's own id. Two accounts on the same tool never share an

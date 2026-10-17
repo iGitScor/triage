@@ -351,6 +351,7 @@ impl Message {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 
@@ -445,6 +446,7 @@ impl Event {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -543,6 +545,7 @@ impl Chat {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         })
     }
 }

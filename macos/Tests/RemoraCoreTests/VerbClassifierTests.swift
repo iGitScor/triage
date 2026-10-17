@@ -219,4 +219,50 @@ struct VerbClassifierTests {
             #expect(abs(ours - embedding.distance(between: a, and: b, distanceType: .cosine)) < 1e-6, "\(a) / \(b)")
         }
     }
+
+    /// Each sort says why: the words that decided, a question, or nothing clear. Same cases as Windows.
+    @Test(
+        arguments: [
+            ("Can you check the build?", SortReason(.keyword, "can you")),
+            ("Tu peux regarder ?", SortReason(.keyword, "tu peux")),
+            ("Merci de relire la PR", SortReason(.keyword, "merci de")),
+            ("Is the build green?", SortReason(.question)),
+            ("No need to reply, the build is green", SortReason(.noReply, "no need to reply")),
+            ("FYI the build is green", SortReason(.info, "fyi")),
+            ("Thanks!", SortReason(.closing, "thanks")),
+            ("👍", SortReason(.closing)),
+            ("https://example.com/build/42", SortReason(.codeOnly)),
+        ])
+    func eachSortSaysWhy(text: String, reason: SortReason) {
+        #expect(KeywordIntentClassifier().classified(text)?.reason == reason)
+    }
+
+    @Test func aGuessSaysSoAndTheSourcesSortHasNoReason() {
+        var dm = makeItem("1", bundle: .directMessages)
+        dm.title = "The client is still waiting for the quote"
+        let unsure = classifier.classify(dm)
+        #expect(unsure.bundle == .reply)
+        #expect(unsure.reason == SortReason(.unsure), "kept in To reply, and says it's a guess")
+        var review = makeItem("2", bundle: .reviews)
+        review.title = "Can you review?"
+        #expect(classifier.classify(review).reason == nil, "the source sorted it, its badges tell why")
+    }
+
+    /// Put in To reply by the user: there whatever its words say, until it's done; never the other way.
+    @Test func aMessagePutInToReplyStaysThere() {
+        func classified(_ id: String, _ title: String, _ bundle: InboxBundle) -> InboxItem {
+            var item = makeItem(id, bundle: bundle, needsAction: true)
+            item.title = title
+            return classifier.classify(item)
+        }
+        let news = classified("n", "FYI the build is green", .mentions)
+        let thanks = classified("t", "Thanks!", .directMessages)
+        let mine = classified("m", "Here is the link", .asked)
+        #expect(news.canMoveToReply && thanks.canMoveToReply && !mine.canMoveToReply)
+        let moved = ItemState(movedToReplyAt: now)
+        let layout = InboxAssembler().layout(items: [news, thanks], states: ["n": moved, "t": moved], now: now)
+        #expect(layout.myTurnItems.count == 2, "both in To reply, the finished one too")
+        #expect(
+            layout.myTurnItems.allSatisfy { $0.bundle == .reply && $0.needsAction && $0.reason == SortReason(.moved) })
+    }
 }

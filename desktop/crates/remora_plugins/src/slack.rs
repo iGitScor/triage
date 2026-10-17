@@ -626,6 +626,7 @@ impl Reply {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 }
@@ -798,6 +799,7 @@ impl Match {
             suggested_people: None,
             recurrence: None,
             reactions: None,
+            reason: None,
         }
     }
 
