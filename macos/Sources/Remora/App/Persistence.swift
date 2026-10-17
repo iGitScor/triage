@@ -16,6 +16,8 @@ final class Persistence {
     let reviewTimes: JSONStore<[ReviewTiming]>
     let bundleSummaries: JSONStore<[String: BundleSummary]>
     let assistantUsage: JSONStore<AssistantUsage>
+    /// What agents asked through the MCP server (V15-01).
+    let agentReads: JSONStore<[AgentRead]>
     /// Saves the files off the main thread, each once per burst of changes.
     let writer = DiskWriter()
     private let isDemo: Bool
@@ -33,6 +35,7 @@ final class Persistence {
         reviewTimes = JSONStore("review-times", in: folder)
         bundleSummaries = JSONStore("bundle-summaries", in: folder, backedUp: false)
         assistantUsage = JSONStore("assistant-usage", in: folder, backedUp: false)
+        agentReads = JSONStore("agent-reads", in: folder, backedUp: false)
     }
 
     func save<Value: Sendable>(_ value: Value, to store: JSONStore<Value>) {

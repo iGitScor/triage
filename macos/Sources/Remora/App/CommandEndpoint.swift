@@ -1,12 +1,15 @@
 import Foundation
 import RemoraCore
 
-/// The `remora` command (IDEA-22): `remora count`, `list`, `remind` ask the app on its socket (`LocalSocket`). A demo
-/// run answers only where REMORA_SOCKET says, never in the real app's place.
+/// The `remora` command (IDEA-22): `remora count`, `list`, `remind` ask the app on its socket (`LocalSocket`), and so
+/// does `remora mcp` for the agents on this Mac (V15-01). A demo run answers only where REMORA_SOCKET says, never in
+/// the real app's place.
 @MainActor enum CommandEndpoint {
     static func start(model: InboxModel, demo: Bool) -> LocalSocketServer? {
         let environment = ProcessInfo.processInfo.environment
         if demo && environment[LocalSocket.variable] == nil { return nil }
+        // The organization turned the command and the MCP server off (V15-10): nothing listens at all.
+        guard LocalAPIPolicy.allowed() else { return nil }
         do {
             return try LocalSocketServer(path: LocalSocket.path(environment: environment)) { line in
                 DispatchQueue.main.sync { MainActor.assumeIsolated { model.answerCommand(line) } }
@@ -21,7 +24,10 @@ import RemoraCore
 extension InboxModel {
     /// The inbox as it is now, without the titles of the tools whose content is hidden (Settings, or the
     /// organization's policy).
-    func answerCommand(_ line: String, now: Date = .now) -> String {
+    func answerCommand(_ line: String, now: Date = .now, allowed: Bool = LocalAPIPolicy.allowed()) -> String {
+        // A policy that changed since the app started listening: refuse rather than answer (V15-10).
+        guard allowed else { return #"{"error":"\#(McpServer.disabled)","ok":false}"# }
+        if let read = AgentRead.from(line, now: now) { recordAgentRead(read) }
         let hidden = effectivePreferences.hiddenContentPlugins
         let remind = { (text: String, at: Date) throws(RemoraCommand.Refusal) -> String in
             guard let id = self.addReminder(text, at: at) else {

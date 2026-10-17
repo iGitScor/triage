@@ -32,6 +32,8 @@ final class InboxModel {
             updateSpotlight()
         }
     }
+    /// What agents asked through `remora mcp`, oldest first (V15-01), for Settings.
+    private(set) var agentReads: [AgentRead] = []
     private(set) var reminders: [InboxItem] {
         didSet {
             layoutChanged()
@@ -155,6 +157,7 @@ final class InboxModel {
             snoozes = SnoozeService(history: read(files.history) ?? [], persistence: files)
             learning = LearningService(
                 records: read(files.learning) ?? [], reviewTimings: read(files.reviewTimes) ?? [], persistence: files)
+            agentReads = files.agentReads.load() ?? []
             environment.removeURLCaches()
         }
         storageIssues = issues
@@ -1081,6 +1084,12 @@ final class InboxModel {
         title: "Connection test", context: "Remora", date: .now
     )
 
+    /// Keeps an agent's request through the MCP server (V15-01): the most recent `AgentRead.kept`.
+    func recordAgentRead(_ read: AgentRead) {
+        agentReads = AgentRead.adding(read, to: agentReads)
+        persistence.save(agentReads, to: persistence.agentReads)
+    }
+
     /// Removes everything Remora stored on this Mac: accounts, tokens, cache, history, settings.
     /// Everything else is erased even when the Keychain refuses; then that refusal is thrown, so it is said.
     func eraseLocalData() throws {
@@ -1097,6 +1106,7 @@ final class InboxModel {
         assistant.reset()
         snoozes.reset()
         learning.reset()
+        agentReads = []
         links = [:]
         preferences = Preferences()
         spotlight.reset()

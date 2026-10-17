@@ -68,6 +68,12 @@
       <enabledValue><decimal value="1" /></enabledValue>
       <disabledValue><decimal value="0" /></disabledValue>
     </policy>
+    <policy name="AllowLocalAPI" class="Both" displayName="$(string.AllowLocalAPI)" explainText="$(string.AllowLocalAPI_Help)" key="Software\Policies\Remora" valueName="AllowLocalAPI">
+      <parentCategory ref="Remora" />
+      <supportedOn ref="SUPPORTED_Remora" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
     <policy name="AIDailyLimit" class="Both" displayName="$(string.AIDailyLimit)" explainText="$(string.AIDailyLimit_Help)" key="Software\Policies\Remora" presentation="$(presentation.AIDailyLimit)">
       <parentCategory ref="Remora" />
       <supportedOn ref="SUPPORTED_Remora" />

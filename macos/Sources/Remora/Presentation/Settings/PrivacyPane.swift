@@ -9,6 +9,22 @@ struct PrivacyPane: View {
     @State private var confirmingErase = false
     @State private var eraseError: String?
 
+    /// What an agent asked, in the words of the tabs.
+    static func asked(_ read: AgentRead) -> String {
+        switch read.command {
+        case "count": L("the count")
+        case "remind": L("a reminder")
+        default:
+            switch read.tab ?? "my-turn" {
+            case "in-progress": L("In progress")
+            case "waiting": L("Waiting")
+            case "snoozed": L("Snoozed")
+            case "done": L("Done")
+            default: L("My turn")
+            }
+        }
+    }
+
     var body: some View {
         @Bindable var model = model
         let managed = ManagedPolicy.isManaged()
@@ -79,6 +95,35 @@ struct PrivacyPane: View {
                         }
                     }
                 }
+            }
+
+            Section(L("Agents on this Mac")) {
+                Text(
+                    L(
+                        "AI agents such as Claude Desktop, Claude Code or Gemini CLI can ask Remora what waits on you, through MCP. They read the inbox; they never write to your tools."
+                    )
+                )
+                .font(Myna.font(11.5))
+                .foregroundStyle(Myna.muted)
+                if !LocalAPIPolicy.allowed() {
+                    Label(L("Turned off by your organization."), systemImage: "building.columns")
+                        .font(Myna.font(12, .semibold))
+                } else if model.agentReads.isEmpty {
+                    Text(L("No agent has asked yet.")).font(Myna.font(12)).foregroundStyle(Myna.muted)
+                } else {
+                    // The most recent first; the name is what the agent says it is.
+                    ForEach(Array(model.agentReads.suffix(5).reversed().enumerated()), id: \.offset) { _, read in
+                        HStack {
+                            Text(read.agent).font(Myna.font(12.5, .medium))
+                            Text(Self.asked(read)).font(Myna.font(12)).foregroundStyle(Myna.inkSoft)
+                            Spacer()
+                            Text(read.at, format: .relative(presentation: .named))
+                                .font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                        }
+                    }
+                }
+                Link(L("How to set it up"), destination: URL(string: "https://triage.iscor.me/docs/guide/agents")!)
+                    .font(Myna.font(12))
             }
 
             Section(L("Data on this Mac")) {

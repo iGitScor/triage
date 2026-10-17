@@ -170,6 +170,15 @@ pub fn open_notices(app: AppHandle) -> Result<()> {
     app.opener().open_path(path.to_string_lossy(), None::<&str>).map_err(|e| Message::from(e.to_string()))
 }
 
+/// The guide to connecting AI agents through `remora mcp` (V15-01), in the browser.
+#[tauri::command]
+pub fn open_agents_guide(app: AppHandle) -> Result<()> {
+    let page = if crate::i18n::translator().lang() == "fr" { "fr/guide/agents" } else { "guide/agents" };
+    app.opener()
+        .open_url(format!("https://triage.iscor.me/docs/{page}"), None::<&str>)
+        .map_err(|e| Message::from(e.to_string()))
+}
+
 #[tauri::command]
 pub async fn sources(state: State<'_, AppState>) -> Result<Vec<SourceInfo>> {
     Ok(state.inbox.lock().await.sources())
@@ -326,6 +335,10 @@ pub struct SettingsView {
     /// What the assistant used today and this month (AI-03).
     usage_today: UsageDay,
     usage_month: UsageDay,
+    /// The agents' last requests through `remora mcp`, most recent first (V15-01).
+    agent_reads: Vec<remora_core::AgentRead>,
+    /// The organization's `AllowLocalAPI` (V15-10).
+    local_api_allowed: bool,
 }
 
 #[tauri::command]
@@ -350,6 +363,8 @@ pub async fn settings(app: AppHandle, state: State<'_, AppState>) -> Result<Sett
         notifications_off: crate::notifications_off(&app),
         usage_today,
         usage_month,
+        agent_reads: inbox.agent_reads().into_iter().take(5).collect(),
+        local_api_allowed: inbox.local_api_allowed(),
     })
 }
 

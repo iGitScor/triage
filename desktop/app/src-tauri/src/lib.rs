@@ -205,6 +205,7 @@ pub fn run() {
             commands::hide,
             commands::quit,
             commands::open_notices,
+            commands::open_agents_guide,
             commands::open_notification_settings,
         ])
         .setup(move |app| {
@@ -386,6 +387,10 @@ fn follow(app: &AppHandle, url: &str) {
 fn listen(app: &AppHandle, demo: bool) {
     use remora_app::local_api;
     if demo && std::env::var_os(local_api::ENDPOINT_VARIABLE).is_none() {
+        return;
+    }
+    // The organization turned the command and the MCP server off (V15-10): nothing listens at all.
+    if !remora_app::Managed::read().local_api_allowed() {
         return;
     }
     let handle = app.clone();

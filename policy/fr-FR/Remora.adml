@@ -23,6 +23,8 @@
       <string id="AIServer_Help">Le serveur qu’utilise l’assistant OpenAI-compatible, rempli et verrouillé dans les Réglages.</string>
       <string id="AllowLocalAI">Autoriser un serveur d’IA sur cet ordinateur</string>
       <string id="AllowLocalAI_Help">Un serveur sur cet ordinateur (localhost) : autorisé même sans IA externe, ou refusé.</string>
+      <string id="AllowLocalAPI">Autoriser les scripts et les agents à lire la boîte</string>
+      <string id="AllowLocalAPI_Help">La commande remora et le serveur MCP pour les agents d’IA de cet ordinateur (Claude Desktop, Claude Code, Gemini CLI). Désactivé : seule l’app peut lire la boîte.</string>
       <string id="AIDailyLimit">Requêtes de l’assistant par jour</string>
       <string id="AIDailyLimit_Help">Le nombre maximal de requêtes que l’assistant peut envoyer chaque jour (un brief, un résumé ou un tri en est une), de 1 à 10000. Au-delà, l’assistant attend le lendemain. Verrouillé dans les Réglages.</string>
       <string id="HiddenContentSources">Masquer le contenu des messages</string>

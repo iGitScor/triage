@@ -21,6 +21,8 @@ const unmanaged = {
   wayland: false,
   usageToday: { day: '2026-10-15', requests: 0, inputTokens: 0, outputTokens: 0 },
   usageMonth: { day: '2026-10', requests: 0, inputTokens: 0, outputTokens: 0 },
+  agentReads: [],
+  localApiAllowed: true,
 }
 const replies: Record<string, unknown> = {
   sources: demo.sources,
@@ -174,6 +176,35 @@ describe('Settings the organization set', () => {
     expect(invoke).toHaveBeenCalledWith('set_preferences', {
       preferences: { ...demo.preferences, allowExternalAi: true },
     })
+  })
+})
+
+describe('Settings, agents on this computer (V15-01, V15-10)', () => {
+  afterEach(() => {
+    cleanup()
+    invoke.mockClear()
+    replies.settings = unmanaged
+  })
+
+  it('says no agent has asked, then lists what agents read, and opens the guide', async () => {
+    const { getByText, getByRole } = await open('Privacy')
+    expect(getByText('No agent has asked yet.')).toBeTruthy()
+    await fireEvent.click(getByRole('button', { name: 'How to set it up' }))
+    expect(invoke).toHaveBeenCalledWith('open_agents_guide', undefined)
+    cleanup()
+    replies.settings = {
+      ...unmanaged,
+      agentReads: [{ agent: 'Claude Desktop', command: 'list', tab: 'waiting', at: new Date().toISOString() }],
+    }
+    const again = await open('Privacy')
+    expect(again.getByText('Claude Desktop')).toBeTruthy()
+    expect(again.getByText('Waiting')).toBeTruthy()
+  })
+
+  it('says when the organization turned agents off', async () => {
+    replies.settings = { ...unmanaged, localApiAllowed: false }
+    const { getByText } = await open('Privacy')
+    expect(getByText('Turned off by your organization.')).toBeTruthy()
   })
 })
 

@@ -17,6 +17,20 @@ errorKind: FailureKind | null,
  */
 remarks: Array<Message>, id: string, pluginId: string, name: string | null, settings: { [key in string]: string }, identity: string | null, };
 
+/**
+ * An agent asked the app something through `remora mcp` (V15-01): who it said it was, what, when. Kept on this
+ * computer for Settings, erased with the rest; the name is the agent's own claim, not verified.
+ */
+export type AgentRead = { agent: string, 
+/**
+ * `count`, `list` or `remind`.
+ */
+command: string, 
+/**
+ * The tab, for `list`.
+ */
+tab: string | null, at: string, };
+
 export type Appearance = "system" | "light" | "dark";
 
 export type AssistantView = { name: string, 
@@ -239,7 +253,8 @@ export type LinkedView = { id: string, title: string, context: string, pluginId:
  * settings: `HiddenContentSources` (REG_MULTI_SZ, added to the user's), `RefreshMinutes` (REG_DWORD, 1 to 60),
  * `OpenInApps` (REG_DWORD 0/1), `ClaudeCodePath` (REG_SZ) and `AIDailyLimit` (REG_DWORD, assistant requests a day,
  * 1 to 10000). A source's settings (REG_SZ, `SETTINGS`): what the organization registered for Microsoft 365,
- * `MicrosoftTenant` and `MicrosoftClientID`, locked in the form.
+ * `MicrosoftTenant` and `MicrosoftClientID`, locked in the form. `AllowLocalAPI` (REG_DWORD 0/1): 0 turns off the
+ * `remora` command and the MCP server for agents (V15-10), so nothing on the computer can read the inbox but the app.
  * A key that is set wins over the user's own choice.
  *
  * It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -280,6 +295,10 @@ claudeCodePath: string | null,
  * Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored (AI-03).
  */
 aiDailyLimit: number | null, 
+/**
+ * The `remora` command and the MCP server (V15-10). Unset: allowed; unreadable: off.
+ */
+allowLocalApi: boolean | null, 
 /**
  * Sources' settings by policy name (`ConfigField::managed_key`), replacing what the user typed. Empty:
  * unreadable, so the source can't sign in.
@@ -432,7 +451,15 @@ notificationsOff: 'app' | 'all' | 'policy' | null,
 /**
  * What the assistant used today and this month (AI-03).
  */
-usageToday: UsageDay, usageMonth: UsageDay, };
+usageToday: UsageDay, usageMonth: UsageDay, 
+/**
+ * The agents' last requests through `remora mcp`, most recent first (V15-01).
+ */
+agentReads: Array<AgentRead>, 
+/**
+ * The organization's `AllowLocalAPI` (V15-10).
+ */
+localApiAllowed: boolean, };
 
 /**
  * Signing in through the browser: OAuth 2's authorization code with PKCE, for an app that keeps no secret, the

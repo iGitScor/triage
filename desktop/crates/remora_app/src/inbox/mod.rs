@@ -32,7 +32,8 @@ pub use sync::SyncEngine;
 use crate::{JsonStore, Managed, Preferences, Vault};
 use chrono::{DateTime, Utc};
 use persistence::{
-    ACCOUNTS, BRIEF, CACHE, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES, SUMMARIES, USAGE,
+    ACCOUNTS, AGENT_READS, BRIEF, CACHE, HISTORY, LEARNING, PREFERENCES, REMINDERS, REVIEW_TIMES, STATES, SUMMARIES,
+    USAGE,
 };
 use remora_core::{
     Account, CompliancePolicy, FailureKind, InboxAssembler, InboxBundle, InboxItem, InboxLayout, ItemState, LinkFinder,
@@ -134,6 +135,8 @@ pub struct Inbox {
     links: HashMap<String, Vec<String>>,
     /// The states and reminders before the last Done or Clear all, until the next one.
     undo_point: Option<(HashMap<String, ItemState>, Vec<InboxItem>)>,
+    /// What agents asked through the MCP server, oldest first (V15-01).
+    agent_reads: Vec<remora_core::AgentRead>,
 }
 
 impl Inbox {
@@ -162,6 +165,7 @@ impl Inbox {
             ),
             links: HashMap::new(),
             undo_point: None,
+            agent_reads: files.load(AGENT_READS).unwrap_or_default(),
             managed,
             persistence: files,
         };
@@ -189,6 +193,7 @@ impl Inbox {
             reminders: vec![],
             links: HashMap::new(),
             undo_point: None,
+            agent_reads: vec![],
             persistence,
         }
     }
@@ -667,6 +672,24 @@ impl Inbox {
     /// The files, for the app to flush when it quits.
     pub fn store(&self) -> Option<JsonStore> {
         self.persistence.store()
+    }
+
+    /// An agent's request through the MCP server (V15-01), kept for Settings: the most recent `AGENT_READS_KEPT`.
+    pub fn record_agent_read(&mut self, read: remora_core::AgentRead) {
+        self.agent_reads.push(read);
+        let excess = self.agent_reads.len().saturating_sub(remora_core::AGENT_READS_KEPT);
+        self.agent_reads.drain(..excess);
+        self.persistence.save(AGENT_READS, &self.agent_reads);
+    }
+
+    /// Whether the `remora` command and the MCP server may read the inbox (`AllowLocalAPI`, V15-10).
+    pub fn local_api_allowed(&self) -> bool {
+        self.managed.local_api_allowed()
+    }
+
+    /// What agents asked, most recent first.
+    pub fn agent_reads(&self) -> Vec<remora_core::AgentRead> {
+        self.agent_reads.iter().rev().cloned().collect()
     }
 
     /// Settings → Privacy → Erase local data, the tokens already deleted (`Tokens::erase`). The files go under the

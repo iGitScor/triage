@@ -6,12 +6,15 @@
 
 use crate::Inbox;
 use chrono::{DateTime, Utc};
-use remora_core::{answer_command, command_invocation, command_output, COMMAND_LINE_LIMIT, COMMAND_USAGE};
+use remora_core::{
+    agent_read, answer_command, command_invocation, command_output, McpSession, COMMAND_LINE_LIMIT, COMMAND_USAGE,
+    MCP_DISABLED,
+};
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::PathBuf;
 
 /// The first words that make the app's binary a command instead of the tray app.
-const COMMANDS: [&str; 5] = ["count", "list", "remind", "help", "--help"];
+const COMMANDS: [&str; 6] = ["count", "list", "remind", "mcp", "help", "--help"];
 
 /// Overrides where the app listens and the command asks (tests, a demo run).
 pub const ENDPOINT_VARIABLE: &str = "REMORA_SOCKET";
@@ -27,6 +30,14 @@ pub fn run_command(args: &[String]) -> i32 {
     if args.first().is_some_and(|first| first == "help" || first == "--help") {
         println!("{COMMAND_USAGE}");
         return 0;
+    }
+    let allowed = crate::Managed::read().local_api_allowed();
+    if args.first().is_some_and(|first| first == "mcp") {
+        return run_mcp(allowed);
+    }
+    if !allowed {
+        eprintln!("{MCP_DISABLED}");
+        return 1;
     }
     let invocation = match command_invocation(args) {
         Ok(invocation) => invocation,
@@ -53,9 +64,39 @@ pub fn run_command(args: &[String]) -> i32 {
     }
 }
 
+/// `remora mcp` (V15-01): an MCP server on standard input and output for the agents on this computer, each tool call
+/// relayed to the app as a request line. It runs until the agent closes its end. With `AllowLocalAPI` off it still
+/// answers, so the agent can say why, but refuses every call (`McpSession`).
+fn run_mcp(allowed: bool) -> i32 {
+    let mut session = McpSession::new(env!("CARGO_PKG_VERSION"), allowed);
+    let endpoint = endpoint();
+    let mut ask = |request: &str| ask(&endpoint, request).map_err(|_| ());
+    let stdout = io::stdout();
+    for line in io::stdin().lock().lines() {
+        let Ok(line) = line else { break };
+        if line.trim().is_empty() {
+            continue;
+        }
+        if let Some(answer) = session.handle(&line, &mut ask) {
+            let mut out = stdout.lock();
+            if writeln!(out, "{answer}").and_then(|_| out.flush()).is_err() {
+                break;
+            }
+        }
+    }
+    0
+}
+
 /// What the app answers a request line with: the inbox as it is now, without the titles of the tools whose content
 /// is hidden (Settings, or the organization's policy). True when a reminder was saved, for the window to show it.
 pub fn answer(inbox: &mut Inbox, line: &str, now: DateTime<Utc>) -> (String, bool) {
+    // A policy that changed since the app started listening: refuse rather than answer (V15-10).
+    if !inbox.local_api_allowed() {
+        return (serde_json::json!({ "ok": false, "error": MCP_DISABLED }).to_string(), false);
+    }
+    if let Some(read) = agent_read(line, now) {
+        inbox.record_agent_read(read);
+    }
     let layout = inbox.layout(now, "");
     let preferences = inbox.effective_preferences();
     let mut saved = false;
@@ -327,9 +368,10 @@ mod tests {
     }
 
     #[test]
-    fn only_the_three_commands_and_help_are_commands() {
+    fn only_the_three_commands_mcp_and_help_are_commands() {
         let args = |list: &[&str]| list.iter().map(|a| a.to_string()).collect::<Vec<_>>();
         assert!(is_command(&args(&["count"])) && is_command(&args(&["remind", "x"])) && is_command(&args(&["help"])));
+        assert!(is_command(&args(&["mcp"])));
         assert!(!is_command(&args(&[])) && !is_command(&args(&["--reminder"])) && !is_command(&args(&["--demo"])));
     }
 
@@ -352,6 +394,23 @@ mod tests {
         inbox.arrange().1.hidden_content_sources = Some(vec!["reminders".into()]);
         let (list, _) = answer(&mut inbox, r#"{"command":"list"}"#, later);
         assert!(!list.contains("Call Erin"), "{list}");
+    }
+
+    /// V15-01: what an agent asks through `remora mcp` is logged under its declared name; the `remora` command isn't.
+    /// V15-10: with `AllowLocalAPI` off, the app refuses even a request that reached it.
+    #[test]
+    fn agents_reads_are_logged_and_the_policy_can_refuse() {
+        let mut inbox = Inbox::in_memory(Arc::new(MemoryVault::default()), Managed::default());
+        answer(&mut inbox, r#"{"command":"list","tab":"waiting","agent":"Claude Desktop"}"#, now());
+        answer(&mut inbox, r#"{"command":"count"}"#, now());
+        let reads = inbox.agent_reads();
+        assert_eq!(reads.len(), 1);
+        assert_eq!((reads[0].agent.as_str(), reads[0].tab.as_deref()), ("Claude Desktop", Some("waiting")));
+
+        inbox.arrange().1.allow_local_api = Some(false);
+        let (refused, _) = answer(&mut inbox, r#"{"command":"count","agent":"Claude Desktop"}"#, now());
+        assert!(refused.contains("AllowLocalAPI") && refused.contains(r#""ok":false"#), "{refused}");
+        assert_eq!(inbox.agent_reads().len(), 1, "a refused request isn't logged");
     }
 
     /// Both ends over a real socket, which only this user may open.

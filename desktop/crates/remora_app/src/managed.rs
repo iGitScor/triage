@@ -16,7 +16,8 @@ use ts_rs::TS;
 /// settings: `HiddenContentSources` (REG_MULTI_SZ, added to the user's), `RefreshMinutes` (REG_DWORD, 1 to 60),
 /// `OpenInApps` (REG_DWORD 0/1), `ClaudeCodePath` (REG_SZ) and `AIDailyLimit` (REG_DWORD, assistant requests a day,
 /// 1 to 10000). A source's settings (REG_SZ, `SETTINGS`): what the organization registered for Microsoft 365,
-/// `MicrosoftTenant` and `MicrosoftClientID`, locked in the form.
+/// `MicrosoftTenant` and `MicrosoftClientID`, locked in the form. `AllowLocalAPI` (REG_DWORD 0/1): 0 turns off the
+/// `remora` command and the MCP server for agents (V15-10), so nothing on the computer can read the inbox but the app.
 /// A key that is set wins over the user's own choice.
 ///
 /// It fails closed: a value Remora can't read (wrong type, unreadable key) is applied as strictly as possible (no
@@ -48,6 +49,8 @@ pub struct Managed {
     pub claude_code_path: Option<String>,
     /// Assistant requests a day, 1 to 10000, locked in Settings; another number is ignored (AI-03).
     pub ai_daily_limit: Option<u32>,
+    /// The `remora` command and the MCP server (V15-10). Unset: allowed; unreadable: off.
+    pub allow_local_api: Option<bool>,
     /// Sources' settings by policy name (`ConfigField::managed_key`), replacing what the user typed. Empty:
     /// unreadable, so the source can't sign in.
     pub settings: BTreeMap<String, String>,
@@ -60,7 +63,7 @@ pub const POLICY_KEY: &str = r"SOFTWARE\Policies\Remora";
 pub const POLICY_FILE: &str = "/etc/remora/policy.json";
 /// The sources' settings an organization may set (`ConfigField::managed_key`).
 pub const SETTINGS: [&str; 2] = ["MicrosoftTenant", "MicrosoftClientID"];
-pub const VALUES: [&str; 16] = [
+pub const VALUES: [&str; 17] = [
     "AllowedPlugins",
     "AllowExternalAI",
     "AllowRemoteImages",
@@ -68,6 +71,7 @@ pub const VALUES: [&str; 16] = [
     "AllowedAIServers",
     "AIServer",
     "AllowLocalAI",
+    "AllowLocalAPI",
     "AIExcludedSources",
     "AllowedAIModels",
     "HiddenContentSources",
@@ -321,6 +325,7 @@ impl Managed {
         // Unreadable means off: an update the organization didn't plan is the riskier side.
         let automatic_updates = flag("AutomaticUpdates");
         let allow_local_ai = flag("AllowLocalAI");
+        let allow_local_api = flag("AllowLocalAPI");
         let open_in_apps = flag("OpenInApps");
         Managed {
             allowed_plugins,
@@ -337,9 +342,15 @@ impl Managed {
             open_in_apps,
             claude_code_path,
             ai_daily_limit,
+            allow_local_api,
             settings,
             unreadable,
         }
+    }
+
+    /// Whether the `remora` command and the MCP server may read the inbox: off only when the organization says so.
+    pub fn local_api_allowed(&self) -> bool {
+        self.allow_local_api != Some(false)
     }
 
     /// False when the organization turned updating off: no check at all, not even Check now.

@@ -16,6 +16,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- AI agents on your computer (Claude Desktop, Claude Code, Gemini CLI) can ask Remora what waits on you, on Mac,
+  Windows and Linux: `remora mcp` is an MCP server that lists a tab, gives the count and adds a reminder, without the
+  agent getting your tokens and without writing to your tools. Settings → Privacy shows which agent read what; Erase
+  removes it. Organizations can turn it off, with the `remora` command, through `AllowLocalAPI`.
 - The assistant's use, on Mac, Windows and Linux: Settings → General → Assistant shows today's and this month's
   requests and tokens, as Claude, Claude Code or the OpenAI-compatible server reported them, and an optional **Daily
   limit** stops further requests until the next day. Kept on this computer for 31 days; Erase removes it. An

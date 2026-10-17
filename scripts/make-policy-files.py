@@ -108,6 +108,14 @@ KEYS = [
         "Un serveur sur cet ordinateur (localhost) : autorisé même sans IA externe, ou refusé.",
     ),
     (
+        "AllowLocalAPI",
+        "bool",
+        "Allow scripts and agents to read the inbox",
+        "The remora command and the MCP server for AI agents on this computer (Claude Desktop, Claude Code, Gemini CLI). Off: nothing on the computer can read the inbox but the app.",
+        "Autoriser les scripts et les agents à lire la boîte",
+        "La commande remora et le serveur MCP pour les agents d’IA de cet ordinateur (Claude Desktop, Claude Code, Gemini CLI). Désactivé : seule l’app peut lire la boîte.",
+    ),
+    (
         "AIDailyLimit",
         "count",
         "Assistant requests a day",

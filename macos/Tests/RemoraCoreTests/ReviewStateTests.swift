@@ -16,7 +16,9 @@ struct ReviewStateTests {
         #expect(try read(#"{"name":"a","tone":"negative"}"#) == .changesRequested)
         #expect(try read(#"{"name":"a"}"#) == nil)
         #expect(try read(#"{"name":"a","review":"changesRequested"}"#) == .changesRequested)
-        let saved = try JSONEncoder().encode(Person(name: "a", review: .approved))
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys  // key order isn't guaranteed otherwise: the test was flaky
+        let saved = try encoder.encode(Person(name: "a", review: .approved))
         #expect(String(decoding: saved, as: UTF8.self) == #"{"name":"a","review":"approved"}"#)
     }
 

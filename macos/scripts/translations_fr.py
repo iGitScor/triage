@@ -1,6 +1,16 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
+    # Agents (V15-01)
+    "Agents on this Mac": "Agents sur ce Mac",
+    "Agents on this computer": "Agents sur cet ordinateur",
+    "AI agents such as Claude Desktop, Claude Code or Gemini CLI can ask Remora what waits on you, through MCP. They read the inbox; they never write to your tools.": "Les agents d’IA comme Claude Desktop, Claude Code ou Gemini CLI peuvent demander à Remora ce qui vous attend, par MCP. Ils lisent la boîte ; ils n’écrivent jamais dans vos outils.",
+    "Turned off by your organization.": "Désactivé par votre organisation.",
+    "No agent has asked yet.": "Aucun agent n’a encore rien demandé.",
+    "How to set it up": "Comment l’installer",
+    "the count": "le compte",
+    "a reminder": "un rappel",
+    "Remora isn't running on this computer: open it, then try again.": "Remora n’est pas ouvert sur cet ordinateur : ouvrez-le, puis réessayez.",
     "Your organization’s Claude Code path can’t be read, so Claude Code is off. Ask your IT team to check it.": "Le chemin de Claude Code fixé par votre organisation est illisible : Claude Code est désactivé. Demandez à votre service informatique de le vérifier.",
     "Third-party licences": "Licences tierces",
     # Linux

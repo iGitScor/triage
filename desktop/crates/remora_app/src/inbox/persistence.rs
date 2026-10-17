@@ -21,6 +21,8 @@ pub(super) const BRIEF: &str = "brief";
 pub(super) const SUMMARIES: &str = "bundle-summaries";
 /// What the assistant used, per day (AI-03).
 pub(super) const USAGE: &str = "assistant-usage";
+/// What agents asked through the MCP server (V15-01), the most recent `AGENT_READS_KEPT`.
+pub(super) const AGENT_READS: &str = "agent-reads";
 
 /// A folder of JSON files, or nowhere: the demo and tests save nothing.
 #[derive(Clone, Default)]

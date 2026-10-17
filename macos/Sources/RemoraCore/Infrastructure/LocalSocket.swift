@@ -27,12 +27,16 @@ public enum LocalSocket {
         return URL(fileURLWithPath: folder, isDirectory: true).appending(path: "remora.sock").path
     }
 
-    /// The command line's whole run: asks the app, prints its answer. 0 done, 1 refused, 2 a mistake in the
-    /// command, 3 Remora isn't running.
+    /// The command line's whole run: asks the app, prints its answer. 0 done, 1 refused (by the app, or by the
+    /// organization's `AllowLocalAPI`), 2 a mistake in the command, 3 Remora isn't running.
     public static func run(_ args: [String]) -> Int32 {
         if args.first == "help" || args.first == "--help" {
             print(RemoraCommand.usage)
             return 0
+        }
+        guard LocalAPIPolicy.allowed() else {
+            FileHandle.standardError.write(Data((McpServer.disabled + "\n").utf8))
+            return 1
         }
         guard let invocation = RemoraCommand.invocation(args) else {
             FileHandle.standardError.write(Data((RemoraCommand.usage + "\n").utf8))

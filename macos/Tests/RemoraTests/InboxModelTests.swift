@@ -58,6 +58,24 @@ struct InboxModelTests {
         #expect(!acme.isSame(as: org("globex"), identity: "alice"))
     }
 
+    /// V15-01: what an agent asks through `remora mcp` is logged under its declared name, the `remora` command isn't,
+    /// and Erase empties the log. V15-10: with `AllowLocalAPI` off, a request that reached the app is refused.
+    @Test func agentReadsAreLoggedAndThePolicyCanRefuse() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        _ = model.answerCommand(#"{"command":"list","tab":"waiting","agent":"Claude Desktop"}"#)
+        _ = model.answerCommand(#"{"command":"count"}"#)
+        #expect(model.agentReads.map(\.agent) == ["Claude Desktop"])
+        #expect(model.agentReads.first?.tab == "waiting")
+
+        let refused = model.answerCommand(#"{"command":"count","agent":"Claude Desktop"}"#, allowed: false)
+        #expect(refused.contains("AllowLocalAPI") && refused.contains(#""ok":false"#), "\(refused)")
+        #expect(model.agentReads.count == 1, "a refused request isn't logged")
+
+        try model.eraseLocalData()
+        #expect(model.agentReads.isEmpty)
+    }
+
     /// IDEA-22: the `remora` command reads the inbox as it is, without hidden titles, saves reminders, and finds
     /// nothing once erased.
     @Test func theCommandAnswersFromTheInboxAndHidesWhatIsHidden() async throws {

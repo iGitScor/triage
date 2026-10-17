@@ -50,6 +50,9 @@ La mettre dans votre PATH :
 - **Windows** : l’app elle-même, `%LOCALAPPDATA%\Remora\Remora.exe count` ; ajoutez ce dossier à votre PATH pour
   taper `remora count`.
 
+Les agents d’IA (Claude Desktop, Claude Code, Gemini CLI) utilisent la même commande, en `remora mcp` : voir
+[Remora et vos agents](/fr/guide/agents).
+
 Une commande de script Raycast, par exemple, est un fichier avec quelques commentaires en tête :
 
 ```sh

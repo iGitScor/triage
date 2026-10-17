@@ -2,7 +2,7 @@
 import { listen } from '@tauri-apps/api/event'
 import { onMount } from 'svelte'
 import { api, type Account, type Preferences, type Settings, type Source, type UpdateStatus } from './api'
-import type { UsageDay } from './bindings'
+import type { AgentRead, UsageDay } from './bindings'
 import ConnectForm from './ConnectForm.svelte'
 import Icon from './Icon.svelte'
 import Logo from './Logo.svelte'
@@ -10,6 +10,7 @@ import { lang, linux, say, t, translateMessage } from './i18n'
 
 /** What a system shortcut runs on a Wayland desktop with no GlobalShortcuts portal, where Remora can't bind one. */
 const REMINDER_COMMAND = 'remora --reminder'
+import { relative } from './time'
 import { tablist } from './tablist'
 import { confirmFocus } from './confirm'
 
@@ -86,6 +87,17 @@ function usageLabel(day: UsageDay): string {
   if (day.requests === 0) return t('Nothing yet')
   const requests = day.requests === 1 ? t('%d request', 1) : t('%d requests', day.requests)
   return `${requests} · ${t('%@ tokens', (day.inputTokens + day.outputTokens).toLocaleString(lang))}`
+}
+
+/** What an agent asked, in the words of the tabs (V15-01). */
+function asked(read: AgentRead): string {
+  if (read.command === 'count') return t('the count')
+  if (read.command === 'remind') return t('a reminder')
+  if (read.tab === 'in-progress') return t('In progress')
+  if (read.tab === 'waiting') return t('Waiting')
+  if (read.tab === 'snoozed') return t('Snoozed')
+  if (read.tab === 'done') return t('Done')
+  return t('My turn')
 }
 
 /// The assistant's settings show once one is connected.
@@ -370,6 +382,22 @@ onMount(() => {
       {/each}
       <p class="help">{t('No telemetry, no analytics. Remora only talks to the hosts above.')}</p>
 
+      <h2 class="section-title">{t('Agents on this computer')}</h2>
+      <p class="help">{t('AI agents such as Claude Desktop, Claude Code or Gemini CLI can ask Remora what waits on you, through MCP. They read the inbox; they never write to your tools.')}</p>
+      {#if !settings.localApiAllowed}
+        <p class="notice">{t('Turned off by your organization.')}</p>
+      {:else if !settings.agentReads.length}
+        <p class="muted">{t('No agent has asked yet.')}</p>
+      {:else}
+        <!-- The most recent first; the name is what the agent says it is. -->
+        <ul class="agent-reads">
+          {#each settings.agentReads as read, index (index)}
+            <li class="row line"><strong>{read.agent}</strong><span class="muted">{asked(read)}</span><span class="spacer"></span><span class="muted">{relative(read.at)}</span></li>
+          {/each}
+        </ul>
+      {/if}
+      <button type="button" class="link" onclick={() => api.openAgentsGuide()}>{t('How to set it up')}</button>
+
       <h2 class="section-title">{t('Data on this PC')}</h2>
       <p class="help">{linux ? t('Inbox cache, settings and snooze history in %@. Tokens are in the system keyring.', settings.dataDir) : t('Inbox cache, settings and snooze history in %@. Tokens are in the Windows Credential Manager.', settings.dataDir)}</p>
       {#if erasing}
@@ -450,4 +478,5 @@ onMount(() => {
   .erase p {
     margin: 0 0 8px;
   }
+  .agent-reads { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 </style>

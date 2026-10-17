@@ -126,6 +126,7 @@ export const api = {
   openItem: (id: string, inBrowser = false) => call<void>('open_item', { id, inBrowser }),
   openSetup: (pluginId: string, host?: string) => call<void>('open_setup', { pluginId, host: host ?? null }, QUIET),
   openNotices: () => call<void>('open_notices'),
+  openAgentsGuide: () => call<void>('open_agents_guide'),
   openNotificationSettings: () => call<void>('open_notification_settings'),
   sources: () => call<Source[]>('sources'),
   accounts: () => call<Account[]>('accounts'),

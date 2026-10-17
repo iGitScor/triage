@@ -6,6 +6,7 @@ on:
     paths:
       - "desktop/**"
       - "eval/**"
+      - "mcp/**"
       - "macos/scripts/translations_fr.py"
       - "scripts/make-emoji.py"
       - "scripts/make-policy-files.py"
@@ -18,6 +19,7 @@ on:
     paths:
       - "desktop/**"
       - "eval/**"
+      - "mcp/**"
       - "macos/scripts/translations_fr.py"
       - "scripts/make-emoji.py"
       - "scripts/make-policy-files.py"

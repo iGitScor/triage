@@ -48,6 +48,7 @@ pub const COMMANDS: &[&str] = &[
     "hide",
     "quit",
     "open_notices",
+    "open_agents_guide",
     "open_notification_settings",
 ];
 

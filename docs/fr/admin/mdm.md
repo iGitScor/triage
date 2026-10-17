@@ -25,6 +25,7 @@ peut plus modifier la politique.
 | `AIServer` | Chaîne | Le serveur qu’utilise l’assistant OpenAI-compatible, rempli et verrouillé dans les Réglages, y compris pour les comptes déjà connectés. Refusé si `AllowedAIServers` ne l’autorise pas | Choisi par l’utilisateur |
 | `AIDailyLimit` | Entier | Le nombre maximal de requêtes que l’assistant peut envoyer par jour (un brief, un résumé ou un tri en est une), de 1 à 10000 (une autre valeur est ignorée). Au-delà, l’assistant attend le lendemain. Verrouillé dans les Réglages | Aucune limite ; l’utilisateur décide |
 | `AllowLocalAI` | Booléen | Un serveur sur cet ordinateur (`localhost`, `127.0.0.1`, `::1`, seules adresses qui peuvent utiliser http). `true` : autorisé même avec l’IA externe désactivée. `false` : refusé. Non défini : autorisé sauf si `AllowExternalAI` est géré à `false`, car un serveur local pourrait relayer vers le cloud | Voir le sens |
+| `AllowLocalAPI` | Booléen | La commande `remora` et le serveur MCP qui permet aux agents d’IA de cet ordinateur (Claude Desktop, Claude Code, Gemini CLI) de lire la boîte. `false` : l’app n’ouvre aucune socket, et rien sur l’ordinateur hormis l’app ne peut lire la boîte | `true` |
 | `HiddenContentSources` | Tableau de chaînes | Les outils dont les notifications disent où quelque chose s’est passé, pas ce qui a été écrit ; `reminders` pour les rappels de l’utilisateur. S’ajoute au choix de l’utilisateur et le verrouille dans les Réglages | Aucun |
 | `RefreshMinutes` | Entier | La fréquence de vérification des outils, de 1 à 60 minutes (une autre valeur est ignorée). Verrouillé dans les Réglages | 5 |
 | `OpenInApps` | Booléen | Ouvrir les éléments Slack et Linear dans leur app quand elle est installée ; `false` ouvre toujours la page web | `true` |
@@ -147,6 +148,7 @@ puis sous `HKEY_CURRENT_USER\SOFTWARE\Policies\Remora` pour les stratégies par 
 | `AllowedAIServers` | `REG_MULTI_SZ` | Les serveurs OpenAI-compatibles autorisés, un préfixe d’URL par ligne |
 | `AIServer` | `REG_SZ` | Le serveur OpenAI-compatible, réglé et verrouillé |
 | `AllowLocalAI` | `REG_DWORD` | `1` pour autoriser un serveur sur cet ordinateur, `0` pour le refuser |
+| `AllowLocalAPI` | `REG_DWORD` | `1` pour laisser les scripts et les agents lire la boîte (commande `remora`, serveur MCP), `0` pour l’interdire |
 | `AIDailyLimit` | `REG_DWORD` | Les requêtes de l’assistant par jour, de 1 à 10000 ; verrouillé dans les Réglages |
 | `AIExcludedSources` | `REG_MULTI_SZ` | Les outils dont les éléments ne parviennent jamais à l’assistant, un identifiant par ligne (`reminders` pour les rappels) ; verrouillé dans les Réglages |
 | `AllowedAIModels` | `REG_MULTI_SZ` | Les modèles que l’assistant peut utiliser, un identifiant par ligne |
