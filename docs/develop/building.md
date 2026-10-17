@@ -58,17 +58,23 @@ Manage Certificates → + → Apple Development. Then `make run`.
 ## Releasing
 
 Releases are repo-wide tags, and the version lives in the source: the macOS `Info.plist`, the Rust workspace and the
-Windows interface's package files. `make version` shows it; `make version V=x.y.z` sets it everywhere.
+Windows interface's package files. `make version` shows it. A release is one command and one commit:
 
 ```sh
-make version V=0.3.2
-git commit -am "chore: version 0.3.2"
-git tag -s v0.3.2 -m "Remora 0.3.2"
-git push origin main v0.3.2
+make release V=0.3.2 DRY=1   # the checks only
+make release V=0.3.2
 ```
 
+It checks first, so nothing is tagged when something would stop the release: on `main`, nothing uncommitted, level
+with `origin/main`, every CI run on the commit green, `make deps-check` clean (it needs `cargo-deny`), and changes
+under `## Unreleased` in `CHANGELOG.md`. Then one commit `chore: version 0.3.2` holds the version everywhere, the
+changelog's dated heading and the website's pages built again (they show the version); the signed tag `v0.3.2` and
+the commit are pushed together.
+
 [`.github/workflows/release.yml`](https://github.com/iGitScor/triage/blob/main/.github/workflows/release.yml)
-first checks that the tag matches the version in the source, then builds both apps in parallel with the same checks
+first checks, in minutes, what would stop the release anyway: the tag matches the version in the source, no known
+vulnerability or licence problem (cargo-deny), and the committed website pages are what `site/build.py` writes. Then
+it builds both apps in parallel with the same checks
 as CI: the Mac app is tested, stamped with a build number (`CFBundleVersion`, the run number), built Universal,
 signed, and packaged as `Remora.dmg` with the licences; the Windows app goes through the translation check,
 type-check, clippy and tests before `Remora-Setup.exe` is built. Meanwhile a `ci-passed` job waits for CI's own runs
@@ -76,7 +82,9 @@ on the tagged commit (Format, macOS, Windows and Linux, Website, Dependencies) a
 tag a commit whose CI passed, and don't push to `main` until it has (a newer push cancels the runs in progress). Only
 when all succeed does a last job publish the GitHub release, with every file, its SHA-256 and its SBOM (CycloneDX) at once. Each build job signs the provenance
 and SBOM attestations of the file it built (`gh attestation verify`). The names never change, so
-`releases/latest/download/Remora.dmg` always serves the newest.
+`releases/latest/download/Remora.dmg` always serves the newest. Then a `site` job deploys the website and docs, so
+their download links never run ahead of the release; it needs the `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit, this
+account only) and `CLOUDFLARE_ACCOUNT_ID` secrets, and without them says so and leaves `make deploy` to a maintainer.
 
 ### Release signing
 
@@ -120,12 +128,17 @@ the window by ID (nothing is clicked or typed), crops the title bar and writes P
 Both are served from `triage.iscor.me` by one Cloudflare Worker with static assets only
 (`site/wrangler.jsonc`). The pages are in `site/build.py`, these docs in `docs/` (VitePress):
 
+The release workflow deploys them after each release. From a maintainer's computer, the fallback:
+
 ```sh
-site/deploy.sh
+make deploy
 ```
 
-It runs, in order: `python3 site/build.py` (marketing pages → `site/public`), `site/og/render.sh` (social cards
-and the touch icon), `npm --prefix docs run build` (docs → `site/public/docs`), then `npx wrangler deploy`.
+It runs `python3 site/build.py` and stops if `site/public` then differs from what is committed (commit the pages,
+or release with `make release`), then `npm --prefix docs run build` (docs → `site/public/docs`), and
+`npx wrangler deploy`. It writes nothing that is committed. The social cards and the touch icon are rendered apart,
+with `make og`, after a change to `site/og/card.*`; commit the PNGs. The Website workflow fails when the committed
+pages aren't what `site/build.py` writes.
 
 `npm --prefix docs run dev` serves the docs locally with live reload. `make a11y` builds the docs and checks every
 page with axe, in light and dark (WCAG 2.1 AA), and `make links` that every internal link, the language menu

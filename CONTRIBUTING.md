@@ -65,10 +65,10 @@ Commit messages follow the history: `feat(macos): …`, `fix(desktop): …`, `do
 
 ## Releases and the website
 
-Maintainers release with `make version V=x.y.z`, a commit, then the tag `vx.y.z`
-([building and releasing](docs/develop/building.md#releasing)); the release workflow refuses a tag that doesn't
-match the source.
-`make deploy` publishes the website and docs and needs a Cloudflare login; `make site-preview` shows them locally
+Maintainers release with `make release V=x.y.z`: checks, then one commit (version, changelog, site pages), the
+signed tag and the push ([building and releasing](docs/develop/building.md#releasing)). The release workflow
+publishes, then deploys the website and docs.
+`make deploy` does it from a maintainer's computer and needs a Cloudflare login; `make site-preview` shows them locally
 first, `make a11y` checks their accessibility with axe, and `make links` that every internal link leads to a page.
 
 ## Security and licence

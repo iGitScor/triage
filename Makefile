@@ -3,7 +3,7 @@
 # See CONTRIBUTING.md. On Windows without make, run the commands from desktop/README.md directly.
 
 .DEFAULT_GOAL := help
-.PHONY: help setup test check format format-check version deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture desktop-bindings i18n i18n-check test-counts eval \
+.PHONY: help setup test check format format-check version release og deps-check mac-test mac-run mac-demo desktop-test desktop-check desktop-demo desktop-fixture desktop-bindings i18n i18n-check test-counts eval \
 	policy-files docs docs-build docs-check a11y links site site-preview screenshots deploy clean
 
 help: ## List the targets
@@ -45,8 +45,11 @@ format-check: ## Fail if a file isn't formatted or has a lint error (as CI does)
 	python3 scripts/test-counts.py --check
 	python3 scripts/tokens-check.py
 
-version: ## Show the version, or set it everywhere with V=x.y.z (then commit and tag vx.y.z)
+version: ## Show the version, or check that every place agrees (to release, `make release V=x.y.z`)
 	python3 scripts/version.py $(V)
+
+release: ## Release V=x.y.z in one commit: checks, version, changelog, site pages, signed tag, push (DRY=1: checks only)
+	python3 scripts/release.py $(V) $(if $(DRY),--dry-run)
 
 deps-check: ## Known vulnerabilities and licences, as the Dependencies workflow checks them (needs cargo-deny)
 	@command -v cargo-deny >/dev/null || { echo "Needs cargo-deny: cargo install cargo-deny --locked"; exit 1; }
@@ -134,8 +137,11 @@ screenshots: ## Recapture the screenshots of both apps used by the site, docs an
 	macos/scripts/screenshots.sh
 	cd desktop/app && npm ci && npm run build && node scripts/screenshots.mjs
 
-deploy: ## Publish the website and docs to Cloudflare (maintainers; needs a wrangler login)
+deploy: ## Publish the website and docs from this computer (the release workflow does it; needs a wrangler login)
 	site/deploy.sh
+
+og: ## Render the social cards and the touch icon again, after changing site/og/card.* (commit the PNGs)
+	site/og/render.sh
 
 clean: ## Remove build outputs (macOS build, Windows interface bundle, built docs)
 	$(MAKE) -C macos clean

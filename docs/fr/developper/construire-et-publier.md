@@ -61,17 +61,23 @@ identifiant Apple → Gérer les certificats → + → Apple Development. Puis `
 
 Les versions sont des tags valables pour tout le dépôt, et le numéro de version vit dans les sources : le
 `Info.plist` macOS, le workspace Rust et les fichiers de paquet de l’interface Windows. `make version` l’affiche ;
-`make version V=x.y.z` le règle partout.
+une publication tient en une commande et un commit :
 
 ```sh
-make version V=0.3.2
-git commit -am "chore: version 0.3.2"
-git tag -s v0.3.2 -m "Remora 0.3.2"
-git push origin main v0.3.2
+make release V=0.3.2 DRY=1   # les vérifications seules
+make release V=0.3.2
 ```
 
+Elle vérifie d’abord, pour que rien ne soit tagué si quelque chose bloquerait la publication : sur `main`, rien
+de non commité, à égalité avec `origin/main`, toutes les exécutions de la CI vertes sur le commit, `make deps-check`
+propre (il faut `cargo-deny`), et des changements sous `## Unreleased` dans `CHANGELOG.md`. Puis un seul commit
+`chore: version 0.3.2` contient la version partout, le titre daté du changelog et les pages du site reconstruites
+(elles affichent la version) ; le tag signé `v0.3.2` et le commit sont poussés ensemble.
+
 [`.github/workflows/release.yml`](https://github.com/iGitScor/triage/blob/main/.github/workflows/release.yml)
-vérifie d’abord que le tag correspond à la version des sources, puis construit les deux apps en parallèle avec les
+vérifie d’abord, en quelques minutes, ce qui bloquerait de toute façon la publication : le tag correspond à la
+version des sources, aucune vulnérabilité connue ni problème de licence (cargo-deny), et les pages du site commitées
+sont celles qu’écrit `site/build.py`. Puis il construit les deux apps en parallèle avec les
 mêmes contrôles que la CI : l’app Mac est testée, reçoit un numéro de build (`CFBundleVersion`, le numéro
 d’exécution), est compilée en Universal, signée, et empaquetée en `Remora.dmg` avec les licences ; l’app Windows
 passe la vérification des traductions, la vérification de types, clippy et les tests avant la construction de
@@ -128,13 +134,17 @@ Les deux sont servis depuis `triage.iscor.me` par un seul Cloudflare Worker, ave
 uniquement (`site/wrangler.jsonc`). Les pages sont dans `site/build.py`, cette documentation dans `docs/`
 (VitePress) :
 
+Le workflow de publication les déploie après chaque version. Depuis l’ordinateur d’un mainteneur, en secours :
+
 ```sh
-site/deploy.sh
+make deploy
 ```
 
-Il lance, dans l’ordre : `python3 site/build.py` (pages de présentation → `site/public`), `site/og/render.sh`
-(cartes pour les réseaux sociaux et l’icône tactile), `npm --prefix docs run build` (documentation →
-`site/public/docs`), puis `npx wrangler deploy`.
+Il lance `python3 site/build.py` et s’arrête si `site/public` diffère alors de ce qui est commité (commitez les pages,
+ou publiez avec `make release`), puis `npm --prefix docs run build` (documentation → `site/public/docs`) et
+`npx wrangler deploy`. Il n’écrit rien de commité. Les cartes pour les réseaux sociaux et l’icône tactile se rendent
+à part, avec `make og`, après une modification de `site/og/card.*` ; commitez les PNG. Le workflow du site échoue
+quand les pages commitées ne sont pas celles qu’écrit `site/build.py`.
 
 `npm --prefix docs run dev` sert la documentation en local avec rechargement à chaud. `make a11y` construit la
 documentation et vérifie chaque page avec axe, en clair et en sombre (WCAG 2.1 AA), et `make links` que chaque lien

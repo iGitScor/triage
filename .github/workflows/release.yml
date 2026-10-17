@@ -1,7 +1,9 @@
 name: Release
 
-# Set the version first (`make version V=0.3.2`), commit, then push the tag v0.3.2. The apps (macOS, Windows, and
-# Linux in preview) are checked and built in parallel; the release is published only when all succeed, with every
+# `make release V=0.3.2` checks, sets the version, dates the changelog and builds the site's pages in one commit, then
+# pushes it with the signed tag v0.3.2. Here, first, nothing that would stop the release: the tag is the source's
+# version, no known vulnerability or licence problem, the committed pages are the build's. Then the apps (macOS,
+# Windows, and Linux in preview) are checked and built in parallel; the release is published only when all succeed, with every
 # file at once, so a failure never leaves a half-published release. Each build job also writes its app's SBOM (CycloneDX, from the lockfiles) and signs two
 # attestations for the file it built: where it was built from (provenance) and what is in it (the SBOM).
 # Anyone can check them: `gh attestation verify Remora.dmg --repo iGitScor/triage`. The files keep the same name in every release, so the website links to
@@ -19,13 +21,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Before any build: what would stop the release anyway, found in minutes rather than after the builds.
   version:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the sitemap's date is when site/build.py last changed
       - name: The tag matches the version in the source
         run: python3 scripts/version.py --check "${GITHUB_REF_NAME#v}"
+      - name: No known vulnerability or licence problem in the Rust dependencies
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          manifest-path: desktop/Cargo.toml
+          command: check advisories licenses sources bans
+      - name: The committed website pages are the build's (make release builds them)
+        run: |
+          python3 site/build.py
+          git diff --exit-code -- site/public
 
   macos:
     needs: version
@@ -535,3 +549,45 @@ jobs:
             dist/Remora-amd64.deb dist/Remora-amd64.deb.sha256 dist/Remora-amd64.deb.cdx.json \
             dist/Remora-policy-files.zip "${EXTRA[@]}" \
             --repo "$GITHUB_REPOSITORY" --title "Remora ${GITHUB_REF_NAME#v}" --notes-file notes.md --generate-notes --verify-tag
+
+  # The website and docs, once the files they link to are published: the download links never run ahead of the
+  # release. Needs the CLOUDFLARE_API_TOKEN (Workers Scripts: Edit, on this account only) and CLOUDFLARE_ACCOUNT_ID
+  # secrets; without them it says so and the release stands (`make deploy` from a maintainer's computer instead).
+  site:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Cloudflare credentials
+        id: credentials
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::No CLOUDFLARE_API_TOKEN secret: the website wasn't deployed. Run make deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.credentials.outputs.ready == 'true'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.credentials.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            docs/package-lock.json
+            site/package-lock.json
+      - name: Build the docs and their CSP, then deploy
+        if: steps.credentials.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: "false"
+        run: |
+          npm --prefix docs ci
+          npm --prefix docs run build
+          python3 site/csp.py
+          npm --prefix site ci --ignore-scripts
+          cd site && npx --no-install wrangler deploy

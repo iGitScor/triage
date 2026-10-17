@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
-# Builds the marketing pages, the social cards and the docs into site/public, then publishes them to Cloudflare.
+# Publishes the website and docs to Cloudflare from this computer. The release workflow does it after each release
+# (its site job); this is the fallback. It writes nothing that is committed: the pages come from the release commit
+# (`make release`), the social cards from `make og`.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 python3 site/build.py
-site/og/render.sh
+if ! git diff --quiet -- site/public; then
+  echo "site/public differs from what is committed: commit the pages first (or release with make release)." >&2
+  exit 1
+fi
 [ -d docs/node_modules ] || npm --prefix docs ci
 npm --prefix docs run build
 python3 site/csp.py
-# The wrangler of site/package-lock.json, exactly, never "the latest 4.x" with Cloudflare credentials.
 npm --prefix site ci --ignore-scripts
-# Wrangler sends usage telemetry to Cloudflare by default: not from here.
 export WRANGLER_SEND_METRICS=false
 cd site && npx --no-install wrangler deploy
