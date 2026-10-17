@@ -74,6 +74,7 @@
 "5 min" = "5 min";
 "@you the flag is at 20% in prod, metrics look good so far…" = "@you le flag est à 20 % en prod, les métriques sont bonnes pour l’instant…";
 "A Notion database couldn’t be read (%@): %@" = "Impossible de lire une base Notion (%@) : %@";
+"A dot when something needs me" = "Un point quand quelque chose m’attend";
 "A fine-grained token with read-only Pull requests and Issues, or a classic token with repo and read:org." = "Un jeton à granularité fine avec Pull requests et Issues en lecture seule, ou un jeton classique avec repo et read:org.";
 "A lighter model is enough for two sentences and uses less of your plan." = "Un modèle plus léger suffit pour deux phrases et consomme moins de votre abonnement.";
 "A personal access token, or the secret of an internal connection." = "Un jeton d’accès personnel, ou le secret d’une connexion interne.";
@@ -547,6 +548,7 @@
 "Snooze…" = "Reporter…";
 "Some files couldn’t be erased: %@. Delete them from %@." = "Certains fichiers n’ont pas pu être effacés : %@. Supprimez-les de %@.";
 "Someone" = "Quelqu’un";
+"Something needs you" = "Quelque chose vous attend";
 "Soon" = "Bientôt";
 "Sources" = "Sources";
 "Spread them" = "Les espacer";

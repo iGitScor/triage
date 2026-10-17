@@ -7,6 +7,8 @@ pub enum TrayCount {
     /// What needs you (My turn, without quiet items).
     WaitingOnMe,
     Everything,
+    /// The attention icon when something needs you, and no number in the tooltip: calmer than a count all day.
+    Dot,
     Hidden,
 }
 

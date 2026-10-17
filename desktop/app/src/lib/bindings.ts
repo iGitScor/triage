@@ -553,7 +553,7 @@ export type TextSize = "standard" | "large" | "larger";
 
 export type Tone = "accent" | "positive" | "negative" | "warning" | "neutral";
 
-export type TrayCount = "waitingOnMe" | "everything" | "hidden";
+export type TrayCount = "waitingOnMe" | "everything" | "dot" | "hidden";
 
 export type TriageAction = "keep" | "reschedule" | "done" | "now";
 

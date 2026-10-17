@@ -508,7 +508,7 @@ private struct GeneralPane: View {
                     ForEach(Preferences.MenuBarCount.allCases) { Text($0.label).tag($0) }
                 }
                 Toggle("One counter per source", isOn: $model.preferences.countPerSource)
-                    .disabled(model.preferences.menuBarCount == .hidden)
+                    .disabled(model.preferences.menuBarCount == .hidden || model.preferences.menuBarCount == .dot)
                 Toggle("Lime pill when something needs me", isOn: $model.preferences.brandedMenuBar)
                     .disabled(model.preferences.menuBarCount == .hidden)
                 Toggle("Only show the task in progress while one runs", isOn: $model.preferences.focusWhileInProgress)

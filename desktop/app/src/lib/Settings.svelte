@@ -220,6 +220,7 @@ onMount(() => {
         <select class="field small" value={p.trayCount} onchange={(e) => save({ trayCount: e.currentTarget.value as Preferences['trayCount'] })}>
           <option value="waitingOnMe">{t('My turn')}</option>
           <option value="everything">{t('Everything in my inbox')}</option>
+          <option value="dot">{t('A dot when something needs me')}</option>
           <option value="hidden">{t('Nothing')}</option>
         </select>
       </label>

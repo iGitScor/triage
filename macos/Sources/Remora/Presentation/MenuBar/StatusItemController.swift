@@ -85,10 +85,11 @@ final class StatusItemController: NSObject {
     private func updateLabel() {
         // One tracking block for everything the label reads: a block per value would each schedule
         // their own update on the same change, and multiply.
-        let (allCounts, branded, running, focus, startedAt) = withObservationTracking {
+        let (allCounts, dot, branded, running, focus, startedAt) = withObservationTracking {
             let layout = model.layout
             return (
                 menuBarCounts(layout),
+                model.preferences.menuBarCount == .dot,
                 model.preferences.brandedMenuBar,
                 layout.inProgress.count,
                 model.preferences.focusWhileInProgress,
@@ -101,7 +102,7 @@ final class StatusItemController: NSObject {
         let focused = focus && running > 0
         let counts = focused ? [] : allCounts
         label = MenuBarTitle.Content(
-            counts: counts, running: running, since: startedAt, branded: branded, focused: focused)
+            counts: counts, running: running, since: startedAt, branded: branded, focused: focused, dot: dot)
         frames = [:]
         shown = nil
         scheduleAnimation()
@@ -180,8 +181,8 @@ final class StatusItemController: NSObject {
     private func menuBarCounts(_ layout: InboxLayout) -> [(pluginID: String?, count: Int)] {
         let preferences = model.preferences
         guard preferences.menuBarCount != .hidden else { return [] }
-        let counts = layout.countsBySource(actionableOnly: preferences.menuBarCount == .waitingOnMe)
-        if preferences.countPerSource {
+        let counts = layout.countsBySource(actionableOnly: preferences.menuBarCount != .everything)
+        if preferences.countPerSource, preferences.menuBarCount != .dot {
             return counts.map { ($0.pluginID, $0.count) }
         }
         let total = counts.reduce(0) { $0 + $1.count }
@@ -349,6 +350,8 @@ enum MenuBarTitle {
         var branded = true
         /// Only the task in progress shows, in inverted colors.
         var focused = false
+        /// A dot instead of the number.
+        var dot = false
     }
 
     /// One animation frame: how far the fish turns. Quantized, so a few cached frames cover the whole wiggle.
@@ -372,7 +375,10 @@ enum MenuBarTitle {
         var parts = ["Remora"]
         if content.running > 0 { parts.append(runningText(content, now: now)) }
         if !content.focused {
-            parts.append(total > 0 ? L("%d needs you", plural: "%d need you", total) : L("Nothing needs you"))
+            parts.append(
+                total == 0
+                    ? L("Nothing needs you")
+                    : content.dot ? L("Something needs you") : L("%d needs you", plural: "%d need you", total))
         }
         return parts.joined(separator: ", ")
     }
@@ -453,7 +459,8 @@ enum MenuBarTitle {
                 title.append(NSAttributedString(attachment: attachment))
                 title.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
             }
-            title.append(NSAttributedString(string: "\(entry.count)", attributes: attributes))
+            title.append(
+                NSAttributedString(string: content.dot ? "\u{25CF}" : "\(entry.count)", attributes: attributes))
         }
         return title
     }

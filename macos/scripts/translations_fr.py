@@ -1,6 +1,9 @@
 # French translations for Remora. Keys are the English strings used in the code.
 # Run scripts/make-strings.py to regenerate Resources/fr.lproj/Localizable.strings.
 FR = {
+    # A quiet menu bar or tray icon
+    "A dot when something needs me": "Un point quand quelque chose m’attend",
+    "Something needs you": "Quelque chose vous attend",
     # Bots and agents
     "Bot": "Bot",
     "Bump lodash from 4.17.20 to 4.17.21": "Passer lodash de 4.17.20 à 4.17.21",

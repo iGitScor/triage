@@ -5,6 +5,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ## Unreleased
 
+### Added
+
+- **Show count of** → *A dot when something needs me*: the menu bar (or the tray's tooltip) says something waits,
+  not how many, for a calmer day.
+
 ### Changed
 
 - Mac: two items are no longer linked because they share a typo or a person's name; a library or product name still

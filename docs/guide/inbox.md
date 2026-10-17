@@ -15,7 +15,7 @@ description: How Remora sorts what needs you. My turn and Waiting, the verbs (To
 | **Done** | What you marked done, until something new happens on it. |
 
 The count on the menu bar or tray icon only covers *My turn*, minus what’s quiet (*To read*, low priority). Settings
-→ General → **Show count of** can count everything, or nothing.
+→ General → **Show count of** can count everything, show only a dot when something needs you, or nothing.
 
 ## Verbs, not apps
 
@@ -142,7 +142,7 @@ The first sync of a new account never notifies: connecting a tool doesn’t floo
 | Check every | How often Remora refreshes: 1 minute to 1 hour, every 5 minutes by default |
 | Open in desktop apps when installed | Slack and Linear open in their app; ⌥-click (Shift-click on Windows) opens the web page instead |
 | Open at login (Start with Windows) | Start Remora when you sign in |
-| Show count of | *My turn*, everything, or nothing |
+| Show count of | *My turn*, everything, a dot, or nothing |
 | One counter per source (Mac) | One count per tool in the menu bar, ordered by the most pressing verb |
 | Lime pill when something needs me (Mac) | Highlights the menu bar item when *My turn* isn’t empty |
 | Theme | System, light or dark |

@@ -44,12 +44,14 @@ struct Preferences: Codable, Equatable {
     }
 
     enum MenuBarCount: String, Codable, CaseIterable, Identifiable {
-        case waitingOnMe, everything, hidden
+        /// `dot`: a dot instead of the number when something needs you, a calmer menu bar than a count all day.
+        case waitingOnMe, everything, dot, hidden
         var id: String { rawValue }
         var label: String {
             switch self {
             case .waitingOnMe: L("My turn")
             case .everything: L("Everything in my inbox")
+            case .dot: L("A dot when something needs me")
             case .hidden: L("Nothing")
             }
         }

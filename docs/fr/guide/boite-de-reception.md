@@ -15,7 +15,7 @@ description: Comment Remora range ce qui a besoin de vous. À moi et En attente,
 | **Terminés** | Ce que vous avez terminé, jusqu’à ce qu’il y ait du nouveau. |
 
 Le compteur de la barre des menus ou de l’icône de la zone de notification ne compte que *À moi*, sans ce qui est
-discret (*À lire*, priorité basse). Réglages → Général → **Compteur** peut tout compter, ou rien.
+discret (*À lire*, priorité basse). Réglages → Général → **Compteur** peut tout compter, n’afficher qu’un point quand quelque chose vous attend, ou rien.
 
 ## Des verbes, pas des applis
 
@@ -153,7 +153,7 @@ La première synchronisation d’un nouveau compte ne notifie jamais : connecter
 | Vérifier toutes les | La fréquence d’actualisation : de 1 minute à 1 heure, toutes les 5 minutes par défaut |
 | Ouvrir dans les apps installées | Slack et Linear s’ouvrent dans leur app ; ⌥-clic (Maj-clic sous Windows) ouvre la page web |
 | Ouvrir à la connexion (Lancer au démarrage de Windows) | Lancer Remora à l’ouverture de session |
-| Compteur | *À moi*, toute ma boîte, ou rien |
+| Compteur | *À moi*, toute ma boîte, un point, ou rien |
 | Un compteur par source (Mac) | Un compteur par outil dans la barre des menus, dans l’ordre du verbe le plus pressant |
 | Pastille citron quand quelque chose m’attend (Mac) | Met en valeur l’icône quand *À moi* n’est pas vide |
 | Thème | Système, clair ou sombre |

@@ -39,6 +39,7 @@ impl Translator {
 /// The strings the tray and its menu show, each translated in fr.json.
 pub const TRAY_STRINGS: &[&str] = &[
     "Nothing needs you",
+    "Something needs you",
     "%d need you",
     "%d in progress",
     "%d min",
@@ -66,6 +67,8 @@ pub enum TrayImage {
 pub struct TraySummary {
     pub count: usize,
     pub show_count: bool,
+    /// Says something needs you, not how many.
+    pub dot: bool,
     pub running: usize,
     pub since: Option<DateTime<Utc>>,
     /// While a task is in progress and focus is on, only that task shows.
@@ -84,19 +87,22 @@ impl TraySummary {
             let hidden = inbox.effective_preferences().hides_content(&item.plugin_id);
             (item.id.clone(), task_label(item, hidden, t))
         });
+        let dot = inbox.preferences().tray_count == TrayCount::Dot;
         let (count, show_count) = match inbox.preferences().tray_count {
             TrayCount::WaitingOnMe => (layout.action_count(), true),
             TrayCount::Everything => (layout.my_turn_items().count() + layout.waiting_count(), true),
+            TrayCount::Dot => (layout.action_count(), true),
             TrayCount::Hidden => (layout.action_count(), false),
         };
         let focused = inbox.preferences().focus_while_in_progress && running > 0;
-        TraySummary { count, show_count, running, since, focused, task }
+        TraySummary { count, show_count, dot, running, since, focused, task }
     }
 
     /// "Remora · 3 need you", "Remora · 1 in progress (25 min)", or both.
     pub fn tooltip(&self, now: DateTime<Utc>, t: &Translator) -> String {
         let counts = match self.count {
             0 => t.t("Nothing needs you"),
+            _ if self.dot => t.t("Something needs you"),
             n => t.t("%d need you").replace("%d", &n.to_string()),
         };
         match (self.running, self.focused, self.show_count) {
@@ -283,6 +289,12 @@ mod tests {
         let summary = TraySummary::of(&inbox, now(), &Translator::english());
         assert_eq!(summary.tooltip(now(), &Translator::english()), "Remora · 2 need you");
         assert_eq!(summary.icon(), TrayImage::Attention);
+
+        // A dot: the attention icon, and no number. As the Mac's menu bar.
+        inbox.arrange().0.tray_count = TrayCount::Dot;
+        let dot = TraySummary::of(&inbox, now(), &Translator::english());
+        assert_eq!(dot.tooltip(now(), &Translator::english()), "Remora · Something needs you");
+        assert_eq!(dot.icon(), TrayImage::Attention);
 
         inbox.arrange().0.tray_count = TrayCount::Hidden;
         let hidden = TraySummary::of(&inbox, now(), &Translator::english());
