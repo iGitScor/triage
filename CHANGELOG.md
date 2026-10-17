@@ -40,6 +40,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Fixed
 
+- Related items: a version or an encoding ("UTF-8", "SHA-256", "node-20") no longer counts as a ticket key, so two
+  items that only mention it are no longer shown as related. A Linear or Jira key typed in lower case ("ce-1380")
+  now is, and a CVE counts whole.
 - Mac: avatars and emoji pictures are kept in memory only, no longer in the disk cache with their cookies, and a
   redirect to another host is refused, as on Windows and Linux.
 - Windows and Linux: each account's tokens get their own Credential Manager or keyring entry, so about ten accounts

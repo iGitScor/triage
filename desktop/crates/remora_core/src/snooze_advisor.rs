@@ -1,9 +1,8 @@
 use crate::{InboxBundle, InboxItem, ItemState, SnoozeClock, SnoozeReason};
 use chrono::{DateTime, Datelike, Days, Duration, Local, NaiveTime, TimeZone, Timelike, Utc, Weekday};
-use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet};
-use std::sync::{Arc, LazyLock};
+use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 use ts_rs::TS;
 
 /// One snooze, kept locally to learn your habits.
@@ -387,37 +386,9 @@ fn rounded_up(date: DateTime<Utc>) -> DateTime<Utc> {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct KeywordSimilarity;
 
-static STOP_WORDS: [&str; 33] = [
-    "the", "and", "for", "with", "from", "into", "this", "that", "your", "about", "when", "what", "after", "new",
-    "pour", "avec", "dans", "les", "des", "une", "sur", "est", "pas", "qui", "que", "vous", "nous", "vers", "la", "le",
-    "de", "du", "au",
-];
-
-static TICKET_KEY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[A-Z][A-Z0-9]+-\d+").unwrap());
-
-impl KeywordSimilarity {
-    fn ticket_keys(text: &str) -> HashSet<&str> {
-        TICKET_KEY.find_iter(text).map(|m| m.as_str()).collect()
-    }
-
-    fn words(text: &str) -> HashSet<String> {
-        text.to_lowercase()
-            .split(|c: char| !c.is_alphabetic() && !c.is_numeric())
-            .filter(|w| w.chars().count() >= 4 && !STOP_WORDS.contains(w))
-            .map(str::to_string)
-            .collect()
-    }
-}
-
 impl SimilarityModel for KeywordSimilarity {
     fn similar(&self, a: &str, b: &str) -> bool {
-        if !Self::ticket_keys(a).is_disjoint(&Self::ticket_keys(b)) {
-            return true;
-        }
-        let (words_a, words_b) = (Self::words(a), Self::words(b));
-        let shared = words_a.intersection(&words_b).count();
-        let union = words_a.union(&words_b).count();
-        shared >= 2 && shared as f64 / union.max(1) as f64 >= 0.4
+        crate::link_finder::keyword_similar(a, b)
     }
 }
 
@@ -458,6 +429,7 @@ mod tests {
     use super::*;
     use crate::{Badge, InboxAssembler, Placement, Snooze, SnoozeMode, Tone};
     use chrono::FixedOffset;
+    use std::collections::HashSet;
 
     /// Europe/Paris in October 2026 (summer time until the 25th).
     fn paris() -> FixedOffset {

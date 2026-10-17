@@ -235,9 +235,9 @@ public struct KeywordSimilarity: SimilarityModel {
         return shared >= 2 && Double(shared) / Double(max(union, 1)) >= 0.4
     }
 
+    /// Titles alone say nothing of which prefixes are real, so only keys written in capitals count.
     static func ticketKeys(_ text: String) -> Set<String> {
-        let regex = #/[A-Z][A-Z0-9]+-\d+/#
-        return Set(text.matches(of: regex).map { String($0.output) })
+        TicketKeys().keys(text)
     }
 
     static func words(_ text: String) -> Set<String> {

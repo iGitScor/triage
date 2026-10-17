@@ -1,12 +1,11 @@
 //! Finds items from different tools that are about the same thing, even when nobody linked them: a shared ticket
 //! key ("CE-1390"), or titles with most significant words in common. Port of the macOS `LinkFinder.swift` with its
 //! keyword similarity only: the Mac also uses Apple's word embeddings and a rare-token model, which Windows lacks.
-use crate::InboxItem;
+use crate::{InboxItem, TicketKeys};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
-static TICKET_KEY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[A-Z][A-Z0-9]+-\d+").expect("valid regex"));
 static TAGS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(\s*\[[^\]]*\])+\s*").expect("valid regex"));
 static COMMIT_PREFIX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-zA-Z]+(\([^)]*\))?!?:\s*").expect("valid regex"));
@@ -35,7 +34,8 @@ impl LinkFinder {
     pub fn links(&self, items: &[InboxItem]) -> HashMap<String, Vec<String>> {
         let reminders = crate::InboxBundle::reminders();
         let candidates: Vec<&InboxItem> = items.iter().filter(|i| i.bundle != reminders).collect();
-        let keys: Vec<HashSet<String>> = candidates.iter().map(|i| keys_of(i)).collect();
+        let tickets = TicketKeys::known_in(candidates.iter().copied());
+        let keys: Vec<HashSet<String>> = candidates.iter().map(|i| keys_of(i, &tickets)).collect();
         let titles: Vec<String> = candidates.iter().map(|i| normalized(&i.title)).collect();
         let mut strong: HashMap<&str, Vec<String>> = HashMap::new();
         let mut weak: HashMap<&str, Vec<String>> = HashMap::new();
@@ -68,8 +68,8 @@ impl LinkFinder {
 }
 
 /// Ticket keys in the title, the context (a Linear identifier lives there) and the preview.
-fn keys_of(item: &InboxItem) -> HashSet<String> {
-    ticket_keys(&[item.title.as_str(), &item.context, item.preview.as_deref().unwrap_or("")].join(" ").to_uppercase())
+fn keys_of(item: &InboxItem, tickets: &TicketKeys) -> HashSet<String> {
+    tickets.keys(&[item.title.as_str(), &item.context, item.preview.as_deref().unwrap_or("")].join(" "))
 }
 
 /// "[SOAK] chore(deps): Bump axios" → "Bump axios": tags and commit-style prefixes say nothing about the topic.
@@ -78,8 +78,9 @@ pub(crate) fn normalized(title: &str) -> String {
     COMMIT_PREFIX.replace(&untagged, "").into_owned()
 }
 
+/// Titles alone say nothing of which prefixes are real, so only keys written in capitals count.
 pub(crate) fn ticket_keys(text: &str) -> HashSet<String> {
-    TICKET_KEY.find_iter(text).map(|m| m.as_str().to_string()).collect()
+    TicketKeys::default().keys(text)
 }
 
 /// Same ticket key ("ENG-123"), or most significant words in common (Swift's `KeywordSimilarity.similar`).
@@ -169,5 +170,20 @@ mod tests {
         assert_eq!(links["1"], ["2"]);
         assert_eq!(links["4"], ["3"]);
         assert!(!links.contains_key("5"), "reminders are never linked");
+    }
+
+    /// ML-21: two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
+    #[test]
+    fn versions_do_not_link_but_a_lower_case_known_key_does() {
+        let items = [
+            task("1", "linear", "Close Dotfile cases", "CE-1380"),
+            task("2", "slack", "can someone look at ce-1380?", ""),
+            task("3", "github", "Read files as utf-8", ""),
+            task("4", "teams", "Export breaks on UTF-8 names", ""),
+        ];
+        let links = LinkFinder::default().links(&items);
+        assert_eq!(links["1"], ["2"]);
+        assert_eq!(links["2"], ["1"]);
+        assert!(!links.contains_key("3") && !links.contains_key("4"));
     }
 }

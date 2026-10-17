@@ -69,4 +69,15 @@ struct LinkFinderTests {
         #expect(links["1"] == ["2"])
         #expect(links["3"] == nil, "sharing the ordinary word “address” is not a link")
     }
+
+    /// ML-21: two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
+    @Test func versionsDoNotLinkButALowerCaseKnownKeyDoes() {
+        let issue = item("1", "linear", "Close Dotfile cases", context: "CE-1380")
+        let slack = item("2", "slack", "can someone look at ce-1380?")
+        let pr = item("3", "github", "Read files as utf-8")
+        let message = item("4", "teams", "Export breaks on UTF-8 names")
+        let links = LinkFinder(similarity: []).links([issue, slack, pr, message])
+        #expect(links["1"] == ["2"] && links["2"] == ["1"])
+        #expect(links["3"] == nil && links["4"] == nil)
+    }
 }

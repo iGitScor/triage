@@ -49,7 +49,9 @@ flowchart TB
   insights (loop, avoidance, pile-up with `spread`, cluster via `SimilarityModel`s, stale).
   `KeywordSimilarity` (ticket keys, shared words) and `EmbeddingSimilarity` (Infrastructure, Apple word
   embeddings; distance ≤ 0.95 for a shared topic, 0.9 to link items across tools, calibrated on title pairs,
-  precision over recall).
+  precision over recall). `TicketKeys` finds the keys: a prefix seen as a Linear or Jira key matches in any case,
+  any other must be in capitals, start a word and not be a version or encoding (`UTF-8`, `SHA-256`); a CVE counts
+  whole.
 - `VerbClassifier`: moves items from the *kind* a plugin reported (mention, DM, your MR) to a *verb*
   bundle (to reply, to read, to fix, ready to merge, waiting on others). Chat text goes through
   `TextIntentClassifier`s in order: `KeywordIntentClassifier` (English and French wording), then

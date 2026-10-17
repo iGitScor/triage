@@ -18,7 +18,8 @@ public struct LinkFinder: Sendable {
     /// Item ID → linked item IDs.
     public func links(_ items: [InboxItem]) -> [String: [String]] {
         let candidates = items.filter { $0.bundle != .reminders }
-        let keys = candidates.map { Self.keys(of: $0) }
+        let tickets = TicketKeys(knownIn: candidates)
+        let keys = candidates.map { Self.keys(of: $0, tickets) }
         let titles = candidates.map { Self.normalized($0.title) }
         var strong: [String: [String]] = [:]
         var weak: [String: [String]] = [:]
@@ -45,9 +46,8 @@ public struct LinkFinder: Sendable {
     }
 
     /// Ticket keys in the title, the context (a Linear identifier lives there) and the preview.
-    static func keys(of item: InboxItem) -> Set<String> {
-        KeywordSimilarity.ticketKeys(
-            [item.title, item.context, item.preview ?? ""].joined(separator: " ").uppercased())
+    static func keys(of item: InboxItem, _ tickets: TicketKeys) -> Set<String> {
+        tickets.keys([item.title, item.context, item.preview ?? ""].joined(separator: " "))
     }
 
     /// "[SOAK] chore(deps): Bump axios" → "Bump axios": tags and commit-style prefixes say nothing about the topic.

@@ -57,6 +57,9 @@ flowchart TB
   éléments périmés). `KeywordSimilarity` (clés de tickets, mots communs) et `EmbeddingSimilarity`
   (Infrastructure, embeddings de mots d’Apple ; distance ≤ 0,95 pour un même sujet, 0,9 pour relier des éléments
   entre outils, calibrées sur des paires de titres, mieux vaut manquer un rapprochement qu’en inventer un).
+  `TicketKeys` trouve les clés : un préfixe vu comme clé Linear ou Jira est reconnu quelle que soit la casse, tout
+  autre doit être en majuscules, commencer un mot et ne pas être une version ou un encodage (`UTF-8`, `SHA-256`) ;
+  un CVE compte en entier.
 - `VerbClassifier` : fait passer les éléments du *type* signalé par l’extension (mention, message direct, votre
   MR) à un groupe de *verbe* (à répondre, à lire, à corriger, prête à fusionner, en attente des autres). Le texte
   des messages passe par des `TextIntentClassifier`, dans l’ordre : `KeywordIntentClassifier` (formulations

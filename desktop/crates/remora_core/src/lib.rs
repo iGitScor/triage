@@ -23,6 +23,7 @@ pub mod recurrence;
 pub mod review_prep;
 pub mod snooze_advisor;
 pub mod text;
+pub mod ticket_keys;
 pub mod usage;
 pub mod waiting;
 
@@ -46,6 +47,7 @@ pub use reaction::*;
 pub use recurrence::*;
 pub use review_prep::*;
 pub use snooze_advisor::*;
+pub use ticket_keys::*;
 pub use usage::*;
 pub use waiting::*;
 
