@@ -12,6 +12,12 @@ ignore = [
     # proc-macro-error is unmaintained: a build-time macro of gtk3-macros, in Tauri's GTK 3 stack on Linux. No code
     # of it ships; it goes when Tauri moves off GTK 3.
     { id = "RUSTSEC-2024-0370", reason = "build-time macro of Tauri's GTK 3 stack (Linux), nothing of it ships" },
+    # zvariant, zvariant_derive and zbus_names were merged into zbus 6 (as its `wire` and `names` modules): unmaintained,
+    # not vulnerable. zbus 5 comes with Tauri's Linux stack (notify-rust, ashpd, the opener and single-instance plugins),
+    # none of which has moved to zbus 6 yet; they go when it does.
+    { id = "RUSTSEC-2026-0370", reason = "zvariant merged into zbus 6; zbus 5 is Tauri's Linux stack, no upgrade yet" },
+    { id = "RUSTSEC-2026-0371", reason = "zbus_names merged into zbus 6; zbus 5 is Tauri's Linux stack, no upgrade yet" },
+    { id = "RUSTSEC-2026-0372", reason = "zvariant_derive merged into zbus 6; zbus 5 is Tauri's Linux stack, no upgrade yet" },
 ]
 
 [licenses]

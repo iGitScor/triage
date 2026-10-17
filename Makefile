@@ -9,12 +9,14 @@
 help: ## List the targets
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-13s %s\n", $$1, $$2}'
 
-setup: ## Install the Node packages (tooling, Windows interface, docs) and the pre-commit hook
+setup: ## Install the Node packages (tooling, Windows interface, docs), the pre-commit hook and cargo-deny
 	npm ci
 	npm --prefix desktop/app ci
 	npm --prefix docs ci
 	npx lefthook install
 	npx playwright install chromium
+	@# cargo-deny, for make deps-check and make release: Homebrew's build when there is one, else compiled.
+	@command -v cargo-deny >/dev/null || { command -v brew >/dev/null && brew install cargo-deny; } || cargo install cargo-deny --locked
 
 test: mac-test desktop-test ## Run every test suite
 
@@ -52,7 +54,7 @@ release: ## Release V=x.y.z in one commit: checks, version, changelog, site page
 	python3 scripts/release.py $(V) $(if $(DRY),--dry-run)
 
 deps-check: ## Known vulnerabilities and licences, as the Dependencies workflow checks them (needs cargo-deny)
-	@command -v cargo-deny >/dev/null || { echo "Needs cargo-deny: cargo install cargo-deny --locked"; exit 1; }
+	@command -v cargo-deny >/dev/null || { echo "Needs cargo-deny: run make setup"; exit 1; }
 	cd desktop && cargo deny check advisories licenses sources bans
 	cd desktop/app && npm audit --omit=dev --audit-level=high
 	cd docs && npm audit --audit-level=high
