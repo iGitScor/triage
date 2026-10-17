@@ -3,6 +3,15 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Changed
+
+- Mac: two items are no longer linked because they share a typo or a person's name; a library or product name still
+  links them. A long message is sorted by its opening and its last sentence.
+- A snooze insight you set aside (*Not now*) stays away for a month, after a restart too, and one more snoozed item
+  doesn't bring it back.
+
 ## 0.11.0 (2026-10-17)
 
 ### Added
