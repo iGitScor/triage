@@ -57,6 +57,9 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     private let neighbors = 3
     /// Minimum gap between the two classes' distances (Apple's cosine scale) to trust the answer.
     private let margin: Double
+    /// The gap needed to answer information or closing, which takes a message out of *To reply*: a request missed
+    /// costs more than one shown for nothing.
+    private let leavingMargin: Double
 
     /// A language's sentence embedding and the examples' vectors in it, computed once: comparing with
     /// `distance(between:and:)` embedded every example again for every message.
@@ -89,8 +92,9 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     /// The same messages come back on every refresh: answer each one once.
     private var answers: [String: TextIntent?] = [:]
 
-    public init(margin: Double = 0.05) {
+    public init(margin: Double = 0.05, leavingMargin: Double = 0.07) {
         self.margin = margin
+        self.leavingMargin = leavingMargin
     }
 
     /// Loads both languages' models, so the first refresh doesn't wait for them. Call it off the main thread.
@@ -129,7 +133,9 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         }
         // The nearest class, if clearly nearer than the runner-up.
         let ranked = examples.keys.map { ($0, distance(to: $0)) }.filter { $0.1.isFinite }.sorted { $0.1 < $1.1 }
-        guard ranked.count >= 2, ranked[1].1 - ranked[0].1 >= margin else { return nil }
+        guard ranked.count >= 2,
+            ranked[1].1 - ranked[0].1 >= (ranked[0].0 == .request ? margin : max(margin, leavingMargin))
+        else { return nil }
         return ranked[0].0
     }
 

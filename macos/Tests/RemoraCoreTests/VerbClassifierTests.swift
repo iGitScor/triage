@@ -150,7 +150,9 @@ struct VerbClassifierTests {
         let correct = results.filter { $0.1 == $0.2 }.count
         let wrong = results.filter { $0.2 != nil && $0.1 != $0.2 }.count
         #expect(wrong == 0, "confident mistakes: \(wrong)")
-        #expect(correct >= 8, "correct: \(correct) of \(cases.count)")
+        // Information needs a wider gap than a request (`leavingMargin`), so some stays unsure: the labelled set of
+        // eval/ (IntentEvaluationTests) measures the balance.
+        #expect(correct >= 6, "correct: \(correct) of \(cases.count)")
     }
 
     /// ML-09: messages classified at the same time, while the models load, get the answers they get one at a time.

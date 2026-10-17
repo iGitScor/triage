@@ -7,6 +7,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Mac: a message is taken out of *To reply* only when its meaning is clearly information or a thank-you, so fewer
+  requests said without a keyword end up in *To read* (on the test messages, 3 missed instead of 9).
 - A message that is only code or a link goes to *To read*, not *To reply*. On a Mac, a message clearly in another
   language than English or French is no longer read with the English examples: it stays unsure, so *To reply*.
 - GitHub: *Create a token* opens a fine-grained token, read-only for pull requests and issues, instead of a classic

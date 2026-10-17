@@ -56,7 +56,8 @@ flowchart TB
   bundle (to reply, to read, to fix, ready to merge, waiting on others). Chat text goes through
   `TextIntentClassifier`s in order: `KeywordIntentClassifier` (English and French wording), then
   `EmbeddingIntentClassifier` (Infrastructure, Apple NaturalLanguage sentence embeddings compared with
-  example sentences; answers only when the nearest class is clearly nearer than the next, otherwise *To reply*).
+  example sentences; answers only when the nearest class is clearly nearer than the next, by a wider gap for
+  information and closing, which leave *To reply*; otherwise *To reply*).
   A third intent, *closing* ("thanks!", a lone 👍), finishes a conversation. Your own message, last in a
   conversation, goes the same way: a request waits on others; anything else finishes it (`answered`) or, when nobody
   asked, is cleared (`asked`).

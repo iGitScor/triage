@@ -65,7 +65,8 @@ flowchart TB
   des messages passe par des `TextIntentClassifier`, dans l’ordre : `KeywordIntentClassifier` (formulations
   anglaises et françaises), puis `EmbeddingIntentClassifier` (Infrastructure, embeddings de phrases
   NaturalLanguage d’Apple comparés à des phrases d’exemple ; il ne répond que lorsque les deux classes sont
-  nettement plus proche que la suivante, sinon *À répondre*). Une troisième intention, la *clôture* (« merci ! »,
+  nettement plus proche que la suivante, avec un écart plus grand pour l’information et la clôture, qui sortent de
+  *À répondre* ; sinon *À répondre*). Une troisième intention, la *clôture* (« merci ! »,
   un 👍 seul), termine une conversation. Votre propre message, dernier d’une conversation, suit le même chemin : une
   demande attend les autres ; le reste la termine (`answered`) ou, si personne n’avait rien demandé, est effacé
   (`asked`). Les deux apps notent ces classifieurs sur les messages étiquetés de `eval/` et échouent sous les

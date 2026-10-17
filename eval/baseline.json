@@ -13,29 +13,29 @@
     "verbAccuracy": 0.65
   },
   "macos.embeddings": {
-    "accuracy": 0.88,
-    "coverage": 0.62,
-    "othersKept": 0.56,
-    "precision.closing": 0.9,
-    "precision.info": 0.81,
+    "accuracy": 0.92,
+    "coverage": 0.56,
+    "othersKept": 0.5,
+    "precision.closing": 0.94,
+    "precision.info": 0.91,
     "precision.request": 0.92,
-    "recall.closing": 0.6,
-    "recall.info": 0.48,
+    "recall.closing": 0.56,
+    "recall.info": 0.42,
     "recall.request": 0.58,
-    "requestsKept": 0.92,
-    "verbAccuracy": 0.7
+    "requestsKept": 0.97,
+    "verbAccuracy": 0.69
   },
   "macos.chain": {
-    "accuracy": 0.92,
-    "coverage": 0.75,
-    "othersKept": 0.7,
-    "precision.closing": 0.92,
-    "precision.info": 0.88,
+    "accuracy": 0.95,
+    "coverage": 0.72,
+    "othersKept": 0.67,
+    "precision.closing": 0.96,
+    "precision.info": 0.94,
     "precision.request": 0.94,
-    "recall.closing": 0.88,
-    "recall.info": 0.57,
+    "recall.closing": 0.86,
+    "recall.info": 0.54,
     "recall.request": 0.71,
-    "requestsKept": 0.92,
-    "verbAccuracy": 0.79
+    "requestsKept": 0.97,
+    "verbAccuracy": 0.8
   }
 }
