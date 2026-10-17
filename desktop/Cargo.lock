@@ -3581,7 +3581,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "futures",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "libc",
  "regex",
  "remora_core",
