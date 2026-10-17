@@ -17,6 +17,9 @@ pub(crate) const STOP_WORDS: &[&str] = &[
     "de", "du", "au",
 ];
 
+/// An item with a similar title: its id, how close the titles are, and its date.
+type Similar = (String, f64, chrono::DateTime<chrono::Utc>);
+
 #[derive(Clone, Debug)]
 pub struct LinkFinder {
     /// At most this many links per item, most certain first.
@@ -38,7 +41,8 @@ impl LinkFinder {
         let keys: Vec<HashSet<String>> = candidates.iter().map(|i| keys_of(i, &tickets)).collect();
         let titles: Vec<String> = candidates.iter().map(|i| normalized(&i.title)).collect();
         let mut strong: HashMap<&str, Vec<String>> = HashMap::new();
-        let mut weak: HashMap<&str, Vec<String>> = HashMap::new();
+        // Similar titles, with how close they are, to keep the closest when there are more than `limit`.
+        let mut weak: HashMap<&str, Vec<Similar>> = HashMap::new();
 
         for i in 0..candidates.len() {
             for j in i + 1..candidates.len() {
@@ -46,24 +50,39 @@ impl LinkFinder {
                     continue;
                 }
                 let (a, b) = (candidates[i].id.as_str(), candidates[j].id.as_str());
-                let bucket = if !keys[i].is_disjoint(&keys[j]) {
-                    &mut strong
+                if !keys[i].is_disjoint(&keys[j]) {
+                    strong.entry(a).or_default().push(b.to_string());
+                    strong.entry(b).or_default().push(a.to_string());
                 } else if keyword_similar(&titles[i], &titles[j]) {
-                    &mut weak
-                } else {
-                    continue;
-                };
-                bucket.entry(a).or_default().push(b.to_string());
-                bucket.entry(b).or_default().push(a.to_string());
+                    let score = closeness(&titles[i], &titles[j]);
+                    weak.entry(a).or_default().push((b.to_string(), score, candidates[j].date));
+                    weak.entry(b).or_default().push((a.to_string(), score, candidates[i].date));
+                }
             }
         }
         let ids: HashSet<&str> = strong.keys().chain(weak.keys()).copied().collect();
         ids.into_iter()
             .map(|id| {
-                let linked = strong.get(id).into_iter().chain(weak.get(id)).flatten().take(self.limit).cloned();
-                (id.to_string(), linked.collect())
+                // Closest first, then the most recent: not the order the sources happened to list them in.
+                let mut similar = weak.get(id).cloned().unwrap_or_default();
+                similar.sort_by(|x, y| y.1.total_cmp(&x.1).then(y.2.cmp(&x.2)).then(x.0.cmp(&y.0)));
+                let linked =
+                    strong.get(id).cloned().unwrap_or_default().into_iter().chain(similar.into_iter().map(|s| s.0));
+                (id.to_string(), linked.take(self.limit).collect())
             })
             .collect()
+    }
+}
+
+/// How close two titles are: the share of their significant words they have in common (Swift's
+/// `LinkFinder.closeness`).
+fn closeness(a: &str, b: &str) -> f64 {
+    let (words_a, words_b) = (keywords(a), keywords(b));
+    let union = words_a.union(&words_b).count();
+    if union == 0 {
+        0.0
+    } else {
+        words_a.intersection(&words_b).count() as f64 / union as f64
     }
 }
 
@@ -185,5 +204,18 @@ mod tests {
         assert_eq!(links["1"], ["2"]);
         assert_eq!(links["2"], ["1"]);
         assert!(!links.contains_key("3") && !links.contains_key("4"));
+    }
+
+    /// More similar items than links shown: the closest are kept, not the first ones listed. Same case as the Mac.
+    #[test]
+    fn the_closest_similar_items_are_kept() {
+        let links = LinkFinder::default().links(&[
+            task("a", "github", "Export invoices to CSV for accounting", ""),
+            task("b1", "linear", "Export invoices weekly accounting team report", ""),
+            task("b4", "notion", "Invoices accounting export broken today", ""),
+            task("b3", "jira", "Export invoices accounting monthly", ""),
+            task("b2", "slack", "Export invoices accounting", ""),
+        ]);
+        assert_eq!(links["a"], ["b2", "b3", "b4"], "all the same words, then three of four, then three of five");
     }
 }

@@ -14,6 +14,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - Claude Code gets only what it needs from Remora's environment and its own setup, not other tools' tokens; on a
   Mac, a run that is cancelled or too long is killed if it doesn't quit.
+- When more than three items look like the same one, the closest are linked, not the first ones listed.
 - Mac: two items are no longer linked because they share a typo or a person's name; a library or product name still
   links them. A long message is sorted by its opening and its last sentence.
 - A snooze insight you set aside (*Not now*) stays away for a month, after a restart too, and one more snoozed item

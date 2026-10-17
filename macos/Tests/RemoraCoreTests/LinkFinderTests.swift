@@ -91,4 +91,15 @@ struct LinkFinderTests {
         #expect(links["1"] == ["2"] && links["2"] == ["1"])
         #expect(links["3"] == nil && links["4"] == nil)
     }
+
+    /// More similar items than links shown: the closest are kept, not the first ones listed. Same case as Windows.
+    @Test func theClosestSimilarItemsAreKept() {
+        let links = LinkFinder().links([
+            item("a", "github", "Export invoices to CSV for accounting"),
+            item("b1", "linear", "Export invoices weekly accounting team report"),
+            item("b4", "notion", "Invoices accounting export broken today"),
+            item("b3", "jira", "Export invoices accounting monthly"), item("b2", "slack", "Export invoices accounting"),
+        ])
+        #expect(links["a"] == ["b2", "b3", "b4"], "all the same words, then three of four, then three of five")
+    }
 }

@@ -22,7 +22,8 @@ public struct LinkFinder: Sendable {
         let keys = candidates.map { Self.keys(of: $0, tickets) }
         let titles = candidates.map { Self.normalized($0.title) }
         var strong: [String: [String]] = [:]
-        var weak: [String: [String]] = [:]
+        /// Similar titles, with how close they are, to keep the closest when there are more than `limit`.
+        var weak: [String: [(id: String, score: Double, date: Date)]] = [:]
 
         for i in candidates.indices {
             for j in candidates.indices where j > i && candidates[i].pluginID != candidates[j].pluginID {
@@ -32,17 +33,31 @@ public struct LinkFinder: Sendable {
                     strong[a, default: []].append(b)
                     strong[b, default: []].append(a)
                 } else if remembered.similar(titles[i], titles[j], by: similarity) {
-                    weak[a, default: []].append(b)
-                    weak[b, default: []].append(a)
+                    let score = Self.closeness(titles[i], titles[j])
+                    weak[a, default: []].append((b, score, candidates[j].date))
+                    weak[b, default: []].append((a, score, candidates[i].date))
                 }
             }
         }
         remembered.forgetUnused()
         var links: [String: [String]] = [:]
         for id in Set(strong.keys).union(weak.keys) {
-            links[id] = Array(((strong[id] ?? []) + (weak[id] ?? [])).prefix(limit))
+            // Closest first, then the most recent: not the order the sources happened to list them in.
+            let similar = (weak[id] ?? []).sorted {
+                ($0.score, $0.date, $1.id) > ($1.score, $1.date, $0.id)
+            }.map(\.id)
+            links[id] = Array(((strong[id] ?? []) + similar).prefix(limit))
         }
         return links
+    }
+
+    /// How close two titles are, whichever model found them similar: the share of their significant words they have
+    /// in common. The same measure on Windows and Linux.
+    static func closeness(_ a: String, _ b: String) -> Double {
+        let wordsA = KeywordSimilarity.words(a)
+        let wordsB = KeywordSimilarity.words(b)
+        let union = wordsA.union(wordsB).count
+        return union == 0 ? 0 : Double(wordsA.intersection(wordsB).count) / Double(union)
     }
 
     /// Ticket keys in the title, the context (a Linear identifier lives there) and the preview.
