@@ -89,12 +89,36 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     private let loading = NSLock()
     /// Nil when the language has no model on this Mac.
     private var models: [NLLanguage: Model?] = [:]
-    /// The same messages come back on every refresh: answer each one once.
+    /// The same messages come back on every refresh: answer each one once. Capped, oldest out first, so a Mac left
+    /// running for weeks doesn't keep every message it ever saw.
     private var answers: [String: TextIntent?] = [:]
+    /// `answers`' keys, oldest first.
+    private var answered: [String] = []
+    /// More than several refreshes' worth of messages.
+    static let kept = 1_000
 
     public init(margin: Double = 0.05, leavingMargin: Double = 0.07) {
         self.margin = margin
         self.leavingMargin = leavingMargin
+    }
+
+    /// What of a message is read: its first two sentences and its last one. A long message, the whole of it in one
+    /// vector, means little; what's asked is said first ("Can you…") or last ("…let me know what you think").
+    static func gist(_ text: String) -> String {
+        let tokenizer = NLTokenizer(unit: .sentence)
+        tokenizer.string = text
+        let sentences = tokenizer.tokens(for: text.startIndex..<text.endIndex).map {
+            text[$0].trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty }
+        guard sentences.count > 3 else { return text }
+        return (sentences.prefix(2) + [sentences[sentences.count - 1]]).joined(separator: " ")
+    }
+
+    /// How many answers are kept now (tests).
+    var cachedCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return answers.count
     }
 
     /// Loads both languages' models, so the first refresh doesn't wait for them. Call it off the main thread.
@@ -108,7 +132,12 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
         if let answer = cached(text) { return answer }
         let answer = classify(text)
         lock.lock()
-        answers[text] = answer
+        if answers.updateValue(answer, forKey: text) == nil { answered.append(text) }
+        if answered.count > Self.kept {
+            let gone = answered.count - Self.kept
+            for old in answered.prefix(gone) { answers[old] = nil }
+            answered.removeFirst(gone)
+        }
         lock.unlock()
         return answer
     }
@@ -120,8 +149,9 @@ public final class EmbeddingIntentClassifier: TextIntentClassifier, @unchecked S
     }
 
     private func classify(_ text: String) -> TextIntent? {
-        // Code and links say nothing of what's asked, and would pull the sentence's meaning their way.
-        let text = KeywordIntentClassifier.prose(text).trimmingCharacters(in: .whitespacesAndNewlines)
+        // Code and links say nothing of what's asked, and would pull the sentence's meaning their way; a long message
+        // is read by its opening and its last sentence, where what's asked is.
+        let text = Self.gist(KeywordIntentClassifier.prose(text).trimmingCharacters(in: .whitespacesAndNewlines))
         guard let language = Self.language(of: text), let model = model(for: language),
             let message = model.vector(for: text)
         else { return nil }

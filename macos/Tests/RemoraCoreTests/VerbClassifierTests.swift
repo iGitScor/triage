@@ -272,4 +272,19 @@ struct VerbClassifierTests {
         #expect(
             layout.myTurnItems.allSatisfy { $0.bundle == .reply && $0.needsAction && $0.reason == SortReason(.moved) })
     }
+
+    /// A long message is read by its first two sentences and its last one; a short one whole.
+    @Test func aLongMessageIsReadByItsGist() {
+        let long = "The build broke last night. The cache was stale. We purged it. It took an hour. Can you check?"
+        #expect(
+            EmbeddingIntentClassifier.gist(long) == "The build broke last night. The cache was stale. Can you check?")
+        #expect(EmbeddingIntentClassifier.gist("Short one. Two. Three.") == "Short one. Two. Three.")
+    }
+
+    /// The answers kept stay capped, the oldest out first.
+    @Test func theAnswerCacheIsCapped() {
+        let classifier = EmbeddingIntentClassifier()
+        for n in 0..<(EmbeddingIntentClassifier.kept + 50) { _ = classifier.intent(of: "message \(n)") }
+        #expect(classifier.cachedCount == EmbeddingIntentClassifier.kept)
+    }
 }
