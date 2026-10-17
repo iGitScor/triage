@@ -35,6 +35,10 @@ env:
   CARGO_PROFILE_TEST_DEBUG: 0
 
 # A newer push to the same branch or pull request cancels the run in progress.
+# Reading the repository is all these jobs need: a dependency or action gone bad gets no token that can push.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
