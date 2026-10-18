@@ -282,7 +282,7 @@ struct RemoraMark: View {
     var size: CGFloat = 26
 
     var body: some View {
-        Image(nsImage: RemoraArt.mark(size: size, disc: NSColor(hex: 0xB9FF66), fish: NSColor(hex: 0x111111)))
+        Image(nsImage: RemoraArt.mark(size: size, disc: NSColor(Myna.accent), fish: NSColor(Myna.onAccent)))
             .frame(width: size, height: size)
     }
 }

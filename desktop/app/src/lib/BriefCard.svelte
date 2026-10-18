@@ -57,8 +57,8 @@ const byId = $derived(new Map(items.map((i) => [i.id, i])))
     margin: 0 0 12px;
     padding: 12px 14px;
     border-radius: 16px;
-    background: var(--dark, #111);
-    color: var(--on-dark, #f0f0e8);
+    background: var(--dark);
+    color: var(--on-dark);
     font-size: 13px;
   }
   .brief p {

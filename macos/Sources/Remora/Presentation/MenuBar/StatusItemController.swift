@@ -398,8 +398,8 @@ enum MenuBarTitle {
     /// Not a template image, so it keeps its colors on light and dark menu bars.
     /// Focused on a task in progress: lime on ink, so it reads differently from the usual count.
     static func pill(_ content: Content, motion: Motion = .still, height: CGFloat = 18) -> NSImage {
-        let lime = NSColor(hex: 0xB9FF66)
-        let dark = NSColor(hex: 0x111111)
+        let lime = NSColor(Myna.accent)
+        let dark = NSColor(Myna.onAccent)
         let (ink, fill) = content.focused ? (lime, dark) : (dark, lime)
         let title = make(content, motion: motion, color: ink)
         let fish = NSSize(width: 22, height: 11)

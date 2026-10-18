@@ -1,5 +1,7 @@
-// Renders the app icon source (1024 px) and the tray icons from the Remora fish, with Playwright's
+// Renders the app icon source (1024 px) and the tray icons from the Remora fish, in the design system's colours
+// (@iscor/design), with Playwright's
 // Chromium (npx playwright-core install chromium once). `npm run icons` then derives every size with tauri icon.
+import { dark, light } from '@iscor/design'
 import { chromium } from 'playwright-core'
 
 const fish =
@@ -8,13 +10,17 @@ const mark = (disc, ink, turn = 0) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="${disc}"/><g fill="${ink}" transform="rotate(${turn} 50 51) translate(7 7) scale(.86)">${fish}</g></svg>`
 
 const icons = [
-  ['src-tauri/icons/source.png', 1024, mark('#b9ff66', '#111111')],
-  // Nothing needs you: a quiet grey, readable on light and dark taskbars.
-  ['src-tauri/icons/tray-quiet.png', 64, mark('#8c8ca2', '#ffffff')],
+  ['src-tauri/icons/source.png', 1024, mark(light.accent, light['on-accent'])],
+  // Nothing needs you: a quiet grey, readable on light and dark taskbars; the fish in plain white, which no token is.
+  ['src-tauri/icons/tray-quiet.png', 64, mark(dark.muted, '#ffffff')],
   // Something needs you: the lime of the macOS menu bar pill.
-  ['src-tauri/icons/tray-attention.png', 64, mark('#b9ff66', '#111111')],
+  ['src-tauri/icons/tray-attention.png', 64, mark(light.accent, light['on-accent'])],
   // A task in progress (focus): inverted, and the frames of the fish's wiggle, damped.
-  ...[0, 8, -6, 4, -2].map((turn, i) => [`src-tauri/icons/tray-focus-${i}.png`, 64, mark('#111111', '#b9ff66', turn)]),
+  ...[0, 8, -6, 4, -2].map((turn, i) => [
+    `src-tauri/icons/tray-focus-${i}.png`,
+    64,
+    mark(light['on-accent'], light.accent, turn),
+  ]),
 ]
 
 const browser = await chromium.launch()

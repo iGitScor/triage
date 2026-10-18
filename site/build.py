@@ -129,6 +129,16 @@ def load_copy(lang: str) -> dict:
 T = {lang: load_copy(lang) for lang in ("en", "fr")}
 
 
+def scheme_backdrops() -> dict[str, str]:
+    """The page background in each scheme, for the browser's bar (theme-color), from the design system's tokens.css."""
+    css = (SITE / "public/site/tokens.css").read_text(encoding="utf-8")
+    light, dark = re.findall(r"--backdrop:\s*(#[0-9a-f]{6});", css)[:2]
+    return {"backdrop_light": light, "backdrop_dark": dark}
+
+
+BACKDROPS = scheme_backdrops()
+
+
 @functools.cache
 def template(name: str) -> string.Template:
     # Without the file's final newline, so a template ends where its markup does whatever the editor saves.
@@ -136,7 +146,7 @@ def template(name: str) -> string.Template:
 
 
 def fill(file: str, /, **values: object) -> str:
-    return template(file).substitute(values)
+    return template(file).substitute({**BACKDROPS, **values})
 
 
 def href(lang: str, target: str) -> str:

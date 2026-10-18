@@ -310,7 +310,7 @@ function open(event: MouseEvent) {
     text-align: left;
   }
   .ok {
-    color: var(--ok, #146b50);
+    color: var(--ok);
   }
   .chevron {
     transition: transform 0.15s;
