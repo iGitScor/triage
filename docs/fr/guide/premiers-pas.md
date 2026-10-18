@@ -49,7 +49,7 @@ attendent que vous ouvriez Remora. Si une autre app utilise déjà Ctrl+Alt+R, R
 La version Windows a ce qu’a le Mac : les sept outils, le report avec raisons et constats, la préparation et les
 sessions de relecture, l’assistant d’attente et l’assistant (Claude ou un serveur OpenAI-compatible). Elle trie les
 messages par mots-clés seulement ; la liste complète est dans
-[Remora pour Windows](/fr/developper/windows#ce-que-windows-a-et-ce-qu-il-n-a-pas-encore).
+[Remora pour Windows](/fr/developper/windows#face-au-mac).
 
 ## Sous Linux (aperçu)
 

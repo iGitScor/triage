@@ -45,7 +45,7 @@ wait until you open Remora. If another app already uses Ctrl+Alt+R, Settings →
 The Windows version has what the Mac has: the seven tools, snooze with reasons and insights, review prep and sessions,
 the waiting assistant and the assistant (Claude or an OpenAI-compatible server). It sorts messages with keywords
 only; the full list is in [Remora for
-Windows](/develop/windows#what-windows-has-and-what-it-doesn-t-yet).
+Windows](/develop/windows#next-to-the-mac).
 
 ## On Linux (preview)
 

@@ -1,19 +1,51 @@
 ---
 title: Remora for Windows and Linux
-description: Remora for Windows and Linux (preview), a Tauri 2 tray app in Rust and Svelte. What it does, what it lacks next to the Mac, and how to build it.
+description: Remora for Windows and Linux (preview), a Tauri 2 tray app in Rust and Svelte. How to install it, how it differs from the Mac, and how to build it.
 ---
 
 # Remora for Windows and Linux
 
 Status: **preview**, for colleagues on Windows, and on Linux (community supported). A [Tauri 2](https://tauri.app)
 tray app: a Rust core and a Svelte interface on WebView2 (WebKitGTK on Linux). It ports the macOS rules and plugins
-with the same fixtures and tests, so the apps behave the same. Each release attaches `Remora-Setup.exe` (per-user
-install, no admin rights needed), `Remora-x86_64.AppImage` (updates itself) and `Remora-amd64.deb`.
+with the same fixtures and tests, so the apps behave the same.
 
-On Linux: tokens in the Secret Service (GNOME Keyring, KWallet, KeePassXC), data in `~/.local/share/fr.igitscor.remora`
-readable by you only, the policy in `/etc/remora/policy.json`, a window opened from the tray menu (or on its own where
-the desktop has no tray), notifications that open their item, and on Wayland Ctrl+Alt+R through the desktop's
-GlobalShortcuts portal (KDE Plasma, GNOME 48+), or else a system shortcut running `remora --reminder`.
+## Packages
+
+Each release attaches:
+
+| System | File | Install | Updates |
+|---|---|---|---|
+| Windows | `Remora-Setup.exe` | For you only, no admin rights needed | Itself, when you opt in |
+| Windows | `Remora.msi` | For every user, by IT (see [Deployment](/admin/deployment)) | IT deploys each version |
+| Linux | `Remora-x86_64.AppImage` | Anywhere, no install | Itself, when you opt in |
+| Linux | `Remora-amd64.deb` | Debian, Ubuntu and derivatives | Install the next one |
+
+## Next to the Mac
+
+The same on every system: every source (GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion,
+Microsoft 365), the assistant, snooze reasons and insights, review prep, the waiting assistant, personal ranking,
+Slack reactions, offline mode, updates and the privacy policy. What differs:
+
+| | macOS | Windows | Linux |
+|---|---|---|---|
+| Sorting messages by meaning | Keywords, then an on-device language model | Keywords only: without one, a message goes to *To reply* | As Windows |
+| Links between tools | Ticket keys, words and on-device embeddings | Ticket keys and words: fewer links | As Windows |
+| Opening Remora | Click the menu bar fish | Click the tray icon | *Open Remora* in the tray menu; a window at launch where the desktop has no tray (stock GNOME) |
+| New reminder | Drag the fish down | Ctrl+Alt+R (tray icons can’t be dragged) | Ctrl+Alt+R; on Wayland through the desktop’s portal (KDE Plasma, GNOME 48+), or else a system shortcut running `remora --reminder` |
+| Done, Snooze on a row | Swipe, or the keyboard | Buttons on each row, or the keyboard | As Windows |
+| Buttons in notifications | ✓ | ✓ | Where the desktop shows them |
+| Inbox items in the system search (opt-in) | Spotlight | Not yet | Not yet |
+
+## Where things live
+
+| | macOS | Windows | Linux |
+|---|---|---|---|
+| Tokens | Keychain, one item | Credential Manager, one entry per account | Secret Service (GNOME Keyring, KWallet, KeePassXC) |
+| Data | `~/Library/Application Support/Remora` | `%LOCALAPPDATA%\fr.igitscor.remora` | `~/.local/share/fr.igitscor.remora`, readable by you only |
+| Managed policy ([MDM](/admin/mdm)) | Configuration profile, domain `fr.igitscor.remora` | `HKLM\SOFTWARE\Policies\Remora` (Group Policy, Intune) | `/etc/remora/policy.json` |
+| Certificates | System trust | The Windows certificate store, so corporate root certificates work | The system’s certificates |
+
+## Parts and tests
 
 | Part | What | Tests |
 |---|---|---|
@@ -22,38 +54,6 @@ GlobalShortcuts portal (KDE Plasma, GNOME 48+), or else a system shortcut runnin
 | `crates/remora_app` | Storage, the Credential Manager vault, the registry policy, the inbox service the tray app drives (history, learning, the assistant's brief, summaries and triage), and what the tray shows | 122 |
 | `app/src-tauri` | Draws the tray and popup, notifications, start with Windows, the reminder shortcut, avatars, updates, the commands: only calls into `remora_app` | 6 |
 | `app/src` | The Svelte interface, in English and French | type-checked, 101 |
-
-## What Windows has, and what it doesn’t yet
-
-| | macOS | Windows |
-|---|---|---|
-| Sources: GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion, Microsoft 365 | ✓ | ✓ |
-| The assistant: brief, ✦ group summaries, triage of the snoozed pile, through the Claude API, Claude Code or an OpenAI-compatible server | ✓ | ✓ |
-| Snooze reasons, suggested returns (weekends skipped), insights (loops, pile-ups, clusters, quiet items) | ✓ | ✓ |
-| Review prep (estimate without lockfiles, files, risky areas, your pace) and review sessions | ✓ | ✓ |
-| Waiting assistant: suggested reviewers, nudge drafts to copy | ✓ | ✓ |
-| Reviewers and approvals on rows | ✓ | ✓ |
-| Personal ranking (what you handle quickly) | ✓ | ✓ |
-| Slack reactions (✅ to Done, 👀 to In progress, your questions in Waiting) | ✓ | ✓ |
-| Links between tools (a PR and its ticket) | Ticket keys, words and on-device embeddings | Ticket keys and words: fewer links |
-| Sorting messages by meaning | Keywords, then an on-device language model | Keywords only: without one, a message goes to *To reply* |
-| Updates (opt-in), offline and reconnect, privacy policy | ✓ | ✓ |
-| Buttons in notifications (Done, Snooze, Start on a reminder) | ✓ | ✓ (on Linux, where the desktop shows them) |
-| Managed settings | All the keys in [MDM](/admin/mdm) | All the keys: in the registry on Windows, in `/etc/remora/policy.json` on Linux |
-| Text size | Settings → General | Settings → General, on top of Windows’ scaling |
-| New reminder | Drag the menu bar fish down | A global shortcut, Ctrl+Alt+R: tray icons can’t be dragged |
-| Done, Snooze on a row | Swipe, or the keyboard | Buttons on each row, or the keyboard |
-| Inbox items in the system search (opt-in) | Spotlight | Not yet |
-
-## Same model, Windows equivalents
-
-| | macOS | Windows |
-|---|---|---|
-| Tokens | Keychain, one item | Credential Manager, one entry per account |
-| Data | `~/Library/Application Support/Remora` | `%LOCALAPPDATA%\fr.igitscor.remora` |
-| Managed policy | Configuration profile, domain `fr.igitscor.remora` | `HKLM\SOFTWARE\Policies\Remora` (Group Policy, Intune) |
-| TLS | System trust | `native-tls`: the Windows certificate store, so corporate root certificates work |
-| Reminders | Drag the menu bar fish | A global shortcut (tray icons can’t be dragged) |
 
 ## How it fits together
 

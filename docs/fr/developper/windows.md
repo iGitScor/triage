@@ -1,6 +1,6 @@
 ---
 title: Remora pour Windows et Linux
-description: Remora pour Windows et Linux (aperçu), une app Tauri 2 en Rust et Svelte. Ce qu’elle fait, ce qui lui manque face au Mac, et comment la construire.
+description: Remora pour Windows et Linux (aperçu), une app Tauri 2 en Rust et Svelte. Comment l’installer, ce qui la distingue du Mac, et comment la construire.
 ---
 
 # Remora pour Windows et Linux
@@ -8,14 +8,46 @@ description: Remora pour Windows et Linux (aperçu), une app Tauri 2 en Rust et 
 Statut : **aperçu**, pour les collègues sous Windows, et sous Linux (avec le soutien de la communauté). Une app de
 zone de notification [Tauri 2](https://tauri.app) : un cœur en Rust et une interface Svelte sur WebView2 (WebKitGTK
 sous Linux). Elle reprend les règles et les extensions de macOS avec les mêmes données de test et les mêmes tests,
-pour que les apps se comportent pareil. Chaque version publiée joint `Remora-Setup.exe` (installation par
-utilisateur, sans droits d’administrateur), `Remora-x86_64.AppImage` (qui se met à jour seule) et `Remora-amd64.deb`.
+pour que les apps se comportent pareil.
 
-Sous Linux : les jetons dans le Secret Service (GNOME Keyring, KWallet, KeePassXC), les données dans
-`~/.local/share/fr.igitscor.remora` lisibles par vous seul, la politique dans `/etc/remora/policy.json`, une fenêtre
-ouverte depuis le menu de la zone de notification (ou d’elle-même là où le bureau n’en a pas), des notifications qui
-ouvrent leur élément, et sous Wayland Ctrl+Alt+R par le portail GlobalShortcuts du bureau (KDE Plasma, GNOME 48+),
-ou sinon un raccourci du système qui lance `remora --reminder`.
+## Paquets
+
+Chaque version publiée joint :
+
+| Système | Fichier | Installation | Mises à jour |
+|---|---|---|---|
+| Windows | `Remora-Setup.exe` | Pour vous seul, sans droits d’administrateur | D’elle-même, si vous l’activez |
+| Windows | `Remora.msi` | Pour tous les utilisateurs, par l’informatique (voir [Déploiement](/fr/admin/deploiement)) | L’informatique déploie chaque version |
+| Linux | `Remora-x86_64.AppImage` | N’importe où, sans installation | D’elle-même, si vous l’activez |
+| Linux | `Remora-amd64.deb` | Debian, Ubuntu et dérivées | Installer la suivante |
+
+## Face au Mac
+
+Pareil sur tous les systèmes : toutes les sources (GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira,
+Notion, Microsoft 365), l’assistant, les raisons de report et les constats, la préparation des relectures,
+l’assistant d’attente, le classement personnel, les réactions Slack, le mode hors ligne, les mises à jour et la
+politique de confidentialité. Ce qui change :
+
+| | macOS | Windows | Linux |
+|---|---|---|---|
+| Trier les messages par leur sens | Mots-clés, puis un modèle de langue sur l’appareil | Mots-clés seulement : sans eux, un message va dans *À répondre* | Comme Windows |
+| Liens entre outils | Clés de ticket, mots et embeddings sur l’appareil | Clés de ticket et mots : moins de liens | Comme Windows |
+| Ouvrir Remora | Clic sur le poisson de la barre des menus | Clic sur l’icône de la zone de notification | *Ouvrir Remora* dans son menu ; une fenêtre au lancement là où le bureau n’a pas de zone de notification (GNOME d’origine) |
+| Nouveau rappel | Tirer le poisson vers le bas | Ctrl+Alt+R (on ne peut pas tirer une icône de la zone de notification) | Ctrl+Alt+R ; sous Wayland par le portail du bureau (KDE Plasma, GNOME 48+), ou sinon un raccourci du système qui lance `remora --reminder` |
+| Terminé, Reporter sur une ligne | Balayer, ou le clavier | Boutons sur chaque ligne, ou le clavier | Comme Windows |
+| Boutons dans les notifications | ✓ | ✓ | Là où le bureau les affiche |
+| Éléments dans la recherche du système (sur demande) | Spotlight | Pas encore | Pas encore |
+
+## Où sont les choses
+
+| | macOS | Windows | Linux |
+|---|---|---|---|
+| Jetons | Trousseau, un seul élément | Gestionnaire d’identification, une entrée par compte | Secret Service (GNOME Keyring, KWallet, KeePassXC) |
+| Données | `~/Library/Application Support/Remora` | `%LOCALAPPDATA%\fr.igitscor.remora` | `~/.local/share/fr.igitscor.remora`, lisibles par vous seul |
+| Politique gérée ([MDM](/fr/admin/mdm)) | Profil de configuration, domaine `fr.igitscor.remora` | `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe, Intune) | `/etc/remora/policy.json` |
+| Certificats | Confiance du système | Le magasin de certificats de Windows : les certificats racine d’entreprise fonctionnent | Les certificats du système |
+
+## Parties et tests
 
 | Partie | Contenu | Tests |
 |---|---|---|
@@ -24,38 +56,6 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 122 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 6 |
 | `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 101 |
-
-## Ce que Windows a, et ce qu’il n’a pas encore
-
-| | macOS | Windows |
-|---|---|---|
-| Sources : GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion, Microsoft 365 | ✓ | ✓ |
-| L’assistant : brief, résumés ✦ des groupes, tri des éléments reportés, par l’API Claude, Claude Code ou un serveur OpenAI-compatible | ✓ | ✓ |
-| Raisons de report, retours suggérés (sans les week-ends), constats (boucles, embouteillages, sujets proches, éléments sans nouvelles) | ✓ | ✓ |
-| Préparation des relectures (estimation sans fichiers de verrouillage, fichiers, zones sensibles, votre rythme) et sessions de relecture | ✓ | ✓ |
-| Assistant d’attente : relecteurs suggérés, relances rédigées à copier | ✓ | ✓ |
-| Relecteurs et approbations sur les lignes | ✓ | ✓ |
-| Classement personnel (ce que vous traitez vite) | ✓ | ✓ |
-| Réactions Slack (✅ vers Terminés, 👀 vers En cours, vos questions en attente) | ✓ | ✓ |
-| Liens entre outils (une PR et son ticket) | Clés de ticket, mots et embeddings sur l’appareil | Clés de ticket et mots : moins de liens |
-| Tri des messages par le sens | Mots-clés, puis un modèle de langue sur l’appareil | Mots-clés seulement : sans correspondance, un message va dans *À répondre* |
-| Mises à jour (sur option), hors ligne et reconnexion, politique de confidentialité | ✓ | ✓ |
-| Boutons dans les notifications (Terminé, Reporter, Commencer sur un rappel) | ✓ | ✓ (sous Linux, là où le bureau les affiche) |
-| Réglages gérés | Toutes les clés de [MDM](/fr/admin/mdm) | Toutes les clés : dans le registre sous Windows, dans `/etc/remora/policy.json` sous Linux |
-| Taille du texte | Réglages → Général | Réglages → Général, en plus de la mise à l’échelle de Windows |
-| Nouveau rappel | Glisser le poisson de la barre des menus | Un raccourci global, Ctrl+Alt+R : on ne peut pas glisser une icône de la zone de notification |
-| Terminé, Reporter sur une ligne | Balayer, ou le clavier | Des boutons sur chaque ligne, ou le clavier |
-| Les éléments dans la recherche du système (sur demande) | Spotlight | Pas encore |
-
-## Même modèle, équivalents Windows
-
-| | macOS | Windows |
-|---|---|---|
-| Jetons | Trousseau, un seul élément | Gestionnaire d’identification, une entrée par compte |
-| Données | `~/Library/Application Support/Remora` | `%LOCALAPPDATA%\fr.igitscor.remora` |
-| Politique gérée | Profil de configuration, domaine `fr.igitscor.remora` | `HKLM\SOFTWARE\Policies\Remora` (stratégie de groupe, Intune) |
-| TLS | Confiance du système | `native-tls` : le magasin de certificats Windows, donc les certificats racines de l’entreprise fonctionnent |
-| Rappels | Faire glisser le poisson de la barre des menus | Un raccourci global (on ne peut pas faire glisser les icônes de la zone de notification) |
 
 ## Comment tout s’assemble
 
