@@ -75,6 +75,21 @@ Ses données sont dans `%LOCALAPPDATA%\fr.igitscor.remora` et ses jetons dans le
 *Exécuter quand même*) ; pour l’éviter, signez-le avec le certificat de signature de code de votre organisation avant
 de le déployer. La politique se règle dans le registre : voir [MDM](./mdm#windows-strategie-de-groupe-ou-intune).
 
+Pour Intune, SCCM ou un autre outil de flotte, utilisez **Remora.msi** (même SHA-256, SBOM et attestation, à
+`https://github.com/iGitScor/triage/releases/latest/download/Remora.msi`). Il installe pour tous les utilisateurs,
+dans `C:\Program Files\Remora` ; chacun garde ses données, ses jetons et ses réglages.
+
+- Installation silencieuse : `msiexec /i Remora.msi /qn` ; désinstallation : `msiexec /x Remora.msi /qn`, ou depuis
+  *Applications*.
+- Intune : ajoutez-le comme application métier (Intune lit le code produit), ou comme application Win32 détectée par
+  le fichier `%ProgramFiles%\Remora\remora.exe`, en version égale ou supérieure à celle que vous déployez.
+- Un MSI plus récent remplace celui installé, sans seconde copie.
+- Installé ainsi, Remora ne se met pas à jour lui-même : vous déployez chaque version, et les Réglages indiquent
+  *Votre organisation installe les nouvelles versions de Remora*.
+
+L’app qu’il contient est signée quand l’installeur l’est ; le MSI lui-même n’est pas encore signé (voir
+[Signature du code](./signature-du-code)).
+
 ## Linux (aperçu)
 
 Chaque version publie aussi **Remora-x86_64.AppImage** et **Remora-amd64.deb**, chacun avec son SHA-256, son SBOM et
@@ -90,7 +105,7 @@ Désactivées par défaut : rien n’appelle l’extérieur. Un utilisateur peut
 automatiquement* (Réglages → Général) ; Remora interroge alors GitHub une fois par jour et installe une nouvelle
 version, signée par la clé de publication, quand il le choisit. Réglez `AutomaticUpdates` dans la
 [politique](./mdm) pour décider pour tous : vrai l’active et le verrouille, faux désactive entièrement les mises à
-jour (même *Vérifier maintenant*) si vous redéployez chaque version vous-même. Suivez les
+jour (même *Vérifier maintenant*) si vous redéployez chaque version vous-même. Le MSI les désactive de lui-même. Suivez les
 [versions](https://github.com/iGitScor/triage/releases) (GitHub → Watch → Custom → Releases) dans tous les cas.
 
 ## La désinstaller

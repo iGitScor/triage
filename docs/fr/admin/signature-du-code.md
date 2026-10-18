@@ -16,7 +16,7 @@ chaque version disent aussi comment ses propres fichiers ont été signés.
 | Plateforme | Fichiers | Aujourd’hui | Une fois en place |
 |---|---|---|---|
 | macOS | `Remora.app` dans `Remora.dmg` | **Ad hoc**, sans notarisation. Gatekeeper demande la première fois, et le trousseau redemande une fois après chaque mise à jour, car macOS reconnaît une app ad hoc à son build exact. | Le certificat propre à Remora : macOS reconnaît chaque mise à jour comme la même app, et le trousseau cesse de demander. Ce n’est toujours pas un Developer ID d’Apple : Gatekeeper demande la première fois tant que l’app n’est pas notarisée. |
-| Windows | `Remora-Setup.exe` et le `Remora.exe` qu’il installe | **Non signé.** SmartScreen avertit la première fois (*Informations complémentaires* → *Exécuter quand même*). | SignPath, avec le certificat de la SignPath Foundation. Windows affiche *SignPath Foundation* comme éditeur. |
+| Windows | `Remora-Setup.exe`, `Remora.msi` et le `Remora.exe` qu’ils installent | **Non signés.** SmartScreen avertit la première fois (*Informations complémentaires* → *Exécuter quand même*). | SignPath, avec le certificat de la SignPath Foundation. Windows affiche *SignPath Foundation* comme éditeur. Le MSI demande sa propre configuration d’artefact SignPath (`msi`). |
 | Linux | `Remora-x86_64.AppImage`, `Remora-amd64.deb` | **Non signés**, comme la plupart des AppImage ; vérifiez le SHA-256 et la provenance de build ci-dessous. | Pas de changement prévu. |
 
 Pour éviter ces demandes dès aujourd’hui, une organisation peut construire et signer sa propre copie avec son

@@ -59,6 +59,29 @@ fn supported(app: &AppHandle) -> bool {
         .is_some_and(|key| !key.trim().is_empty())
 }
 
+/// Installed for every user (the MSI, in Program Files): the organization deploys each version, and the updater's
+/// per-user installer would leave a second copy, or fail without admin rights. Treated as `AutomaticUpdates` false.
+fn installed_for_all_users() -> bool {
+    let Some(exe) = std::env::current_exe().ok() else { return false };
+    let folders: Vec<String> = ["ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"]
+        .iter()
+        .filter_map(|name| std::env::var(name).ok())
+        .collect();
+    cfg!(windows) && under_any(&exe.to_string_lossy(), &folders)
+}
+
+/// Whether `path` is inside one of `folders`, as Windows compares paths: case and separators aside.
+fn under_any(path: &str, folders: &[String]) -> bool {
+    let normal = |p: &str| p.replace('/', "\\").trim_end_matches('\\').to_lowercase();
+    let path = normal(path);
+    folders.iter().map(|f| normal(f)).any(|folder| !folder.is_empty() && path.starts_with(&format!("{folder}\\")))
+}
+
+/// Updates the policy allows: not off by `AutomaticUpdates`, and not an install the organization deploys.
+async fn allowed(app: &AppHandle) -> bool {
+    !installed_for_all_users() && app.state::<AppState>().inbox.lock().await.managed().updates_allowed()
+}
+
 async fn set(app: &AppHandle, status: UpdateStatus) {
     *app.state::<AppState>().updates.status.lock().await = status.clone();
     let _ = app.emit("updates-changed", status);
@@ -70,7 +93,7 @@ pub async fn status(app: &AppHandle) -> UpdateStatus {
     if !supported(app) {
         return UpdateStatus::Unsupported;
     }
-    if !app.state::<AppState>().inbox.lock().await.managed().updates_allowed() {
+    if !allowed(app).await {
         return UpdateStatus::Managed;
     }
     app.state::<AppState>().updates.status.lock().await.clone()
@@ -88,7 +111,7 @@ pub async fn offered(app: &AppHandle) -> Option<String> {
 /// a check or an install is running.
 pub async fn check(app: &AppHandle) {
     let state = app.state::<AppState>();
-    if state.demo || !supported(app) || !state.inbox.lock().await.managed().updates_allowed() {
+    if state.demo || !supported(app) || !allowed(app).await {
         return;
     }
     if matches!(*state.updates.status.lock().await, UpdateStatus::Checking | UpdateStatus::Installing { .. }) {
@@ -169,5 +192,19 @@ mod tests {
         assert_eq!(release_page("0.4.0").as_deref(), Some("https://github.com/iGitScor/triage/releases/tag/v0.4.0"));
         assert_eq!(release_page("v0.4.0").as_deref(), Some("https://github.com/iGitScor/triage/releases/tag/v0.4.0"));
         assert_eq!(release_page("0.4.0/../../evil"), None);
+    }
+
+    /// The MSI installs in Program Files; the per-user installer in %LOCALAPPDATA%.
+    #[test]
+    fn an_install_in_program_files_is_for_all_users() {
+        let folders = vec!["C:\\Program Files".to_string(), "C:\\Program Files (x86)\\".to_string()];
+        assert!(under_any("C:\\Program Files\\Remora\\remora.exe", &folders));
+        assert!(under_any("c:/program files (x86)/Remora/remora.exe", &folders));
+        assert!(!under_any("C:\\Users\\erin\\AppData\\Local\\Remora\\remora.exe", &folders));
+        assert!(
+            !under_any("C:\\Program Files Extra\\remora.exe", &folders),
+            "a folder whose name only starts the same"
+        );
+        assert!(!under_any("C:\\Program Files\\Remora\\remora.exe", &[String::new()]));
     }
 }

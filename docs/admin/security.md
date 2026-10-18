@@ -59,7 +59,7 @@ details. It covers the macOS app and, where it differs, the Windows app (in prev
 
 | Question | Answer |
 |---|---|
-| How is it distributed? | GitHub Releases: `Remora.dmg`, `Remora-Setup.exe`, `Remora-x86_64.AppImage` and `Remora-amd64.deb`, at fixed URLs. See [Deploying Remora](./deployment). |
+| How is it distributed? | GitHub Releases: `Remora.dmg`, `Remora-Setup.exe`, `Remora.msi`, `Remora-x86_64.AppImage` and `Remora-amd64.deb`, at fixed URLs. See [Deploying Remora](./deployment). |
 | How can a download be checked? | Each file has its SHA-256, a CycloneDX SBOM and a signed build provenance: `gh attestation verify Remora.dmg --repo iGitScor/triage` proves it was built by the release workflow from the tagged source. |
 | Code signing | **Not yet**: the Mac app is signed ad hoc and not notarized, and the Windows installer isn't signed. Users confirm the first launch. You can build and sign your own copy with your Developer ID. What will be signed, and by whom: [Code signing policy](./code-signing). |
 | Updates | Off by default. Once on (Settings → General, or `AutomaticUpdates`), Remora checks GitHub once a day and installs a new version when the user chooses. Each download must carry the release key's signature for that version (Ed25519 on macOS, Tauri's minisign on Windows), and on macOS the new app must be signed by the same certificate. `AutomaticUpdates` = false turns updating off entirely, for fleets you redeploy yourself. |

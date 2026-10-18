@@ -89,7 +89,20 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           name: Remora-windows
-          path: desktop/target/debug/bundle/nsis/*.exe
+          path: |
+            desktop/target/debug/bundle/nsis/*.exe
+            desktop/target/debug/bundle/msi/*.msi
+      # The MSI for fleet tools, installed and removed for real, silently as Intune or SCCM do.
+      - name: The MSI installs and uninstalls
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        run: |
+          $msi = (Get-ChildItem target/debug/bundle/msi/*.msi).FullName
+          $exe = Join-Path $env:ProgramFiles 'Remora\remora.exe'
+          $install = Start-Process msiexec -ArgumentList '/i', "`"$msi`"", '/qn', '/l*v', 'install.log' -Wait -PassThru
+          if ($install.ExitCode -ne 0 -or -not (Test-Path $exe)) { Get-Content install.log -Tail 40; exit 1 }
+          $remove = Start-Process msiexec -ArgumentList '/x', "`"$msi`"", '/qn' -Wait -PassThru
+          if ($remove.ExitCode -ne 0 -or (Test-Path $exe)) { exit 1 }
 
   # Pull requests (mostly Dependabot's) stop after the tests: the installer, the Linux packages and the licence
   # notices are built on pushes, and by every release.

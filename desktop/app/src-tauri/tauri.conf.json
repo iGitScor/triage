@@ -38,7 +38,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": ["nsis", "msi"],
     "publisher": "Remora",
     "copyright": "GPL-3.0-or-later",
     "category": "Productivity",
@@ -57,6 +57,9 @@
         "languages": ["English", "French"],
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon.ico"
+      },
+      "wix": {
+        "language": "en-US"
       }
     }
   }

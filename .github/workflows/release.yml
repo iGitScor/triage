@@ -7,8 +7,8 @@ name: Release
 # file at once, so a failure never leaves a half-published release. Each build job also writes its app's SBOM (CycloneDX, from the lockfiles) and signs two
 # attestations for the file it built: where it was built from (provenance) and what is in it (the SBOM).
 # Anyone can check them: `gh attestation verify Remora.dmg --repo iGitScor/triage`. The files keep the same name in every release, so the website links to
-# https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg (and Remora-Setup.exe, Remora-x86_64.AppImage,
-# Remora-amd64.deb).
+# https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg (and Remora-Setup.exe, Remora.msi,
+# Remora-x86_64.AppImage, Remora-amd64.deb).
 on:
   push:
     tags: ["v*"]
@@ -258,8 +258,8 @@ jobs:
       - name: Rebuild the installer around the signed app
         if: steps.signing.outputs.enabled == 'true'
         run: |
-          rm -rf ../target/release/bundle/nsis
-          npx tauri bundle --bundles nsis --no-binary-patching
+          rm -rf ../target/release/bundle/nsis ../target/release/bundle/msi
+          npx tauri bundle --bundles nsis,msi --no-binary-patching
         working-directory: desktop/app
       - name: Upload the installer for signing
         id: unsigned-installer
@@ -298,14 +298,33 @@ jobs:
           fi
           sha256sum Remora-Setup.exe > Remora-Setup.exe.sha256
           cat Remora-Setup.exe.sha256
+          # For fleet tools (Intune, SCCM): installs for every user, in Program Files. Its app is the signed one; the
+          # MSI itself is signed once SignPath has an "msi" artifact configuration (docs/admin/code-signing.md).
+          cp target/release/bundle/msi/*.msi Remora.msi
+          sha256sum Remora.msi > Remora.msi.sha256
+          cp Remora-Setup.exe.cdx.json Remora.msi.cdx.json
+          ls -l Remora-Setup.exe Remora.msi
+      # Installed and removed for real, silently as a fleet tool does, before anything is published.
+      - name: The MSI installs and uninstalls
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:ProgramFiles 'Remora\remora.exe'
+          $install = Start-Process msiexec -ArgumentList '/i', 'Remora.msi', '/qn', '/l*v', 'install.log' -Wait -PassThru
+          if ($install.ExitCode -ne 0 -or -not (Test-Path $exe)) { Get-Content install.log -Tail 40; exit 1 }
+          $remove = Start-Process msiexec -ArgumentList '/x', 'Remora.msi', '/qn' -Wait -PassThru
+          if ($remove.ExitCode -ne 0 -or (Test-Path $exe)) { exit 1 }
       - name: Provenance
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
-          subject-path: desktop/Remora-Setup.exe
+          subject-path: |
+            desktop/Remora-Setup.exe
+            desktop/Remora.msi
       - name: SBOM attestation
         uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
         with:
-          subject-path: desktop/Remora-Setup.exe
+          subject-path: |
+            desktop/Remora-Setup.exe
+            desktop/Remora.msi
           sbom-path: desktop/Remora-Setup.exe.cdx.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -314,6 +333,9 @@ jobs:
             desktop/Remora-Setup.exe
             desktop/Remora-Setup.exe.sha256
             desktop/Remora-Setup.exe.cdx.json
+            desktop/Remora.msi
+            desktop/Remora.msi.sha256
+            desktop/Remora.msi.cdx.json
           if-no-files-found: error
 
   # Linux (preview): an AppImage, which updates itself, and a .deb, updated by installing the new one. Built
@@ -516,7 +538,7 @@ jobs:
           cat > notes.md <<EOF
           **Mac: [Remora.dmg](https://github.com/iGitScor/triage/releases/latest/download/Remora.dmg)** (macOS 14 or later), open it and drag Remora to Applications. Remora isn't notarized yet: the first time, right-click Remora → Open (on macOS 15: System Settings → Privacy & Security → Open Anyway). $KEYCHAIN
 
-          **Windows (preview): [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe)** (Windows 10 or 11), installs for your user only. $SMARTSCREEN
+          **Windows (preview): [Remora-Setup.exe](https://github.com/iGitScor/triage/releases/latest/download/Remora-Setup.exe)** (Windows 10 or 11), installs for your user only; [Remora.msi](https://github.com/iGitScor/triage/releases/latest/download/Remora.msi) installs for every user, for Intune or SCCM. $SMARTSCREEN
 
           **Linux (preview, community supported): [Remora-x86_64.AppImage](https://github.com/iGitScor/triage/releases/latest/download/Remora-x86_64.AppImage)**, which updates itself, or **[Remora-amd64.deb](https://github.com/iGitScor/triage/releases/latest/download/Remora-amd64.deb)** for Ubuntu and Debian (update by installing the new one). Needs WebKitGTK 4.1, a keyring (GNOME Keyring, KWallet or KeePassXC) and a tray (on GNOME, the AppIndicator extension; without one Remora opens as a window).
 
@@ -545,6 +567,7 @@ jobs:
           [ -f dist/latest.json ] && EXTRA=(dist/latest.json)
           gh release create "$GITHUB_REF_NAME" dist/Remora.dmg dist/Remora.dmg.sha256 dist/Remora.dmg.cdx.json \
             dist/Remora-Setup.exe dist/Remora-Setup.exe.sha256 dist/Remora-Setup.exe.cdx.json \
+            dist/Remora.msi dist/Remora.msi.sha256 dist/Remora.msi.cdx.json \
             dist/Remora-x86_64.AppImage dist/Remora-x86_64.AppImage.sha256 dist/Remora-x86_64.AppImage.cdx.json \
             dist/Remora-amd64.deb dist/Remora-amd64.deb.sha256 dist/Remora-amd64.deb.cdx.json \
             dist/Remora-policy-files.zip "${EXTRA[@]}" \

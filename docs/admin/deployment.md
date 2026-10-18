@@ -72,6 +72,19 @@ Each release also has **Remora-Setup.exe** (with its SHA-256, SBOM and attestati
 SmartScreen warns once (*More info* → *Run anyway*); to avoid that, sign it with your organization’s code-signing
 certificate before deploying. The policy is set in the registry: see [MDM](./mdm#windows-group-policy-or-intune).
 
+For Intune, SCCM or another fleet tool, use **Remora.msi** (same SHA-256, SBOM and attestation, at
+`https://github.com/iGitScor/triage/releases/latest/download/Remora.msi`). It installs for every user, in
+`C:\Program Files\Remora`; each user keeps their own data, tokens and settings.
+
+- Silent install: `msiexec /i Remora.msi /qn`; uninstall: `msiexec /x Remora.msi /qn`, or from *Apps*.
+- Intune: add it as a line-of-business app (Intune reads the product code), or as a Win32 app detected by the file
+  `%ProgramFiles%\Remora\remora.exe`, version equal to or greater than the one you deploy.
+- A newer MSI replaces the installed one, without a second copy.
+- Installed this way, Remora doesn't update itself: you deploy each version, and Settings says *Your organization
+  installs new versions of Remora*.
+
+The app inside is signed when the installer is; the MSI itself isn't signed yet (see [Code signing](./code-signing)).
+
 ## Linux (preview)
 
 Each release also has **Remora-x86_64.AppImage** and **Remora-amd64.deb**, each with its SHA-256, SBOM and
@@ -85,7 +98,7 @@ Keyring, KWallet or KeePassXC). The policy is a root-owned file: see [MDM](./mdm
 Off by default: nothing calls home. A user can turn on *Check for updates automatically* (Settings → General);
 Remora then asks GitHub once a day and installs a new version, signed with the release key, when they choose. Set
 `AutomaticUpdates` in the [policy](./mdm) to decide for everyone: true turns it on and locks it, false turns updating
-off entirely (not even *Check now*) when you redeploy each version yourself. Watch the
+off entirely (not even *Check now*) when you redeploy each version yourself. The MSI turns it off on its own. Watch the
 [releases](https://github.com/iGitScor/triage/releases) (GitHub → Watch → Custom → Releases) either way.
 
 ## Removing it
