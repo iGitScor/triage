@@ -1,0 +1,21 @@
+# Remora
+
+> $description
+
+Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
+(To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
+ranking on the device, and only talks to the tools the user or their organization allows: $tools. A tray
+app for Windows and Linux is in preview. French pages: $origin/fr/.
+
+## Pages
+
+$pages
+## Links
+
+- [Download for Mac]($dmg)
+- [Download for Windows (preview)]($exe)
+- [Linux (preview): AppImage and .deb]($origin/docs/guide/faq#can-i-use-it-on-linux)
+- [Source code]($repo)
+- [Documentation]($origin/docs/): the user guide, IT and compliance, and writing a plugin
+- [Connecting your tools]($origin/docs/guide/connecting-tools)
+- [Data flows]($origin/docs/admin/data-flows) and [MDM policy]($origin/docs/admin/mdm)

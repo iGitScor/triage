@@ -1,0 +1,733 @@
+{
+  "language_name": "Français",
+  "locale": "fr_FR",
+  "tools": "GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365",
+  "tagline": "Tout ce qui a besoin de vous. Rien de plus.",
+  "description": "Remora : une boîte dans la barre des menus ou la zone de notification pour relectures, Slack, Linear, Jira, Notion et Microsoft 365, rangées par action.",
+  "skip": "Aller au contenu",
+  "nav": {
+    "features": "Fonctionnalités",
+    "privacy": "Confidentialité et conformité"
+  },
+  "nav_label": "Navigation principale",
+  "lang_label": "Langue",
+  "home_label": "Remora, accueil",
+  "get": "Télécharger pour Mac",
+  "get_windows": "Télécharger pour Windows",
+  "get_linux": "Linux",
+  "get_short": "Télécharger",
+  "footer_blurb": "Une boîte de réception dans la barre des menus ou la zone de notification pour tout ce qui a besoin de vous. Elle tourne sur votre ordinateur et ne parle qu’aux outils autorisés.",
+  "footer": {
+    "product": {
+      "title": "Produit",
+      "links": [
+        {
+          "href": "features",
+          "label": "Fonctionnalités"
+        },
+        {
+          "href": "privacy",
+          "label": "Confidentialité et conformité"
+        },
+        {
+          "href": "$dmg",
+          "label": "Télécharger pour Mac"
+        },
+        {
+          "href": "$exe",
+          "label": "Télécharger pour Windows (aperçu)"
+        },
+        {
+          "href": "$repo/releases",
+          "label": "Notes de version"
+        }
+      ]
+    },
+    "resources": {
+      "title": "Ressources",
+      "links": [
+        {
+          "href": "/docs/fr/",
+          "label": "Documentation"
+        },
+        {
+          "href": "/docs/fr/guide/connecter-vos-outils",
+          "label": "Connecter vos outils"
+        },
+        {
+          "href": "/docs/fr/admin/",
+          "label": "DSI et conformité"
+        },
+        {
+          "href": "/docs/fr/developper/extensions",
+          "label": "Écrire une extension"
+        },
+        {
+          "href": "$repo",
+          "label": "Code source sur GitHub"
+        }
+      ]
+    },
+    "trust": {
+      "title": "Confiance",
+      "links": [
+        {
+          "href": "$repo/blob/main/LICENSE",
+          "label": "Licence GPL-3.0-or-later"
+        },
+        {
+          "href": "$repo/security",
+          "label": "Signaler une vulnérabilité"
+        },
+        {
+          "href": "/docs/fr/admin/signature-du-code",
+          "label": "Politique de signature du code"
+        },
+        {
+          "href": "$repo/issues",
+          "label": "Questions et retours"
+        }
+      ]
+    }
+  },
+  "footer_bottom": {
+    "licence": "Remora est un logiciel libre sous licence GPL-3.0-or-later, conçu avec l’aide de Claude.",
+    "credits": "Logos des outils : Simple Icons (CC0) · police Outfit (OFL)"
+  },
+  "clock": "jeu. 9:41",
+  "og_alt": "Remora : tout ce qui a besoin de vous, dans la barre des menus ou la zone de notification. Une seule boîte pour relectures, merge requests, Slack, Linear, Jira, Notion et Microsoft 365, sur votre ordinateur.",
+  "seo": {
+    "home": {
+      "title": "Remora — Une seule boîte pour $tools",
+      "description": "Relectures, Slack, Linear, Jira, Notion et Microsoft 365 dans une seule boîte, barre des menus ou zone de notification. Gratuit, open source, sans compte."
+    },
+    "features": {
+      "title": "Fonctionnalités — Remora, la boîte de réception des développeurs",
+      "description": "Des verbes plutôt que des applis, Terminé et Épingler, reporter avec une raison, des rappels, préparer ses relectures. Tout Remora."
+    },
+    "privacy": {
+      "title": "Confidentialité et conformité — Remora n’envoie rien ailleurs",
+      "description": "Ni serveur, ni compte, ni télémétrie : Remora ne parle qu’aux outils autorisés, IA désactivée par défaut, politique verrouillable par MDM. Chaque flux."
+    }
+  },
+  "crumb": "Accueil",
+  "screens": {
+    "myturn": "L’onglet À moi : réponses, relectures avec leur estimation, vos merge requests et tâches, rangées par ce qu’il y a à faire",
+    "waiting": "L’onglet En attente : les merge requests qui attendent des relecteurs, avec une relance suggérée",
+    "snoozed": "L’onglet Reportés : ce qui revient lundi, et un conseil sur ce que vous repoussez sans cesse"
+  },
+  "platform_note": {
+    "mac": "Captures : l’app Mac.",
+    "windows": "Captures : l’app Windows et Linux."
+  },
+  "line_art": {
+    "label": "Le poisson Remora tiré vers le bas depuis la barre des menus : une ligne de pêche suit le pointeur et une bulle indique dans 25 minutes.",
+    "when": "dans 25 min",
+    "at": "10:06 · relâchez pour le nommer",
+    "hint": "plus bas : plus tard"
+  },
+  "home": {
+    "eyebrow": "Barre des menus · macOS · Windows · Linux",
+    "h1": "Tout ce qui a<br /><span class=\"mark\">besoin de vous.</span>",
+    "lead": "Rien de plus. Relectures de code, vos merge requests, mentions Slack, tickets Linear et Jira, tâches Notion, Outlook et Teams, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
+    "note": "Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même. Linux, en aperçu : AppImage ou .deb sur la page des versions.",
+    "notice": "Remora parle français et anglais, tout comme le tri sur l’appareil.",
+    "desk_note": "La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.",
+    "facts": [
+      {
+        "value": "0",
+        "label": "serveur, compte ou traceur de notre part"
+      },
+      {
+        "value": "8",
+        "label": "outils : $tools"
+      },
+      {
+        "value": "5",
+        "label": "éléments par verbe, le reste replié"
+      },
+      {
+        "value": "100 %",
+        "label": "du tri et du classement faits sur votre ordinateur"
+      }
+    ],
+    "tabs_eyebrow": "En images",
+    "tabs_title": "À vous, aux autres, <span class=\"mark\">plus tard.</span>",
+    "tabs_lead": "Trois onglets au lieu de quatre applis. Ce qui vous attend, ce que vous attendez, et ce que vous avez choisi de revoir plus tard.",
+    "tabs": [
+      {
+        "tab": "myturn",
+        "name": "À moi",
+        "text": "Quelqu’un attend après vous : une réponse, une relecture, une correction, une tâche, un rappel."
+      },
+      {
+        "tab": "waiting",
+        "name": "En attente",
+        "text": "Vous attendez les autres. Remora suggère des relecteurs et rédige la relance."
+      },
+      {
+        "tab": "snoozed",
+        "name": "Reportés",
+        "text": "Hors de vue jusqu’au bon moment, ou jusqu’à du nouveau. Avec une raison."
+      }
+    ],
+    "verbs_eyebrow": "Des verbes, pas des applis",
+    "verbs_title": "Rangé par <span class=\"mark\">ce qu’il faut faire.</span>",
+    "verbs_lead": "Une question sur Slack et un commentaire GitLab finissent tous deux dans À répondre. Les messages sont triés sur votre ordinateur par des règles de mots-clés, plus le modèle de langue d’Apple embarqué sur le Mac. Pas d’IA générative, rien n’est envoyé. Réagissez ✅ dans Slack et l’élément passe dans Terminés.",
+    "verbs": [
+      {
+        "icon": "reply",
+        "label": "À répondre"
+      },
+      {
+        "icon": "review",
+        "label": "À relire"
+      },
+      {
+        "icon": "fix",
+        "label": "À corriger"
+      },
+      {
+        "icon": "merge",
+        "label": "Prêtes à fusionner"
+      },
+      {
+        "icon": "todo",
+        "label": "À faire"
+      },
+      {
+        "icon": "bell",
+        "label": "Rappels"
+      },
+      {
+        "icon": "read",
+        "label": "À lire"
+      },
+      {
+        "icon": "hourglass",
+        "label": "En attente des autres"
+      }
+    ],
+    "quiet": ["read", "hourglass"],
+    "verbs_more": "À lire et En attente sont affichés, jamais comptés : le badge ne compte que ce qui a besoin de vous.",
+    "line_eyebrow": "Rappels",
+    "line_title": "Lancez un rappel <span class=\"mark\">depuis la barre des menus.</span>",
+    "line_lead": "Attrapez le poisson et tirez vers le bas. Plus vous descendez, plus il revient tard : des minutes, puis des heures, puis des jours. Relâchez, tapez ce qu’il faut retenir, Entrée. Échap annule.",
+    "line_more": "Ou appuyez sur + dans la boîte ; sous Windows, Ctrl+Alt+R depuis n’importe où. À l’heure dite, une notification arrive, avec des boutons pour reporter.",
+    "features_eyebrow": "Fonctionnalités",
+    "features_title": "Moins de bruit, <span class=\"mark\">plus de fait.</span>",
+    "features_lead": "Chaque fonctionnalité a un seul but : moins de choses en tête à la fois.",
+    "features": [
+      {
+        "icon": "done",
+        "title": "Terminé tant que rien ne change",
+        "body": "Marquez-le terminé et il disparaît, jusqu’à ce qu’un commit, une approbation ou une réponse le fasse revenir."
+      },
+      {
+        "icon": "moon",
+        "title": "Reporter avec une raison",
+        "body": "En attente de quelqu’un, pas le temps, demande de la concentration. Chaque raison propose un retour adapté, dont « jusqu’à du nouveau »."
+      },
+      {
+        "icon": "stopwatch",
+        "title": "Préparer la relecture",
+        "body": "« ~6 min · 4 fichiers · tests ✓ · Auth » sous chaque demande de relecture, à partir des chemins et du nombre de lignes seulement. Puis une session, les plus rapides d’abord."
+      },
+      {
+        "icon": "people",
+        "title": "Assistant d’attente",
+        "body": "Pas de relecteur sur votre merge request ? Des suggestions parmi ceux qui relisent d’habitude. Silence depuis un jour ? Une relance rédigée, que vous copiez. Remora n’envoie jamais rien."
+      },
+      {
+        "icon": "bell",
+        "title": "Des notifications qui agissent",
+        "body": "Approuvée, modifications demandées, tests en échec, un rappel à l’heure. Sur le Mac, terminez ou reportez directement depuis la notification ; sous Windows, un clic l’ouvre."
+      },
+      {
+        "icon": "star",
+        "title": "Apprend vos habitudes",
+        "body": "Ce que vous traitez vite et ce que vous repoussez, appris sur votre ordinateur. Ça départage, et une petite étoile dit pourquoi."
+      }
+    ],
+    "features_more": "Toutes les fonctionnalités",
+    "sources_eyebrow": "Sources",
+    "sources_title": "Vos outils, <span class=\"mark\">vos comptes.</span>",
+    "sources_lead": "Connectez autant de comptes que nécessaire et nommez-les : « GitLab boulot », « Slack client ». Chacun s’ouvre dans son appli quand elle est installée.",
+    "sources": [
+      {
+        "tool": "github",
+        "name": "GitHub",
+        "text": "Vos pull requests, les demandes de relecture et les tickets qui vous sont assignés. Enterprise aussi."
+      },
+      {
+        "tool": "gitlab",
+        "name": "GitLab",
+        "text": "Vos merge requests, celles que vous relisez, approbations, pipelines et To-Dos. Auto-hébergé aussi."
+      },
+      {
+        "tool": "bitbucket",
+        "name": "Bitbucket",
+        "text": "Vos pull requests et celles que vous relisez, avec approbations et builds. Cloud ou Data Center."
+      },
+      {
+        "tool": "azuredevops",
+        "name": "Azure DevOps",
+        "text": "Les pull requests à relire et les vôtres, votes et stratégies, et vos éléments de travail. Server aussi."
+      },
+      {
+        "tool": "slack",
+        "name": "Slack",
+        "text": "Mentions et messages directs, ouverts dans l’appli Slack."
+      },
+      {
+        "tool": "linear",
+        "name": "Linear",
+        "text": "Les tickets qui vous sont assignés, avec priorité et échéance, plus les mentions non lues."
+      },
+      {
+        "tool": "jira",
+        "name": "Jira",
+        "text": "Les tickets qui vous sont assignés et les commentaires qui vous mentionnent. Cloud ou Data Center."
+      },
+      {
+        "tool": "microsoft",
+        "name": "Microsoft 365 (aperçu)",
+        "text": "Les courriels Outlook signalés et non lus, les invitations à traiter et les conversations Teams non lues. Connexion par votre navigateur."
+      },
+      {
+        "tool": "claude",
+        "name": "Claude ou OpenAI (facultatif)",
+        "text": "Un court brief sur quoi traiter d’abord, avec Claude ou un modèle OpenAI-compatible. Désactivé par défaut, et seulement si votre organisation l’autorise."
+      },
+      {
+        "tool": "notion",
+        "name": "Notion",
+        "text": "Les tâches qui vous sont assignées dans les bases choisies."
+      }
+    ],
+    "soon": {},
+    "why_eyebrow": "Pourquoi Remora",
+    "why_title": "Pourquoi pas <span class=\"mark\">ce que vous avez déjà ?</span>",
+    "why_lead": "Bonne question : vos outils ont déjà leur boîte. Voici ce qui change quand elles n’en font qu’une.",
+    "why": [
+      {
+        "icon": "globe",
+        "title": "La boîte de chaque outil",
+        "body": "Les notifications GitHub, la boîte de Linear, Jira : chacune est le meilleur endroit pour agir sur ses propres éléments, et chacune a son badge à surveiller. Remora réunit ce qui a besoin de vous, puis ouvre chaque élément dans son outil."
+      },
+      {
+        "icon": "reply",
+        "title": "« Plus tard » dans Slack",
+        "body": "Pratique pour les messages que vous avez choisi de garder. Il ne contient que Slack, et seulement ce que vous avez mis de côté à la main. Remora relève elle-même mentions et messages directs, et range la question dans À répondre, à côté de la relecture qui vous attend."
+      },
+      {
+        "icon": "menu",
+        "title": "Une app de barre des menus pour le code",
+        "body": "gitbar, qui a inspiré Remora, garde vos merge requests dans la barre des menus, et le fait bien. Remora garde l’idée pour chaque outil connecté, et range par verbe : À relire, À répondre, À corriger."
+      },
+      {
+        "icon": "lock",
+        "title": "Une boîte unifiée hébergée",
+        "body": "Elle vous suit sur tous vos appareils, ce que Remora ne fait pas. Mais vos jetons et vos messages passent par ses serveurs. Remora n’a pas de serveur : elle parle à chaque outil depuis votre ordinateur, et trie sur place."
+      }
+    ],
+    "privacy_eyebrow": "Confidentialité et conformité",
+    "privacy_title": "Pensé pour les équipes qui ont des règles.",
+    "privacy_lead": "Aucune donnée ne quitte votre ordinateur, sauf vers les outils autorisés. Appliqué dans le code, vérifié par des tests, verrouillable par votre DSI.",
+    "privacy": [
+      {
+        "icon": "shield",
+        "title": "Seulement les destinations autorisées",
+        "body": "Chaque outil déclare les adresses qu’il peut joindre. Toute autre adresse est bloquée, y compris les domaines qui imitent."
+      },
+      {
+        "icon": "sparkle",
+        "title": "IA externe désactivée par défaut",
+        "body": "L’assistant est facultatif. Votre organisation peut l’interdire, et toutes les fonctions d’IA disparaissent."
+      },
+      {
+        "icon": "building",
+        "title": "Géré par votre DSI",
+        "body": "Outils autorisés, IA et avatars se verrouillent par profil de configuration (MDM). Par stratégie de groupe sous Windows."
+      }
+    ],
+    "privacy_more": "Chaque flux de données, et comment il est contrôlé",
+    "faq_eyebrow": "FAQ",
+    "faq_title": "Bon à savoir",
+    "faq": [
+      {
+        "question": "Mes données passent-elles par un serveur Remora ?",
+        "answer": "Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS ou le Gestionnaire d’identification de Windows. Pas de télémétrie, pas d’analytics, pas de rapports de plantage."
+      },
+      {
+        "question": "Faut-il un assistant d’IA ?",
+        "answer": "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre ordinateur, sans IA générative. L’assistant (Claude ou un modèle OpenAI-compatible) n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas."
+      },
+      {
+        "question": "Mon agent d’IA peut-il utiliser Remora ?",
+        "answer": "Oui. Claude Desktop, Claude Code, Gemini CLI et les autres agents qui parlent MCP peuvent demander à Remora ce qui vous attend, lister un onglet ou ajouter un rappel, grâce à <code>remora mcp</code> sur votre ordinateur. Ils ne reçoivent jamais vos jetons et ne peuvent pas écrire dans vos outils. Votre organisation peut le désactiver. <a href=\"/docs/fr/guide/agents\">Remora et vos agents</a>."
+      },
+      {
+        "question": "Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?",
+        "answer": "Oui. Indiquez votre adresse en connectant le compte : Remora ne parle qu’à celle-ci. Configuration de chaque outil : <a href=\"/docs/fr/guide/connecter-vos-outils\">connecter vos outils</a>."
+      },
+      {
+        "question": "Existe-t-il une version Windows ?",
+        "answer": "Oui, en aperçu : <a href=\"$exe\">Remora-Setup.exe</a> pour Windows 10 ou 11, installée pour votre utilisateur seulement (sans droits d’administrateur). Mêmes règles, les mêmes outils et le même assistant (Claude ou OpenAI-compatible), même modèle de conformité, avec la politique dans le registre pour la stratégie de groupe ou Intune. Elle trie les messages par mots-clés seulement. L’installeur n’est pas encore signé : si SmartScreen prévient, cliquez sur Informations complémentaires → Exécuter quand même."
+      },
+      {
+        "question": "Existe-t-il une version Linux ?",
+        "answer": "Oui, en aperçu et soutenue par la communauté : <a href=\"$appimage\">Remora-x86_64.AppImage</a>, qui se met à jour seule, ou <a href=\"$deb\">Remora-amd64.deb</a> pour Ubuntu et Debian. La même app que sous Windows, avec la politique dans <code>/etc/remora/policy.json</code>. Elle demande WebKitGTK 4.1, un trousseau (GNOME Keyring, KWallet ou KeePassXC) et une zone de notification, sinon elle s’ouvre en fenêtre. <a href=\"/docs/fr/guide/premiers-pas#sous-linux-apercu\">Premiers pas sous Linux</a>."
+      },
+      {
+        "question": "Pourquoi macOS demande-t-il le mot de passe du trousseau ?",
+        "answer": "Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une app qui n’est pas signée par un développeur enregistré. Choisissez Toujours autoriser."
+      },
+      {
+        "question": "macOS dit qu’il ne peut pas vérifier l’app ?",
+        "answer": "Remora n’est pas encore notarisée. Clic droit, puis Ouvrir ; sous macOS 15, Réglages Système → Confidentialité et sécurité → Ouvrir quand même. macOS ne demande qu’une fois."
+      },
+      {
+        "question": "Combien ça coûte ?",
+        "answer": "Rien. Remora est un logiciel libre sous licence <a href=\"$repo/blob/main/LICENSE\">GPL-3.0-or-later</a>, et son code source est sur <a href=\"$repo\">GitHub</a> : votre équipe sécurité peut lire exactement ce qu’elle fait."
+      }
+    ],
+    "final_title": "Votre boîte,<br />sans le <span class=\"mark\">bruit.</span>",
+    "final_lead": "Connectez un outil, voyez ce qui a besoin de vous, fermez les autres onglets."
+  },
+  "features": {
+    "title": "Une boîte de réception <span class=\"mark\">qui apaise.</span>",
+    "lead": "Tout ce que fait Remora, rangé selon le moment où vous en avez besoin.",
+    "groups": [
+      {
+        "key": "inbox",
+        "name": "La boîte de réception",
+        "intro": "Rangée par ce qu’il faut faire, jamais plus que ce que vous pouvez absorber.",
+        "items": [
+          {
+            "icon": "todo",
+            "title": "À moi et En attente",
+            "body": "À moi contient ce que l’on attend de vous. En attente, ce que vous attendez des autres. Reportés et Terminés sont à un clic."
+          },
+          {
+            "icon": "reply",
+            "title": "Des verbes",
+            "body": "À répondre, À relire, À corriger, Prêtes à fusionner, À faire, Rappels, À lire, En attente des autres. Les messages sont classés sur votre ordinateur, en français et en anglais ; dans le doute, À répondre."
+          },
+          {
+            "icon": "done",
+            "title": "Terminé",
+            "body": "Masque un élément jusqu’à ce qu’il change. Videz la liste en un clic ; les éléments effacés reviennent quand même s’il y a du nouveau."
+          },
+          {
+            "icon": "pin",
+            "title": "Épingler",
+            "body": "Garde un élément en haut, quoi qu’il arrive ensuite."
+          },
+          {
+            "icon": "star",
+            "title": "La priorité, puis vos habitudes",
+            "body": "En retard et à faire aujourd’hui d’abord, puis la priorité de l’outil (Linear Urgent, Haute…), l’échéance la plus proche, l’activité récente. La priorité basse est affichée, jamais comptée."
+          },
+          {
+            "icon": "read",
+            "title": "Cinq à la fois",
+            "body": "Les longues listes montrent leurs cinq premiers et « Afficher N de plus ». Un résumé du reste quand l’assistant est autorisé."
+          }
+        ]
+      },
+      {
+        "key": "menubar",
+        "name": "La barre des menus et la zone de notification",
+        "intro": "Remora vit dans la barre des menus du Mac ou la zone de notification de Windows : aucune fenêtre à garder ouverte.",
+        "items": [
+          {
+            "icon": "menu",
+            "title": "Un compteur par outil",
+            "body": "Le poisson et un seul nombre, ou sur le Mac un compteur par outil, dans l’ordre du verbe le plus pressant. Commencez une tâche : elle s’affiche seule, avec le temps passé dessus."
+          },
+          {
+            "icon": "drag",
+            "title": "Tirer pour un rappel",
+            "body": "Tirez le poisson vers le bas pour lancer un rappel ; une bulle indique quand il revient. Plus bas, c’est plus tard. Sous Windows, Ctrl+Alt+R. Répétez-le chaque jour, jour ouvré ou semaine."
+          },
+          {
+            "icon": "swipe",
+            "title": "Gestes",
+            "body": "Deux doigts sur le trackpad : à droite pour terminer, à gauche pour reporter. Sous Windows, des boutons sur chaque ligne."
+          },
+          {
+            "icon": "link",
+            "title": "S’ouvre dans la bonne appli",
+            "body": "Les éléments Slack et Linear s’ouvrent dans leur appli quand elle est installée (⌥-clic, ou Maj-clic sous Windows, pour le web), sinon dans le navigateur."
+          }
+        ]
+      },
+      {
+        "key": "time",
+        "name": "Le temps",
+        "intro": "Reporter est une décision : Remora vous aide à bien la prendre.",
+        "items": [
+          {
+            "icon": "moon",
+            "title": "Reporter ou rappeler",
+            "body": "Masquez un élément jusqu’à plus tard, ou gardez-le visible avec un rappel. Des raccourcis (plus tard, ce soir, demain, semaine prochaine) ou un curseur : minutes, puis heures, puis jours."
+          },
+          {
+            "icon": "hourglass",
+            "title": "Avec une raison",
+            "body": "En attente de quelqu’un, pas le temps, demande de la concentration, pas urgent, pas motivé. Chacune propose un retour ; l’attente peut durer « jusqu’à du nouveau »."
+          },
+          {
+            "icon": "star",
+            "title": "Des conseils",
+            "body": "Les boucles (reporté trois fois), les embouteillages du même matin, les éléments sur un même sujet, ceux devenus silencieux. Un conseil à la fois, jamais un rapport."
+          },
+          {
+            "icon": "bell",
+            "title": "Des notifications avec boutons",
+            "body": "Nouvelles relectures, mentions, approbations, tests en échec, rappels. Terminer ou Reporter sans ouvrir Remora. Masquez le texte des messages par outil, pour les partages d’écran."
+          }
+        ]
+      },
+      {
+        "key": "reviews",
+        "name": "Les relectures",
+        "intro": "Moins d’allers-retours entre vos outils.",
+        "items": [
+          {
+            "icon": "stopwatch",
+            "title": "Préparer la relecture",
+            "body": "Une estimation et ce que touche la modification (migrations, authentification, infrastructure, dépendances), à partir des chemins et du nombre de lignes seulement. Le code n’est jamais stocké."
+          },
+          {
+            "icon": "review",
+            "title": "Sessions de relecture",
+            "body": "Démarrer une session parcourt vos relectures une par une, les plus rapides d’abord : ⏎ ouvrir, D terminer, S reporter, → passer."
+          },
+          {
+            "icon": "link",
+            "title": "Des liens entre outils",
+            "body": "Une pull request et un ticket Linear au titre proche sont présentés ensemble, même si personne ne les a liés."
+          },
+          {
+            "icon": "people",
+            "title": "Assistant d’attente",
+            "body": "Des relecteurs suggérés quand il n’y en a pas, une relance rédigée quand ils restent silencieux. Écrite sur place ; vous la copiez, Remora n’envoie jamais rien."
+          }
+        ]
+      },
+      {
+        "key": "assistant",
+        "name": "L’assistant (facultatif)",
+        "intro": "Désactivé par défaut. Seulement si votre organisation autorise l’IA externe.",
+        "items": [
+          {
+            "icon": "sparkle",
+            "title": "Brief",
+            "body": "Trois phrases et les éléments à traiter d’abord, avec Claude Code sur votre abonnement, l’API Claude ou un modèle OpenAI-compatible. Mis en cache, pour ne pas dépenser de jetons à chaque ouverture."
+          },
+          {
+            "icon": "read",
+            "title": "Résumés de liste",
+            "body": "Deux phrases sur une liste chargée, avec un modèle plus léger. Réutilisé tant que la liste ne change pas."
+          },
+          {
+            "icon": "moon",
+            "title": "Tri",
+            "body": "Pour un onglet Reportés encombré : garder, reprogrammer, laisser tomber ou faire maintenant, élément par élément. Vous validez chaque changement."
+          }
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "eyebrow": "Confidentialité et conformité",
+    "h1": "Seulement les outils <span class=\"mark\">que vous autorisez.</span>",
+    "lead": "Remora n’a ni serveur, ni compte, ni télémétrie. Elle parle directement aux outils connectés, et à rien d’autre. Pensée pour les organisations aux règles strictes sur les données.",
+    "out_eyebrow": "Sur le réseau",
+    "out_title": "Ce qui quitte votre ordinateur",
+    "out_lead": "Des requêtes de lecture vers vos propres outils, avec vos propres jetons. Les données reviennent et restent sur votre ordinateur.",
+    "out_cols": ["Flux", "Destination", "Ce qui est envoyé", "Par défaut"],
+    "out_rows": [
+      [
+        "GitHub",
+        "<code>api.github.com</code>, <code>github.com</code>, avatars, ou votre GitHub Enterprise",
+        "Votre jeton ; des lectures de vos pull requests, demandes de relecture, tickets assignés, et chemins et nombre de lignes des fichiers modifiés",
+        "Autorisé"
+      ],
+      [
+        "GitLab",
+        "Votre serveur GitLab",
+        "Votre jeton ; des lectures de vos merge requests, approbations, pipelines, To-Dos, et chemins et nombre de lignes des fichiers modifiés. Les diffs ne sont jamais lus",
+        "Autorisé"
+      ],
+      [
+        "Azure DevOps",
+        "Votre organisation Azure DevOps (<code>dev.azure.com</code>) ou votre serveur",
+        "Votre jeton ; des lectures de vos pull requests, votes, vérifications de stratégie, chemins des fichiers modifiés et éléments de travail assignés. Le contenu des fichiers n’est jamais lu",
+        "Autorisé"
+      ],
+      [
+        "Slack",
+        "<code>slack.com</code>",
+        "Votre jeton utilisateur ; des recherches de vos mentions, messages directs et de vos messages récents, les réponses de 10 de vos fils au plus, les réactions (les vôtres, et celles de 15 messages récents au plus) et les emoji propres à l’espace de travail",
+        "Autorisé"
+      ],
+      [
+        "Linear",
+        "<code>api.linear.app</code>, <code>public.linear.app</code>",
+        "Votre clé d’API ; des lectures des tickets assignés et des notifications",
+        "Autorisé"
+      ],
+      [
+        "Bitbucket",
+        "<code>api.bitbucket.org</code>, ou votre Data Center",
+        "Votre jeton (et l’e-mail sur Cloud) ; vos pull requests ouvertes, celles que vous relisez, et l’état de leurs builds",
+        "Autorisé"
+      ],
+      [
+        "Jira",
+        "Votre hôte Jira : <code>*.atlassian.net</code>, ou votre Data Center",
+        "Votre jeton (et l’e-mail sur Cloud) ; des recherches des tickets qui vous sont assignés, et des commentaires de la dernière semaine sur les tickets que vous suivez ; sur Cloud, si vous l’activez, des pages et commentaires Confluence de la dernière semaine qui vous mentionnent",
+        "Autorisé"
+      ],
+      [
+        "Microsoft 365",
+        "<code>login.microsoftonline.com</code>, <code>graph.microsoft.com</code>",
+        "Une connexion dans votre navigateur, puis des lectures de vos courriels signalés et non lus, des invitations sans réponse et des conversations Teams non lues",
+        "Autorisé"
+      ],
+      [
+        "Notion",
+        "<code>api.notion.com</code>",
+        "Votre jeton ; qui vous êtes, les propriétés des bases choisies (pour écarter les tâches terminées), puis vos tâches ouvertes",
+        "Autorisé"
+      ],
+      [
+        "Claude",
+        "Anthropic, via Claude Code ou <code>api.anthropic.com</code>",
+        "Pour chaque élément : son verbe, son titre (la première ligne seulement d’un message Slack), son contexte, son auteur, ses statuts, son âge et le sens de ses réactions ; pour trier les reportés, aussi la raison et le nombre de reports. Jamais de jetons, de liens, de code ni le reste d’un message",
+        "<strong>Désactivé</strong>"
+      ],
+      [
+        "OpenAI-compatible",
+        "Le serveur choisi par vous ou votre organisation : OpenAI, Azure OpenAI, Mistral, ou un sur votre ordinateur",
+        "Les mêmes champs que pour Claude",
+        "<strong>Désactivé</strong>, sauf un serveur sur votre ordinateur"
+      ],
+      [
+        "Avatars",
+        "Les serveurs d’images de vos outils connectés, Gravatar pour GitLab, Jira et Bitbucket, et <code>emoji.slack-edge.com</code> pour les emoji propres à un espace de travail",
+        "Une requête d’image, jamais avec un jeton",
+        "Autorisé"
+      ],
+      [
+        "Mises à jour",
+        "<code>github.com</code> et les serveurs de téléchargement de GitHub",
+        "Une vérification par jour d’une nouvelle version, puis le téléchargement que vous choisissez. Aucun identifiant ni contenu",
+        "<strong>Désactivé</strong>"
+      ]
+    ],
+    "stay_eyebrow": "Sur votre ordinateur",
+    "stay_title": "Ce qui reste, et où",
+    "stay_cols": ["Données", "Emplacement"],
+    "stay_rows": [
+      [
+        "Cache, états, rappels, historique des reports, préférences",
+        "<code>~/Library/Application Support/Remora</code>, protégé par FileVault ; sous Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> ; sous Linux, <code>~/.local/share/fr.igitscor.remora</code>, lisible par vous seul"
+      ],
+      [
+        "Jetons",
+        "Un seul élément de votre trousseau de session ; une entrée du Gestionnaire d’identification sous Windows ; le Secret Service (GNOME Keyring, KWallet) sous Linux"
+      ],
+      [
+        "Ce que vous traitez vite ou reportez",
+        "<code>learning.json</code>, pour le classement sur cet ordinateur seulement"
+      ],
+      [
+        "Spotlight, si vous l’activez (Mac)",
+        "Le titre de chaque élément et sa provenance, jamais les aperçus ni les personnes ; retirés quand vous le désactivez, déconnectez un outil ou effacez tout"
+      ],
+      ["Préparation des relectures", "Chemins et nombre de lignes seulement ; le code n’est jamais stocké"],
+      ["Messages rédigés", "Écrits à partir de modèles, copiés dans le presse-papiers, jamais envoyés"]
+    ],
+    "enforce_eyebrow": "Appliqué, pas promis",
+    "enforce_title": "Contrôlé dans le code, <span class=\"mark\">couvert par des tests.</span>",
+    "enforce": [
+      {
+        "icon": "shield",
+        "title": "Destinations déclarées",
+        "body": "Chaque extension déclare les adresses qu’elle peut joindre. Un test échoue sinon."
+      },
+      {
+        "icon": "lock",
+        "title": "Un seul passage",
+        "body": "Les extensions ne reçoivent qu’un client réseau limité à leurs adresses. Tout le reste échoue avec « Bloqué : destination non autorisée », domaines imitateurs compris."
+      },
+      {
+        "icon": "sparkle",
+        "title": "IA externe désactivée par défaut",
+        "body": "Les extensions d’assistant sont refusées tant que l’IA externe n’est pas autorisée, sauf un serveur sur votre ordinateur ; ensuite seulement apparaissent brief, résumés et tri."
+      },
+      {
+        "icon": "chip",
+        "title": "Intelligence sur l’appareil",
+        "body": "Le tri des messages, la similarité des sujets, le classement et les conseils de report tournent sur votre ordinateur : avec les modèles de langue embarqués d’Apple sur le Mac, avec des règles de mots-clés sous Windows. Rien n’est envoyé."
+      },
+      {
+        "icon": "eyeoff",
+        "title": "Pas de télémétrie",
+        "body": "Pas d’analytics, pas de rapports de plantage, pas de vérification de mise à jour sauf si vous l’activez. Polices et logos sont intégrés, jamais téléchargés."
+      },
+      {
+        "icon": "trash",
+        "title": "Effacer les données locales",
+        "body": "Réglages → Confidentialité liste les destinations de chaque compte connecté, et efface en un clic tout ce que Remora a stocké."
+      }
+    ],
+    "mdm_eyebrow": "Pour la DSI",
+    "mdm_title": "Verrouillez la politique <span class=\"mark\">par MDM.</span>",
+    "mdm_lead": "Déployez un profil de configuration pour le domaine de préférences <code>fr.igitscor.remora</code>. Réglages → Confidentialité affiche alors « Géré par votre organisation », et l’utilisateur ne peut plus la modifier.",
+    "mdm_cols": ["Clé", "Type", "Signification"],
+    "mdm_rows": [
+      [
+        "<code>AllowedPlugins</code>",
+        "Tableau de chaînes",
+        "Outils autorisés : <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>"
+      ],
+      [
+        "<code>AllowExternalAI</code>",
+        "Booléen",
+        "Autoriser l’assistant à envoyer le contenu de la boîte hors de l’ordinateur"
+      ],
+      ["<code>AllowRemoteImages</code>", "Booléen", "Charger les avatars depuis les outils autorisés seulement"],
+      [
+        "<code>AIExcludedSources</code>",
+        "Tableau de chaînes",
+        "Les outils dont les éléments ne parviennent jamais à l’assistant, comme <code>slack</code> (Mac)"
+      ],
+      ["<code>AllowedAIModels</code>", "Tableau de chaînes", "Les modèles que l’assistant peut utiliser (Mac)"],
+      [
+        "<code>AllowedAIServers</code>, <code>AIServer</code>",
+        "Tableau d’URL, URL",
+        "Les serveurs OpenAI-compatibles autorisés, ou celui à utiliser, verrouillé"
+      ],
+      ["<code>AllowLocalAI</code>", "Booléen", "Autoriser ou refuser un serveur sur l’ordinateur"]
+    ],
+    "mdm_caption": "Contenu du profil de configuration",
+    "windows": "L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",
+    "more": "Flux de données, profil MDM et déploiement, pour la DSI et la conformité",
+    "more_href": "/docs/fr/admin/"
+  },
+  "picker": {
+    "choose": "Choisissez votre langue",
+    "languages": "Anglais ou français"
+  },
+  "not_found": {
+    "title": "Page introuvable",
+    "heading": "Cette page n’existe pas.",
+    "text": "Le lien est peut-être ancien, ou l’adresse mal saisie.",
+    "home": "Accueil"
+  }
+}

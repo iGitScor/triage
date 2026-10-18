@@ -131,8 +131,8 @@ un écran déverrouillé, et `cwebp` (`brew install webp`).
 ## Le site et cette documentation
 
 Les deux sont servis depuis `triage.iscor.me` par un seul Cloudflare Worker, avec des fichiers statiques
-uniquement (`site/wrangler.jsonc`). Les pages sont dans `site/build.py`, cette documentation dans `docs/`
-(VitePress) :
+uniquement (`site/wrangler.jsonc`). Le texte des pages est dans `site/copy/en.json` et `fr.json`, leur balisage
+dans `site/templates/`, assemblés par `site/build.py` ; cette documentation est dans `docs/` (VitePress) :
 
 Le workflow de publication les déploie après chaque version. Depuis l’ordinateur d’un mainteneur, en secours :
 

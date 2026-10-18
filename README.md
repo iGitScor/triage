@@ -222,7 +222,7 @@ and signed build provenance in one GitHub release, only if every build succeeds.
 ## Website
 
 [`site/`](site) holds the marketing pages and, built from [`docs/`](docs), the documentation, served by Cloudflare as static assets (no server code, a strict CSP, no
-analytics). The copy lives in [`site/build.py`](site/build.py), which writes the English and French pages:
+analytics). The copy lives in [`site/copy/`](site/copy) and the markup in [`site/templates/`](site/templates); [`site/build.py`](site/build.py) writes the English and French pages:
 
 ```sh
 macos/scripts/screenshots.sh      # the demo inbox, each tab, both languages and schemes

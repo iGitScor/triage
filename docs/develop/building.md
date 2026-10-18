@@ -126,7 +126,8 @@ the window by ID (nothing is clicked or typed), crops the title bar and writes P
 ## The website and these docs
 
 Both are served from `triage.iscor.me` by one Cloudflare Worker with static assets only
-(`site/wrangler.jsonc`). The pages are in `site/build.py`, these docs in `docs/` (VitePress):
+(`site/wrangler.jsonc`). The pages' copy is in `site/copy/en.json` and `fr.json`, their markup in
+`site/templates/`, put together by `site/build.py`; these docs are in `docs/` (VitePress):
 
 The release workflow deploys them after each release. From a maintainer's computer, the fallback:
 

@@ -1,43 +1,44 @@
 #!/usr/bin/env python3
-"""Writes the Remora website (public/) in English and French from the copy below. Standard library only.
+"""Writes the Remora website (public/) in English and French. Standard library only.
 
     python3 site/build.py     then    cd site && npx wrangler deploy
 
-Screenshots come from macos/scripts/screenshots.sh and desktop/app/scripts/screenshots.mjs (make screenshots). Same design system as Myna (site.css, tokens.css).
+The copy is in copy/en.json and copy/fr.json ($repo, $dmg, $tools… stand for the links and names below), the page
+markup in templates/ (string.Template), and this file puts them together; the one-line fragments repeated in lists
+(cards, rows, buttons) are the small helpers below. Screenshots come from macos/scripts/screenshots.sh and
+desktop/app/scripts/screenshots.mjs (make screenshots). Same design system as Myna (site.css, tokens.css).
 """
 
 from __future__ import annotations
 
 import datetime
+import functools
 import html
 import json
 import pathlib
 import plistlib
 import re
+import string
 import subprocess
 
-ROOT = pathlib.Path(__file__).parent / "public"
+SITE = pathlib.Path(__file__).parent
+ROOT = SITE / "public"
 ORIGIN = "https://triage.iscor.me"
 REPO = "https://github.com/iGitScor/triage"
 DMG = REPO + "/releases/latest/download/Remora.dmg"
-# What Remora gathers and where it lives, said once per language: titles, descriptions, the hero, llms.txt.
-WHAT = {
-    "en": "code reviews, merge requests, Slack mentions, Linear and Jira issues, Notion tasks, and Outlook and Teams",
-    "fr": "relectures de code, merge requests, mentions Slack, tickets Linear et Jira, tâches Notion, et Outlook et Teams",
-}
-TOOLS = {
-    "en": "GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365",
-    "fr": "GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365",
-}
 EXE = REPO + "/releases/latest/download/Remora-Setup.exe"
 APPIMAGE = REPO + "/releases/latest/download/Remora-x86_64.AppImage"
 DEB = REPO + "/releases/latest/download/Remora-amd64.deb"
 # The released version, from the source `make version` sets, so the page's structured data never goes stale.
-VERSION = plistlib.loads((pathlib.Path(__file__).parent.parent / "macos/Resources/Info.plist").read_bytes())[
-    "CFBundleShortVersionString"
-]
+VERSION = plistlib.loads((SITE.parent / "macos/Resources/Info.plist").read_bytes())["CFBundleShortVersionString"]
 LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 DOCS = {"en": "/docs/", "fr": "/docs/fr/"}
+# The MDM page's example policy, written by scripts/make-policy-files.py from its key list: the privacy page shows
+# the same keys and values, so the sample can't drift from the files IT imports.
+POLICY = json.loads((SITE.parent / "policy/policy.json").read_text(encoding="utf-8"))
+DOMAIN = "fr.igitscor.remora"
+# Which capture illustrates which group of the features page.
+SHOTS = {"time": "snoozed", "reviews": "waiting"}
 
 ICONS = {
     "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -79,6 +80,12 @@ FISH = (
     '<path fill-rule="evenodd" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z"/></svg>'
 )
 
+PAGES = {
+    "home": {"en": "/en/", "fr": "/fr/"},
+    "features": {"en": "/en/features", "fr": "/fr/fonctionnalites"},
+    "privacy": {"en": "/en/privacy", "fr": "/fr/confidentialite"},
+}
+
 
 def icon(name: str, size: int = 22, cls: str = "") -> str:
     attrs = f' class="{cls}"' if cls else ""
@@ -92,165 +99,37 @@ def e(text: str) -> str:
     return html.escape(text, quote=True)
 
 
-# ---------------------------------------------------------------- copy
+# ---------------------------------------------------------------- copy and templates
 
-PAGES = {
-    "home": {"en": "/en/", "fr": "/fr/"},
-    "features": {"en": "/en/features", "fr": "/fr/fonctionnalites"},
-    "privacy": {"en": "/en/privacy", "fr": "/fr/confidentialite"},
-}
 
-T = {
-    "en": {
-        "locale": "en_US",
-        "tagline": "Everything that needs you. Nothing that doesn’t.",
-        # Short enough to show whole in search results.
-        "description": "Remora: one inbox in your menu bar or tray for code reviews, Slack, Linear, Jira, Notion and Microsoft 365, sorted by what you have to do. On-device.",
-        "skip": "Skip to content",
-        "nav": {"features": "Features", "privacy": "Privacy & compliance"},
-        "nav_label": "Main navigation",
-        "lang_label": "Language",
-        "home_label": "Remora, home",
-        "get": "Download for Mac",
-        "get_windows": "Download for Windows",
-        "get_linux": "Linux",
-        "get_short": "Download",
-        "source": "Source on GitHub",
-        "footer_blurb": "An inbox in the menu bar or the system tray for everything that needs you. It runs on your computer and talks only to the tools you allow.",
-        "footer": {
-            "product": (
-                "Product",
-                [
-                    ("features", "Features"),
-                    ("privacy", "Privacy & compliance"),
-                    (DMG, "Download for Mac"),
-                    (EXE, "Download for Windows (preview)"),
-                    (REPO + "/releases", "Release notes"),
-                ],
-            ),
-            "resources": (
-                "Resources",
-                [
-                    ("/docs/", "Documentation"),
-                    ("/docs/guide/connecting-tools", "Connecting your tools"),
-                    ("/docs/admin/", "For IT and compliance"),
-                    ("/docs/develop/plugins", "Writing a plugin"),
-                    (REPO, "Source code on GitHub"),
-                ],
-            ),
-            "trust": (
-                "Trust",
-                [
-                    (REPO + "/blob/main/LICENSE", "GPL-3.0-or-later licence"),
-                    (REPO + "/security", "Report a vulnerability"),
-                    ("/docs/admin/code-signing", "Code signing policy"),
-                    (REPO + "/issues", "Questions and feedback"),
-                ],
-            ),
-        },
-        "footer_bottom": (
-            "Remora is free software under the GPL-3.0-or-later licence, built with the help of Claude.",
-            "Tool logos: Simple Icons (CC0) · Outfit font (OFL)",
-        ),
-        "clock": "Thu 9:41",
-        "og_alt": "Remora: everything that needs you, in your menu bar or tray. One inbox for code reviews, merge requests, Slack, Linear, Jira, Notion and Microsoft 365, on your computer.",
-        "seo": {
-            "home": (
-                f"Remora — One inbox for {TOOLS['en']}",
-                "Code reviews, Slack, Linear, Jira, Notion and Microsoft 365 in one inbox in your menu bar or tray, sorted by what to do. Free, open source, no account.",
-            ),
-            "features": (
-                "Features — Remora, the menu bar inbox for developers",
-                "Verbs instead of apps, Done and Pin, snooze with a reason, reminders, review prep and sessions, a waiting assistant. All of Remora.",
-            ),
-            "privacy": (
-                "Privacy & compliance — Remora sends nothing but to your tools",
-                "No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow.",
-            ),
-        },
-        "crumb": "Home",
-        "screens": {
-            "myturn": "The My turn tab: replies, reviews with their estimate, your merge requests and tasks, grouped by what to do",
-            "waiting": "The Waiting tab: merge requests waiting on reviewers, with a suggested nudge",
-            "snoozed": "The Snoozed tab: items coming back on Monday and an insight about the ones you keep putting off",
-        },
-        "platform_note": ("Screenshots: the Mac app.", "Screenshots: the Windows and Linux app."),
-    },
-    "fr": {
-        "locale": "fr_FR",
-        "tagline": "Tout ce qui a besoin de vous. Rien de plus.",
-        "description": "Remora : une boîte dans la barre des menus ou la zone de notification pour relectures, Slack, Linear, Jira, Notion et Microsoft 365, rangées par action.",
-        "skip": "Aller au contenu",
-        "nav": {"features": "Fonctionnalités", "privacy": "Confidentialité et conformité"},
-        "nav_label": "Navigation principale",
-        "lang_label": "Langue",
-        "home_label": "Remora, accueil",
-        "get": "Télécharger pour Mac",
-        "get_windows": "Télécharger pour Windows",
-        "get_linux": "Linux",
-        "get_short": "Télécharger",
-        "source": "Code source sur GitHub",
-        "footer_blurb": "Une boîte de réception dans la barre des menus ou la zone de notification pour tout ce qui a besoin de vous. Elle tourne sur votre ordinateur et ne parle qu’aux outils autorisés.",
-        "footer": {
-            "product": (
-                "Produit",
-                [
-                    ("features", "Fonctionnalités"),
-                    ("privacy", "Confidentialité et conformité"),
-                    (DMG, "Télécharger pour Mac"),
-                    (EXE, "Télécharger pour Windows (aperçu)"),
-                    (REPO + "/releases", "Notes de version"),
-                ],
-            ),
-            "resources": (
-                "Ressources",
-                [
-                    ("/docs/fr/", "Documentation"),
-                    ("/docs/fr/guide/connecter-vos-outils", "Connecter vos outils"),
-                    ("/docs/fr/admin/", "DSI et conformité"),
-                    ("/docs/fr/developper/extensions", "Écrire une extension"),
-                    (REPO, "Code source sur GitHub"),
-                ],
-            ),
-            "trust": (
-                "Confiance",
-                [
-                    (REPO + "/blob/main/LICENSE", "Licence GPL-3.0-or-later"),
-                    (REPO + "/security", "Signaler une vulnérabilité"),
-                    ("/docs/fr/admin/signature-du-code", "Politique de signature du code"),
-                    (REPO + "/issues", "Questions et retours"),
-                ],
-            ),
-        },
-        "footer_bottom": (
-            "Remora est un logiciel libre sous licence GPL-3.0-or-later, conçu avec l’aide de Claude.",
-            "Logos des outils : Simple Icons (CC0) · police Outfit (OFL)",
-        ),
-        "clock": "jeu. 9:41",
-        "og_alt": "Remora : tout ce qui a besoin de vous, dans la barre des menus ou la zone de notification. Une seule boîte pour relectures, merge requests, Slack, Linear, Jira, Notion et Microsoft 365, sur votre ordinateur.",
-        "seo": {
-            "home": (
-                f"Remora — Une seule boîte pour {TOOLS['fr']}",
-                "Relectures, Slack, Linear, Jira, Notion et Microsoft 365 dans une seule boîte, barre des menus ou zone de notification. Gratuit, open source, sans compte.",
-            ),
-            "features": (
-                "Fonctionnalités — Remora, la boîte de réception des développeurs",
-                "Des verbes plutôt que des applis, Terminé et Épingler, reporter avec une raison, des rappels, préparer ses relectures. Tout Remora.",
-            ),
-            "privacy": (
-                "Confidentialité et conformité — Remora n’envoie rien ailleurs",
-                "Ni serveur, ni compte, ni télémétrie : Remora ne parle qu’aux outils autorisés, IA désactivée par défaut, politique verrouillable par MDM. Chaque flux.",
-            ),
-        },
-        "crumb": "Accueil",
-        "screens": {
-            "myturn": "L’onglet À moi : réponses, relectures avec leur estimation, vos merge requests et tâches, rangées par ce qu’il y a à faire",
-            "waiting": "L’onglet En attente : les merge requests qui attendent des relecteurs, avec une relance suggérée",
-            "snoozed": "L’onglet Reportés : ce qui revient lundi, et un conseil sur ce que vous repoussez sans cesse",
-        },
-        "platform_note": ("Captures : l’app Mac.", "Captures : l’app Windows et Linux."),
-    },
-}
+def resolve(node, names: dict[str, str]):
+    """The copy with its $placeholders replaced, at every depth. A placeholder with no value stops the build."""
+    if isinstance(node, str):
+        return string.Template(node).substitute(names)
+    if isinstance(node, list):
+        return [resolve(item, names) for item in node]
+    if isinstance(node, dict):
+        return {key: resolve(value, names) for key, value in node.items()}
+    return node
+
+
+def load_copy(lang: str) -> dict:
+    data = json.loads((SITE / "copy" / f"{lang}.json").read_text(encoding="utf-8"))
+    names = {"repo": REPO, "dmg": DMG, "exe": EXE, "appimage": APPIMAGE, "deb": DEB, "tools": data["tools"]}
+    return resolve(data, names)
+
+
+T = {lang: load_copy(lang) for lang in ("en", "fr")}
+
+
+@functools.cache
+def template(name: str) -> string.Template:
+    # Without the file's final newline, so a template ends where its markup does whatever the editor saves.
+    return string.Template((SITE / "templates" / name).read_text(encoding="utf-8").removesuffix("\n"))
+
+
+def fill(file: str, /, **values: object) -> str:
+    return template(file).substitute(values)
 
 
 def href(lang: str, target: str) -> str:
@@ -269,9 +148,10 @@ def plain(markup: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", markup))
 
 
-def head(lang: str, page: str, title: str, description: str, data: list[dict] | None = None) -> str:
+def head(lang: str, page: str, data: list[dict] | None = None) -> str:
+    """The document head, the site header and the opening of <main>, with the page's structured data."""
     t = T[lang]
-    title, description = t["seo"][page]
+    seo = t["seo"][page]
     path = PAGES[page][lang]
     other = "fr" if lang == "en" else "en"
     data = list(data or [])
@@ -286,49 +166,41 @@ def head(lang: str, page: str, title: str, description: str, data: list[dict] | 
                 ],
             }
         )
-    structured = "".join(ld(d) for d in data)
-    return f"""<!doctype html>
-<html lang="{lang}">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{e(title)}</title>
-    <meta name="description" content="{e(description)}" />
-    <link rel="canonical" href="{ORIGIN}{path}" />
-    <link rel="alternate" hreflang="{lang}" href="{ORIGIN}{path}" />
-    <link rel="alternate" hreflang="{other}" href="{ORIGIN}{PAGES[page][other]}" />
-    <link rel="alternate" hreflang="x-default" href="{ORIGIN}/" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f0e8" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e14" />
-    <link rel="icon" type="image/svg+xml" href="/site/favicon.svg" />
-    <link rel="apple-touch-icon" href="/site/apple-touch-icon.png" />
-    <link rel="preload" href="/site/outfit.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/site/tokens.css" />
-    <link rel="stylesheet" href="/site/site.css" />
-    <link rel="stylesheet" href="/site/remora.css" />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Remora" />
-    <meta property="og:locale" content="{t["locale"]}" />
-    <meta property="og:locale:alternate" content="{T[other]["locale"]}" />
-    <meta property="og:url" content="{ORIGIN}{path}" />
-    <meta property="og:title" content="{e(title)}" />
-    <meta property="og:description" content="{e(description)}" />
-    <meta property="og:image" content="{ORIGIN}/site/og.{lang}.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="{e(t["og_alt"])}" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{e(title)}" />
-    <meta name="twitter:description" content="{e(description)}" />
-    <meta name="twitter:image" content="{ORIGIN}/site/og.{lang}.png" />
-    <script src="/site/site.js" defer></script>
-{structured}  </head>
-  <body>
-    <a class="skip-link" href="#main">{t["skip"]}</a>
-{header(lang, page)}
-    <main id="main">
-"""
+    nav = "".join(
+        f'<li><a href="{PAGES[key][lang]}"{' aria-current="page"' if key == page else ""}>{label}</a></li>'
+        for key, label in t["nav"].items()
+    )
+    nav += f'<li><a href="{DOCS[lang]}">Docs</a></li><li><a href="{REPO}">GitHub</a></li>'
+    switch = "".join(
+        f'<a href="{PAGES[page][code]}" hreflang="{code}" lang="{code}" data-lang="{code}" '
+        f'aria-label="{T[code]["language_name"]}"{' aria-current="true"' if code == lang else ""}>{code.upper()}</a>'
+        for code in ("fr", "en")
+    )
+    return (
+        fill(
+            "page-head.html",
+            lang=lang,
+            other=other,
+            title=e(seo["title"]),
+            description=e(seo["description"]),
+            url=ORIGIN + path,
+            other_url=ORIGIN + PAGES[page][other],
+            origin=ORIGIN,
+            locale=t["locale"],
+            other_locale=T[other]["locale"],
+            og_alt=e(t["og_alt"]),
+            structured="".join(ld(d) for d in data),
+            skip=t["skip"],
+            brand=brand(lang),
+            nav_label=t["nav_label"],
+            nav=nav,
+            lang_label=t["lang_label"],
+            switch=switch,
+            dmg=DMG,
+            get_short=t["get_short"],
+        )
+        + "\n"
+    )
 
 
 def brand(lang: str) -> str:
@@ -338,50 +210,24 @@ def brand(lang: str) -> str:
     )
 
 
-def header(lang: str, page: str) -> str:
-    t = T[lang]
-    items = "".join(
-        f'<li><a href="{PAGES[key][lang]}"{' aria-current="page"' if key == page else ""}>{label}</a></li>'
-        for key, label in t["nav"].items()
-    )
-    items += f'<li><a href="{DOCS[lang]}">Docs</a></li><li><a href="{REPO}">GitHub</a></li>'
-    switch = "".join(
-        f'<a href="{PAGES[page][code]}" hreflang="{code}" lang="{code}" data-lang="{code}" aria-label="{name}"'
-        f"{' aria-current="true"' if code == lang else ''}>{code.upper()}</a>"
-        for code, name in (("fr", "Français"), ("en", "English"))
-    )
-    return f"""    <header class="site-header">
-      <div class="wrap header-bar">
-        {brand(lang)}
-        <nav class="site-nav" aria-label="{t["nav_label"]}"><ul>{items}</ul></nav>
-        <div class="header-actions">
-          <nav class="lang-switch" aria-label="{t["lang_label"]}">{switch}</nav>
-          <a class="btn btn-primary btn-sm" href="{DMG}" data-download="mac">{t["get_short"]}</a>
-        </div>
-      </div>
-    </header>"""
-
-
 def footer(lang: str) -> str:
     t = T[lang]
     columns = ""
-    for key, (title, links) in t["footer"].items():
-        lis = "".join(f'<li><a href="{href(lang, target)}">{label}</a></li>' for target, label in links)
-        columns += f'<nav aria-labelledby="f-{key}"><h2 id="f-{key}">{title}</h2><ul>{lis}</ul></nav>'
-    left, right = t["footer_bottom"]
-    return f"""    </main>
-    <footer class="site-footer">
-      <div class="wrap">
-        <div class="footer-grid">
-          <div class="footer-brand">{brand(lang)}<p>{t["footer_blurb"]}</p></div>
-          {columns}
-        </div>
-        <div class="footer-bottom"><span>{left}</span><span>{right}</span></div>
-      </div>
-    </footer>
-  </body>
-</html>
-"""
+    for key, column in t["footer"].items():
+        lis = "".join(f'<li><a href="{href(lang, link["href"])}">{link["label"]}</a></li>' for link in column["links"])
+        columns += f'<nav aria-labelledby="f-{key}"><h2 id="f-{key}">{column["title"]}</h2><ul>{lis}</ul></nav>'
+    bottom = t["footer_bottom"]
+    return (
+        fill(
+            "page-foot.html",
+            brand=brand(lang),
+            blurb=t["footer_blurb"],
+            columns=columns,
+            licence=bottom["licence"],
+            credits=bottom["credits"],
+        )
+        + "\n"
+    )
 
 
 def screen(tab: str, lang: str, eager: bool = False, whole: bool = False, platform: str = "") -> str:
@@ -410,10 +256,10 @@ def screens(tab: str, lang: str) -> str:
 
 def platform_note(lang: str, tag: str = "p") -> str:
     """Which app the captures above show, swapped by site.js like the captures."""
-    mac, windows = T[lang]["platform_note"]
+    note = T[lang]["platform_note"]
     return (
-        f'<{tag} class="screen-platform"><span data-platform="mac">{mac}</span>'
-        f'<span data-platform="windows" hidden>{windows}</span></{tag}>'
+        f'<{tag} class="screen-platform"><span data-platform="mac">{note["mac"]}</span>'
+        f'<span data-platform="windows" hidden>{note["windows"]}</span></{tag}>'
     )
 
 
@@ -422,21 +268,23 @@ def desk(lang: str, note: str) -> str:
         f'<span class="counter"><span class="logo logo-{tool}"></span>{n}</span>'
         for tool, n in (("slack", 2), ("github", 3), ("gitlab", 1), ("notion", 1))
     )
-    return f"""<div class="desk">
-            <div class="menubar" aria-hidden="true">
-              <span class="status-item"><span class="logo logo-fish"></span>{counters}</span>
-              {icon("wifi", 16, "glyph")}{icon("battery", 16, "glyph")}<span>{T[lang]["clock"]}</span>
-            </div>
-            <div class="desk-body"><div class="popover">{screen("myturn", lang, eager=True)}</div></div>
-            <p class="desk-note">{note}</p>
-          </div>"""
+    return fill(
+        "desk.html",
+        counters=counters,
+        wifi=icon("wifi", 16, "glyph"),
+        battery=icon("battery", 16, "glyph"),
+        clock=T[lang]["clock"],
+        screen=screen("myturn", lang, eager=True),
+        note=note,
+    )
 
 
-def cards(items: list[tuple[str, str, str]], cls: str = "card card-field", accent: bool = False) -> str:
+def cards(items: list[dict], cls: str = "card card-field", accent: bool = False) -> str:
     icon_cls = "icon icon-accent" if accent else "icon"
     return "".join(
-        f'<article class="{cls}"><span class="{icon_cls}">{icon(name)}</span><h3>{title}</h3><p>{body}</p></article>'
-        for name, title, body in items
+        f'<article class="{cls}"><span class="{icon_cls}">{icon(item["icon"])}</span>'
+        f"<h3>{item['title']}</h3><p>{item['body']}</p></article>"
+        for item in items
     )
 
 
@@ -458,15 +306,22 @@ def linux_button(lang: str, cls: str = "btn btn-secondary btn-lg") -> str:
     return f'<a class="{cls}" href="{APPIMAGE}" data-download="linux">{T[lang]["get_linux"]}</a>'
 
 
-def faq(items: list[tuple[str, str]]) -> str:
+def downloads(lang: str) -> str:
+    return cta_button(lang) + windows_button(lang) + linux_button(lang)
+
+
+def faq(items: list[dict]) -> str:
     return (
         '<div class="faq">'
-        + "".join(f"<details><summary>{q}</summary><div><p>{a}</p></div></details>" for q, a in items)
+        + "".join(
+            f"<details><summary>{item['question']}</summary><div><p>{item['answer']}</p></div></details>"
+            for item in items
+        )
         + "</div>"
     )
 
 
-def table(caption: str, columns: tuple[str, ...], rows: list[tuple[str, ...]]) -> str:
+def table(caption: str, columns: list[str], rows: list[list[str]]) -> str:
     head_html = "".join(f'<th scope="col">{c}</th>' for c in columns)
     body = "".join(
         "<tr>" + f'<th scope="row">{r[0]}</th>' + "".join(f"<td>{c}</td>" for c in r[1:]) + "</tr>" for r in rows
@@ -478,36 +333,8 @@ def table(caption: str, columns: tuple[str, ...], rows: list[tuple[str, ...]]) -
 
 
 def line_art(lang: str) -> str:
-    when, at, hint = (
-        ("in 25 min", "10:06 · release to name it", "drag down: later")
-        if lang == "en"
-        else ("dans 25 min", "10:06 · relâchez pour le nommer", "plus bas : plus tard")
-    )
-    label = (
-        "Dragging the Remora fish down from the menu bar: a fishing line follows the pointer and a bubble reads in 25 minutes."
-        if lang == "en"
-        else "Le poisson Remora tiré vers le bas depuis la barre des menus : une ligne de pêche suit le pointeur et une bulle indique dans 25 minutes."
-    )
-    return f"""<figure class="line-art" role="img" aria-label="{e(label)}">
-            <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg">
-              <rect class="bar" x="-1" y="-1" width="522" height="38" />
-              <rect class="highlight" x="292" y="6" width="66" height="24" rx="6" />
-              <g class="ink" transform="translate(300 10) scale(0.56)">
-                <path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z" transform="translate(-5 -35)" />
-                <path fill-rule="evenodd" transform="translate(-5 -35)" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z" />
-              </g>
-              <rect class="soft" x="380" y="13" width="44" height="10" rx="5" />
-              <rect class="soft" x="436" y="13" width="64" height="10" rx="5" />
-              <path class="rod" d="M326 30 C 326 110, 250 150, 236 222" />
-              <g class="catch">
-                <path class="rod" d="M236 222 q -2 12 8 12" />
-                <rect class="bubble" x="150" y="244" width="196" height="62" rx="16" />
-                <text class="bubble-text" x="248" y="270" text-anchor="middle">{when}</text>
-                <text class="bubble-sub" x="248" y="291" text-anchor="middle">{e(at)}</text>
-                <text class="hint" x="372" y="282">↓ {e(hint)}</text>
-              </g>
-            </svg>
-          </figure>"""
+    art = T[lang]["line_art"]
+    return fill("line-art.html", label=e(art["label"]), when=art["when"], at=e(art["at"]), hint=e(art["hint"]))
 
 
 # ---------------------------------------------------------------- home
@@ -515,584 +342,109 @@ def line_art(lang: str) -> str:
 
 def home(lang: str) -> str:
     t = T[lang]
-    if lang == "en":
-        c = dict(
-            eyebrow="Menu bar inbox · macOS · Windows · Linux",
-            h1='Everything that<br /><span class="mark">needs you.</span>',
-            lead="Nothing that doesn’t. Code reviews, your merge requests, Slack mentions, Linear and Jira issues, Notion tasks, Outlook and Teams, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
-            secondary="Privacy & compliance",
-            note="Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway. Linux, in preview: AppImage or .deb on the releases page.",
-            notice="Remora speaks English and French, and so does on-device sorting.",
-            desk_note="The real app, with sample data. One fish in the menu bar, one count per tool.",
-            facts=[
-                ("0", "servers, accounts or trackers of ours"),
-                ("8", f"tools: {TOOLS['en']}"),
-                ("5", "items per verb, the rest folded away"),
-                ("100%", "of sorting and ranking done on your computer"),
-            ],
-            tabs_eyebrow="See it",
-            tabs_title='Your turn, their turn, <span class="mark">later.</span>',
-            tabs_lead="Three tabs instead of four apps. What waits on you, what you wait on, and what you chose to see again later.",
-            tabs=[
-                ("myturn", "My turn", "Someone is waiting on you: a reply, a review, a fix, a task, a reminder."),
-                ("waiting", "Waiting", "You’re waiting on others. Remora suggests reviewers and drafts the nudge."),
-                ("snoozed", "Snoozed", "Out of sight until it’s time, or until there’s news. With a reason."),
-            ],
-            verbs_eyebrow="Verbs, not apps",
-            verbs_title='Sorted by <span class="mark">what to do.</span>',
-            verbs_lead="A Slack question and a GitLab comment both land in To reply. Messages are sorted on your computer with keyword rules, plus Apple’s on-device language model on the Mac. No generative AI, nothing sent. React ✅ in Slack and the item moves to Done.",
-            verbs=[
-                ("reply", "To reply"),
-                ("review", "To review"),
-                ("fix", "To fix"),
-                ("merge", "Ready to merge"),
-                ("todo", "To do"),
-                ("bell", "Reminders"),
-                ("read", "To read"),
-                ("hourglass", "Waiting on others"),
-            ],
-            quiet={"read", "hourglass"},
-            verbs_more="To read and Waiting are shown, never counted: the badge only counts what needs you.",
-            line_eyebrow="Reminders",
-            line_title='Cast a reminder <span class="mark">from the menu bar.</span>',
-            line_lead="Grab the fish and pull down. The further you drag, the later it comes back: minutes, then hours, then days. Release, type what to remember, press Enter. Esc cancels.",
-            line_more="Or press + in the inbox; on Windows, Ctrl+Alt+R from anywhere. Due reminders arrive as notifications, with Snooze buttons.",
-            features_eyebrow="Features",
-            features_title='Less noise, <span class="mark">more done.</span>',
-            features_lead="Every feature has one job: fewer things on your mind at once.",
-            features=[
-                (
-                    "done",
-                    "Done until it changes",
-                    "Mark it done and it stays gone, until a new commit, an approval or a reply brings it back.",
-                ),
-                (
-                    "moon",
-                    "Snooze with a reason",
-                    "Waiting for someone, no time now, needs focus. Each reason picks a sensible return time, and “until there’s news” is one of them.",
-                ),
-                (
-                    "stopwatch",
-                    "Review prep",
-                    "“~6 min · 4 files · tests ✓ · Auth” under each review request, from file paths and line counts only. Then a session, quick wins first.",
-                ),
-                (
-                    "people",
-                    "Waiting assistant",
-                    "No reviewer on your merge request? Suggestions from who usually reviews there. Silent for a day? A drafted nudge, which you copy. Remora never sends.",
-                ),
-                (
-                    "bell",
-                    "Notifications that act",
-                    "Approved, changes requested, checks failed, a reminder due. On the Mac, mark it done or snooze it right from the notification; on Windows, a click opens it.",
-                ),
-                (
-                    "star",
-                    "Learns your habits",
-                    "What you handle fast and what you push back, learned on your computer. It breaks ties, and a small star says why.",
-                ),
-            ],
-            features_more="All features",
-            sources_eyebrow="Sources",
-            sources_title='Your tools, <span class="mark">your accounts.</span>',
-            sources_lead="Connect as many accounts as you need and name them: “Work GitLab”, “Client Slack”. Each one opens in its own app when it’s installed.",
-            sources=[
-                (
-                    "github",
-                    "GitHub",
-                    "Pull requests you opened, review requests and issues assigned to you. Enterprise too.",
-                ),
-                (
-                    "gitlab",
-                    "GitLab",
-                    "Your merge requests, the ones you review, approvals, pipelines and To-Dos. Self-hosted too.",
-                ),
-                (
-                    "bitbucket",
-                    "Bitbucket",
-                    "Pull requests you opened and those you review, with approvals and builds. Cloud or Data Center.",
-                ),
-                (
-                    "azuredevops",
-                    "Azure DevOps",
-                    "Pull requests you review or opened, votes and policy checks, and work items assigned to you. Server too.",
-                ),
-                ("slack", "Slack", "Mentions and direct messages, opened in the Slack app."),
-                ("linear", "Linear", "Issues assigned to you with their priority and due date, plus unread mentions."),
-                ("jira", "Jira", "Issues assigned to you and comments that mention you. Cloud or Data Center."),
-                (
-                    "microsoft",
-                    "Microsoft 365 (preview)",
-                    "Flagged and unread Outlook mail, invitations to answer and unread Teams chats. Signed in through your browser.",
-                ),
-                (
-                    "claude",
-                    "Claude or OpenAI (optional)",
-                    "A short brief on what to handle first, with Claude or an OpenAI-compatible model. Off by default, and only if your organization allows it.",
-                ),
-                ("notion", "Notion", "Tasks assigned to you in the databases you pick."),
-            ],
-            soon={},
-            why_eyebrow="Why Remora",
-            why_title='Why not just <span class="mark">use what you have?</span>',
-            why_lead="Fair question: your tools already have inboxes. Here is what changes when they become one.",
-            why=[
-                (
-                    "globe",
-                    "Each tool’s own inbox",
-                    "GitHub notifications, Linear’s inbox, Jira: each is the best place to act on its own items, and each has its own badge to check. Remora lists what needs you from all of them, then opens each item in its tool.",
-                ),
-                (
-                    "reply",
-                    "Slack’s Later",
-                    "Good for messages you chose to keep. It only holds Slack, and only what you saved by hand. Remora picks up mentions and direct messages itself, and files the question under To reply, next to the review waiting on you.",
-                ),
-                (
-                    "menu",
-                    "A menu bar app for code reviews",
-                    "gitbar, which inspired Remora, keeps your merge requests in the menu bar, and does it well. Remora keeps the idea for every tool you connect, and sorts by verb: To review, To reply, To fix.",
-                ),
-                (
-                    "lock",
-                    "A hosted unified inbox",
-                    "It follows you on every device, which Remora doesn’t. But your tokens and messages go through its servers. Remora has no server: it talks to each tool from your computer, and sorts there.",
-                ),
-            ],
-            privacy_eyebrow="Privacy & compliance",
-            privacy_title="Built for teams with rules.",
-            privacy_lead="No data leaves your computer except to the tools you allow. Enforced in code, checked by tests, lockable by your IT.",
-            privacy=[
-                (
-                    "shield",
-                    "Only allowed destinations",
-                    "Each tool declares the hosts it may reach. Any other address is blocked, look-alike domains included.",
-                ),
-                (
-                    "sparkle",
-                    "External AI off by default",
-                    "The assistant is opt-in. Your organization can forbid it, and then every AI feature disappears.",
-                ),
-                (
-                    "building",
-                    "Managed by your IT",
-                    "Allowed tools, AI and avatars can be locked with a configuration profile (MDM). Group Policy on Windows.",
-                ),
-            ],
-            privacy_more="Every data flow, and how it is enforced",
-            faq_title="Good to know",
-            faq=[
-                (
-                    "Is my data sent to a Remora server?",
-                    "There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain or the Windows Credential Manager. No telemetry, no analytics, no crash reports.",
-                ),
-                (
-                    "Do I need an AI assistant?",
-                    "No. Sorting, ranking, snooze advice and review prep all run on your computer without generative AI. The assistant (Claude or an OpenAI-compatible model) only adds optional briefs and summaries, and it is off until you, and your organization, allow it.",
-                ),
-                (
-                    "Can my AI agent use Remora?",
-                    'Yes. Claude Desktop, Claude Code, Gemini CLI and other agents that speak MCP can ask Remora what waits on you, list a tab or add a reminder, through <code>remora mcp</code> on your computer. They never get your tokens, and they can’t write to your tools. Your organization can turn it off. <a href="/docs/guide/agents">Remora and your agents</a>.',
-                ),
-                (
-                    "Does it work with GitHub Enterprise and self-hosted GitLab?",
-                    'Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href="/docs/guide/connecting-tools">connecting your tools</a>.',
-                ),
-                (
-                    "Is there a Windows version?",
-                    f'Yes, in preview: <a href="{EXE}">Remora-Setup.exe</a> for Windows 10 or 11, installed for your user only (no admin rights). Same rules, the same tools and the same assistant (Claude or OpenAI-compatible), same compliance model, with the policy in the registry for Group Policy or Intune. It sorts messages with keywords only. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway.',
-                ),
-                (
-                    "Is there a Linux version?",
-                    f'Yes, in preview and community supported: <a href="{APPIMAGE}">Remora-x86_64.AppImage</a>, which updates itself, or <a href="{DEB}">Remora-amd64.deb</a> for Ubuntu and Debian. The same app as on Windows, with the policy in <code>/etc/remora/policy.json</code>. It needs WebKitGTK 4.1, a keyring (GNOME Keyring, KWallet or KeePassXC) and a tray, or it opens as a window. <a href="/docs/guide/getting-started#on-linux-preview">Getting started on Linux</a>.',
-                ),
-                (
-                    "Why does macOS ask for my Keychain password?",
-                    "Remora keeps all your tokens in one Keychain item. macOS asks once per new build of an app that isn’t signed by a registered developer. Choose Always Allow.",
-                ),
-                (
-                    "macOS says it can’t check the app?",
-                    "Remora isn’t notarized yet. Right-click it and choose Open; on macOS 15, use System Settings → Privacy & Security → Open Anyway. macOS only asks once.",
-                ),
-                (
-                    "How much does it cost?",
-                    f'Nothing. Remora is free software under the <a href="{REPO}/blob/main/LICENSE">GPL-3.0-or-later</a> licence, and its source code is on <a href="{REPO}">GitHub</a>, so your security team can read exactly what it does.',
-                ),
-            ],
-            final_title='Your inbox,<br />without the <span class="mark">noise.</span>',
-            final_lead="Connect one tool, see what needs you, close the other tabs.",
-        )
-    else:
-        c = dict(
-            eyebrow="Barre des menus · macOS · Windows · Linux",
-            h1='Tout ce qui a<br /><span class="mark">besoin de vous.</span>',
-            lead="Rien de plus. Relectures de code, vos merge requests, mentions Slack, tickets Linear et Jira, tâches Notion, Outlook et Teams, dans une seule boîte de réception, dans la barre des menus ou la zone de notification. Rangés par ce que vous avez à faire, pas par leur provenance.",
-            secondary="Confidentialité et conformité",
-            note="Gratuit et open source, sans compte. Mac : macOS 14 ou ultérieur ; la première fois, clic droit sur Remora → Ouvrir. Windows 10 ou 11, en aperçu : si SmartScreen prévient, Informations complémentaires → Exécuter quand même. Linux, en aperçu : AppImage ou .deb sur la page des versions.",
-            notice="Remora parle français et anglais, tout comme le tri sur l’appareil.",
-            desk_note="La vraie app, avec des données d’exemple. Un poisson dans la barre des menus, un compteur par outil.",
-            facts=[
-                ("0", "serveur, compte ou traceur de notre part"),
-                ("8", f"outils : {TOOLS['fr']}"),
-                ("5", "éléments par verbe, le reste replié"),
-                ("100 %", "du tri et du classement faits sur votre ordinateur"),
-            ],
-            tabs_eyebrow="En images",
-            tabs_title='À vous, aux autres, <span class="mark">plus tard.</span>',
-            tabs_lead="Trois onglets au lieu de quatre applis. Ce qui vous attend, ce que vous attendez, et ce que vous avez choisi de revoir plus tard.",
-            tabs=[
-                (
-                    "myturn",
-                    "À moi",
-                    "Quelqu’un attend après vous : une réponse, une relecture, une correction, une tâche, un rappel.",
-                ),
-                (
-                    "waiting",
-                    "En attente",
-                    "Vous attendez les autres. Remora suggère des relecteurs et rédige la relance.",
-                ),
-                ("snoozed", "Reportés", "Hors de vue jusqu’au bon moment, ou jusqu’à du nouveau. Avec une raison."),
-            ],
-            verbs_eyebrow="Des verbes, pas des applis",
-            verbs_title='Rangé par <span class="mark">ce qu’il faut faire.</span>',
-            verbs_lead="Une question sur Slack et un commentaire GitLab finissent tous deux dans À répondre. Les messages sont triés sur votre ordinateur par des règles de mots-clés, plus le modèle de langue d’Apple embarqué sur le Mac. Pas d’IA générative, rien n’est envoyé. Réagissez ✅ dans Slack et l’élément passe dans Terminés.",
-            verbs=[
-                ("reply", "À répondre"),
-                ("review", "À relire"),
-                ("fix", "À corriger"),
-                ("merge", "Prêtes à fusionner"),
-                ("todo", "À faire"),
-                ("bell", "Rappels"),
-                ("read", "À lire"),
-                ("hourglass", "En attente des autres"),
-            ],
-            quiet={"read", "hourglass"},
-            verbs_more="À lire et En attente sont affichés, jamais comptés : le badge ne compte que ce qui a besoin de vous.",
-            line_eyebrow="Rappels",
-            line_title='Lancez un rappel <span class="mark">depuis la barre des menus.</span>',
-            line_lead="Attrapez le poisson et tirez vers le bas. Plus vous descendez, plus il revient tard : des minutes, puis des heures, puis des jours. Relâchez, tapez ce qu’il faut retenir, Entrée. Échap annule.",
-            line_more="Ou appuyez sur + dans la boîte ; sous Windows, Ctrl+Alt+R depuis n’importe où. À l’heure dite, une notification arrive, avec des boutons pour reporter.",
-            features_eyebrow="Fonctionnalités",
-            features_title='Moins de bruit, <span class="mark">plus de fait.</span>',
-            features_lead="Chaque fonctionnalité a un seul but : moins de choses en tête à la fois.",
-            features=[
-                (
-                    "done",
-                    "Terminé tant que rien ne change",
-                    "Marquez-le terminé et il disparaît, jusqu’à ce qu’un commit, une approbation ou une réponse le fasse revenir.",
-                ),
-                (
-                    "moon",
-                    "Reporter avec une raison",
-                    "En attente de quelqu’un, pas le temps, demande de la concentration. Chaque raison propose un retour adapté, dont « jusqu’à du nouveau ».",
-                ),
-                (
-                    "stopwatch",
-                    "Préparer la relecture",
-                    "« ~6 min · 4 fichiers · tests ✓ · Auth » sous chaque demande de relecture, à partir des chemins et du nombre de lignes seulement. Puis une session, les plus rapides d’abord.",
-                ),
-                (
-                    "people",
-                    "Assistant d’attente",
-                    "Pas de relecteur sur votre merge request ? Des suggestions parmi ceux qui relisent d’habitude. Silence depuis un jour ? Une relance rédigée, que vous copiez. Remora n’envoie jamais rien.",
-                ),
-                (
-                    "bell",
-                    "Des notifications qui agissent",
-                    "Approuvée, modifications demandées, tests en échec, un rappel à l’heure. Sur le Mac, terminez ou reportez directement depuis la notification ; sous Windows, un clic l’ouvre.",
-                ),
-                (
-                    "star",
-                    "Apprend vos habitudes",
-                    "Ce que vous traitez vite et ce que vous repoussez, appris sur votre ordinateur. Ça départage, et une petite étoile dit pourquoi.",
-                ),
-            ],
-            features_more="Toutes les fonctionnalités",
-            sources_eyebrow="Sources",
-            sources_title='Vos outils, <span class="mark">vos comptes.</span>',
-            sources_lead="Connectez autant de comptes que nécessaire et nommez-les : « GitLab boulot », « Slack client ». Chacun s’ouvre dans son appli quand elle est installée.",
-            sources=[
-                (
-                    "github",
-                    "GitHub",
-                    "Vos pull requests, les demandes de relecture et les tickets qui vous sont assignés. Enterprise aussi.",
-                ),
-                (
-                    "gitlab",
-                    "GitLab",
-                    "Vos merge requests, celles que vous relisez, approbations, pipelines et To-Dos. Auto-hébergé aussi.",
-                ),
-                (
-                    "bitbucket",
-                    "Bitbucket",
-                    "Vos pull requests et celles que vous relisez, avec approbations et builds. Cloud ou Data Center.",
-                ),
-                (
-                    "azuredevops",
-                    "Azure DevOps",
-                    "Les pull requests à relire et les vôtres, votes et stratégies, et vos éléments de travail. Server aussi.",
-                ),
-                ("slack", "Slack", "Mentions et messages directs, ouverts dans l’appli Slack."),
-                (
-                    "linear",
-                    "Linear",
-                    "Les tickets qui vous sont assignés, avec priorité et échéance, plus les mentions non lues.",
-                ),
-                (
-                    "jira",
-                    "Jira",
-                    "Les tickets qui vous sont assignés et les commentaires qui vous mentionnent. Cloud ou Data Center.",
-                ),
-                (
-                    "microsoft",
-                    "Microsoft 365 (aperçu)",
-                    "Les courriels Outlook signalés et non lus, les invitations à traiter et les conversations Teams non lues. Connexion par votre navigateur.",
-                ),
-                (
-                    "claude",
-                    "Claude ou OpenAI (facultatif)",
-                    "Un court brief sur quoi traiter d’abord, avec Claude ou un modèle OpenAI-compatible. Désactivé par défaut, et seulement si votre organisation l’autorise.",
-                ),
-                ("notion", "Notion", "Les tâches qui vous sont assignées dans les bases choisies."),
-            ],
-            soon={},
-            why_eyebrow="Pourquoi Remora",
-            why_title='Pourquoi pas <span class="mark">ce que vous avez déjà ?</span>',
-            why_lead="Bonne question : vos outils ont déjà leur boîte. Voici ce qui change quand elles n’en font qu’une.",
-            why=[
-                (
-                    "globe",
-                    "La boîte de chaque outil",
-                    "Les notifications GitHub, la boîte de Linear, Jira : chacune est le meilleur endroit pour agir sur ses propres éléments, et chacune a son badge à surveiller. Remora réunit ce qui a besoin de vous, puis ouvre chaque élément dans son outil.",
-                ),
-                (
-                    "reply",
-                    "« Plus tard » dans Slack",
-                    "Pratique pour les messages que vous avez choisi de garder. Il ne contient que Slack, et seulement ce que vous avez mis de côté à la main. Remora relève elle-même mentions et messages directs, et range la question dans À répondre, à côté de la relecture qui vous attend.",
-                ),
-                (
-                    "menu",
-                    "Une app de barre des menus pour le code",
-                    "gitbar, qui a inspiré Remora, garde vos merge requests dans la barre des menus, et le fait bien. Remora garde l’idée pour chaque outil connecté, et range par verbe : À relire, À répondre, À corriger.",
-                ),
-                (
-                    "lock",
-                    "Une boîte unifiée hébergée",
-                    "Elle vous suit sur tous vos appareils, ce que Remora ne fait pas. Mais vos jetons et vos messages passent par ses serveurs. Remora n’a pas de serveur : elle parle à chaque outil depuis votre ordinateur, et trie sur place.",
-                ),
-            ],
-            privacy_eyebrow="Confidentialité et conformité",
-            privacy_title="Pensé pour les équipes qui ont des règles.",
-            privacy_lead="Aucune donnée ne quitte votre ordinateur, sauf vers les outils autorisés. Appliqué dans le code, vérifié par des tests, verrouillable par votre DSI.",
-            privacy=[
-                (
-                    "shield",
-                    "Seulement les destinations autorisées",
-                    "Chaque outil déclare les adresses qu’il peut joindre. Toute autre adresse est bloquée, y compris les domaines qui imitent.",
-                ),
-                (
-                    "sparkle",
-                    "IA externe désactivée par défaut",
-                    "L’assistant est facultatif. Votre organisation peut l’interdire, et toutes les fonctions d’IA disparaissent.",
-                ),
-                (
-                    "building",
-                    "Géré par votre DSI",
-                    "Outils autorisés, IA et avatars se verrouillent par profil de configuration (MDM). Par stratégie de groupe sous Windows.",
-                ),
-            ],
-            privacy_more="Chaque flux de données, et comment il est contrôlé",
-            faq_title="Bon à savoir",
-            faq=[
-                (
-                    "Mes données passent-elles par un serveur Remora ?",
-                    "Il n’y a pas de serveur Remora. L’app parle directement aux outils connectés, garde ses données dans votre dossier utilisateur et vos jetons dans le trousseau de macOS ou le Gestionnaire d’identification de Windows. Pas de télémétrie, pas d’analytics, pas de rapports de plantage.",
-                ),
-                (
-                    "Faut-il un assistant d’IA ?",
-                    "Non. Le tri, le classement, les conseils de report et la préparation des relectures tournent sur votre ordinateur, sans IA générative. L’assistant (Claude ou un modèle OpenAI-compatible) n’ajoute que des briefs et résumés facultatifs, désactivés tant que vous, et votre organisation, ne les autorisez pas.",
-                ),
-                (
-                    "Mon agent d’IA peut-il utiliser Remora ?",
-                    'Oui. Claude Desktop, Claude Code, Gemini CLI et les autres agents qui parlent MCP peuvent demander à Remora ce qui vous attend, lister un onglet ou ajouter un rappel, grâce à <code>remora mcp</code> sur votre ordinateur. Ils ne reçoivent jamais vos jetons et ne peuvent pas écrire dans vos outils. Votre organisation peut le désactiver. <a href="/docs/fr/guide/agents">Remora et vos agents</a>.',
-                ),
-                (
-                    "Ça marche avec GitHub Enterprise et un GitLab auto-hébergé ?",
-                    'Oui. Indiquez votre adresse en connectant le compte : Remora ne parle qu’à celle-ci. Configuration de chaque outil : <a href="/docs/fr/guide/connecter-vos-outils">connecter vos outils</a>.',
-                ),
-                (
-                    "Existe-t-il une version Windows ?",
-                    f'Oui, en aperçu : <a href="{EXE}">Remora-Setup.exe</a> pour Windows 10 ou 11, installée pour votre utilisateur seulement (sans droits d’administrateur). Mêmes règles, les mêmes outils et le même assistant (Claude ou OpenAI-compatible), même modèle de conformité, avec la politique dans le registre pour la stratégie de groupe ou Intune. Elle trie les messages par mots-clés seulement. L’installeur n’est pas encore signé : si SmartScreen prévient, cliquez sur Informations complémentaires → Exécuter quand même.',
-                ),
-                (
-                    "Existe-t-il une version Linux ?",
-                    f'Oui, en aperçu et soutenue par la communauté : <a href="{APPIMAGE}">Remora-x86_64.AppImage</a>, qui se met à jour seule, ou <a href="{DEB}">Remora-amd64.deb</a> pour Ubuntu et Debian. La même app que sous Windows, avec la politique dans <code>/etc/remora/policy.json</code>. Elle demande WebKitGTK 4.1, un trousseau (GNOME Keyring, KWallet ou KeePassXC) et une zone de notification, sinon elle s’ouvre en fenêtre. <a href="/docs/fr/guide/premiers-pas#sous-linux-apercu">Premiers pas sous Linux</a>.',
-                ),
-                (
-                    "Pourquoi macOS demande-t-il le mot de passe du trousseau ?",
-                    "Remora garde tous vos jetons dans un seul élément du trousseau. macOS le demande une fois par nouvelle version d’une app qui n’est pas signée par un développeur enregistré. Choisissez Toujours autoriser.",
-                ),
-                (
-                    "macOS dit qu’il ne peut pas vérifier l’app ?",
-                    "Remora n’est pas encore notarisée. Clic droit, puis Ouvrir ; sous macOS 15, Réglages Système → Confidentialité et sécurité → Ouvrir quand même. macOS ne demande qu’une fois.",
-                ),
-                (
-                    "Combien ça coûte ?",
-                    f'Rien. Remora est un logiciel libre sous licence <a href="{REPO}/blob/main/LICENSE">GPL-3.0-or-later</a>, et son code source est sur <a href="{REPO}">GitHub</a> : votre équipe sécurité peut lire exactement ce qu’elle fait.',
-                ),
-            ],
-            final_title='Votre boîte,<br />sans le <span class="mark">bruit.</span>',
-            final_lead="Connectez un outil, voyez ce qui a besoin de vous, fermez les autres onglets.",
-        )
-
-    facts = "".join(f'<div class="fact"><strong>{n}</strong><span>{label}</span></div>' for n, label in c["facts"])
+    c = t["home"]
+    facts = "".join(
+        f'<div class="fact"><strong>{f["value"]}</strong><span>{f["label"]}</span></div>' for f in c["facts"]
+    )
     tabs = "".join(
-        f"<li><figure>{screens(tab, lang)}<figcaption><strong>{name}</strong>{text}</figcaption></figure></li>"
-        for tab, name, text in c["tabs"]
+        f"<li><figure>{screens(tab['tab'], lang)}<figcaption><strong>{tab['name']}</strong>{tab['text']}</figcaption></figure></li>"
+        for tab in c["tabs"]
     )
     verbs = "".join(
-        f'<li{' class="is-quiet"' if name in c["quiet"] else ""}><span class="dot">{icon(name, 13)}</span>{label}</li>'
-        for name, label in c["verbs"]
+        f'<li{' class="is-quiet"' if verb["icon"] in c["quiet"] else ""}><span class="dot">{icon(verb["icon"], 13)}</span>{verb["label"]}</li>'
+        for verb in c["verbs"]
     )
     sources = "".join(
-        f'<article class="source"><span class="logo logo-{tool}"></span><div><h3>{name}'
-        f"{f'<span class="soon">{c["soon"][tool]}</span>' if tool in c['soon'] else ''}</h3><p>{text}</p></div></article>"
-        for tool, name, text in c["sources"]
+        f'<article class="source"><span class="logo logo-{s["tool"]}"></span><div><h3>{s["name"]}'
+        f"{f'<span class="soon">{c["soon"][s["tool"]]}</span>' if s['tool'] in c['soon'] else ''}</h3><p>{s['text']}</p></div></article>"
+        for s in c["sources"]
     )
-    return (
-        head(
-            lang,
-            "home",
-            "",
-            "",
-            [
-                {
-                    "@context": "https://schema.org",
-                    "@type": "SoftwareApplication",
-                    "name": "Remora",
-                    "url": ORIGIN + PAGES["home"][lang],
-                    "description": t["description"],
-                    "applicationCategory": "BusinessApplication",
-                    "applicationSubCategory": "Productivity",
-                    "operatingSystem": "macOS 14 or later, Windows 10 or 11, Linux",
-                    "softwareVersion": VERSION,
-                    "inLanguage": ["en", "fr"],
-                    "isAccessibleForFree": True,
-                    "license": LICENSE_URL,
-                    "downloadUrl": DMG,
-                    "installUrl": DMG,
-                    "screenshot": [
-                        ORIGIN + f"/site/screens/{tab}.{lang}.light.png" for tab in ("myturn", "waiting", "snoozed")
-                    ],
-                    "image": ORIGIN + f"/site/og.{lang}.png",
-                    "codeRepository": REPO,
-                    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
-                },
-                {
-                    "@context": "https://schema.org",
-                    "@type": "FAQPage",
-                    "mainEntity": [
-                        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": plain(a)}}
-                        for q, a in c["faq"]
-                    ],
-                },
+    structured = [
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Remora",
+            "url": ORIGIN + PAGES["home"][lang],
+            "description": t["description"],
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "Productivity",
+            "operatingSystem": "macOS 14 or later, Windows 10 or 11, Linux",
+            "softwareVersion": VERSION,
+            "inLanguage": ["en", "fr"],
+            "isAccessibleForFree": True,
+            "license": LICENSE_URL,
+            "downloadUrl": DMG,
+            "installUrl": DMG,
+            "screenshot": [
+                ORIGIN + f"/site/screens/{tab}.{lang}.light.png" for tab in ("myturn", "waiting", "snoozed")
             ],
-        )
-        + f"""      <section class="hero" aria-labelledby="hero-title">
-        <div class="wrap hero-grid">
-          <div>
-            <span class="eyebrow">{c["eyebrow"]}</span>
-            <h1 id="hero-title">{c["h1"]}</h1>
-            <p class="lead">{c["lead"]}</p>
-            <div class="ctas">{cta_button(lang)}{windows_button(lang)}{linux_button(lang)}</div>
-            <p class="cta-note">{c["note"]}</p>
-            <p class="notice">{icon("info", 18)}<span>{c["notice"]}</span></p>
-          </div>
-          {desk(lang, c["desk_note"])}
-        </div>
-      </section>
-
-      <section class="section-tight" aria-label="Remora">
-        <div class="wrap"><div class="facts">{facts}</div></div>
-      </section>
-
-      <section class="section" aria-labelledby="tabs-title">
-        <div class="wrap">
-          {section_head(c["tabs_eyebrow"], c["tabs_title"], c["tabs_lead"], ident="tabs-title")}
-          <ul class="tabs-show">{tabs}</ul>
-          {platform_note(lang)}
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="verbs-title">
-        <div class="wrap feature-row">
-          <div>
-            <span class="eyebrow">{c["verbs_eyebrow"]}</span>
-            <h2 id="verbs-title">{c["verbs_title"]}</h2>
-            <p class="lead">{c["verbs_lead"]}</p>
-          </div>
-          <div><ul class="verbs">{verbs}</ul><p class="cta-note">{c["verbs_more"]}</p></div>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="line-title">
-        <div class="wrap feature-row">
-          {line_art(lang)}
-          <div>
-            <span class="eyebrow">{c["line_eyebrow"]}</span>
-            <h2 id="line-title">{c["line_title"]}</h2>
-            <p class="lead">{c["line_lead"]}</p>
-            <p class="cta-note">{c["line_more"]}</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="features-title">
-        <div class="wrap">
-          {section_head(c["features_eyebrow"], c["features_title"], c["features_lead"], ident="features-title")}
-          <div class="grid grid-3">{cards(c["features"])}</div>
-          <p class="cta-note"><a class="link-arrow" href="{PAGES["features"][lang]}">{c["features_more"]}</a></p>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="sources-title">
-        <div class="wrap">
-          {section_head(c["sources_eyebrow"], c["sources_title"], c["sources_lead"], ident="sources-title")}
-          <div class="sources">{sources}</div>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="why-title">
-        <div class="wrap">
-          {section_head(c["why_eyebrow"], c["why_title"], c["why_lead"], ident="why-title")}
-          <div class="grid grid-2">{cards(c["why"])}</div>
-        </div>
-      </section>
-
-      <section class="band" aria-labelledby="privacy-title">
-        <div class="wrap">
-          <div class="section-head"><span class="eyebrow">{c["privacy_eyebrow"]}</span><h2 id="privacy-title">{c["privacy_title"]}</h2><p>{c["privacy_lead"]}</p></div>
-          <div class="grid grid-3">{cards(c["privacy"], cls="card")}</div>
-          <p class="cta-note"><a class="link-arrow" href="{PAGES["privacy"][lang]}">{c["privacy_more"]}</a></p>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="faq-title">
-        <div class="wrap">
-          <div class="section-head"><span class="eyebrow">FAQ</span><h2 id="faq-title">{c["faq_title"]}</h2></div>
-          {faq(c["faq"])}
-        </div>
-      </section>
-
-      <section class="section final" aria-labelledby="final-title">
-        <div class="wrap">
-          <h2 id="final-title">{c["final_title"]}</h2>
-          <p class="lead">{c["final_lead"]}</p>
-          <div class="ctas">{cta_button(lang)}{windows_button(lang, "btn btn-ink btn-lg")}{linux_button(lang, "btn btn-ink btn-lg")}</div>
-        </div>
-      </section>
-"""
-        + footer(lang)
+            "image": ORIGIN + f"/site/og.{lang}.png",
+            "codeRepository": REPO,
+            "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": item["question"],
+                    "acceptedAnswer": {"@type": "Answer", "text": plain(item["answer"])},
+                }
+                for item in c["faq"]
+            ],
+        },
+    ]
+    body = fill(
+        "home.html",
+        eyebrow=c["eyebrow"],
+        h1=c["h1"],
+        lead=c["lead"],
+        ctas=downloads(lang),
+        note=c["note"],
+        info=icon("info", 18),
+        notice=c["notice"],
+        desk=desk(lang, c["desk_note"]),
+        facts=facts,
+        tabs_head=section_head(c["tabs_eyebrow"], c["tabs_title"], c["tabs_lead"], ident="tabs-title"),
+        tabs=tabs,
+        platform_note=platform_note(lang),
+        verbs_eyebrow=c["verbs_eyebrow"],
+        verbs_title=c["verbs_title"],
+        verbs_lead=c["verbs_lead"],
+        verbs=verbs,
+        verbs_more=c["verbs_more"],
+        line_art=line_art(lang),
+        line_eyebrow=c["line_eyebrow"],
+        line_title=c["line_title"],
+        line_lead=c["line_lead"],
+        line_more=c["line_more"],
+        features_head=section_head(
+            c["features_eyebrow"], c["features_title"], c["features_lead"], ident="features-title"
+        ),
+        features=cards(c["features"]),
+        features_href=PAGES["features"][lang],
+        features_more=c["features_more"],
+        sources_head=section_head(c["sources_eyebrow"], c["sources_title"], c["sources_lead"], ident="sources-title"),
+        sources=sources,
+        why_head=section_head(c["why_eyebrow"], c["why_title"], c["why_lead"], ident="why-title"),
+        why=cards(c["why"]),
+        privacy_eyebrow=c["privacy_eyebrow"],
+        privacy_title=c["privacy_title"],
+        privacy_lead=c["privacy_lead"],
+        privacy=cards(c["privacy"], cls="card"),
+        privacy_href=PAGES["privacy"][lang],
+        privacy_more=c["privacy_more"],
+        faq_eyebrow=c["faq_eyebrow"],
+        faq_title=c["faq_title"],
+        faq=faq(c["faq"]),
+        final_title=c["final_title"],
+        final_lead=c["final_lead"],
+        final_ctas=cta_button(lang)
+        + windows_button(lang, "btn btn-ink btn-lg")
+        + linux_button(lang, "btn btn-ink btn-lg"),
     )
+    return head(lang, "home", structured) + body + "\n" + footer(lang)
 
 
 # ---------------------------------------------------------------- features
@@ -1100,873 +452,141 @@ def home(lang: str) -> str:
 
 def features(lang: str) -> str:
     t = T[lang]
-    if lang == "en":
-        title, lead = (
-            'One inbox, <span class="mark">built to calm down.</span>',
-            "Everything Remora does, grouped by the moment you need it.",
-        )
-        groups = [
-            (
-                "inbox",
-                "The inbox",
-                "Sorted by what to do, never more than you can take in.",
-                [
-                    (
-                        "todo",
-                        "My turn and Waiting",
-                        "My turn holds what someone waits on you for. Waiting holds what you wait on others for. Snoozed and Done are one click away.",
-                    ),
-                    (
-                        "reply",
-                        "Verbs",
-                        "To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others. Messages are classified on your computer, in English and French; when unsure, To reply.",
-                    ),
-                    (
-                        "done",
-                        "Done",
-                        "Hides an item until something changes on it. Clear the Done list in one click; cleared items still come back on new activity.",
-                    ),
-                    ("pin", "Pin", "Keeps an item at the top, whatever arrives next."),
-                    (
-                        "star",
-                        "Priority, then habits",
-                        "Overdue and due today first, then the tool’s priority (Linear Urgent, High…), the nearest due date, recent activity. Low priority is shown, never counted.",
-                    ),
-                    (
-                        "read",
-                        "Five at a time",
-                        "Long bundles show their top five and “Show N more”. A smart summary of the rest when the assistant is allowed.",
-                    ),
-                ],
-            ),
-            (
-                "menubar",
-                "The menu bar and the tray",
-                "Remora lives in the Mac’s menu bar or the Windows system tray: no window to keep open.",
-                [
-                    (
-                        "menu",
-                        "One count per tool",
-                        "The fish and a single number, or on the Mac one count per tool, ordered by the most pressing verb. Start a task and it shows alone, with how long you’ve been on it.",
-                    ),
-                    (
-                        "drag",
-                        "Drag to remind",
-                        "Pull the fish down to cast a reminder; a bubble shows when it comes back. Further down means later. On Windows, Ctrl+Alt+R. Repeat it every day, weekday or week.",
-                    ),
-                    (
-                        "swipe",
-                        "Gestures",
-                        "Two fingers on the trackpad: right to mark done, left to snooze. On Windows, buttons on each row.",
-                    ),
-                    (
-                        "link",
-                        "Opens in the right app",
-                        "Slack and Linear items open in their desktop app when it’s installed (⌥-click, or Shift-click on Windows, for the web), with the browser as fallback.",
-                    ),
-                ],
-            ),
-            (
-                "time",
-                "Time",
-                "Snooze is a decision, so Remora helps you make a good one.",
-                [
-                    (
-                        "moon",
-                        "Snooze or remind",
-                        "Hide an item until later, or keep it visible and get a reminder. Presets (later today, this evening, tomorrow, next week) or a scrubber: minutes, then hours, then days.",
-                    ),
-                    (
-                        "hourglass",
-                        "With a reason",
-                        "Waiting for someone, no time now, needs focus, not urgent, not feeling it. Each picks a return time; waiting can come back “until there’s news”.",
-                    ),
-                    (
-                        "star",
-                        "Insights",
-                        "Loops (snoozed three times), pile-ups on the same morning, items on the same topic, items gone quiet. One insight at a time, never a report.",
-                    ),
-                    (
-                        "bell",
-                        "Notifications with buttons",
-                        "New review requests, mentions, approvals, failed checks, due reminders. Done or Snooze without opening Remora. Hide the message text per tool, for screen shares.",
-                    ),
-                ],
-            ),
-            (
-                "reviews",
-                "Reviews",
-                "Less context switching between your tools.",
-                [
-                    (
-                        "stopwatch",
-                        "Review prep",
-                        "An estimate and what the change touches (migrations, auth, infrastructure, dependencies), from file paths and line counts only. Code is never stored.",
-                    ),
-                    (
-                        "review",
-                        "Review sessions",
-                        "Start session goes through your review requests one by one, quick wins first: ⏎ open, D done, S snooze, → skip.",
-                    ),
-                    (
-                        "link",
-                        "Links between tools",
-                        "A pull request and a Linear issue with a similar title are shown together, even when nobody linked them.",
-                    ),
-                    (
-                        "people",
-                        "Waiting assistant",
-                        "Suggested reviewers when there are none, a drafted nudge when they stay silent. Written locally; you copy it, Remora never sends.",
-                    ),
-                ],
-            ),
-            (
-                "assistant",
-                "Assistant (optional)",
-                "Off by default. Only where your organization allows external AI.",
-                [
-                    (
-                        "sparkle",
-                        "Brief",
-                        "Three sentences and the items to handle first, with Claude Code on your plan, the Claude API or an OpenAI-compatible model. Cached, so it doesn’t spend tokens on every open.",
-                    ),
-                    (
-                        "read",
-                        "Bundle summaries",
-                        "Two sentences on a busy bundle, with a lighter model. Reused while the bundle holds the same items.",
-                    ),
-                    (
-                        "moon",
-                        "Triage",
-                        "For a crowded Snoozed tab: keep, reschedule, let go or do now, item by item. You confirm every change.",
-                    ),
-                ],
-            ),
-        ]
-        shots = {"time": "snoozed", "reviews": "waiting"}
-        page_title = "Features — Remora"
-        description = "Everything Remora does: verbs, Done and Pin, snooze with a reason, reminders from the menu bar or a shortcut, review prep and sessions, the waiting assistant, and an optional AI brief."
-    else:
-        title, lead = (
-            'Une boîte de réception <span class="mark">qui apaise.</span>',
-            "Tout ce que fait Remora, rangé selon le moment où vous en avez besoin.",
-        )
-        groups = [
-            (
-                "inbox",
-                "La boîte de réception",
-                "Rangée par ce qu’il faut faire, jamais plus que ce que vous pouvez absorber.",
-                [
-                    (
-                        "todo",
-                        "À moi et En attente",
-                        "À moi contient ce que l’on attend de vous. En attente, ce que vous attendez des autres. Reportés et Terminés sont à un clic.",
-                    ),
-                    (
-                        "reply",
-                        "Des verbes",
-                        "À répondre, À relire, À corriger, Prêtes à fusionner, À faire, Rappels, À lire, En attente des autres. Les messages sont classés sur votre ordinateur, en français et en anglais ; dans le doute, À répondre.",
-                    ),
-                    (
-                        "done",
-                        "Terminé",
-                        "Masque un élément jusqu’à ce qu’il change. Videz la liste en un clic ; les éléments effacés reviennent quand même s’il y a du nouveau.",
-                    ),
-                    ("pin", "Épingler", "Garde un élément en haut, quoi qu’il arrive ensuite."),
-                    (
-                        "star",
-                        "La priorité, puis vos habitudes",
-                        "En retard et à faire aujourd’hui d’abord, puis la priorité de l’outil (Linear Urgent, Haute…), l’échéance la plus proche, l’activité récente. La priorité basse est affichée, jamais comptée.",
-                    ),
-                    (
-                        "read",
-                        "Cinq à la fois",
-                        "Les longues listes montrent leurs cinq premiers et « Afficher N de plus ». Un résumé du reste quand l’assistant est autorisé.",
-                    ),
-                ],
-            ),
-            (
-                "menubar",
-                "La barre des menus et la zone de notification",
-                "Remora vit dans la barre des menus du Mac ou la zone de notification de Windows : aucune fenêtre à garder ouverte.",
-                [
-                    (
-                        "menu",
-                        "Un compteur par outil",
-                        "Le poisson et un seul nombre, ou sur le Mac un compteur par outil, dans l’ordre du verbe le plus pressant. Commencez une tâche : elle s’affiche seule, avec le temps passé dessus.",
-                    ),
-                    (
-                        "drag",
-                        "Tirer pour un rappel",
-                        "Tirez le poisson vers le bas pour lancer un rappel ; une bulle indique quand il revient. Plus bas, c’est plus tard. Sous Windows, Ctrl+Alt+R. Répétez-le chaque jour, jour ouvré ou semaine.",
-                    ),
-                    (
-                        "swipe",
-                        "Gestes",
-                        "Deux doigts sur le trackpad : à droite pour terminer, à gauche pour reporter. Sous Windows, des boutons sur chaque ligne.",
-                    ),
-                    (
-                        "link",
-                        "S’ouvre dans la bonne appli",
-                        "Les éléments Slack et Linear s’ouvrent dans leur appli quand elle est installée (⌥-clic, ou Maj-clic sous Windows, pour le web), sinon dans le navigateur.",
-                    ),
-                ],
-            ),
-            (
-                "time",
-                "Le temps",
-                "Reporter est une décision : Remora vous aide à bien la prendre.",
-                [
-                    (
-                        "moon",
-                        "Reporter ou rappeler",
-                        "Masquez un élément jusqu’à plus tard, ou gardez-le visible avec un rappel. Des raccourcis (plus tard, ce soir, demain, semaine prochaine) ou un curseur : minutes, puis heures, puis jours.",
-                    ),
-                    (
-                        "hourglass",
-                        "Avec une raison",
-                        "En attente de quelqu’un, pas le temps, demande de la concentration, pas urgent, pas motivé. Chacune propose un retour ; l’attente peut durer « jusqu’à du nouveau ».",
-                    ),
-                    (
-                        "star",
-                        "Des conseils",
-                        "Les boucles (reporté trois fois), les embouteillages du même matin, les éléments sur un même sujet, ceux devenus silencieux. Un conseil à la fois, jamais un rapport.",
-                    ),
-                    (
-                        "bell",
-                        "Des notifications avec boutons",
-                        "Nouvelles relectures, mentions, approbations, tests en échec, rappels. Terminer ou Reporter sans ouvrir Remora. Masquez le texte des messages par outil, pour les partages d’écran.",
-                    ),
-                ],
-            ),
-            (
-                "reviews",
-                "Les relectures",
-                "Moins d’allers-retours entre vos outils.",
-                [
-                    (
-                        "stopwatch",
-                        "Préparer la relecture",
-                        "Une estimation et ce que touche la modification (migrations, authentification, infrastructure, dépendances), à partir des chemins et du nombre de lignes seulement. Le code n’est jamais stocké.",
-                    ),
-                    (
-                        "review",
-                        "Sessions de relecture",
-                        "Démarrer une session parcourt vos relectures une par une, les plus rapides d’abord : ⏎ ouvrir, D terminer, S reporter, → passer.",
-                    ),
-                    (
-                        "link",
-                        "Des liens entre outils",
-                        "Une pull request et un ticket Linear au titre proche sont présentés ensemble, même si personne ne les a liés.",
-                    ),
-                    (
-                        "people",
-                        "Assistant d’attente",
-                        "Des relecteurs suggérés quand il n’y en a pas, une relance rédigée quand ils restent silencieux. Écrite sur place ; vous la copiez, Remora n’envoie jamais rien.",
-                    ),
-                ],
-            ),
-            (
-                "assistant",
-                "L’assistant (facultatif)",
-                "Désactivé par défaut. Seulement si votre organisation autorise l’IA externe.",
-                [
-                    (
-                        "sparkle",
-                        "Brief",
-                        "Trois phrases et les éléments à traiter d’abord, avec Claude Code sur votre abonnement, l’API Claude ou un modèle OpenAI-compatible. Mis en cache, pour ne pas dépenser de jetons à chaque ouverture.",
-                    ),
-                    (
-                        "read",
-                        "Résumés de liste",
-                        "Deux phrases sur une liste chargée, avec un modèle plus léger. Réutilisé tant que la liste ne change pas.",
-                    ),
-                    (
-                        "moon",
-                        "Tri",
-                        "Pour un onglet Reportés encombré : garder, reprogrammer, laisser tomber ou faire maintenant, élément par élément. Vous validez chaque changement.",
-                    ),
-                ],
-            ),
-        ]
-        shots = {"time": "snoozed", "reviews": "waiting"}
-        page_title = "Fonctionnalités — Remora"
-        description = "Tout ce que fait Remora : verbes, Terminé et Épingler, reporter avec une raison, rappels depuis la barre des menus ou un raccourci, préparation et sessions de relecture, assistant d’attente, et un brief d’IA facultatif."
-
-    subnav = "".join(f'<li><a href="#{key}">{name}</a></li>' for key, name, _, _ in groups)
-    body = ""
-    for key, name, intro, items in groups:
+    c = t["features"]
+    groups = ""
+    for group in c["groups"]:
+        key = group["key"]
         shot = ""
-        if key in shots:
-            shot = f'<figure class="shot shot-narrow">{screens(shots[key], lang)}{platform_note(lang, "figcaption")}</figure>'
-        body += f"""
-      <section class="section-tight" id="{key}" aria-labelledby="{key}-title">
-        <div class="wrap">
-          <div class="section-head"><h2 id="{key}-title">{name}</h2><p>{intro}</p></div>
-          <div class="grid grid-2">{cards(items)}</div>
-          {shot}
-        </div>
-      </section>"""
-    return (
-        head(lang, "features", page_title, description)
-        + f"""      <section class="page-hero" aria-labelledby="page-title">
-        <div class="wrap">
-          <span class="eyebrow">{t["nav"]["features"]}</span>
-          <h1 id="page-title">{title}</h1>
-          <p class="lead">{lead}</p>
-          <div class="ctas">{cta_button(lang)}{windows_button(lang)}{linux_button(lang)}</div>
-        </div>
-      </section>
-      <nav class="subnav" aria-label="{t["nav"]["features"]}"><div class="wrap"><ul>{subnav}</ul></div></nav>
-{body}
-"""
-        + footer(lang)
+        if key in SHOTS:
+            shot = f'<figure class="shot shot-narrow">{screens(SHOTS[key], lang)}{platform_note(lang, "figcaption")}</figure>'
+        groups += "\n" + fill(
+            "features-group.html",
+            key=key,
+            name=group["name"],
+            intro=group["intro"],
+            cards=cards(group["items"]),
+            shot=shot,
+        )
+    body = fill(
+        "features.html",
+        eyebrow=t["nav"]["features"],
+        title=c["title"],
+        lead=c["lead"],
+        ctas=downloads(lang),
+        subnav="".join(f'<li><a href="#{group["key"]}">{group["name"]}</a></li>' for group in c["groups"]),
+        groups=groups,
     )
+    return head(lang, "features") + body + "\n" + footer(lang)
 
 
 # ---------------------------------------------------------------- privacy
 
 
-MDM = """<span class="tok-note">&lt;!-- Preference domain fr.igitscor.remora --&gt;</span>
-&lt;key&gt;<span class="tok-key">AllowedPlugins</span>&lt;/key&gt;
-&lt;array&gt;
-  &lt;string&gt;github&lt;/string&gt;
-  &lt;string&gt;gitlab&lt;/string&gt;
-  &lt;string&gt;linear&lt;/string&gt;
-&lt;/array&gt;
-&lt;key&gt;<span class="tok-key">AllowExternalAI</span>&lt;/key&gt;&lt;false/&gt;
-&lt;key&gt;<span class="tok-key">AllowRemoteImages</span>&lt;/key&gt;&lt;true/&gt;"""
+def mdm_sample() -> str:
+    """The example policy as the plist keys of a configuration profile, escaped and highlighted for the code card."""
+    lines = [f'<span class="tok-note">&lt;!-- Preference domain {DOMAIN} --&gt;</span>']
+    for key, value in POLICY.items():
+        name = f'&lt;key&gt;<span class="tok-key">{e(key)}</span>&lt;/key&gt;'
+        if isinstance(value, bool):
+            lines.append(name + ("&lt;true/&gt;" if value else "&lt;false/&gt;"))
+        elif isinstance(value, list):
+            lines += [
+                name,
+                "&lt;array&gt;",
+                *(f"  &lt;string&gt;{e(v)}&lt;/string&gt;" for v in value),
+                "&lt;/array&gt;",
+            ]
+        else:
+            lines.append(f"{name}&lt;string&gt;{e(str(value))}&lt;/string&gt;")
+    return "\n".join(lines)
 
 
 def privacy(lang: str) -> str:
-    if lang == "en":
-        c = dict(
-            title="Privacy & compliance — Remora",
-            description="Remora sends nothing anywhere except to the tools you allow. Every data flow, what stays on your computer, how it is enforced, and how IT can lock the policy with MDM or Group Policy.",
-            eyebrow="Privacy & compliance",
-            h1='Only the tools <span class="mark">you allow.</span>',
-            lead="Remora has no server, no account and no telemetry. It talks directly to the tools you connect, and to nothing else. Built for organizations with strict data rules.",
-            out_eyebrow="On the network",
-            out_title="What leaves your computer",
-            out_lead="Read requests to your own tools, with your own tokens. Data comes back and stays on your computer.",
-            out_cols=("Flow", "Destination", "What is sent", "Default"),
-            out_rows=[
-                (
-                    "GitHub",
-                    "<code>api.github.com</code>, <code>github.com</code>, avatars, or your GitHub Enterprise host",
-                    "Your token; read requests for your pull requests, review requests, assigned issues, and changed file paths and line counts",
-                    "Allowed",
-                ),
-                (
-                    "GitLab",
-                    "Your GitLab host",
-                    "Your token; read requests for your merge requests, approvals, pipelines, To-Dos, and changed file paths and line counts. Diffs are never read",
-                    "Allowed",
-                ),
-                (
-                    "Azure DevOps",
-                    "Your Azure DevOps organization (<code>dev.azure.com</code>) or server",
-                    "Your token; read requests for your pull requests, votes, policy checks, changed file paths and assigned work items. File contents are never read",
-                    "Allowed",
-                ),
-                (
-                    "Slack",
-                    "<code>slack.com</code>",
-                    "Your user token; searches for your mentions, direct messages and your own recent messages, the replies in up to 10 of your threads, reactions (yours, and on up to 15 recent messages) and the workspace’s own emoji",
-                    "Allowed",
-                ),
-                (
-                    "Linear",
-                    "<code>api.linear.app</code>, <code>public.linear.app</code>",
-                    "Your API key; read requests for assigned issues and notifications",
-                    "Allowed",
-                ),
-                (
-                    "Bitbucket",
-                    "<code>api.bitbucket.org</code>, or your Data Center",
-                    "Your token (and e-mail on Cloud); your open pull requests, those you review, and their build status",
-                    "Allowed",
-                ),
-                (
-                    "Jira",
-                    "Your Jira host: <code>*.atlassian.net</code>, or your Data Center",
-                    "Your token (and e-mail on Cloud); searches for issues assigned to you, and for the comments of the last week on issues you watch; on Cloud, if you turn it on, for the Confluence pages and comments of the last week that mention you",
-                    "Allowed",
-                ),
-                (
-                    "Microsoft 365",
-                    "<code>login.microsoftonline.com</code>, <code>graph.microsoft.com</code>",
-                    "A sign-in in your browser, then read requests for your flagged and unread mail, unanswered invitations and unread Teams chats",
-                    "Allowed",
-                ),
-                (
-                    "Notion",
-                    "<code>api.notion.com</code>",
-                    "Your token; who you are, the properties of the databases you chose (to leave finished tasks out), then your open tasks there",
-                    "Allowed",
-                ),
-                (
-                    "Claude",
-                    "Anthropic, through Claude Code or <code>api.anthropic.com</code>",
-                    "For each inbox item: its verb, title (only the first line of a Slack message), context, author, statuses, age and what its reactions mean; to sort the Snoozed tab, also the snooze reason and count. Never tokens, links, code or the rest of a message",
-                    "<strong>Off</strong>",
-                ),
-                (
-                    "OpenAI-compatible",
-                    "The server you or your organization set: OpenAI, Azure OpenAI, Mistral, or one on your computer",
-                    "The same fields as Claude",
-                    "<strong>Off</strong>, except a server on your computer",
-                ),
-                (
-                    "Avatars",
-                    "Image hosts of your connected tools, Gravatar for GitLab, Jira and Bitbucket, and <code>emoji.slack-edge.com</code> for a workspace’s own emoji",
-                    "An image request, never with a token",
-                    "Allowed",
-                ),
-                (
-                    "Updates",
-                    "<code>github.com</code> and GitHub’s download servers",
-                    "A check for a new version once a day, then the download you choose. No identifier or content",
-                    "<strong>Off</strong>",
-                ),
-            ],
-            stay_eyebrow="On your computer",
-            stay_title="What stays where",
-            stay_cols=("Data", "Where"),
-            stay_rows=[
-                (
-                    "Inbox cache, states, reminders, snooze history, preferences",
-                    "<code>~/Library/Application Support/Remora</code>, protected by FileVault; on Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code>; on Linux, <code>~/.local/share/fr.igitscor.remora</code>, readable by you only",
-                ),
-                (
-                    "Tokens",
-                    "One item in your login Keychain; one entry in the Credential Manager on Windows; the Secret Service (GNOME Keyring, KWallet) on Linux",
-                ),
-                (
-                    "What you handle fast or snooze",
-                    "<code>learning.json</code>, used for ranking on this computer only",
-                ),
-                (
-                    "Spotlight, if you turn it on (Mac)",
-                    "Each item’s title and where it comes from, never previews or people; removed when you turn it off, disconnect a tool or erase",
-                ),
-                ("Review prep", "File paths and line counts only; code is never stored"),
-                ("Drafted messages", "Written from templates, copied to your clipboard, never sent"),
-            ],
-            enforce_eyebrow="Enforced, not promised",
-            enforce_title='Checked in code, <span class="mark">covered by tests.</span>',
-            enforce=[
-                (
-                    "shield",
-                    "Declared destinations",
-                    "Every plugin declares the hosts it may reach. A test fails if one doesn’t.",
-                ),
-                (
-                    "lock",
-                    "One gate",
-                    "Plugins only get a network client limited to their own hosts. Anything else fails with “Blocked: not an allowed destination”, look-alike domains included.",
-                ),
-                (
-                    "sparkle",
-                    "External AI off by default",
-                    "Assistant plugins are refused until external AI is allowed, except a server on your computer; then the brief, summaries and triage appear.",
-                ),
-                (
-                    "chip",
-                    "On-device intelligence",
-                    "Sorting messages, topic similarity, ranking and snooze advice run on your computer: with Apple’s on-device language models on the Mac, with keyword rules on Windows. Nothing is sent.",
-                ),
-                (
-                    "eyeoff",
-                    "No telemetry",
-                    "No analytics, no crash reporting, no update check unless you turn updates on. Fonts and logos are bundled, never downloaded.",
-                ),
-                (
-                    "trash",
-                    "Erase local data",
-                    "Settings → Privacy lists every connected account’s destinations, and erases everything Remora stored in one click.",
-                ),
-            ],
-            mdm_eyebrow="For IT",
-            mdm_title='Lock the policy <span class="mark">with MDM.</span>',
-            mdm_lead="Deploy a configuration profile for the preference domain <code>fr.igitscor.remora</code>. Settings → Privacy then shows “Managed by your organization”, and users can’t change it.",
-            mdm_cols=("Key", "Type", "Meaning"),
-            mdm_rows=[
-                (
-                    "<code>AllowedPlugins</code>",
-                    "Array of strings",
-                    "Allowed tools: <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>",
-                ),
-                (
-                    "<code>AllowExternalAI</code>",
-                    "Boolean",
-                    "Allow the assistant to send inbox content off the computer",
-                ),
-                ("<code>AllowRemoteImages</code>", "Boolean", "Load avatars from allowed tools only"),
-                (
-                    "<code>AIExcludedSources</code>",
-                    "Array of strings",
-                    "Tools whose items never reach the assistant, such as <code>slack</code> (Mac)",
-                ),
-                ("<code>AllowedAIModels</code>", "Array of strings", "The models the assistant may use (Mac)"),
-                (
-                    "<code>AllowedAIServers</code>, <code>AIServer</code>",
-                    "Array of URLs, URL",
-                    "The OpenAI-compatible servers allowed, or the one to use, locked",
-                ),
-                ("<code>AllowLocalAI</code>", "Boolean", "Allow or refuse a server on the computer"),
-            ],
-            mdm_caption="Configuration profile payload",
-            windows="The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
-            more="Data flows, MDM profile and deployment, for IT and compliance teams",
-            more_href="/docs/admin/",
-        )
-    else:
-        c = dict(
-            title="Confidentialité et conformité — Remora",
-            description="Remora n’envoie rien ailleurs que vers les outils autorisés. Chaque flux de données, ce qui reste sur votre ordinateur, comment c’est appliqué, et comment la DSI verrouille la politique par MDM ou stratégie de groupe.",
-            eyebrow="Confidentialité et conformité",
-            h1='Seulement les outils <span class="mark">que vous autorisez.</span>',
-            lead="Remora n’a ni serveur, ni compte, ni télémétrie. Elle parle directement aux outils connectés, et à rien d’autre. Pensée pour les organisations aux règles strictes sur les données.",
-            out_eyebrow="Sur le réseau",
-            out_title="Ce qui quitte votre ordinateur",
-            out_lead="Des requêtes de lecture vers vos propres outils, avec vos propres jetons. Les données reviennent et restent sur votre ordinateur.",
-            out_cols=("Flux", "Destination", "Ce qui est envoyé", "Par défaut"),
-            out_rows=[
-                (
-                    "GitHub",
-                    "<code>api.github.com</code>, <code>github.com</code>, avatars, ou votre GitHub Enterprise",
-                    "Votre jeton ; des lectures de vos pull requests, demandes de relecture, tickets assignés, et chemins et nombre de lignes des fichiers modifiés",
-                    "Autorisé",
-                ),
-                (
-                    "GitLab",
-                    "Votre serveur GitLab",
-                    "Votre jeton ; des lectures de vos merge requests, approbations, pipelines, To-Dos, et chemins et nombre de lignes des fichiers modifiés. Les diffs ne sont jamais lus",
-                    "Autorisé",
-                ),
-                (
-                    "Azure DevOps",
-                    "Votre organisation Azure DevOps (<code>dev.azure.com</code>) ou votre serveur",
-                    "Votre jeton ; des lectures de vos pull requests, votes, vérifications de stratégie, chemins des fichiers modifiés et éléments de travail assignés. Le contenu des fichiers n’est jamais lu",
-                    "Autorisé",
-                ),
-                (
-                    "Slack",
-                    "<code>slack.com</code>",
-                    "Votre jeton utilisateur ; des recherches de vos mentions, messages directs et de vos messages récents, les réponses de 10 de vos fils au plus, les réactions (les vôtres, et celles de 15 messages récents au plus) et les emoji propres à l’espace de travail",
-                    "Autorisé",
-                ),
-                (
-                    "Linear",
-                    "<code>api.linear.app</code>, <code>public.linear.app</code>",
-                    "Votre clé d’API ; des lectures des tickets assignés et des notifications",
-                    "Autorisé",
-                ),
-                (
-                    "Bitbucket",
-                    "<code>api.bitbucket.org</code>, ou votre Data Center",
-                    "Votre jeton (et l’e-mail sur Cloud) ; vos pull requests ouvertes, celles que vous relisez, et l’état de leurs builds",
-                    "Autorisé",
-                ),
-                (
-                    "Jira",
-                    "Votre hôte Jira : <code>*.atlassian.net</code>, ou votre Data Center",
-                    "Votre jeton (et l’e-mail sur Cloud) ; des recherches des tickets qui vous sont assignés, et des commentaires de la dernière semaine sur les tickets que vous suivez ; sur Cloud, si vous l’activez, des pages et commentaires Confluence de la dernière semaine qui vous mentionnent",
-                    "Autorisé",
-                ),
-                (
-                    "Microsoft 365",
-                    "<code>login.microsoftonline.com</code>, <code>graph.microsoft.com</code>",
-                    "Une connexion dans votre navigateur, puis des lectures de vos courriels signalés et non lus, des invitations sans réponse et des conversations Teams non lues",
-                    "Autorisé",
-                ),
-                (
-                    "Notion",
-                    "<code>api.notion.com</code>",
-                    "Votre jeton ; qui vous êtes, les propriétés des bases choisies (pour écarter les tâches terminées), puis vos tâches ouvertes",
-                    "Autorisé",
-                ),
-                (
-                    "Claude",
-                    "Anthropic, via Claude Code ou <code>api.anthropic.com</code>",
-                    "Pour chaque élément : son verbe, son titre (la première ligne seulement d’un message Slack), son contexte, son auteur, ses statuts, son âge et le sens de ses réactions ; pour trier les reportés, aussi la raison et le nombre de reports. Jamais de jetons, de liens, de code ni le reste d’un message",
-                    "<strong>Désactivé</strong>",
-                ),
-                (
-                    "OpenAI-compatible",
-                    "Le serveur choisi par vous ou votre organisation : OpenAI, Azure OpenAI, Mistral, ou un sur votre ordinateur",
-                    "Les mêmes champs que pour Claude",
-                    "<strong>Désactivé</strong>, sauf un serveur sur votre ordinateur",
-                ),
-                (
-                    "Avatars",
-                    "Les serveurs d’images de vos outils connectés, Gravatar pour GitLab, Jira et Bitbucket, et <code>emoji.slack-edge.com</code> pour les emoji propres à un espace de travail",
-                    "Une requête d’image, jamais avec un jeton",
-                    "Autorisé",
-                ),
-                (
-                    "Mises à jour",
-                    "<code>github.com</code> et les serveurs de téléchargement de GitHub",
-                    "Une vérification par jour d’une nouvelle version, puis le téléchargement que vous choisissez. Aucun identifiant ni contenu",
-                    "<strong>Désactivé</strong>",
-                ),
-            ],
-            stay_eyebrow="Sur votre ordinateur",
-            stay_title="Ce qui reste, et où",
-            stay_cols=("Données", "Emplacement"),
-            stay_rows=[
-                (
-                    "Cache, états, rappels, historique des reports, préférences",
-                    "<code>~/Library/Application Support/Remora</code>, protégé par FileVault ; sous Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> ; sous Linux, <code>~/.local/share/fr.igitscor.remora</code>, lisible par vous seul",
-                ),
-                (
-                    "Jetons",
-                    "Un seul élément de votre trousseau de session ; une entrée du Gestionnaire d’identification sous Windows ; le Secret Service (GNOME Keyring, KWallet) sous Linux",
-                ),
-                (
-                    "Ce que vous traitez vite ou reportez",
-                    "<code>learning.json</code>, pour le classement sur cet ordinateur seulement",
-                ),
-                (
-                    "Spotlight, si vous l’activez (Mac)",
-                    "Le titre de chaque élément et sa provenance, jamais les aperçus ni les personnes ; retirés quand vous le désactivez, déconnectez un outil ou effacez tout",
-                ),
-                ("Préparation des relectures", "Chemins et nombre de lignes seulement ; le code n’est jamais stocké"),
-                ("Messages rédigés", "Écrits à partir de modèles, copiés dans le presse-papiers, jamais envoyés"),
-            ],
-            enforce_eyebrow="Appliqué, pas promis",
-            enforce_title='Contrôlé dans le code, <span class="mark">couvert par des tests.</span>',
-            enforce=[
-                (
-                    "shield",
-                    "Destinations déclarées",
-                    "Chaque extension déclare les adresses qu’elle peut joindre. Un test échoue sinon.",
-                ),
-                (
-                    "lock",
-                    "Un seul passage",
-                    "Les extensions ne reçoivent qu’un client réseau limité à leurs adresses. Tout le reste échoue avec « Bloqué : destination non autorisée », domaines imitateurs compris.",
-                ),
-                (
-                    "sparkle",
-                    "IA externe désactivée par défaut",
-                    "Les extensions d’assistant sont refusées tant que l’IA externe n’est pas autorisée, sauf un serveur sur votre ordinateur ; ensuite seulement apparaissent brief, résumés et tri.",
-                ),
-                (
-                    "chip",
-                    "Intelligence sur l’appareil",
-                    "Le tri des messages, la similarité des sujets, le classement et les conseils de report tournent sur votre ordinateur : avec les modèles de langue embarqués d’Apple sur le Mac, avec des règles de mots-clés sous Windows. Rien n’est envoyé.",
-                ),
-                (
-                    "eyeoff",
-                    "Pas de télémétrie",
-                    "Pas d’analytics, pas de rapports de plantage, pas de vérification de mise à jour sauf si vous l’activez. Polices et logos sont intégrés, jamais téléchargés.",
-                ),
-                (
-                    "trash",
-                    "Effacer les données locales",
-                    "Réglages → Confidentialité liste les destinations de chaque compte connecté, et efface en un clic tout ce que Remora a stocké.",
-                ),
-            ],
-            mdm_eyebrow="Pour la DSI",
-            mdm_title='Verrouillez la politique <span class="mark">par MDM.</span>',
-            mdm_lead="Déployez un profil de configuration pour le domaine de préférences <code>fr.igitscor.remora</code>. Réglages → Confidentialité affiche alors « Géré par votre organisation », et l’utilisateur ne peut plus la modifier.",
-            mdm_cols=("Clé", "Type", "Signification"),
-            mdm_rows=[
-                (
-                    "<code>AllowedPlugins</code>",
-                    "Tableau de chaînes",
-                    "Outils autorisés : <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>",
-                ),
-                (
-                    "<code>AllowExternalAI</code>",
-                    "Booléen",
-                    "Autoriser l’assistant à envoyer le contenu de la boîte hors de l’ordinateur",
-                ),
-                (
-                    "<code>AllowRemoteImages</code>",
-                    "Booléen",
-                    "Charger les avatars depuis les outils autorisés seulement",
-                ),
-                (
-                    "<code>AIExcludedSources</code>",
-                    "Tableau de chaînes",
-                    "Les outils dont les éléments ne parviennent jamais à l’assistant, comme <code>slack</code> (Mac)",
-                ),
-                (
-                    "<code>AllowedAIModels</code>",
-                    "Tableau de chaînes",
-                    "Les modèles que l’assistant peut utiliser (Mac)",
-                ),
-                (
-                    "<code>AllowedAIServers</code>, <code>AIServer</code>",
-                    "Tableau d’URL, URL",
-                    "Les serveurs OpenAI-compatibles autorisés, ou celui à utiliser, verrouillé",
-                ),
-                ("<code>AllowLocalAI</code>", "Booléen", "Autoriser ou refuser un serveur sur l’ordinateur"),
-            ],
-            mdm_caption="Contenu du profil de configuration",
-            windows="L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",
-            more="Flux de données, profil MDM et déploiement, pour la DSI et la conformité",
-            more_href="/docs/fr/admin/",
-        )
-    return (
-        head(lang, "privacy", c["title"], c["description"])
-        + f"""      <section class="page-hero" aria-labelledby="page-title">
-        <div class="wrap">
-          <span class="eyebrow">{c["eyebrow"]}</span>
-          <h1 id="page-title">{c["h1"]}</h1>
-          <p class="lead">{c["lead"]}</p>
-        </div>
-      </section>
-
-      <section class="section-tight" aria-labelledby="out-title">
-        <div class="wrap">
-          {section_head(c["out_eyebrow"], c["out_title"], c["out_lead"], ident="out-title")}
-          {table(c["out_title"], c["out_cols"], c["out_rows"])}
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="stay-title">
-        <div class="wrap feature-row">
-          <div><span class="eyebrow">{c["stay_eyebrow"]}</span><h2 id="stay-title">{c["stay_title"]}</h2></div>
-          {table(c["stay_title"], c["stay_cols"], c["stay_rows"])}
-        </div>
-      </section>
-
-      <section class="band" aria-labelledby="enforce-title">
-        <div class="wrap">
-          <div class="section-head"><span class="eyebrow">{c["enforce_eyebrow"]}</span><h2 id="enforce-title">{c["enforce_title"]}</h2></div>
-          <div class="grid grid-3">{cards(c["enforce"], cls="card")}</div>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="mdm-title">
-        <div class="wrap feature-row">
-          <div>
-            <span class="eyebrow">{c["mdm_eyebrow"]}</span>
-            <h2 id="mdm-title">{c["mdm_title"]}</h2>
-            <p class="lead">{c["mdm_lead"]}</p>
-          </div>
-          <figure class="code-card">
-            <figcaption><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>{c["mdm_caption"]}</span></figcaption>
-            <pre><code>{MDM}</code></pre>
-          </figure>
-        </div>
-        <div class="wrap">
-          {table(c["mdm_title"], c["mdm_cols"], c["mdm_rows"])}
-          <p class="notice">{icon("info", 18)}<span>{c["windows"]}</span></p>
-          <p class="cta-note"><a class="link-arrow" href="{c["more_href"]}">{c["more"]}</a></p>
-        </div>
-      </section>
-"""
-        + footer(lang)
+    c = T[lang]["privacy"]
+    body = fill(
+        "privacy.html",
+        eyebrow=c["eyebrow"],
+        h1=c["h1"],
+        lead=c["lead"],
+        out_head=section_head(c["out_eyebrow"], c["out_title"], c["out_lead"], ident="out-title"),
+        out_table=table(c["out_title"], c["out_cols"], c["out_rows"]),
+        stay_eyebrow=c["stay_eyebrow"],
+        stay_title=c["stay_title"],
+        stay_table=table(c["stay_title"], c["stay_cols"], c["stay_rows"]),
+        enforce_eyebrow=c["enforce_eyebrow"],
+        enforce_title=c["enforce_title"],
+        enforce=cards(c["enforce"], cls="card"),
+        mdm_eyebrow=c["mdm_eyebrow"],
+        mdm_title=c["mdm_title"],
+        mdm_lead=c["mdm_lead"],
+        mdm_caption=c["mdm_caption"],
+        mdm_sample=mdm_sample(),
+        mdm_table=table(c["mdm_title"], c["mdm_cols"], c["mdm_rows"]),
+        info=icon("info", 18),
+        windows=c["windows"],
+        more_href=c["more_href"],
+        more=c["more"],
     )
+    return head(lang, "privacy") + body + "\n" + footer(lang)
 
 
 # ---------------------------------------------------------------- bilingual pages
 
 
 def bilingual_head(title: str, description: str, extra: str = "", lang: str = "fr") -> str:
-    return f"""<!doctype html>
-<html lang="{lang}"{extra}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{e(title)}</title>
-    <meta name="description" content="{e(description)}" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f0e8" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e14" />
-    <link rel="icon" type="image/svg+xml" href="/site/favicon.svg" />
-    <link rel="stylesheet" href="/site/tokens.css" />
-    <link rel="stylesheet" href="/site/site.css" />
-    <link rel="stylesheet" href="/site/remora.css" />
-"""
+    return fill("bilingual-head.html", lang=lang, extra=extra, title=e(title), description=e(description))
 
 
 def picker() -> str:
+    # The x-default page every unmatched visitor gets: English first, both languages side by side, and a
+    # description short enough to show whole in results.
+    en, fr = T["en"], T["fr"]
+    title = f"Remora — {en['picker']['choose']} · {fr['picker']['choose']}"
+    description = f"{en['picker']['description']} {en['picker']['languages']} · {fr['picker']['languages']}."
     return (
-        # The x-default page every unmatched visitor gets: English first, both languages side by side, and a
-        # description short enough to show whole in results.
-        bilingual_head(
-            "Remora — Choose your language · Choisissez votre langue",
-            PICKER_DESCRIPTION,
-            " data-lang-picker",
-            lang="en",
+        fill(
+            "picker.html",
+            head=bilingual_head(title, description, " data-lang-picker", lang="en"),
+            origin=ORIGIN,
+            brand=brand("en"),
+            tagline_en=en["tagline"],
+            tagline_fr=fr["tagline"],
+            name_en=en["language_name"],
+            name_fr=fr["language_name"],
         )
-        + f"""    <link rel="canonical" href="{ORIGIN}/" />
-    <link rel="alternate" hreflang="fr" href="{ORIGIN}/fr/" />
-    <link rel="alternate" hreflang="en" href="{ORIGIN}/en/" />
-    <link rel="alternate" hreflang="x-default" href="{ORIGIN}/" />
-    <script src="/site/site.js"></script>
-  </head>
-  <body>
-    <main id="main" class="center-page">
-      <div class="stack">
-        {brand("en")}
-        <h1>{T["en"]["tagline"]}</h1>
-        <p class="lead" lang="fr">{T["fr"]["tagline"]}</p>
-        <div class="ctas">
-          <a class="btn btn-primary btn-lg" href="/en/" hreflang="en" data-lang="en">English</a>
-          <a class="btn btn-primary btn-lg" href="/fr/" hreflang="fr" lang="fr" data-lang="fr">Français</a>
-        </div>
-      </div>
-    </main>
-  </body>
-</html>
-"""
+        + "\n"
     )
 
 
 def not_found() -> str:
+    en, fr = T["en"]["not_found"], T["fr"]["not_found"]
     return (
-        bilingual_head(
-            "Page introuvable · Page not found — Remora", "Cette page n’existe pas. This page doesn’t exist."
+        fill(
+            "404.html",
+            head=bilingual_head(f"{fr['title']} · {en['title']} — Remora", f"{fr['heading']} {en['heading']}"),
+            brand=brand("fr"),
+            title_fr=fr["title"],
+            title_en=en["title"],
+            heading_fr=fr["heading"],
+            text_fr=fr["text"],
+            home_fr=fr["home"],
+            heading_en=en["heading"],
+            text_en=en["text"],
+            home_en=en["home"],
         )
-        + """    <meta name="robots" content="noindex" />
-  </head>
-  <body>
-    <main id="main" class="center-page">
-      <div class="stack">
-        """
-        + brand("fr")
-        + """
-        <p class="big-code" aria-hidden="true">4<span class="mark">0</span>4</p>
-        <h1><span lang="fr">Page introuvable</span> · <span lang="en">Page not found</span></h1>
-        <div class="bilingual">
-          <section class="card card-field" lang="fr" aria-labelledby="nf-fr">
-            <h2 id="nf-fr">Cette page n’existe pas.</h2>
-            <p>Le lien est peut-être ancien, ou l’adresse mal saisie.</p>
-            <div class="ctas"><a class="btn btn-primary btn-sm" href="/fr/" data-lang="fr">Accueil</a></div>
-          </section>
-          <section class="card card-field" lang="en" aria-labelledby="nf-en">
-            <h2 id="nf-en">This page doesn’t exist.</h2>
-            <p>The link may be old, or the address mistyped.</p>
-            <div class="ctas"><a class="btn btn-primary btn-sm" href="/en/" data-lang="en">Home</a></div>
-          </section>
-        </div>
-      </div>
-    </main>
-  </body>
-</html>
-"""
+        + "\n"
     )
 
 
-PICKER_DESCRIPTION = (
-    "Remora, one inbox for what needs you: code reviews, Slack, Linear, Jira, Notion and Microsoft 365. "
-    "English or French · Anglais ou français."
-)
-
-
 def copy_date() -> str:
-    """When the pages' copy last changed (this file, in git), not the build date: a lastmod that changes at every
-    build tells search engines nothing."""
+    """When the pages' copy last changed (this file, the copy and the templates, in git), not the build date: a
+    lastmod that changes at every build tells search engines nothing."""
     try:
         date = subprocess.run(
-            ["git", "log", "-1", "--format=%cs", "--", __file__], capture_output=True, text=True, check=True
+            ["git", "log", "-1", "--format=%cs", "--", __file__, SITE / "copy", SITE / "templates"],
+            capture_output=True,
+            text=True,
+            check=True,
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         date = ""
@@ -1989,29 +609,22 @@ def sitemap() -> str:
 
 def llms() -> str:
     t = T["en"]
-    pages = "".join(f"- [{t['seo'][key][0]}]({ORIGIN}{PAGES[key]['en']}): {t['seo'][key][1]}\n" for key in PAGES)
-    return f"""# Remora
-
-> {t["description"]}
-
-Remora is a free, open-source (GPL-3.0-or-later) macOS menu bar app. It groups items by what you have to do
-(To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others), runs its sorting and
-ranking on the device, and only talks to the tools the user or their organization allows: {TOOLS["en"]}. A tray
-app for Windows and Linux is in preview. French pages: {ORIGIN}/fr/.
-
-## Pages
-
-{pages}
-## Links
-
-- [Download for Mac]({DMG})
-- [Download for Windows (preview)]({EXE})
-- [Linux (preview): AppImage and .deb]({ORIGIN}/docs/guide/faq#can-i-use-it-on-linux)
-- [Source code]({REPO})
-- [Documentation]({ORIGIN}/docs/): the user guide, IT and compliance, and writing a plugin
-- [Connecting your tools]({ORIGIN}/docs/guide/connecting-tools)
-- [Data flows]({ORIGIN}/docs/admin/data-flows) and [MDM policy]({ORIGIN}/docs/admin/mdm)
-"""
+    pages = "".join(
+        f"- [{t['seo'][key]['title']}]({ORIGIN}{PAGES[key]['en']}): {t['seo'][key]['description']}\n" for key in PAGES
+    )
+    return (
+        fill(
+            "llms.txt",
+            description=t["description"],
+            tools=t["tools"],
+            origin=ORIGIN,
+            pages=pages,
+            dmg=DMG,
+            exe=EXE,
+            repo=REPO,
+        )
+        + "\n"
+    )
 
 
 def write(path: str, content: str) -> None:

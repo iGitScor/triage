@@ -11,6 +11,7 @@ on:
       - "macos/Resources/Info.plist" # the version the pages show
       - "scripts/a11y.mjs"
       - "scripts/check-links.py"
+      - "policy/policy.json" # the privacy page's MDM sample
       - "package-lock.json"
       - ".github/workflows/site.yml"
   pull_request:
@@ -20,6 +21,7 @@ on:
       - "macos/Resources/Info.plist" # the version the pages show
       - "scripts/a11y.mjs"
       - "scripts/check-links.py"
+      - "policy/policy.json" # the privacy page's MDM sample
       - "package-lock.json"
       - ".github/workflows/site.yml"
 
@@ -38,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0 # the sitemap's date is when site/build.py last changed
+          fetch-depth: 0 # the sitemap's date is when the site's copy, templates or build last changed
       - name: The committed pages are what site/build.py writes
         run: |
           python3 site/build.py

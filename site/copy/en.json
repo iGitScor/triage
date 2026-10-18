@@ -1,0 +1,727 @@
+{
+  "language_name": "English",
+  "locale": "en_US",
+  "tools": "GitHub, GitLab, Azure DevOps, Slack, Linear, Jira, Notion and Microsoft 365",
+  "tagline": "Everything that needs you. Nothing that doesn’t.",
+  "description": "Remora: one inbox in your menu bar or tray for code reviews, Slack, Linear, Jira, Notion and Microsoft 365, sorted by what you have to do. On-device.",
+  "skip": "Skip to content",
+  "nav": {
+    "features": "Features",
+    "privacy": "Privacy & compliance"
+  },
+  "nav_label": "Main navigation",
+  "lang_label": "Language",
+  "home_label": "Remora, home",
+  "get": "Download for Mac",
+  "get_windows": "Download for Windows",
+  "get_linux": "Linux",
+  "get_short": "Download",
+  "footer_blurb": "An inbox in the menu bar or the system tray for everything that needs you. It runs on your computer and talks only to the tools you allow.",
+  "footer": {
+    "product": {
+      "title": "Product",
+      "links": [
+        {
+          "href": "features",
+          "label": "Features"
+        },
+        {
+          "href": "privacy",
+          "label": "Privacy & compliance"
+        },
+        {
+          "href": "$dmg",
+          "label": "Download for Mac"
+        },
+        {
+          "href": "$exe",
+          "label": "Download for Windows (preview)"
+        },
+        {
+          "href": "$repo/releases",
+          "label": "Release notes"
+        }
+      ]
+    },
+    "resources": {
+      "title": "Resources",
+      "links": [
+        {
+          "href": "/docs/",
+          "label": "Documentation"
+        },
+        {
+          "href": "/docs/guide/connecting-tools",
+          "label": "Connecting your tools"
+        },
+        {
+          "href": "/docs/admin/",
+          "label": "For IT and compliance"
+        },
+        {
+          "href": "/docs/develop/plugins",
+          "label": "Writing a plugin"
+        },
+        {
+          "href": "$repo",
+          "label": "Source code on GitHub"
+        }
+      ]
+    },
+    "trust": {
+      "title": "Trust",
+      "links": [
+        {
+          "href": "$repo/blob/main/LICENSE",
+          "label": "GPL-3.0-or-later licence"
+        },
+        {
+          "href": "$repo/security",
+          "label": "Report a vulnerability"
+        },
+        {
+          "href": "/docs/admin/code-signing",
+          "label": "Code signing policy"
+        },
+        {
+          "href": "$repo/issues",
+          "label": "Questions and feedback"
+        }
+      ]
+    }
+  },
+  "footer_bottom": {
+    "licence": "Remora is free software under the GPL-3.0-or-later licence, built with the help of Claude.",
+    "credits": "Tool logos: Simple Icons (CC0) · Outfit font (OFL)"
+  },
+  "clock": "Thu 9:41",
+  "og_alt": "Remora: everything that needs you, in your menu bar or tray. One inbox for code reviews, merge requests, Slack, Linear, Jira, Notion and Microsoft 365, on your computer.",
+  "seo": {
+    "home": {
+      "title": "Remora — One inbox for $tools",
+      "description": "Code reviews, Slack, Linear, Jira, Notion and Microsoft 365 in one inbox in your menu bar or tray, sorted by what to do. Free, open source, no account."
+    },
+    "features": {
+      "title": "Features — Remora, the menu bar inbox for developers",
+      "description": "Verbs instead of apps, Done and Pin, snooze with a reason, reminders, review prep and sessions, a waiting assistant. All of Remora."
+    },
+    "privacy": {
+      "title": "Privacy & compliance — Remora sends nothing but to your tools",
+      "description": "No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow."
+    }
+  },
+  "crumb": "Home",
+  "screens": {
+    "myturn": "The My turn tab: replies, reviews with their estimate, your merge requests and tasks, grouped by what to do",
+    "waiting": "The Waiting tab: merge requests waiting on reviewers, with a suggested nudge",
+    "snoozed": "The Snoozed tab: items coming back on Monday and an insight about the ones you keep putting off"
+  },
+  "platform_note": {
+    "mac": "Screenshots: the Mac app.",
+    "windows": "Screenshots: the Windows and Linux app."
+  },
+  "line_art": {
+    "label": "Dragging the Remora fish down from the menu bar: a fishing line follows the pointer and a bubble reads in 25 minutes.",
+    "when": "in 25 min",
+    "at": "10:06 · release to name it",
+    "hint": "drag down: later"
+  },
+  "home": {
+    "eyebrow": "Menu bar inbox · macOS · Windows · Linux",
+    "h1": "Everything that<br /><span class=\"mark\">needs you.</span>",
+    "lead": "Nothing that doesn’t. Code reviews, your merge requests, Slack mentions, Linear and Jira issues, Notion tasks, Outlook and Teams, in one inbox in your menu bar or system tray. Sorted by what you have to do, not by where it came from.",
+    "note": "Free and open source, no account. Mac: macOS 14 or later; the first time, right-click Remora → Open. Windows 10 or 11, in preview: if SmartScreen warns, More info → Run anyway. Linux, in preview: AppImage or .deb on the releases page.",
+    "notice": "Remora speaks English and French, and so does on-device sorting.",
+    "desk_note": "The real app, with sample data. One fish in the menu bar, one count per tool.",
+    "facts": [
+      {
+        "value": "0",
+        "label": "servers, accounts or trackers of ours"
+      },
+      {
+        "value": "8",
+        "label": "tools: $tools"
+      },
+      {
+        "value": "5",
+        "label": "items per verb, the rest folded away"
+      },
+      {
+        "value": "100%",
+        "label": "of sorting and ranking done on your computer"
+      }
+    ],
+    "tabs_eyebrow": "See it",
+    "tabs_title": "Your turn, their turn, <span class=\"mark\">later.</span>",
+    "tabs_lead": "Three tabs instead of four apps. What waits on you, what you wait on, and what you chose to see again later.",
+    "tabs": [
+      {
+        "tab": "myturn",
+        "name": "My turn",
+        "text": "Someone is waiting on you: a reply, a review, a fix, a task, a reminder."
+      },
+      {
+        "tab": "waiting",
+        "name": "Waiting",
+        "text": "You’re waiting on others. Remora suggests reviewers and drafts the nudge."
+      },
+      {
+        "tab": "snoozed",
+        "name": "Snoozed",
+        "text": "Out of sight until it’s time, or until there’s news. With a reason."
+      }
+    ],
+    "verbs_eyebrow": "Verbs, not apps",
+    "verbs_title": "Sorted by <span class=\"mark\">what to do.</span>",
+    "verbs_lead": "A Slack question and a GitLab comment both land in To reply. Messages are sorted on your computer with keyword rules, plus Apple’s on-device language model on the Mac. No generative AI, nothing sent. React ✅ in Slack and the item moves to Done.",
+    "verbs": [
+      {
+        "icon": "reply",
+        "label": "To reply"
+      },
+      {
+        "icon": "review",
+        "label": "To review"
+      },
+      {
+        "icon": "fix",
+        "label": "To fix"
+      },
+      {
+        "icon": "merge",
+        "label": "Ready to merge"
+      },
+      {
+        "icon": "todo",
+        "label": "To do"
+      },
+      {
+        "icon": "bell",
+        "label": "Reminders"
+      },
+      {
+        "icon": "read",
+        "label": "To read"
+      },
+      {
+        "icon": "hourglass",
+        "label": "Waiting on others"
+      }
+    ],
+    "quiet": ["read", "hourglass"],
+    "verbs_more": "To read and Waiting are shown, never counted: the badge only counts what needs you.",
+    "line_eyebrow": "Reminders",
+    "line_title": "Cast a reminder <span class=\"mark\">from the menu bar.</span>",
+    "line_lead": "Grab the fish and pull down. The further you drag, the later it comes back: minutes, then hours, then days. Release, type what to remember, press Enter. Esc cancels.",
+    "line_more": "Or press + in the inbox; on Windows, Ctrl+Alt+R from anywhere. Due reminders arrive as notifications, with Snooze buttons.",
+    "features_eyebrow": "Features",
+    "features_title": "Less noise, <span class=\"mark\">more done.</span>",
+    "features_lead": "Every feature has one job: fewer things on your mind at once.",
+    "features": [
+      {
+        "icon": "done",
+        "title": "Done until it changes",
+        "body": "Mark it done and it stays gone, until a new commit, an approval or a reply brings it back."
+      },
+      {
+        "icon": "moon",
+        "title": "Snooze with a reason",
+        "body": "Waiting for someone, no time now, needs focus. Each reason picks a sensible return time, and “until there’s news” is one of them."
+      },
+      {
+        "icon": "stopwatch",
+        "title": "Review prep",
+        "body": "“~6 min · 4 files · tests ✓ · Auth” under each review request, from file paths and line counts only. Then a session, quick wins first."
+      },
+      {
+        "icon": "people",
+        "title": "Waiting assistant",
+        "body": "No reviewer on your merge request? Suggestions from who usually reviews there. Silent for a day? A drafted nudge, which you copy. Remora never sends."
+      },
+      {
+        "icon": "bell",
+        "title": "Notifications that act",
+        "body": "Approved, changes requested, checks failed, a reminder due. On the Mac, mark it done or snooze it right from the notification; on Windows, a click opens it."
+      },
+      {
+        "icon": "star",
+        "title": "Learns your habits",
+        "body": "What you handle fast and what you push back, learned on your computer. It breaks ties, and a small star says why."
+      }
+    ],
+    "features_more": "All features",
+    "sources_eyebrow": "Sources",
+    "sources_title": "Your tools, <span class=\"mark\">your accounts.</span>",
+    "sources_lead": "Connect as many accounts as you need and name them: “Work GitLab”, “Client Slack”. Each one opens in its own app when it’s installed.",
+    "sources": [
+      {
+        "tool": "github",
+        "name": "GitHub",
+        "text": "Pull requests you opened, review requests and issues assigned to you. Enterprise too."
+      },
+      {
+        "tool": "gitlab",
+        "name": "GitLab",
+        "text": "Your merge requests, the ones you review, approvals, pipelines and To-Dos. Self-hosted too."
+      },
+      {
+        "tool": "bitbucket",
+        "name": "Bitbucket",
+        "text": "Pull requests you opened and those you review, with approvals and builds. Cloud or Data Center."
+      },
+      {
+        "tool": "azuredevops",
+        "name": "Azure DevOps",
+        "text": "Pull requests you review or opened, votes and policy checks, and work items assigned to you. Server too."
+      },
+      {
+        "tool": "slack",
+        "name": "Slack",
+        "text": "Mentions and direct messages, opened in the Slack app."
+      },
+      {
+        "tool": "linear",
+        "name": "Linear",
+        "text": "Issues assigned to you with their priority and due date, plus unread mentions."
+      },
+      {
+        "tool": "jira",
+        "name": "Jira",
+        "text": "Issues assigned to you and comments that mention you. Cloud or Data Center."
+      },
+      {
+        "tool": "microsoft",
+        "name": "Microsoft 365 (preview)",
+        "text": "Flagged and unread Outlook mail, invitations to answer and unread Teams chats. Signed in through your browser."
+      },
+      {
+        "tool": "claude",
+        "name": "Claude or OpenAI (optional)",
+        "text": "A short brief on what to handle first, with Claude or an OpenAI-compatible model. Off by default, and only if your organization allows it."
+      },
+      {
+        "tool": "notion",
+        "name": "Notion",
+        "text": "Tasks assigned to you in the databases you pick."
+      }
+    ],
+    "soon": {},
+    "why_eyebrow": "Why Remora",
+    "why_title": "Why not just <span class=\"mark\">use what you have?</span>",
+    "why_lead": "Fair question: your tools already have inboxes. Here is what changes when they become one.",
+    "why": [
+      {
+        "icon": "globe",
+        "title": "Each tool’s own inbox",
+        "body": "GitHub notifications, Linear’s inbox, Jira: each is the best place to act on its own items, and each has its own badge to check. Remora lists what needs you from all of them, then opens each item in its tool."
+      },
+      {
+        "icon": "reply",
+        "title": "Slack’s Later",
+        "body": "Good for messages you chose to keep. It only holds Slack, and only what you saved by hand. Remora picks up mentions and direct messages itself, and files the question under To reply, next to the review waiting on you."
+      },
+      {
+        "icon": "menu",
+        "title": "A menu bar app for code reviews",
+        "body": "gitbar, which inspired Remora, keeps your merge requests in the menu bar, and does it well. Remora keeps the idea for every tool you connect, and sorts by verb: To review, To reply, To fix."
+      },
+      {
+        "icon": "lock",
+        "title": "A hosted unified inbox",
+        "body": "It follows you on every device, which Remora doesn’t. But your tokens and messages go through its servers. Remora has no server: it talks to each tool from your computer, and sorts there."
+      }
+    ],
+    "privacy_eyebrow": "Privacy & compliance",
+    "privacy_title": "Built for teams with rules.",
+    "privacy_lead": "No data leaves your computer except to the tools you allow. Enforced in code, checked by tests, lockable by your IT.",
+    "privacy": [
+      {
+        "icon": "shield",
+        "title": "Only allowed destinations",
+        "body": "Each tool declares the hosts it may reach. Any other address is blocked, look-alike domains included."
+      },
+      {
+        "icon": "sparkle",
+        "title": "External AI off by default",
+        "body": "The assistant is opt-in. Your organization can forbid it, and then every AI feature disappears."
+      },
+      {
+        "icon": "building",
+        "title": "Managed by your IT",
+        "body": "Allowed tools, AI and avatars can be locked with a configuration profile (MDM). Group Policy on Windows."
+      }
+    ],
+    "privacy_more": "Every data flow, and how it is enforced",
+    "faq_eyebrow": "FAQ",
+    "faq_title": "Good to know",
+    "faq": [
+      {
+        "question": "Is my data sent to a Remora server?",
+        "answer": "There is no Remora server. The app talks directly to the tools you connect, keeps its data in your user folder and your tokens in the macOS Keychain or the Windows Credential Manager. No telemetry, no analytics, no crash reports."
+      },
+      {
+        "question": "Do I need an AI assistant?",
+        "answer": "No. Sorting, ranking, snooze advice and review prep all run on your computer without generative AI. The assistant (Claude or an OpenAI-compatible model) only adds optional briefs and summaries, and it is off until you, and your organization, allow it."
+      },
+      {
+        "question": "Can my AI agent use Remora?",
+        "answer": "Yes. Claude Desktop, Claude Code, Gemini CLI and other agents that speak MCP can ask Remora what waits on you, list a tab or add a reminder, through <code>remora mcp</code> on your computer. They never get your tokens, and they can’t write to your tools. Your organization can turn it off. <a href=\"/docs/guide/agents\">Remora and your agents</a>."
+      },
+      {
+        "question": "Does it work with GitHub Enterprise and self-hosted GitLab?",
+        "answer": "Yes. Enter your host when you connect the account; Remora only talks to that host. Setup for each tool: <a href=\"/docs/guide/connecting-tools\">connecting your tools</a>."
+      },
+      {
+        "question": "Is there a Windows version?",
+        "answer": "Yes, in preview: <a href=\"$exe\">Remora-Setup.exe</a> for Windows 10 or 11, installed for your user only (no admin rights). Same rules, the same tools and the same assistant (Claude or OpenAI-compatible), same compliance model, with the policy in the registry for Group Policy or Intune. It sorts messages with keywords only. The installer isn’t signed yet: if SmartScreen warns, click More info → Run anyway."
+      },
+      {
+        "question": "Is there a Linux version?",
+        "answer": "Yes, in preview and community supported: <a href=\"$appimage\">Remora-x86_64.AppImage</a>, which updates itself, or <a href=\"$deb\">Remora-amd64.deb</a> for Ubuntu and Debian. The same app as on Windows, with the policy in <code>/etc/remora/policy.json</code>. It needs WebKitGTK 4.1, a keyring (GNOME Keyring, KWallet or KeePassXC) and a tray, or it opens as a window. <a href=\"/docs/guide/getting-started#on-linux-preview\">Getting started on Linux</a>."
+      },
+      {
+        "question": "Why does macOS ask for my Keychain password?",
+        "answer": "Remora keeps all your tokens in one Keychain item. macOS asks once per new build of an app that isn’t signed by a registered developer. Choose Always Allow."
+      },
+      {
+        "question": "macOS says it can’t check the app?",
+        "answer": "Remora isn’t notarized yet. Right-click it and choose Open; on macOS 15, use System Settings → Privacy & Security → Open Anyway. macOS only asks once."
+      },
+      {
+        "question": "How much does it cost?",
+        "answer": "Nothing. Remora is free software under the <a href=\"$repo/blob/main/LICENSE\">GPL-3.0-or-later</a> licence, and its source code is on <a href=\"$repo\">GitHub</a>, so your security team can read exactly what it does."
+      }
+    ],
+    "final_title": "Your inbox,<br />without the <span class=\"mark\">noise.</span>",
+    "final_lead": "Connect one tool, see what needs you, close the other tabs."
+  },
+  "features": {
+    "title": "One inbox, <span class=\"mark\">built to calm down.</span>",
+    "lead": "Everything Remora does, grouped by the moment you need it.",
+    "groups": [
+      {
+        "key": "inbox",
+        "name": "The inbox",
+        "intro": "Sorted by what to do, never more than you can take in.",
+        "items": [
+          {
+            "icon": "todo",
+            "title": "My turn and Waiting",
+            "body": "My turn holds what someone waits on you for. Waiting holds what you wait on others for. Snoozed and Done are one click away."
+          },
+          {
+            "icon": "reply",
+            "title": "Verbs",
+            "body": "To reply, To review, To fix, Ready to merge, To do, Reminders, To read, Waiting on others. Messages are classified on your computer, in English and French; when unsure, To reply."
+          },
+          {
+            "icon": "done",
+            "title": "Done",
+            "body": "Hides an item until something changes on it. Clear the Done list in one click; cleared items still come back on new activity."
+          },
+          {
+            "icon": "pin",
+            "title": "Pin",
+            "body": "Keeps an item at the top, whatever arrives next."
+          },
+          {
+            "icon": "star",
+            "title": "Priority, then habits",
+            "body": "Overdue and due today first, then the tool’s priority (Linear Urgent, High…), the nearest due date, recent activity. Low priority is shown, never counted."
+          },
+          {
+            "icon": "read",
+            "title": "Five at a time",
+            "body": "Long bundles show their top five and “Show N more”. A smart summary of the rest when the assistant is allowed."
+          }
+        ]
+      },
+      {
+        "key": "menubar",
+        "name": "The menu bar and the tray",
+        "intro": "Remora lives in the Mac’s menu bar or the Windows system tray: no window to keep open.",
+        "items": [
+          {
+            "icon": "menu",
+            "title": "One count per tool",
+            "body": "The fish and a single number, or on the Mac one count per tool, ordered by the most pressing verb. Start a task and it shows alone, with how long you’ve been on it."
+          },
+          {
+            "icon": "drag",
+            "title": "Drag to remind",
+            "body": "Pull the fish down to cast a reminder; a bubble shows when it comes back. Further down means later. On Windows, Ctrl+Alt+R. Repeat it every day, weekday or week."
+          },
+          {
+            "icon": "swipe",
+            "title": "Gestures",
+            "body": "Two fingers on the trackpad: right to mark done, left to snooze. On Windows, buttons on each row."
+          },
+          {
+            "icon": "link",
+            "title": "Opens in the right app",
+            "body": "Slack and Linear items open in their desktop app when it’s installed (⌥-click, or Shift-click on Windows, for the web), with the browser as fallback."
+          }
+        ]
+      },
+      {
+        "key": "time",
+        "name": "Time",
+        "intro": "Snooze is a decision, so Remora helps you make a good one.",
+        "items": [
+          {
+            "icon": "moon",
+            "title": "Snooze or remind",
+            "body": "Hide an item until later, or keep it visible and get a reminder. Presets (later today, this evening, tomorrow, next week) or a scrubber: minutes, then hours, then days."
+          },
+          {
+            "icon": "hourglass",
+            "title": "With a reason",
+            "body": "Waiting for someone, no time now, needs focus, not urgent, not feeling it. Each picks a return time; waiting can come back “until there’s news”."
+          },
+          {
+            "icon": "star",
+            "title": "Insights",
+            "body": "Loops (snoozed three times), pile-ups on the same morning, items on the same topic, items gone quiet. One insight at a time, never a report."
+          },
+          {
+            "icon": "bell",
+            "title": "Notifications with buttons",
+            "body": "New review requests, mentions, approvals, failed checks, due reminders. Done or Snooze without opening Remora. Hide the message text per tool, for screen shares."
+          }
+        ]
+      },
+      {
+        "key": "reviews",
+        "name": "Reviews",
+        "intro": "Less context switching between your tools.",
+        "items": [
+          {
+            "icon": "stopwatch",
+            "title": "Review prep",
+            "body": "An estimate and what the change touches (migrations, auth, infrastructure, dependencies), from file paths and line counts only. Code is never stored."
+          },
+          {
+            "icon": "review",
+            "title": "Review sessions",
+            "body": "Start session goes through your review requests one by one, quick wins first: ⏎ open, D done, S snooze, → skip."
+          },
+          {
+            "icon": "link",
+            "title": "Links between tools",
+            "body": "A pull request and a Linear issue with a similar title are shown together, even when nobody linked them."
+          },
+          {
+            "icon": "people",
+            "title": "Waiting assistant",
+            "body": "Suggested reviewers when there are none, a drafted nudge when they stay silent. Written locally; you copy it, Remora never sends."
+          }
+        ]
+      },
+      {
+        "key": "assistant",
+        "name": "Assistant (optional)",
+        "intro": "Off by default. Only where your organization allows external AI.",
+        "items": [
+          {
+            "icon": "sparkle",
+            "title": "Brief",
+            "body": "Three sentences and the items to handle first, with Claude Code on your plan, the Claude API or an OpenAI-compatible model. Cached, so it doesn’t spend tokens on every open."
+          },
+          {
+            "icon": "read",
+            "title": "Bundle summaries",
+            "body": "Two sentences on a busy bundle, with a lighter model. Reused while the bundle holds the same items."
+          },
+          {
+            "icon": "moon",
+            "title": "Triage",
+            "body": "For a crowded Snoozed tab: keep, reschedule, let go or do now, item by item. You confirm every change."
+          }
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "eyebrow": "Privacy & compliance",
+    "h1": "Only the tools <span class=\"mark\">you allow.</span>",
+    "lead": "Remora has no server, no account and no telemetry. It talks directly to the tools you connect, and to nothing else. Built for organizations with strict data rules.",
+    "out_eyebrow": "On the network",
+    "out_title": "What leaves your computer",
+    "out_lead": "Read requests to your own tools, with your own tokens. Data comes back and stays on your computer.",
+    "out_cols": ["Flow", "Destination", "What is sent", "Default"],
+    "out_rows": [
+      [
+        "GitHub",
+        "<code>api.github.com</code>, <code>github.com</code>, avatars, or your GitHub Enterprise host",
+        "Your token; read requests for your pull requests, review requests, assigned issues, and changed file paths and line counts",
+        "Allowed"
+      ],
+      [
+        "GitLab",
+        "Your GitLab host",
+        "Your token; read requests for your merge requests, approvals, pipelines, To-Dos, and changed file paths and line counts. Diffs are never read",
+        "Allowed"
+      ],
+      [
+        "Azure DevOps",
+        "Your Azure DevOps organization (<code>dev.azure.com</code>) or server",
+        "Your token; read requests for your pull requests, votes, policy checks, changed file paths and assigned work items. File contents are never read",
+        "Allowed"
+      ],
+      [
+        "Slack",
+        "<code>slack.com</code>",
+        "Your user token; searches for your mentions, direct messages and your own recent messages, the replies in up to 10 of your threads, reactions (yours, and on up to 15 recent messages) and the workspace’s own emoji",
+        "Allowed"
+      ],
+      [
+        "Linear",
+        "<code>api.linear.app</code>, <code>public.linear.app</code>",
+        "Your API key; read requests for assigned issues and notifications",
+        "Allowed"
+      ],
+      [
+        "Bitbucket",
+        "<code>api.bitbucket.org</code>, or your Data Center",
+        "Your token (and e-mail on Cloud); your open pull requests, those you review, and their build status",
+        "Allowed"
+      ],
+      [
+        "Jira",
+        "Your Jira host: <code>*.atlassian.net</code>, or your Data Center",
+        "Your token (and e-mail on Cloud); searches for issues assigned to you, and for the comments of the last week on issues you watch; on Cloud, if you turn it on, for the Confluence pages and comments of the last week that mention you",
+        "Allowed"
+      ],
+      [
+        "Microsoft 365",
+        "<code>login.microsoftonline.com</code>, <code>graph.microsoft.com</code>",
+        "A sign-in in your browser, then read requests for your flagged and unread mail, unanswered invitations and unread Teams chats",
+        "Allowed"
+      ],
+      [
+        "Notion",
+        "<code>api.notion.com</code>",
+        "Your token; who you are, the properties of the databases you chose (to leave finished tasks out), then your open tasks there",
+        "Allowed"
+      ],
+      [
+        "Claude",
+        "Anthropic, through Claude Code or <code>api.anthropic.com</code>",
+        "For each inbox item: its verb, title (only the first line of a Slack message), context, author, statuses, age and what its reactions mean; to sort the Snoozed tab, also the snooze reason and count. Never tokens, links, code or the rest of a message",
+        "<strong>Off</strong>"
+      ],
+      [
+        "OpenAI-compatible",
+        "The server you or your organization set: OpenAI, Azure OpenAI, Mistral, or one on your computer",
+        "The same fields as Claude",
+        "<strong>Off</strong>, except a server on your computer"
+      ],
+      [
+        "Avatars",
+        "Image hosts of your connected tools, Gravatar for GitLab, Jira and Bitbucket, and <code>emoji.slack-edge.com</code> for a workspace’s own emoji",
+        "An image request, never with a token",
+        "Allowed"
+      ],
+      [
+        "Updates",
+        "<code>github.com</code> and GitHub’s download servers",
+        "A check for a new version once a day, then the download you choose. No identifier or content",
+        "<strong>Off</strong>"
+      ]
+    ],
+    "stay_eyebrow": "On your computer",
+    "stay_title": "What stays where",
+    "stay_cols": ["Data", "Where"],
+    "stay_rows": [
+      [
+        "Inbox cache, states, reminders, snooze history, preferences",
+        "<code>~/Library/Application Support/Remora</code>, protected by FileVault; on Windows, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code>; on Linux, <code>~/.local/share/fr.igitscor.remora</code>, readable by you only"
+      ],
+      [
+        "Tokens",
+        "One item in your login Keychain; one entry in the Credential Manager on Windows; the Secret Service (GNOME Keyring, KWallet) on Linux"
+      ],
+      ["What you handle fast or snooze", "<code>learning.json</code>, used for ranking on this computer only"],
+      [
+        "Spotlight, if you turn it on (Mac)",
+        "Each item’s title and where it comes from, never previews or people; removed when you turn it off, disconnect a tool or erase"
+      ],
+      ["Review prep", "File paths and line counts only; code is never stored"],
+      ["Drafted messages", "Written from templates, copied to your clipboard, never sent"]
+    ],
+    "enforce_eyebrow": "Enforced, not promised",
+    "enforce_title": "Checked in code, <span class=\"mark\">covered by tests.</span>",
+    "enforce": [
+      {
+        "icon": "shield",
+        "title": "Declared destinations",
+        "body": "Every plugin declares the hosts it may reach. A test fails if one doesn’t."
+      },
+      {
+        "icon": "lock",
+        "title": "One gate",
+        "body": "Plugins only get a network client limited to their own hosts. Anything else fails with “Blocked: not an allowed destination”, look-alike domains included."
+      },
+      {
+        "icon": "sparkle",
+        "title": "External AI off by default",
+        "body": "Assistant plugins are refused until external AI is allowed, except a server on your computer; then the brief, summaries and triage appear."
+      },
+      {
+        "icon": "chip",
+        "title": "On-device intelligence",
+        "body": "Sorting messages, topic similarity, ranking and snooze advice run on your computer: with Apple’s on-device language models on the Mac, with keyword rules on Windows. Nothing is sent."
+      },
+      {
+        "icon": "eyeoff",
+        "title": "No telemetry",
+        "body": "No analytics, no crash reporting, no update check unless you turn updates on. Fonts and logos are bundled, never downloaded."
+      },
+      {
+        "icon": "trash",
+        "title": "Erase local data",
+        "body": "Settings → Privacy lists every connected account’s destinations, and erases everything Remora stored in one click."
+      }
+    ],
+    "mdm_eyebrow": "For IT",
+    "mdm_title": "Lock the policy <span class=\"mark\">with MDM.</span>",
+    "mdm_lead": "Deploy a configuration profile for the preference domain <code>fr.igitscor.remora</code>. Settings → Privacy then shows “Managed by your organization”, and users can’t change it.",
+    "mdm_cols": ["Key", "Type", "Meaning"],
+    "mdm_rows": [
+      [
+        "<code>AllowedPlugins</code>",
+        "Array of strings",
+        "Allowed tools: <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>"
+      ],
+      ["<code>AllowExternalAI</code>", "Boolean", "Allow the assistant to send inbox content off the computer"],
+      ["<code>AllowRemoteImages</code>", "Boolean", "Load avatars from allowed tools only"],
+      [
+        "<code>AIExcludedSources</code>",
+        "Array of strings",
+        "Tools whose items never reach the assistant, such as <code>slack</code> (Mac)"
+      ],
+      ["<code>AllowedAIModels</code>", "Array of strings", "The models the assistant may use (Mac)"],
+      [
+        "<code>AllowedAIServers</code>, <code>AIServer</code>",
+        "Array of URLs, URL",
+        "The OpenAI-compatible servers allowed, or the one to use, locked"
+      ],
+      ["<code>AllowLocalAI</code>", "Boolean", "Allow or refuse a server on the computer"]
+    ],
+    "mdm_caption": "Configuration profile payload",
+    "windows": "The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
+    "more": "Data flows, MDM profile and deployment, for IT and compliance teams",
+    "more_href": "/docs/admin/"
+  },
+  "picker": {
+    "choose": "Choose your language",
+    "description": "Remora, one inbox for what needs you: code reviews, Slack, Linear, Jira, Notion and Microsoft 365.",
+    "languages": "English or French"
+  },
+  "not_found": {
+    "title": "Page not found",
+    "heading": "This page doesn’t exist.",
+    "text": "The link may be old, or the address mistyped.",
+    "home": "Home"
+  }
+}

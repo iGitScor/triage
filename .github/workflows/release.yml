@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0 # the sitemap's date is when site/build.py last changed
+          fetch-depth: 0 # the sitemap's date is when the site's copy, templates or build last changed
       - name: The tag matches the version in the source
         run: python3 scripts/version.py --check "${GITHUB_REF_NAME#v}"
       - name: No known vulnerability or licence problem in the Rust dependencies

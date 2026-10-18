@@ -50,13 +50,13 @@ keep working; on Windows without `make`, run those directly.
   `Message` (a code, its values, the English): give it a code in `PluginError::message()` (or `Message::new`) and its
   wording in `MESSAGES` in `i18n.ts`; a test fails when a code has none. Fixed sentences go as they are.
 - **User-visible changes are documented**: the guide in `docs/guide` and its French twin in `docs/fr/guide`, the
-  website copy in `site/build.py` (`make site`) when a feature is advertised there, and a line under *Unreleased*
+  website copy in `site/copy/en.json` and `fr.json` (`make site`) when a feature is advertised there, and a line under *Unreleased*
   in [`CHANGELOG.md`](CHANGELOG.md). Keep it short.
 - **Privacy rules hold**: a plugin declares every host it reaches (`egress`, enforced by the guarded HTTP client
   and its tests); tokens go only to the Keychain or the Credential Manager; no telemetry, analytics or crash
   reporting; nothing is sent to an AI unless external AI is allowed. A new or changed flow (a host, an API call, a
   field the assistant gets) updates both lists of flows, in English and French: [Data flows](docs/admin/data-flows.md)
-  and the website's privacy page (`privacy()` in `site/build.py`).
+  and the website's privacy page (`privacy` in `site/copy/en.json` and `fr.json`).
 
 - **Dependencies**: a new Rust crate needs a licence listed in `desktop/deny.toml` (`make deps-check`, with
   `cargo-deny`); Dependabot proposes updates every week.
