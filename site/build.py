@@ -14,6 +14,7 @@ from __future__ import annotations
 import datetime
 import functools
 import html
+import importlib.util
 import json
 import pathlib
 import plistlib
@@ -36,6 +37,12 @@ DOCS = {"en": "/docs/", "fr": "/docs/fr/"}
 # The MDM page's example policy, written by scripts/make-policy-files.py from its key list: the privacy page shows
 # the same keys and values, so the sample can't drift from the files IT imports.
 POLICY = json.loads((SITE.parent / "policy/policy.json").read_text(encoding="utf-8"))
+# Every key IT can set, with its meaning in both languages: the privacy page's table comes from the same list as the
+# policy files, so it can't fall behind.
+_spec = importlib.util.spec_from_file_location("policy_files", SITE.parent / "scripts/make-policy-files.py")
+_policy_files = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_policy_files)
+POLICY_KEYS = _policy_files.KEYS
 DOMAIN = "fr.igitscor.remora"
 # Which capture illustrates which group of the features page.
 SHOTS = {"time": "snoozed", "reviews": "waiting"}
@@ -321,6 +328,15 @@ def faq(items: list[dict]) -> str:
     )
 
 
+def mdm_rows(lang: str) -> list[list[str]]:
+    """The privacy page's MDM table: every policy key, its type and its meaning."""
+    types = T[lang]["privacy"]["mdm_types"]
+    rows = []
+    for name, kind, _, en, _, fr in POLICY_KEYS:
+        rows.append([f"<code>{name}</code>", e(types[kind]), e(fr if lang == "fr" else en)])
+    return rows
+
+
 def table(caption: str, columns: list[str], rows: list[list[str]]) -> str:
     head_html = "".join(f'<th scope="col">{c}</th>' for c in columns)
     body = "".join(
@@ -521,7 +537,7 @@ def privacy(lang: str) -> str:
         mdm_lead=c["mdm_lead"],
         mdm_caption=c["mdm_caption"],
         mdm_sample=mdm_sample(),
-        mdm_table=table(c["mdm_title"], c["mdm_cols"], c["mdm_rows"]),
+        mdm_table=table(c["mdm_title"], c["mdm_cols"], mdm_rows(lang)),
         info=icon("info", 18),
         windows=c["windows"],
         more_href=c["more_href"],

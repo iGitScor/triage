@@ -690,31 +690,13 @@
     "mdm_title": "Verrouillez la politique <span class=\"mark\">par MDM.</span>",
     "mdm_lead": "Déployez un profil de configuration pour le domaine de préférences <code>fr.igitscor.remora</code>. Réglages → Confidentialité affiche alors « Géré par votre organisation », et l’utilisateur ne peut plus la modifier.",
     "mdm_cols": ["Clé", "Type", "Signification"],
-    "mdm_rows": [
-      [
-        "<code>AllowedPlugins</code>",
-        "Tableau de chaînes",
-        "Outils autorisés : <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>"
-      ],
-      [
-        "<code>AllowExternalAI</code>",
-        "Booléen",
-        "Autoriser l’assistant à envoyer le contenu de la boîte hors de l’ordinateur"
-      ],
-      ["<code>AllowRemoteImages</code>", "Booléen", "Charger les avatars depuis les outils autorisés seulement"],
-      [
-        "<code>AIExcludedSources</code>",
-        "Tableau de chaînes",
-        "Les outils dont les éléments ne parviennent jamais à l’assistant, comme <code>slack</code> (Mac)"
-      ],
-      ["<code>AllowedAIModels</code>", "Tableau de chaînes", "Les modèles que l’assistant peut utiliser (Mac)"],
-      [
-        "<code>AllowedAIServers</code>, <code>AIServer</code>",
-        "Tableau d’URL, URL",
-        "Les serveurs OpenAI-compatibles autorisés, ou celui à utiliser, verrouillé"
-      ],
-      ["<code>AllowLocalAI</code>", "Booléen", "Autoriser ou refuser un serveur sur l’ordinateur"]
-    ],
+    "mdm_types": {
+      "list": "Tableau de chaînes",
+      "bool": "Booléen",
+      "string": "Chaîne",
+      "count": "Entier",
+      "minutes": "Entier (minutes)"
+    },
     "mdm_caption": "Contenu du profil de configuration",
     "windows": "L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",
     "more": "Flux de données, profil MDM et déploiement, pour la DSI et la conformité",

@@ -12,6 +12,7 @@ on:
       - "scripts/a11y.mjs"
       - "scripts/check-links.py"
       - "policy/policy.json" # the privacy page's MDM sample
+      - "scripts/make-policy-files.py" # the privacy page's MDM table
       - "package-lock.json"
       - ".github/workflows/site.yml"
   pull_request:
@@ -22,6 +23,7 @@ on:
       - "scripts/a11y.mjs"
       - "scripts/check-links.py"
       - "policy/policy.json" # the privacy page's MDM sample
+      - "scripts/make-policy-files.py" # the privacy page's MDM table
       - "package-lock.json"
       - ".github/workflows/site.yml"
 

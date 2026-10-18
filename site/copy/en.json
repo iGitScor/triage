@@ -687,27 +687,13 @@
     "mdm_title": "Lock the policy <span class=\"mark\">with MDM.</span>",
     "mdm_lead": "Deploy a configuration profile for the preference domain <code>fr.igitscor.remora</code>. Settings → Privacy then shows “Managed by your organization”, and users can’t change it.",
     "mdm_cols": ["Key", "Type", "Meaning"],
-    "mdm_rows": [
-      [
-        "<code>AllowedPlugins</code>",
-        "Array of strings",
-        "Allowed tools: <code>github</code>, <code>gitlab</code>, <code>slack</code>, <code>linear</code>, <code>notion</code>, <code>claude-code</code>, <code>claude</code>, <code>openai</code>"
-      ],
-      ["<code>AllowExternalAI</code>", "Boolean", "Allow the assistant to send inbox content off the computer"],
-      ["<code>AllowRemoteImages</code>", "Boolean", "Load avatars from allowed tools only"],
-      [
-        "<code>AIExcludedSources</code>",
-        "Array of strings",
-        "Tools whose items never reach the assistant, such as <code>slack</code> (Mac)"
-      ],
-      ["<code>AllowedAIModels</code>", "Array of strings", "The models the assistant may use (Mac)"],
-      [
-        "<code>AllowedAIServers</code>, <code>AIServer</code>",
-        "Array of URLs, URL",
-        "The OpenAI-compatible servers allowed, or the one to use, locked"
-      ],
-      ["<code>AllowLocalAI</code>", "Boolean", "Allow or refuse a server on the computer"]
-    ],
+    "mdm_types": {
+      "list": "Array of strings",
+      "bool": "Boolean",
+      "string": "String",
+      "count": "Integer",
+      "minutes": "Integer (minutes)"
+    },
     "mdm_caption": "Configuration profile payload",
     "windows": "The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
     "more": "Data flows, MDM profile and deployment, for IT and compliance teams",
