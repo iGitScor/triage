@@ -1098,6 +1098,7 @@ final class InboxModel {
         accountsService.add(account)
         apply(snapshot, to: account.id)
         persistence.save(itemsByAccount, to: persistence.cache)
+        SampleData.close()
     }
 
     /// What connecting an assistant sends when the whole-inbox brief is off: nothing from the inbox.

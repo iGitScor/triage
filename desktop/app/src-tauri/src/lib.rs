@@ -35,6 +35,9 @@ pub struct AppState {
     /// Stops a browser sign-in that is waiting (Cancel in the form).
     pub cancel_sign_in: Notify,
     pub demo: bool,
+    /// The sample-data window opened from the welcome card (a second Remora in `--demo`): closed once a real tool is
+    /// connected.
+    pub sample_data: std::sync::Mutex<Option<std::process::Child>>,
     pub updates: updates::Updates,
 }
 
@@ -119,26 +122,35 @@ pub fn run() {
         refresh_now: Notify::new(),
         cancel_sign_in: Notify::new(),
         demo: demo_mode,
+        sample_data: Default::default(),
         updates: Default::default(),
     };
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         // The interface speaks the tray's language: the system locale Rust read, not the webview's own.
         .append_invoke_initialization_script(format!(
             "window.__REMORA_LANG__ = {:?}; window.__REMORA_OS__ = {:?};",
             i18n::translator().lang(),
             std::env::consts::OS
-        ))
-        // A second launch opens the running app; `remora --reminder` (a system shortcut on Wayland) a new reminder.
-        .plugin(tauri_plugin_single_instance::init(|app, args, _| {
-            if args.iter().any(|a| a == "--reminder") {
-                new_reminder(app);
-            } else {
-                show(&main_window(app), false);
-            }
-        }))
-        // After single-instance, which hands it the links a second launch receives.
-        .plugin(tauri_plugin_deep_link::init())
+        ));
+    // The sample data (`--demo`) runs beside the real app, as an instance of its own that takes no links.
+    let builder = if demo_mode {
+        builder
+    } else {
+        builder
+            // A second launch opens the running app; `remora --reminder` (a system shortcut on Wayland) a new
+            // reminder.
+            .plugin(tauri_plugin_single_instance::init(|app, args, _| {
+                if args.iter().any(|a| a == "--reminder") {
+                    new_reminder(app);
+                } else {
+                    show(&main_window(app), false);
+                }
+            }))
+            // After single-instance, which hands it the links a second launch receives.
+            .plugin(tauri_plugin_deep_link::init())
+    };
+    builder
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_positioner::init())
@@ -165,6 +177,7 @@ pub fn run() {
             commands::toggle_pin,
             commands::move_to_reply,
             commands::hand_off,
+            commands::open_sample_data,
             commands::start,
             commands::stop,
             commands::clear_done,
@@ -219,10 +232,15 @@ pub fn run() {
                 window.set_decorations(true)?;
                 window.set_skip_taskbar(false)?;
                 window.set_always_on_top(false)?;
-                // Closing the window hides it: the app keeps running, and the tray menu or the launcher opens it.
+                // Closing the window hides it: the app keeps running, and the tray menu or the launcher opens it. The
+                // sample data has no tray: closing it quits.
                 let hidden = window.clone();
                 window.on_window_event(move |event| {
                     if let WindowEvent::CloseRequested { api, .. } = event {
+                        if demo_mode {
+                            hidden.app_handle().exit(0);
+                            return;
+                        }
                         api.prevent_close();
                         let _ = hidden.hide();
                     }
@@ -239,10 +257,14 @@ pub fn run() {
                     }
                 });
             }
-            build_tray(app.handle())?;
+            if !demo_mode {
+                build_tray(app.handle())?;
+            }
             // Wayland lets no app grab a key everywhere: the desktop's GlobalShortcuts portal binds it where there is
-            // one; elsewhere Settings says how to add a system shortcut instead.
-            if linux::wayland() {
+            // one; elsewhere Settings says how to add a system shortcut instead. The sample data leaves the shortcut to
+            // the real app.
+            if demo_mode {
+            } else if linux::wayland() {
                 SHORTCUT_REGISTERED.store(false, std::sync::atomic::Ordering::Relaxed);
                 #[cfg(target_os = "linux")]
                 {

@@ -229,7 +229,11 @@ private struct Onboarding: View {
                     .background(Myna.card, in: Capsule())
                 }
             }
-            Button("Connect a source", action: connect).buttonStyle(PillButtonStyle())
+            HStack(spacing: 8) {
+                Button("Connect a source", action: connect).buttonStyle(PillButtonStyle())
+                // A second Remora with sample data, in a window that saves nothing: see it work before a token.
+                Button("Try with sample data") { SampleData.open() }.buttonStyle(PillButtonStyle(prominent: false))
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 36)

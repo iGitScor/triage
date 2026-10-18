@@ -99,6 +99,7 @@ export const api = {
   togglePin: (id: string) => call<void>('toggle_pin', { id }),
   moveToReply: (id: string) => call<void>('move_to_reply', { id }),
   handOff: (id: string) => call<string | null>('hand_off', { id }),
+  openSampleData: () => call<void>('open_sample_data'),
   start: (id: string) => call<void>('start', { id }),
   stop: (id: string) => call<void>('stop', { id }),
   clearDone: () => call<void>('clear_done'),

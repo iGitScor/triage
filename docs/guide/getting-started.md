@@ -90,10 +90,15 @@ Next: [the inbox](./inbox), and how Remora decides what goes where.
 
 ## Try it without connecting anything
 
-Remora has a demo mode with sample data, opened as a window. Nothing is saved. On a Mac:
+Before connecting a tool, **Try with sample data** on the welcome screen opens Remora with sample items in a window
+of its own, beside the real app. Nothing is saved, and the window closes once you connect a real tool.
+
+From a terminal:
 
 ```sh
-open /Applications/Remora.app --args --demo
+open -n /Applications/Remora.app --args --demo          # Mac
+"%LOCALAPPDATA%\Remora\remora.exe" --demo                  # Windows
+remora --demo                                             # Linux (.deb), or the AppImage with --demo
 ```
 
 ## Languages

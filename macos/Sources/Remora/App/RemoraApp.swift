@@ -36,8 +36,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
         Notifier.shared.onAction = { action, itemID in model.perform(action, onItem: itemID) }
-        Notifier.shared.activate()
-        statusItem = MainActor.assumeIsolated { StatusItemController(model: model) }
+        // The sample data is a window beside the real app: no menu bar item, no notifications of its own.
+        if !CommandLine.arguments.contains("--demo") {
+            Notifier.shared.activate()
+            statusItem = MainActor.assumeIsolated { StatusItemController(model: model) }
+        }
         Task { @MainActor in model.start() }
         commands = MainActor.assumeIsolated {
             CommandEndpoint.start(model: model, demo: CommandLine.arguments.contains("--demo"))
@@ -47,6 +50,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { _ in
             Task { @MainActor in await model.refresh() }
         }
+    }
+
+    /// The sample data's window is all it has: closing it quits. The real app lives on in the menu bar.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        CommandLine.arguments.contains("--demo")
     }
 
     /// `remora://` links: open the inbox (on a tab), the reminder panel filled in, or refresh. Nothing is

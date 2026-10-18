@@ -223,7 +223,11 @@ async function clearAll() {
       <div class="card welcome">
         <strong>{t('Connect a tool to get started')}</strong>
         <p class="muted">{t('GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion or Microsoft 365. Remora only reads, and only talks to the tools you allow.')}</p>
-        <button type="button" class="pill primary" onclick={onsettings}>{t('Connect a tool')}</button>
+        <div class="row">
+          <button type="button" class="pill primary" onclick={onsettings}>{t('Connect a tool')}</button>
+          <!-- A second Remora with sample data, in a window that saves nothing: see it work before creating a token. -->
+          <button type="button" class="pill" onclick={() => api.openSampleData()}>{t('Try with sample data')}</button>
+        </div>
       </div>
     {:else if view}
       {#if tab === 'inProgress'}

@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core'
 import { fireEvent, render } from '@testing-library/svelte'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -100,5 +101,16 @@ describe('An inbox nothing could be read into', () => {
       props: props({ ...view(), counts: { inProgress: 0, myTurn: 0, waiting: 0, snoozed: 0, done: 0 } }),
     })
     expect(container.textContent).toContain('Nothing needs you right now.')
+  })
+})
+
+describe('the welcome card', () => {
+  it('offers the sample data before any tool is connected, and not in the sample data itself', async () => {
+    const { getByRole, unmount } = render(Inbox, { props: props({ ...view(), connected: false }) })
+    await fireEvent.click(getByRole('button', { name: 'Try with sample data' }))
+    expect(invoke).toHaveBeenCalledWith('open_sample_data', undefined)
+    unmount()
+    const demo = render(Inbox, { props: props({ ...view(), connected: false, demo: true }) })
+    expect(demo.queryByRole('button', { name: 'Try with sample data' })).toBeNull()
   })
 })

@@ -100,10 +100,16 @@ Ensuite : [la boîte de réception](./boite-de-reception), et comment Remora dé
 
 ## Essayer sans rien connecter
 
-Remora a un mode démo avec des données d’exemple, ouvert dans une fenêtre. Rien n’est enregistré. Sur Mac :
+Avant de connecter un outil, **Essayer avec des exemples** sur l’écran d’accueil ouvre Remora avec des éléments
+d’exemple dans une fenêtre à part, à côté de la vraie app. Rien n’est enregistré, et la fenêtre se ferme dès que vous
+connectez un vrai outil.
+
+Depuis un terminal :
 
 ```sh
-open /Applications/Remora.app --args --demo
+open -n /Applications/Remora.app --args --demo          # Mac
+"%LOCALAPPDATA%\Remora\remora.exe" --demo                  # Windows
+remora --demo                                             # Linux (.deb), ou l’AppImage avec --demo
 ```
 
 ## Langues

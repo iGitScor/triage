@@ -303,6 +303,7 @@ FR = {
     "%@ couldn’t be read: %@": "Impossible de lire %@ : %@",
     "A Notion database couldn’t be read (%@): %@": "Impossible de lire une base Notion (%@) : %@",
     "Approvals, pipelines or changed files": "les approbations, pipelines ou fichiers modifiés",
+    "Try with sample data": "Essayer avec des exemples",
     "Copy as a prompt for an agent": "Copier comme prompt pour un agent",
     "Prompt copied": "Prompt copié",
     "Handed off %@": "Confié %@",

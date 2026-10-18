@@ -7,6 +7,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Added
 
+- **Try with sample data** on the welcome screen: Remora with sample items in a window of its own, beside the real
+  app, saving nothing; it closes once a real tool is connected. Mac, Windows and Linux.
 - **Show count of** → *A dot when something needs me*: the menu bar (or the tray's tooltip) says something waits,
   not how many, for a calmer day.
 - **Copy as a prompt for an agent** on a row: a ready prompt for Claude Code, Codex or any agent, written on your

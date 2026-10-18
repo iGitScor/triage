@@ -237,8 +237,33 @@ pub async fn connect(
         state.inbox.lock().await.prepare_connect(&plugin_id, name, settings, &secrets, state.http.clone())?;
     let snapshot = plugin.fetch().await?;
     state.tokens.connect(&state.inbox, account, secrets, snapshot, Utc::now()).await?;
+    close_sample_data(&state);
     changed(&app).await;
     Ok(())
+}
+
+/// Opens Remora with sample data in a window of its own (a second instance in `--demo`), which saves nothing: a way
+/// to see what it does before creating a token. One at a time; closed when a real tool is connected.
+#[tauri::command]
+pub fn open_sample_data(state: State<'_, AppState>) -> Result<()> {
+    let mut running = state.sample_data.lock().map_err(|_| Message::from("The sample data is busy.".to_string()))?;
+    if let Some(child) = running.as_mut() {
+        if matches!(child.try_wait(), Ok(None)) {
+            return Ok(());
+        }
+    }
+    let exe = std::env::current_exe().map_err(|e| Message::from(e.to_string()))?;
+    let child = std::process::Command::new(exe).arg("--demo").spawn().map_err(|e| Message::from(e.to_string()))?;
+    *running = Some(child);
+    Ok(())
+}
+
+/// A real tool is connected: the sample data has done its job.
+fn close_sample_data(state: &AppState) {
+    if let Some(mut child) = state.sample_data.lock().ok().and_then(|mut running| running.take()) {
+        let _ = child.kill();
+        let _ = child.wait();
+    }
 }
 
 /// Reconnect: the same account with a new token, checked with one fetch first (the assistant: with one

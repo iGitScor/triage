@@ -8,6 +8,7 @@ pub const COMMANDS: &[&str] = &[
     "toggle_pin",
     "move_to_reply",
     "hand_off",
+    "open_sample_data",
     "start",
     "stop",
     "clear_done",

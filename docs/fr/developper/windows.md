@@ -23,7 +23,7 @@ ou sinon un raccourci du système qui lance `remora --reminder`.
 | `crates/remora_plugins` | GitHub, GitLab, Bitbucket, Azure DevOps, Slack, Linear, Jira, Notion et Microsoft 365 ; l’assistant : Claude par l’API ou par Claude Code, ou un serveur OpenAI-compatible ; le client HTTP limité aux adresses déclarées par chaque extension | 174 |
 | `crates/remora_app` | Stockage, le coffre du Gestionnaire d’identification, la politique du registre, le service de boîte de réception que pilote l’app (historique, apprentissage, brief, résumés et tri de l’assistant), et ce qu’affiche la zone de notification | 122 |
 | `app/src-tauri` | Dessine l’icône et la fenêtre surgissante, les notifications, le lancement avec Windows, le raccourci de rappel, les avatars, les mises à jour, les commandes : se contente d’appeler `remora_app` | 6 |
-| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 100 |
+| `app/src` | L’interface Svelte, en anglais et en français | types vérifiés, 101 |
 
 ## Ce que Windows a, et ce qu’il n’a pas encore
 
