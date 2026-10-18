@@ -28,20 +28,32 @@ les outils que l’utilisateur, ou l’organisation, autorise.**
 ```mermaid
 flowchart LR
   subgraph Computer["L'ordinateur de l'utilisateur"]
-    UI["Remora"] --> Gate["Un seul passage"]
-    Policy["Politique<br/>les clés MDM ou du registre priment sur les choix de l'utilisateur"] --> Gate
-    Gate --> Client["Client HTTP contrôlé<br/>seulement les adresses déclarées"]
-    Store[("Fichiers locaux<br/>+ trousseau ou Gestionnaire d'identification")]
+    UI["Remora"] --> Gate["Contrôle de la politique"]
+    Policy["Politique gérée<br/>MDM / registre priment<br/>sur les réglages"] --> Gate
+    Gate --> Client["Client HTTP contrôlé<br/>Adresses déclarées<br/>par l'extension seulement"]
+    Store[("Fichiers locaux<br/>Identifiants : trousseau<br/>ou Gestionnaire d'identification")]
     UI --- Store
   end
-  Client --> Tools["GitHub · GitLab · Azure DevOps · Slack · Linear · Jira · Notion · Microsoft 365<br/>(outils autorisés seulement)"]
-  Client -. "seulement si la politique l'autorise" .-> Claude["Fournisseur d’IA : Anthropic ou un serveur OpenAI-compatible"]
-  Client -- "toute autre adresse" --x Blocked["Bloqué"]
+
+  Client --> Tools["Intégrations autorisées<br/>Outils approuvés seulement"]
+  Client -.->|"Si la politique l'autorise"| AI["Fournisseur d'IA<br/>Anthropic ou un serveur<br/>OpenAI-compatible"]
+  Client --x|"Toute autre adresse"| Blocked["Bloqué"]
+
+  %% Colours in the docs theme (custom.css), light and dark.
+  classDef neutral stroke-width:1px;
+  classDef security stroke-width:1.5px;
+  classDef blocked stroke-width:1.5px;
+  classDef zone stroke-width:1px;
+
+  class UI,Policy,Store,Tools,AI neutral;
+  class Gate,Client security;
+  class Blocked blocked;
+  class Computer zone;
 ```
 
 1. **Destinations déclarées.** Chaque extension déclare, dans son manifeste, les adresses qu’elle peut joindre et ce
    qu’elle envoie. Un test échoue sinon.
-2. **Un seul passage.** L’app construit les extensions à un seul endroit. Elle refuse celles que la politique
+2. **Contrôle de la politique.** L’app construit les extensions à un seul endroit. Elle refuse celles que la politique
    n’autorise pas, et donne aux autres un client HTTP limité à leurs adresses (plus celle du compte pour les outils
    auto-hébergés). Toute autre adresse échoue avec « Bloqué : … n’est pas une destination autorisée », domaines
    imitateurs compris, et c’est testé aussi.

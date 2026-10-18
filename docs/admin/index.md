@@ -11,36 +11,48 @@ data leaves the computer except to the tools the user, or the organization, allo
 
 ## In short
 
-| Question | Answer |
-|---|---|
-| Is there a Remora server or cloud? | No. The app talks directly to the tools; nothing goes through a third party. |
-| Accounts, telemetry, analytics, crash reports? | None. |
-| What does it send to the tools? | Each user’s own token and read requests. It never writes to the tools. |
-| Where is data stored? | On the computer only: a few JSON files in the user’s own folder, tokens in the login Keychain (macOS) or the Credential Manager (Windows). |
-| AI? | On-device only by default (Apple’s NaturalLanguage framework on macOS, keyword rules on Windows). The assistant (Claude or an OpenAI-compatible server) is opt-in, and can be forbidden. |
-| Can IT lock it down? | Yes: allowed tools, external AI, the assistant’s servers and avatars, through a configuration profile (macOS) or Group Policy and Intune (Windows). |
-| Accessibility? | Aims at WCAG 2.1 AA, partially conformant today: VoiceOver, Narrator and the keyboard, with the known gaps listed in the [accessibility statement](./accessibility). |
-| Source code? | Public, GPL-3.0-or-later: [github.com/iGitScor/triage](https://github.com/iGitScor/triage). |
+| Question                                       | Answer                                                                                                                                                                                   |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Is there a Remora server or cloud?             | No. The app talks directly to the tools; nothing goes through a third party.                                                                                                             |
+| Accounts, telemetry, analytics, crash reports? | None.                                                                                                                                                                                    |
+| What does it send to the tools?                | Each user’s own token and read requests. It never writes to the tools.                                                                                                                   |
+| Where is data stored?                          | On the computer only: a few JSON files in the user’s own folder, tokens in the login Keychain (macOS) or the Credential Manager (Windows).                                               |
+| AI?                                            | On-device only by default (Apple’s NaturalLanguage framework on macOS, keyword rules on Windows). The assistant (Claude or an OpenAI-compatible server) is opt-in, and can be forbidden. |
+| Can IT lock it down?                           | Yes: allowed tools, external AI, the assistant’s servers and avatars, through a configuration profile (macOS) or Group Policy and Intune (Windows).                                      |
+| Accessibility?                                 | Aims at WCAG 2.1 AA, partially conformant today: VoiceOver, Narrator and the keyboard, with the known gaps listed in the [accessibility statement](./accessibility).                     |
+| Source code?                                   | Public, GPL-3.0-or-later: [github.com/iGitScor/triage](https://github.com/iGitScor/triage).                                                                                              |
 
 ## How it is enforced
 
 ```mermaid
 flowchart LR
   subgraph Computer["The user's computer"]
-    UI["Remora"] --> Gate["One gate"]
-    Policy["Policy<br/>MDM or registry keys win over user choices"] --> Gate
-    Gate --> Client["Guarded HTTP client<br/>the plugin's declared hosts only"]
-    Store[("Local files<br/>+ Keychain or Credential Manager")]
+    UI["Remora"] --> Gate["Policy gate"]
+    Policy["Managed policy<br/>MDM / registry overrides<br/>user settings"] --> Gate
+    Gate --> Client["Guarded HTTP client<br/>Plugin-declared hosts only"]
+    Store[("Local files<br/>Credentials in Keychain<br/>or Credential Manager")]
     UI --- Store
   end
-  Client --> Tools["GitHub · GitLab · Azure DevOps · Slack · Linear · Jira · Notion · Microsoft 365<br/>(allowed tools only)"]
-  Client -. "only if the policy allows it" .-> Claude["AI provider: Anthropic or an OpenAI-compatible server"]
-  Client -- "any other host" --x Blocked["Blocked"]
+
+  Client --> Tools["Allowed integrations<br/>Approved tools only"]
+  Client -.->|"If policy permits"| AI["AI provider<br/>Anthropic or an<br/>OpenAI-compatible server"]
+  Client --x|"Any other host"| Blocked["Blocked"]
+
+  %% Colours in the docs theme (custom.css), light and dark.
+  classDef neutral stroke-width:1px;
+  classDef security stroke-width:1.5px;
+  classDef blocked stroke-width:1.5px;
+  classDef zone stroke-width:1px;
+
+  class UI,Policy,Store,Tools,AI neutral;
+  class Gate,Client security;
+  class Blocked blocked;
+  class Computer zone;
 ```
 
 1. **Declared destinations.** Every plugin declares, in its manifest, the hosts it may reach and what it sends. A
    test fails if a plugin doesn’t.
-2. **One gate.** The app builds plugins in one place. It refuses a plugin the policy doesn’t allow, and gives the
+2. **Policy gate.** The app builds plugins in one place. It refuses a plugin the policy doesn’t allow, and gives the
    others an HTTP client limited to their own hosts (plus the account’s host for self-hosted tools). Any other host
    fails with “Blocked: … is not an allowed destination”, look-alike domains included, and that is tested too.
 3. **External AI off by default.** An assistant that sends content off the computer is refused until external AI is

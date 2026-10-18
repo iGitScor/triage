@@ -146,7 +146,7 @@ vide.
 1. **Destinations déclarées.** Chaque extension déclare ses sorties (adresses, description, IA externe ou non) dans
    son manifeste. Un test vérifie que chacune le fait, puis fait passer la récupération de chaque extension par le
    client limité décrit ci-dessous, et échoue si elle joint une autre adresse.
-2. **Un seul passage.** L’app construit les extensions à un seul endroit. Elle refuse celles que la politique
+2. **Contrôle de la politique.** L’app construit les extensions à un seul endroit. Elle refuse celles que la politique
    n’autorise pas, et donne à chacune un client HTTP limité à ses adresses déclarées plus celle du compte. Toute
    autre adresse échoue avec « Bloqué : … n’est pas une destination autorisée », domaines imitateurs compris
    (`api.linear.app.evil.com` est refusé) ; c’est testé.

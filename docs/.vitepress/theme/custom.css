@@ -110,3 +110,30 @@
   font-family: var(--vp-font-family-base);
   font-size: 0.85em;
 }
+
+/* Diagram classes (classDef neutral, security, blocked, zone), in the design system's colours so they follow the
+   theme. :not(#_) outranks the styles Mermaid scopes to each diagram's id. */
+.vp-doc .mermaid svg:not(#_) {
+  --diagram-fill: var(--card);
+  --diagram-stroke: var(--muted);
+}
+.vp-doc .mermaid svg:not(#_) .security {
+  --diagram-fill: var(--info-soft);
+  --diagram-stroke: var(--info);
+}
+.vp-doc .mermaid svg:not(#_) .blocked {
+  --diagram-fill: var(--danger-soft);
+  --diagram-stroke: var(--danger);
+}
+.vp-doc .mermaid svg:not(#_) :is(.neutral, .security, .blocked) > :is(rect, path, polygon, circle),
+.vp-doc .mermaid svg:not(#_) .cluster.zone > rect {
+  fill: var(--diagram-fill) !important;
+  stroke: var(--diagram-stroke) !important;
+}
+.vp-doc .mermaid svg:not(#_) .cluster.zone > rect {
+  fill: var(--surface) !important;
+  stroke: var(--border) !important;
+}
+.vp-doc .mermaid svg:not(#_) :is(.neutral, .security, .blocked, .zone) :is(span, p, .nodeLabel) {
+  color: var(--ink) !important;
+}
