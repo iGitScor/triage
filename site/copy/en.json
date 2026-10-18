@@ -65,6 +65,14 @@
         {
           "href": "$repo",
           "label": "Source code on GitHub"
+        },
+        {
+          "href": "press",
+          "label": "Press kit"
+        },
+        {
+          "href": "$repo/releases.atom",
+          "label": "Release feed (Atom)"
         }
       ]
     },
@@ -108,6 +116,10 @@
     "privacy": {
       "title": "Privacy & compliance — Remora sends nothing but to your tools",
       "description": "No server, no account, no telemetry: Remora talks only to the tools you allow, with AI off by default and a policy IT can lock with MDM. Every data flow."
+    },
+    "press": {
+      "title": "Press kit — Remora, the menu bar inbox for developers",
+      "description": "Descriptions in one line, 30 and 100 words, the logo, the app icon, screenshots and the facts about Remora, free to use."
     }
   },
   "crumb": "Home",
@@ -709,5 +721,80 @@
     "heading": "This page doesn’t exist.",
     "text": "The link may be old, or the address mistyped.",
     "home": "Home"
+  },
+  "press": {
+    "eyebrow": "Press kit",
+    "h1": "Remora, <span class=\"mark\">in brief.</span>",
+    "lead": "Descriptions, logos, screenshots and facts, free to use when you write about Remora.",
+    "crumb": "Press kit",
+    "desc_eyebrow": "Descriptions",
+    "desc_title": "In one line, 30 or 100 words",
+    "desc_lead": "Take the one that fits; shorten as you like, as long as it stays true.",
+    "descriptions": [
+      {
+        "icon": "menu",
+        "title": "One line",
+        "body": "Everything that needs you, from every tool, in one inbox in your menu bar or tray."
+      },
+      {
+        "icon": "reply",
+        "title": "30 words",
+        "body": "Remora gathers code reviews, merge requests, Slack mentions and tasks from Linear, Jira, Notion and Microsoft 365 in one inbox, sorted by what to do. Free, open source, on your computer."
+      },
+      {
+        "icon": "lock",
+        "title": "100 words",
+        "body": "Remora is a free, open-source inbox for the work that waits on you. It lives in the menu bar on a Mac and in the tray on Windows and Linux, and gathers code reviews and merge requests from GitHub, GitLab, Bitbucket and Azure DevOps, mentions and messages from Slack and Microsoft 365, and tasks from Linear, Jira and Notion. Instead of one list per tool, it sorts everything by what to do: to reply, to review, to fix. Remora has no server and no account: it talks to each tool from your computer and sorts there, and IT can lock its policy with MDM."
+      }
+    ],
+    "assets_eyebrow": "Logos and images",
+    "assets_title": "Use them as they are",
+    "assets_lead": "Keep the lime and the ink, and the fish as it is. Captures show the demo inbox, with no real data.",
+    "assets": [
+      {
+        "title": "The mark",
+        "text": "The fish on its lime disc",
+        "preview": "/site/press/remora-mark.svg",
+        "links": [["SVG", "/site/press/remora-mark.svg"], ["PNG, 1024 px", "/site/press/remora-mark-1024.png"]]
+      },
+      {
+        "title": "The Mac app icon",
+        "text": "As in the Dock and Finder",
+        "preview": "/site/press/remora-app-icon-1024.png",
+        "links": [["PNG, 1024 px", "/site/press/remora-app-icon-1024.png"]]
+      },
+      {
+        "title": "Social cards",
+        "text": "1200 × 630, for links and posts",
+        "preview": "/site/og.en.png",
+        "links": [["English", "/site/og.en.png"], ["French", "/site/og.fr.png"]]
+      },
+      {
+        "title": "Screenshots",
+        "text": "The three tabs, light and dark",
+        "preview": "/site/screens/myturn.en.light.webp",
+        "links": [
+          ["My turn", "/site/screens/myturn.en.light.png"],
+          ["Waiting", "/site/screens/waiting.en.light.png"],
+          ["Snoozed", "/site/screens/snoozed.en.light.png"],
+          ["Dark", "/site/screens/myturn.en.dark.png"]
+        ]
+      }
+    ],
+    "facts_eyebrow": "Facts",
+    "facts_title": "What to get right",
+    "facts_lead": "And to follow new versions, the release feed works in any feed reader.",
+    "facts_cols": ["Topic", "Answer"],
+    "facts": [
+      ["Price", "Free, with no account"],
+      ["Licence", "GPL-3.0-or-later (free software)"],
+      ["Platforms", "macOS 14 or later, Windows 10 or 11, Linux"],
+      ["Languages", "English and French"],
+      ["Latest version", "$version"],
+      ["Source code", "<a href=\"$repo\">github.com/iGitScor/triage</a>"],
+      ["Release notes", "<a href=\"$repo/releases\">On GitHub</a>"],
+      ["Release feed", "<a href=\"$repo/releases.atom\">Atom feed</a>"],
+      ["Questions", "<a href=\"$repo/issues\">An issue on GitHub</a>"]
+    ]
   }
 }

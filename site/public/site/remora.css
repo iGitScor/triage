@@ -526,6 +526,59 @@
   }
 }
 
+/* ---------- Press kit ---------- */
+
+.press-assets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.press-asset {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.press-asset img {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  /* A capture's first rows are its title bar: frame a little lower. */
+  object-position: center 18%;
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.press-asset h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.press-asset p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.press-links {
+  margin-top: 6px !important;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .press-assets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ---------- Sources ---------- */
 
 .sources {

@@ -65,6 +65,14 @@
         {
           "href": "$repo",
           "label": "Code source sur GitHub"
+        },
+        {
+          "href": "press",
+          "label": "Kit presse"
+        },
+        {
+          "href": "$repo/releases.atom",
+          "label": "Flux des versions (Atom)"
         }
       ]
     },
@@ -108,6 +116,10 @@
     "privacy": {
       "title": "Confidentialité et conformité — Remora n’envoie rien ailleurs",
       "description": "Ni serveur, ni compte, ni télémétrie : Remora ne parle qu’aux outils autorisés, IA désactivée par défaut, politique verrouillable par MDM. Chaque flux."
+    },
+    "press": {
+      "title": "Kit presse — Remora, la boîte de réception des développeurs",
+      "description": "Descriptions en une ligne, 30 et 100 mots, le logo, l’icône de l’app, des captures et les faits sur Remora, libres d’utilisation."
     }
   },
   "crumb": "Accueil",
@@ -711,5 +723,80 @@
     "heading": "Cette page n’existe pas.",
     "text": "Le lien est peut-être ancien, ou l’adresse mal saisie.",
     "home": "Accueil"
+  },
+  "press": {
+    "eyebrow": "Kit presse",
+    "h1": "Remora, <span class=\"mark\">en bref.</span>",
+    "lead": "Descriptions, logos, captures et faits, libres d’utilisation pour parler de Remora.",
+    "crumb": "Kit presse",
+    "desc_eyebrow": "Descriptions",
+    "desc_title": "En une ligne, 30 ou 100 mots",
+    "desc_lead": "Prenez celle qui convient ; raccourcissez à votre guise, tant qu’elle reste juste.",
+    "descriptions": [
+      {
+        "icon": "menu",
+        "title": "Une ligne",
+        "body": "Tout ce qui a besoin de vous, de tous vos outils, dans une seule boîte, barre des menus ou zone de notification."
+      },
+      {
+        "icon": "reply",
+        "title": "30 mots",
+        "body": "Remora rassemble relectures, merge requests, mentions Slack et tâches Linear, Jira, Notion et Microsoft 365 dans une seule boîte, triée par ce qu’il faut faire. Gratuit, libre, sur votre ordinateur."
+      },
+      {
+        "icon": "lock",
+        "title": "100 mots",
+        "body": "Remora est une boîte de réception gratuite et libre pour le travail qui vous attend. Elle vit dans la barre des menus sur Mac et dans la zone de notification sous Windows et Linux, et rassemble les relectures et merge requests de GitHub, GitLab, Bitbucket et Azure DevOps, les mentions et messages de Slack et Microsoft 365, et les tâches de Linear, Jira et Notion. Plutôt qu’une liste par outil, elle trie tout par ce qu’il faut faire : répondre, relire, corriger. Remora n’a ni serveur ni compte : elle parle à chaque outil depuis votre ordinateur et trie sur place, et l’IT peut verrouiller sa politique par MDM."
+      }
+    ],
+    "assets_eyebrow": "Logos et images",
+    "assets_title": "Utilisez-les tels quels",
+    "assets_lead": "Gardez le lime et l’encre, et le poisson tel qu’il est. Les captures montrent la boîte de démo, sans données réelles.",
+    "assets": [
+      {
+        "title": "La marque",
+        "text": "Le poisson sur son disque lime",
+        "preview": "/site/press/remora-mark.svg",
+        "links": [["SVG", "/site/press/remora-mark.svg"], ["PNG, 1024 px", "/site/press/remora-mark-1024.png"]]
+      },
+      {
+        "title": "L’icône de l’app Mac",
+        "text": "Comme dans le Dock et le Finder",
+        "preview": "/site/press/remora-app-icon-1024.png",
+        "links": [["PNG, 1024 px", "/site/press/remora-app-icon-1024.png"]]
+      },
+      {
+        "title": "Cartes sociales",
+        "text": "1200 × 630, pour les liens et les publications",
+        "preview": "/site/og.fr.png",
+        "links": [["Français", "/site/og.fr.png"], ["Anglais", "/site/og.en.png"]]
+      },
+      {
+        "title": "Captures",
+        "text": "Les trois onglets, clair et sombre",
+        "preview": "/site/screens/myturn.fr.light.webp",
+        "links": [
+          ["À moi", "/site/screens/myturn.fr.light.png"],
+          ["En attente", "/site/screens/waiting.fr.light.png"],
+          ["Reportés", "/site/screens/snoozed.fr.light.png"],
+          ["Sombre", "/site/screens/myturn.fr.dark.png"]
+        ]
+      }
+    ],
+    "facts_eyebrow": "Faits",
+    "facts_title": "Ce qu’il faut dire juste",
+    "facts_lead": "Et pour suivre les nouvelles versions, le flux des versions marche dans tout lecteur de flux.",
+    "facts_cols": ["Sujet", "Réponse"],
+    "facts": [
+      ["Prix", "Gratuit, sans compte"],
+      ["Licence", "GPL-3.0-or-later (logiciel libre)"],
+      ["Plateformes", "macOS 14 ou plus, Windows 10 ou 11, Linux"],
+      ["Langues", "Anglais et français"],
+      ["Dernière version", "$version"],
+      ["Code source", "<a href=\"$repo\">github.com/iGitScor/triage</a>"],
+      ["Notes de version", "<a href=\"$repo/releases\">Sur GitHub</a>"],
+      ["Flux des versions", "<a href=\"$repo/releases.atom\">Flux Atom</a>"],
+      ["Questions", "<a href=\"$repo/issues\">Une issue sur GitHub</a>"]
+    ]
   }
 }

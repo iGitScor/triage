@@ -91,6 +91,7 @@ PAGES = {
     "home": {"en": "/en/", "fr": "/fr/"},
     "features": {"en": "/en/features", "fr": "/fr/fonctionnalites"},
     "privacy": {"en": "/en/privacy", "fr": "/fr/confidentialite"},
+    "press": {"en": "/en/press", "fr": "/fr/presse"},
 }
 
 
@@ -122,7 +123,15 @@ def resolve(node, names: dict[str, str]):
 
 def load_copy(lang: str) -> dict:
     data = json.loads((SITE / "copy" / f"{lang}.json").read_text(encoding="utf-8"))
-    names = {"repo": REPO, "dmg": DMG, "exe": EXE, "appimage": APPIMAGE, "deb": DEB, "tools": data["tools"]}
+    names = {
+        "repo": REPO,
+        "dmg": DMG,
+        "exe": EXE,
+        "appimage": APPIMAGE,
+        "deb": DEB,
+        "tools": data["tools"],
+        "version": VERSION,
+    }
     return resolve(data, names)
 
 
@@ -179,7 +188,13 @@ def head(lang: str, page: str, data: list[dict] | None = None) -> str:
                 "@type": "BreadcrumbList",
                 "itemListElement": [
                     {"@type": "ListItem", "position": 1, "name": t["crumb"], "item": ORIGIN + PAGES["home"][lang]},
-                    {"@type": "ListItem", "position": 2, "name": t["nav"][page], "item": ORIGIN + path},
+                    # A page outside the top navigation (the press kit) names itself.
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": plain(t["nav"].get(page) or t[page]["crumb"]),
+                        "item": ORIGIN + path,
+                    },
                 ],
             }
         )
@@ -202,6 +217,7 @@ def head(lang: str, page: str, data: list[dict] | None = None) -> str:
             description=e(seo["description"]),
             url=ORIGIN + path,
             other_url=ORIGIN + PAGES[page][other],
+            releases_feed=REPO + "/releases.atom",
             origin=ORIGIN,
             locale=t["locale"],
             other_locale=T[other]["locale"],
@@ -556,6 +572,33 @@ def privacy(lang: str) -> str:
     return head(lang, "privacy") + body + "\n" + footer(lang)
 
 
+def press(lang: str) -> str:
+    """The press kit: descriptions to quote, the logo and images to use, and the facts to get right."""
+    c = T[lang]["press"]
+    assets = "".join(
+        f'<li class="press-asset"><img src="{a["preview"]}" alt="" width="96" height="96" decoding="async" />'
+        f'<div><h3>{a["title"]}</h3><p>{a["text"]}</p><p class="press-links">'
+        + " · ".join(f'<a href="{url}">{label}</a>' for label, url in a["links"])
+        + "</p></div></li>"
+        for a in c["assets"]
+    )
+    body = fill(
+        "press.html",
+        eyebrow=c["eyebrow"],
+        h1=c["h1"],
+        lead=c["lead"],
+        desc_head=section_head(c["desc_eyebrow"], c["desc_title"], c["desc_lead"], ident="desc-title"),
+        descriptions=cards(c["descriptions"], cls="card"),
+        assets_head=section_head(c["assets_eyebrow"], c["assets_title"], c["assets_lead"], ident="assets-title"),
+        assets=assets,
+        facts_eyebrow=c["facts_eyebrow"],
+        facts_title=c["facts_title"],
+        facts_lead=c["facts_lead"],
+        facts=table(c["facts_title"], c["facts_cols"], c["facts"]),
+    )
+    return head(lang, "press") + body + "\n" + footer(lang)
+
+
 # ---------------------------------------------------------------- bilingual pages
 
 
@@ -665,6 +708,7 @@ if __name__ == "__main__":
         write(f"{lang}/index.html", home(lang))
         write(PAGES["features"][lang].lstrip("/") + ".html", features(lang))
         write(PAGES["privacy"][lang].lstrip("/") + ".html", privacy(lang))
+        write(PAGES["press"][lang].lstrip("/") + ".html", press(lang))
     write("index.html", picker())
     write("404.html", not_found())
     write("sitemap.xml", sitemap())
