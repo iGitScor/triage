@@ -25,13 +25,23 @@ enum Myna {
     static let accentSoft = Color(
         light: 0xB9FF66, dark: 0xB9FF66, lightOpacity: 0.35, darkOpacity: 0.14, contrastOpacity: (0.6, 0.3)
     )
-    static let accentText = Color(light: 0x356509, dark: 0xB9FF66, contrast: (0x234504, 0xB9FF66))
+    static let accentText = Color(light: 0x356509, dark: 0xB9FF66, contrast: (0x224403, 0xB9FF66))
     static let onAccent = Color(light: 0x111111, dark: 0x111111, contrast: (0x000000, 0x000000))
     static let dark = Color(light: 0x111111, dark: 0x07070B, contrast: (0x000000, 0x000000))
     static let onDark = Color(light: 0xF0F0E8, dark: 0xF0F0E8, contrast: (0xFFFFFF, 0xFFFFFF))
-    static let ok = Color(light: 0x146B50, dark: 0x34D399, contrast: (0x0B4F3A, 0x6EE7B7))
-    static let warn = Color(light: 0x725200, dark: 0xFBBF24, contrast: (0x553D00, 0xFCD34D))
-    static let danger = Color(light: 0xA82C23, dark: 0xF87171, contrast: (0x861C15, 0xFCA5A5))
+    static let ok = Color(light: 0x146B50, dark: 0x34D399, contrast: (0x014530, 0x6EE7B7))
+    static let warn = Color(light: 0x725200, dark: 0xFBBF24, contrast: (0x503800, 0xFCD34D))
+    static let danger = Color(light: 0xA82C23, dark: 0xF87171, contrast: (0x7A1009, 0xFDA6A6))
+    // Under a status chip: its colour reads on them at 4.5:1 (7:1 with Increase Contrast).
+    static let okSoft = Color(
+        light: 0x146B50, dark: 0x34D399, lightOpacity: 0.11, darkOpacity: 0.16, contrast: (0x014530, 0x6EE7B7),
+        contrastOpacity: (0.14, 0.19))
+    static let warnSoft = Color(
+        light: 0x725200, dark: 0xFBBF24, lightOpacity: 0.16, darkOpacity: 0.16, contrast: (0x503800, 0xFCD34D),
+        contrastOpacity: (0.14, 0.2))
+    static let dangerSoft = Color(
+        light: 0xA82C23, dark: 0xF87171, lightOpacity: 0.13, darkOpacity: 0.16, contrast: (0x7A1009, 0xFDA6A6),
+        contrastOpacity: (0.13, 0.13))
 
     /// Secondary text on `dark` surfaces: translucent, but nearly opaque with Increase Contrast.
     static func onDark(opacity: Double) -> Color {
@@ -68,9 +78,9 @@ enum Myna {
     static func color(for tone: Tone) -> (foreground: Color, background: Color) {
         switch tone {
         case .accent: (onAccent, accent)
-        case .positive: (ok, ok.opacity(0.14))
-        case .negative: (danger, danger.opacity(0.14))
-        case .warning: (warn, warn.opacity(0.16))
+        case .positive: (ok, okSoft)
+        case .negative: (danger, dangerSoft)
+        case .warning: (warn, warnSoft)
         case .neutral: (muted, line)
         }
     }

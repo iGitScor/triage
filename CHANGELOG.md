@@ -21,7 +21,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 ### Changed
 
 - The colours come from Estuary, the design system shared with Myna and iscor.me (`@iscor/design`), instead of a
-  copy of it: same look.
+  copy of it. Windows and Linux follow the system's high-contrast setting too, as the Mac did; under it, every text
+  reads at 7:1, and status chips (checks, errors, warnings) read better on every platform.
 - A button that can't be used yet looks it (*Connect* before the fields are filled, *Apply 0 changes*, *Check
   now* while checking), on every platform.
 - Claude Code gets only what it needs from Remora's environment and its own setup, not other tools' tokens; on a

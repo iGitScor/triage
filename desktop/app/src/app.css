@@ -228,17 +228,17 @@ label.stack small,
 }
 
 .chip.positive {
-  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  background: var(--ok-soft);
   color: var(--ok);
 }
 
 .chip.negative {
-  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  background: var(--danger-soft);
   color: var(--danger);
 }
 
 .chip.warning {
-  background: color-mix(in srgb, var(--warn) 18%, transparent);
+  background: var(--warn-soft);
   color: var(--warn);
 }
 
@@ -270,7 +270,7 @@ label.stack small,
 }
 
 .notice.warn {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  background: var(--danger-soft);
   color: var(--ink);
 }
 

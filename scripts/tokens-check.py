@@ -4,7 +4,7 @@
 - The website's site/public/site/tokens.css is the package's dist/tokens.css, as is (the site is static: no
   bundler to import it). `--write` copies it after an update of the package.
 - The Mac's colours (macos/Sources/Remora/Presentation/Theme.swift, `Myna`) equal the package's, in light and in dark,
-  opacity included. The Mac keeps its own file for what the package doesn't have yet: the Increase Contrast variants.
+  with and without Increase Contrast, opacity included.
 
 The Windows app and the docs import the package's CSS themselves.
 """
@@ -61,24 +61,55 @@ def color_arguments(name: str) -> str | None:
     return None
 
 
+def resolved(arguments: str) -> dict[str, tuple[str, float]]:
+    """The Mac's colour in each of the four appearances, from its Color(…) arguments."""
+    hexes = dict(re.findall(r"\b(light|dark): 0x([0-9A-F]{6})", arguments))
+    both = re.search(r"(?<![\w])opacity: ([\d.]+)", arguments)
+    opacity = {
+        scheme: float(m[1])
+        if (m := re.search(rf"{scheme}Opacity: ([\d.]+)", arguments))
+        else float(both[1])
+        if both
+        else 1.0
+        for scheme in ("light", "dark")
+    }
+    contrast = re.search(r"contrast: \(0x([0-9A-F]{6}), 0x([0-9A-F]{6})\)", arguments)
+    contrast_hex = {"light": contrast[1], "dark": contrast[2]} if contrast else hexes
+    pair = re.search(r"contrastOpacity: \(([\d.]+), ([\d.]+)\)", arguments)
+    single = re.search(r"contrastOpacity: ([\d.]+)", arguments)
+    contrast_opacity = (
+        {"light": float(pair[1]), "dark": float(pair[2])}
+        if pair
+        else {"light": float(single[1]), "dark": float(single[1])}
+        if single
+        else opacity
+    )
+    return {
+        "light": (hexes["light"], round(opacity["light"], 2)),
+        "dark": (hexes["dark"], round(opacity["dark"], 2)),
+        "contrast light": (contrast_hex["light"], round(contrast_opacity["light"], 2)),
+        "contrast dark": (contrast_hex["dark"], round(contrast_opacity["dark"], 2)),
+    }
+
+
 checked = 0
 for name in tokens["light"]:
     arguments = color_arguments(camel(name))
     if arguments is None:
         continue  # a token the Mac doesn't use
     checked += 1
-    found = dict(re.findall(r"(light|dark): 0x([0-9A-F]{6})", arguments))
-    opacity = re.search(r"(?<![\w])opacity: ([\d.]+)", arguments)
-    opacities = {
-        "light": float((re.search(r"lightOpacity: ([\d.]+)", arguments) or opacity or [None, 1])[1]),
-        "dark": float((re.search(r"darkOpacity: ([\d.]+)", arguments) or opacity or [None, 1])[1]),
+    mac = resolved(arguments)
+    expected = {
+        "light": rgba(tokens["light"][name]),
+        "dark": rgba(tokens["dark"][name]),
+        "contrast light": rgba(tokens["contrast"]["light"][name]),
+        "contrast dark": rgba(tokens["contrast"]["dark"][name]),
     }
-    for scheme in ("light", "dark"):
-        hex_value, alpha = rgba(tokens[scheme][name])
-        if found.get(scheme) != hex_value or round(opacities[scheme], 2) != alpha:
+    for appearance, value in expected.items():
+        if mac[appearance] != value:
             problems.append(
-                f"Myna.{camel(name)} ({scheme}) is 0x{found.get(scheme)} at {opacities[scheme]}, "
-                f"@iscor/design says 0x{hex_value} at {alpha}"
+                f"Myna.{camel(name)} ({appearance}) is 0x{mac[appearance][0]} at {mac[appearance][1]}, "
+                f"@iscor/design says 0x{value[0]} at {value[1]}"
             )
 disabled = re.search(r"static let disabledOpacity = ([\d.]+)", swift)
 if not disabled or float(disabled.group(1)) != tokens["base"]["disabled"]:
