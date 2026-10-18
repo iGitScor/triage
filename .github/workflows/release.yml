@@ -66,13 +66,12 @@ jobs:
           format: cyclonedx-json
           output-file: macos/Remora.dmg.cdx.json
           upload-artifact: false
-      # The same checks as macos.yml.
+      # The tests ran in macos.yml on this very commit, and the ci-passed job doesn't let a tag whose CI failed be
+      # published: they aren't run again. The quick checks of what goes into the app stay.
       - name: Formatting (.swift-format)
         run: swift format lint --strict --parallel -r Sources Tests Package.swift
       - name: Every UI string has French
         run: python3 scripts/make-strings.py --check
-      - name: Test
-        run: swift test -Xswiftc -warnings-as-errors
       - name: Stamp the build number
         run: /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Resources/Info.plist
       # The same self-signed certificate for every release (from `scripts/make-signing-cert.sh --release`): the
@@ -190,22 +189,16 @@ jobs:
           cache-dependency-path: desktop/app/package-lock.json
       - run: npm ci
         working-directory: desktop/app
-      # The same checks as desktop.yml's Windows job; the ci-passed job also waits for CI itself.
+      # Lint and tests ran in desktop.yml on this very commit, and the ci-passed job doesn't let a tag whose CI failed be
+      # published: they aren't run again. The quick checks of what goes into the app stay.
       - name: French strings are up to date
         run: python scripts/make-i18n.py --check
         working-directory: desktop/app
       - name: Emoji tables match scripts/make-emoji.py
         run: python scripts/make-emoji.py --check
         working-directory: .
-      - name: Type-check, test and build the interface
-        run: npm run check && npm test && npm run build
-        working-directory: desktop/app
       - name: Formatting (rustfmt.toml)
         run: cargo fmt --all --check
-      - name: Lint
-        run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Test
-        run: cargo test --workspace
       # The licences of what the app bundles, with cargo-about pinned by checksum.
       - name: Third-party notices
         shell: bash
@@ -368,18 +361,21 @@ jobs:
           upload-artifact: false
       - name: Rust from desktop/rust-toolchain.toml
         run: rustup toolchain install
+      # As the Windows job: what main's CI cached (the crates' sources); a tag can't read another tag's cache.
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: desktop
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
       - run: npm ci
         working-directory: desktop/app
-      # The same checks as desktop.yml's Linux job.
+      # Lint and tests ran in desktop.yml on this very commit, and the ci-passed job doesn't let a tag whose CI failed be
+      # published: they aren't run again. The quick checks of what goes into the app stay.
       - name: Formatting (rustfmt.toml)
         run: cargo fmt --all --check
       - name: The policy files match scripts/make-policy-files.py
         run: python3 ../scripts/make-policy-files.py --check
-      - name: Lint and test
-        run: cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
       # The licences of what the app bundles, with cargo-about pinned by checksum.
       - name: Third-party notices
         env:

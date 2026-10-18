@@ -74,11 +74,11 @@ the commit are pushed together.
 [`.github/workflows/release.yml`](https://github.com/iGitScor/triage/blob/main/.github/workflows/release.yml)
 first checks, in minutes, what would stop the release anyway: the tag matches the version in the source, no known
 vulnerability or licence problem (cargo-deny), and the committed website pages are what `site/build.py` writes. Then
-it builds both apps in parallel with the same checks
-as CI: the Mac app is tested, stamped with a build number (`CFBundleVersion`, the run number), built Universal,
+it builds the apps in parallel, without running the tests again (CI ran them on this very commit, and `ci-passed`
+below refuses a tag whose CI failed), only the quick checks of what goes in: the Mac app is stamped with a build number (`CFBundleVersion`, the run number), built Universal,
 signed, and packaged as `Remora.dmg` with the licences (`make -C macos dmg`: dmgbuild, pinned by hash, lays the window
 out on `macos/dmg/background.tiff`, rendered from `site/og/dmg.html` by `site/og/render.sh dmg`); the Windows app goes
-through the translation check, type-check, clippy and tests before `Remora-Setup.exe` and `Remora.msi` are built. Meanwhile a `ci-passed` job waits for CI's own runs
+through the translation and formatting checks before `Remora-Setup.exe` and `Remora.msi` are built. Meanwhile a `ci-passed` job waits for CI's own runs
 on the tagged commit (Format, macOS, Windows and Linux, Website, Dependencies) and fails if one didn't succeed, so
 tag a commit whose CI passed, and don't push to `main` until it has (a newer push cancels the runs in progress). Only
 when all succeed does a last job publish the GitHub release, with every file, its SHA-256 and its SBOM (CycloneDX) at once. Each build job signs the provenance
