@@ -50,9 +50,9 @@ enum BriefPrompt {
             TriageDigest(
                 id: snoozed.item.id,
                 kind: snoozed.item.bundle.title,
-                title: snoozed.item.title,
-                context: snoozed.item.context,
-                status: snoozed.item.badges.map(\.label) + snoozed.item.reactionNotes,
+                title: Redaction.scrub(snoozed.item.title),
+                context: Redaction.scrub(snoozed.item.context),
+                status: (snoozed.item.badges.map(\.label) + snoozed.item.reactionNotes).map(Redaction.scrub),
                 lastActivityDaysAgo: Int(now.timeIntervalSince(snoozed.item.date) / .day),
                 returnsAt: snoozed.snooze.until.ISO8601Format(),
                 reason: snoozed.snooze.reason?.rawValue,
@@ -110,10 +110,10 @@ enum BriefPrompt {
             Digest(
                 id: item.id,
                 kind: item.bundle.title,
-                title: item.title,
-                context: item.context,
-                from: item.author?.name,
-                status: item.badges.map(\.label) + item.reactionNotes,
+                title: Redaction.scrub(item.title),
+                context: Redaction.scrub(item.context),
+                from: item.author.map { Redaction.scrub($0.name) },
+                status: (item.badges.map(\.label) + item.reactionNotes).map(Redaction.scrub),
                 ageHours: Int(now.timeIntervalSince(item.date) / 3_600)
             )
         }

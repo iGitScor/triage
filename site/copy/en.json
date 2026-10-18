@@ -607,7 +607,7 @@
       [
         "Claude",
         "Anthropic, through Claude Code or <code>api.anthropic.com</code>",
-        "For each inbox item: its verb, title (only the first line of a Slack message), context, author, statuses, age and what its reactions mean; to sort the Snoozed tab, also the snooze reason and count. Never tokens, links, code or the rest of a message",
+        "For each inbox item: its verb, title (only the first line of a Slack message), context, author, statuses, age and what its reactions mean; to sort the Snoozed tab, also the snooze reason and count. Never tokens, links, code or the rest of a message; a secret, an e-mail address or a phone number in a title is replaced on your computer first",
         "<strong>Off</strong>"
       ],
       [

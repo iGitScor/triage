@@ -22,6 +22,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Before anything goes to the assistant, a secret pasted into a title, a context or a name (a GitHub, Slack, AI or
+  cloud token, a private key) becomes `[secret]`, an e-mail address `[email]` and a phone number `[phone]`, on the
+  computer.
 - The colours come from Estuary, the design system shared with Myna and iscor.me (`@iscor/design`), instead of a
   copy of it. Windows and Linux follow the system's high-contrast setting too, as the Mac did; under it, every text
   reads at 7:1, and status chips (checks, errors, warnings) read better on every platform.

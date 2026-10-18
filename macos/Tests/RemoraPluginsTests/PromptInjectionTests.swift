@@ -37,4 +37,20 @@ struct PromptInjectionTests {
         #expect(message.hasSuffix("\n</snoozed_items>"))
         #expect(message.components(separatedBy: "</snoozed_items>").count == 2)
     }
+
+    /// A token or an address pasted into a title, a context or a name doesn't leave the computer. Same as Windows.
+    @Test func secretsAreRedactedBeforeSending() {
+        let leaky = InboxItem(
+            id: "b", accountID: UUID(), pluginID: "slack", bundle: .reply,
+            title: "Use ghp_abcdefghijklmnopqrstuvwxyz0123456789 to deploy", context: "#ops erin@acme.io",
+            author: Person(name: "bob@acme.io"), date: .now)
+        let snoozed = SnoozedItem(
+            item: leaky, snooze: Snooze(until: .now.addingTimeInterval(3_600), mode: .hide, fingerprint: ""), times: 1)
+        for message in [
+            BriefPrompt.message(items: [leaky], now: .now), BriefPrompt.triageMessage(items: [snoozed], now: .now),
+        ] {
+            #expect(!message.contains("ghp_") && !message.contains("@acme.io"))
+            #expect(message.contains("Use [secret] to deploy"))
+        }
+    }
 }

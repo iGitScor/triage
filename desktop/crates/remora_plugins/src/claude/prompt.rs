@@ -2,7 +2,7 @@
 //! `BriefPrompt.swift`: the same words, so both apps get the same answers.
 
 use chrono::{DateTime, Duration, SecondsFormat, Utc};
-use remora_core::{Brief, Focus, InboxItem, SnoozedItem, TriageAction, TriageSuggestion};
+use remora_core::{redact, Brief, Focus, InboxItem, SnoozedItem, TriageAction, TriageSuggestion};
 use serde::ser::SerializeMap;
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashSet;
@@ -84,10 +84,10 @@ pub fn parse_iso8601(raw: &str) -> Option<DateTime<Utc>> {
 struct Digest<'a> {
     id: &'a str,
     kind: &'a str,
-    title: &'a str,
-    context: &'a str,
+    title: String,
+    context: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    from: Option<&'a str>,
+    from: Option<String>,
     status: Vec<String>,
     age_hours: i64,
 }
@@ -97,8 +97,8 @@ struct Digest<'a> {
 struct TriageDigest<'a> {
     id: &'a str,
     kind: &'a str,
-    title: &'a str,
-    context: &'a str,
+    title: String,
+    context: String,
     status: Vec<String>,
     last_activity_days_ago: i64,
     returns_at: String,
@@ -107,9 +107,9 @@ struct TriageDigest<'a> {
     times_snoozed: u32,
 }
 
-/// An item's badges, then what its reactions mean (never who reacted).
+/// An item's badges, then what its reactions mean (never who reacted). Like every text sent, redacted first.
 fn status(item: &InboxItem) -> Vec<String> {
-    item.badges.iter().map(|b| b.label.clone()).chain(item.reaction_notes()).collect()
+    item.badges.iter().map(|b| b.label.clone()).chain(item.reaction_notes()).map(|s| redact(&s)).collect()
 }
 
 /// The inbox, at most 120 items: what Claude reads for the brief.
@@ -120,9 +120,9 @@ pub fn message(items: &[InboxItem], now: DateTime<Utc>) -> String {
         .map(|item| Digest {
             id: &item.id,
             kind: &item.bundle.title,
-            title: &item.title,
-            context: &item.context,
-            from: item.author.as_ref().map(|a| a.name.as_str()),
+            title: redact(&item.title),
+            context: redact(&item.context),
+            from: item.author.as_ref().map(|a| redact(&a.name)),
             status: status(item),
             age_hours: (now - item.date).num_seconds() / 3_600,
         })
@@ -142,8 +142,8 @@ pub fn triage_message(items: &[SnoozedItem], now: DateTime<Utc>) -> String {
         .map(|snoozed| TriageDigest {
             id: &snoozed.item.id,
             kind: &snoozed.item.bundle.title,
-            title: &snoozed.item.title,
-            context: &snoozed.item.context,
+            title: redact(&snoozed.item.title),
+            context: redact(&snoozed.item.context),
             status: status(&snoozed.item),
             last_activity_days_ago: (now - snoozed.item.date).num_days(),
             returns_at: iso8601(snoozed.snooze.until),
@@ -315,6 +315,21 @@ mod tests {
         reacted.reactions = Some(vec![remora_core::Reaction::new("eyes", 2, true)]);
         let message = message(&[reacted], now());
         assert!(message.contains("you reacted: started") && message.contains("others reacted: started ×1"));
+    }
+
+    /// A token or an address pasted into a title, a context or a name doesn't leave the computer. Same as macOS.
+    #[test]
+    fn secrets_are_redacted_before_sending() {
+        let mut leaky = item("b");
+        leaky.title = "Use ghp_abcdefghijklmnopqrstuvwxyz0123456789 to deploy".into();
+        leaky.context = "#ops erin@acme.io".into();
+        leaky.author =
+            Some(remora_core::Person { name: "bob@acme.io".into(), avatar_url: None, review: None, bot: false });
+        let held = snoozed(leaky.clone(), 1);
+        for message in [message(&[leaky], now()), triage_message(&[held], now())] {
+            assert!(!message.contains("ghp_") && !message.contains("@acme.io"), "{message}");
+            assert!(message.contains("Use [secret] to deploy"));
+        }
     }
 
     /// Inbox content is written by other people; the prompts treat it as data.

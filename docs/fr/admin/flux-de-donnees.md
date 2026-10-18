@@ -50,7 +50,10 @@ OpenAI-compatibles reçoivent les mêmes champs. Pour chaque élément :
   (*En attente de quelqu’un*, *Pas motivé*…) et le nombre de reports.
 
 Le brief envoie jusqu’à 120 éléments, un résumé de groupe les éléments de ce groupe, le tri jusqu’à 80 éléments
-reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un message, les notes, les fichiers.
+reportés. Jamais envoyés : les jetons, les liens, le code, la suite d’un message, les notes, les fichiers. Avant
+l’envoi, ce qui ressemble à un secret collé dans un titre, un contexte, un nom ou un statut (un jeton GitHub, Slack,
+Anthropic, OpenAI, AWS, Google, Stripe ou npm, un JSON web token, un jeton bearer, une clé privée) devient `[secret]`,
+une adresse e-mail `[email]` et un numéro de téléphone `[phone]`, sur l’ordinateur.
 
 - **À la connexion**, l’assistant rédige un premier brief de la boîte, qui sert aussi de test. Quand le *Brief de toute
   la boîte* est désactivé (Réglages → Général → Assistant), le test utilise un seul élément fictif : aucun contenu

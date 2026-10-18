@@ -607,7 +607,7 @@
       [
         "Claude",
         "Anthropic, via Claude Code ou <code>api.anthropic.com</code>",
-        "Pour chaque élément : son verbe, son titre (la première ligne seulement d’un message Slack), son contexte, son auteur, ses statuts, son âge et le sens de ses réactions ; pour trier les reportés, aussi la raison et le nombre de reports. Jamais de jetons, de liens, de code ni le reste d’un message",
+        "Pour chaque élément : son verbe, son titre (la première ligne seulement d’un message Slack), son contexte, son auteur, ses statuts, son âge et le sens de ses réactions ; pour trier les reportés, aussi la raison et le nombre de reports. Jamais de jetons, de liens, de code ni le reste d’un message ; un secret, une adresse e-mail ou un numéro de téléphone dans un titre est d’abord remplacé sur votre ordinateur",
         "<strong>Désactivé</strong>"
       ],
       [

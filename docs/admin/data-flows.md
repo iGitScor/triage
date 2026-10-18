@@ -48,7 +48,10 @@ fields. For each inbox item:
   for someone*, *Not feeling it*…) and how many times it was snoozed.
 
 The brief sends up to 120 items, a bundle summary the items of that bundle, triage up to 80 snoozed items. Never
-sent: tokens, links, code, the rest of a message, notes, files.
+sent: tokens, links, code, the rest of a message, notes, files. Before sending, what looks like a secret pasted into a
+title, a context, a name or a status (a GitHub, Slack, Anthropic, OpenAI, AWS, Google, Stripe or npm token, a JSON web
+token, a bearer token, a private key) becomes `[secret]`, an e-mail address `[email]` and a phone number `[phone]`, on
+the computer.
 
 - **Connecting** the assistant makes a first brief of the inbox, which is also the connection test. When the whole-inbox
   brief is turned off (Settings → General → Assistant), the test uses one made-up item instead, so no inbox content
