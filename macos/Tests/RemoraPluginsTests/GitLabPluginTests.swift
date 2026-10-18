@@ -149,6 +149,36 @@ struct GitLabPluginTests {
         for _ in 1...2 { _ = try await GitLabPlugin(config: config, http: http).fetch() }
         #expect(await http.paths.filter { $0.hasSuffix("/user") }.count == 1)
     }
+
+    /// A project whose default branch's last pipeline failed is to fix; a passing one is nothing; one that can't be
+    /// read is a remark. Same cases as Windows.
+    @Test func aFailedPipelineOnTheDefaultBranchIsToFix() async throws {
+        func fetch(_ pipeline: String) async throws -> SourceSnapshot {
+            let http = StubHTTP(routes: [
+                "/api/v4/user": #"{"username": "alice"}"#,
+                "/api/v4/merge_requests": "[]",
+                "/api/v4/todos": "[]",
+                "/api/v4/projects/acme/tools/cli": #"{"id": 7, "default_branch": "main"}"#,
+                "/api/v4/projects/7/pipelines?ref=main": pipeline,
+                "/api/v4/projects/7/repository/commits/abc": #"{"title": "Bump *ruby*"}"#,
+            ])
+            let values = ["host": "gitlab.acme.io", "token": "t", "repositories": "acme/tools/cli, acme/gone"]
+            return try await GitLabPlugin(config: config(values), http: http).fetch()
+        }
+        let red = try await fetch(
+            #"[{"id": 9, "status": "failed", "sha": "abc", "web_url": "https://gitlab.acme.io/acme/tools/cli/-/pipelines/9", "updated_at": "2026-10-08T12:00:00Z"}]"#
+        )
+        #expect(red.items.count == 1)
+        let item = try #require(red.items.first)
+        #expect(item.title == "Bump ruby" && item.context == "acme/tools/cli · main")
+        #expect(item.bundle == .fix && item.hasBadge(.checksFailing) && item.needsAction)
+        #expect(red.remarks.count == 1, "acme/gone can't be read")
+        #expect(red.remarks.first?.hasPrefix("Projects you maintain couldn’t be read") == true)
+
+        let green = try await fetch(
+            #"[{"id": 9, "status": "success", "sha": "abc", "web_url": "u", "updated_at": "2026-10-08T12:00:00Z"}]"#)
+        #expect(green.items.isEmpty)
+    }
 }
 
 /// Records the paths a plugin requests, then answers with `base`.

@@ -141,6 +141,25 @@ pub fn rate_limit_of(error: &crate::PluginError) -> Option<crate::PluginError> {
     matches!(error, crate::PluginError::RateLimited(_)).then(|| error.clone())
 }
 
+/// The repositories read for checks and alerts, at most: each costs a few requests a refresh.
+pub const MAINTAINED_LIMIT: usize = 10;
+
+/// The repositories the user maintains, from the optional field: `owner/name` (`group/subgroup/name` when `nested`, as
+/// on GitLab), separated by commas, spaces or lines; the same one twice counts once. Same rules on macOS.
+pub fn maintained_repositories(value: &str, nested: bool) -> Vec<String> {
+    let mut found: Vec<String> = vec![];
+    for name in value.split(|c: char| c == ',' || c.is_whitespace()).map(|n| n.trim_matches('/')) {
+        let parts: Vec<&str> = name.split('/').collect();
+        let valid = (parts.len() == 2 || nested && parts.len() > 2)
+            && parts.iter().all(|p| !p.is_empty() && p.chars().all(|c| c.is_alphanumeric() || "-_.".contains(c)));
+        if valid && !found.iter().any(|f| f.eq_ignore_ascii_case(name)) {
+            found.push(name.to_string());
+        }
+    }
+    found.truncate(MAINTAINED_LIMIT);
+    found
+}
+
 pub fn truncated(tool: &str) -> remora_core::Message {
     remora_core::Message::new("truncated", vec![tool.into()], TRUNCATED.replace("%@", tool))
 }
@@ -166,6 +185,7 @@ pub trait AssistantPlugin: Send + Sync {
 mod tests {
     use crate::stub::config;
     use crate::PluginError;
+    use crate::{maintained_repositories, MAINTAINED_LIMIT};
 
     fn host(value: &str) -> Result<String, PluginError> {
         config(&[("host", value)]).url("host")
@@ -208,5 +228,17 @@ mod tests {
         assert_eq!(host("http://localhost:8929").unwrap(), "http://localhost:8929");
         assert_eq!(host("http://127.0.0.1").unwrap(), "http://127.0.0.1");
         assert_eq!(host("https://gitlab acme.io"), Err(PluginError::InvalidField("host".into())));
+    }
+
+    #[test]
+    fn reads_the_repositories_you_maintain() {
+        assert_eq!(
+            maintained_repositories(" acme/web, acme/api\nAcme/Web  bad /x  a/b/c  acme/my.repo_2 ", false),
+            ["acme/web", "acme/api", "acme/my.repo_2"]
+        );
+        assert_eq!(maintained_repositories("acme/tools/cli, acme/web", true), ["acme/tools/cli", "acme/web"]);
+        let many = (0..15).map(|n| format!("acme/r{n}")).collect::<Vec<_>>().join(",");
+        assert_eq!(maintained_repositories(&many, false).len(), MAINTAINED_LIMIT);
+        assert!(maintained_repositories("", true).is_empty());
     }
 }

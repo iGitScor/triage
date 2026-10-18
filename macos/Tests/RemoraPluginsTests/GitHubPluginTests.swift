@@ -120,4 +120,70 @@ struct GitHubPluginTests {
             try GitHubPlugin(config: config(["host": "https://github.com"]), http: StubHTTP(routes: [:]))
         }
     }
+
+    @Test func readsTheRepositoriesYouMaintain() {
+        #expect(
+            Maintained.repositories(" acme/web, acme/api\nAcme/Web  bad /x  a/b/c  acme/my.repo_2 ", nested: false)
+                == ["acme/web", "acme/api", "acme/my.repo_2"])
+        #expect(Maintained.repositories("acme/tools/cli, acme/web", nested: true) == ["acme/tools/cli", "acme/web"])
+        let many = (0..<15).map { "acme/r\($0)" }.joined(separator: ",")
+        #expect(Maintained.repositories(many, nested: false).count == Maintained.limit)
+        #expect(Maintained.repositories(nil, nested: true).isEmpty)
+    }
+
+    let redRun = """
+        {"workflow_runs": [{"id": 42, "name": "CI", "display_title": "Bump *serde*", "conclusion": "failure",
+          "html_url": "https://github.com/acme/web/actions/runs/42", "updated_at": "2026-10-08T12:00:00Z"}]}
+        """
+
+    func maintaining(_ routes: [String: String]) throws -> GitHubPlugin {
+        try GitHubPlugin(
+            config: config(["host": "github.com", "token": "t", "repositories": "acme/web"]),
+            http: StubHTTP(routes: routes.merging(["/graphql": response]) { a, _ in a }))
+    }
+
+    /// A red default branch and open critical or high alerts are things to fix. Same cases as Windows.
+    @Test func aFailingDefaultBranchAndSecurityAlertsAreToFix() async throws {
+        let snapshot = try await maintaining([
+            "/repos/acme/web": #"{"default_branch": "main"}"#,
+            "/repos/acme/web/actions/runs?branch=main": redRun,
+            "/repos/acme/web/dependabot/alerts?severity=critical,high": """
+            [{"number": 3, "html_url": "https://github.com/acme/web/security/dependabot/3",
+              "created_at": "2026-10-07T08:00:00Z", "dependency": {"package": {"name": "lodash"}},
+              "security_advisory": {"summary": "Prototype pollution", "severity": "critical"}}]
+            """,
+            "/repos/acme/web/code-scanning/alerts": """
+            [{"number": 5, "html_url": "https://github.com/acme/web/security/code-scanning/5",
+              "created_at": "2026-10-06T08:00:00Z", "rule": {"description": "SQL injection", "security_severity_level": "high"}}]
+            """,
+        ]).fetch()
+        #expect(snapshot.remarks.isEmpty)
+        let fix = snapshot.items.filter { $0.bundle == .fix }
+        #expect(fix.count == 3)
+        let ci = try #require(fix.first { $0.hasBadge(.checksFailing) })
+        #expect(ci.title == "Bump serde" && ci.context == "acme/web · main" && ci.preview == "CI")
+        #expect(ci.url?.absoluteString == "https://github.com/acme/web/actions/runs/42")
+        #expect(ci.needsAction && ci.badges[0].notify != nil)
+        let dependabot = try #require(fix.first { $0.title.hasPrefix("lodash") })
+        #expect(dependabot.title == "lodash: Prototype pollution")
+        #expect(dependabot.context == "acme/web" && dependabot.priority == .urgent)
+        let scanning = try #require(fix.first { $0.title == "SQL injection" })
+        #expect(scanning.priority == .high && scanning.id != dependabot.id)
+    }
+
+    /// A green run is nothing; no Actions or no code scanning is silent; alerts that can't be read say so.
+    @Test func aGreenBranchIsNothingAndUnreadableAlertsAreARemark() async throws {
+        let snapshot = try await maintaining([
+            "/repos/acme/web": #"{"default_branch": "main"}"#,
+            "/repos/acme/web/actions/runs": redRun.replacingOccurrences(of: "failure", with: "success"),
+            "/repos/acme/web/dependabot/alerts": #"{"message": "nope"}"#,
+        ]).fetch()
+        #expect(!snapshot.items.contains { $0.bundle == .fix })
+        #expect(snapshot.remarks.count == 1)
+        #expect(snapshot.remarks.first?.hasPrefix("Security alerts couldn’t be read") == true)
+
+        let missing = try await maintaining([:]).fetch()
+        #expect(missing.remarks.first?.hasPrefix("Repositories you maintain couldn’t be read") == true)
+        #expect(missing.items.contains { $0.bundle == .authored }, "pull requests still listed")
+    }
 }

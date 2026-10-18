@@ -35,6 +35,11 @@ Si votre organisation utilise l’authentification unique SAML, cliquez sur **Co
 GitHub et autorisez-le pour l’organisation, sinon ses dépôts restent invisibles.
 :::
 
+**Dépôts que je maintiens** (facultatif, 10 au plus, par exemple `acme/web, acme/api`) : quand le dernier run de la
+branche par défaut d’un dépôt a échoué, ou qu’il a des alertes Dependabot ou code scanning critiques ou hautes
+ouvertes, elles vont dans *À corriger*. Donnez aussi au jeton **Actions**, **Dependabot alerts** et **Code scanning
+alerts** en lecture seule.
+
 ## GitLab
 
 Affiche vos merge requests, celles que vous relisez, leurs approbations et pipelines, et vos autres To-Dos : un
@@ -48,6 +53,9 @@ il quitte aussi Remora.
 3. Collez-le et cliquez sur **Connecter**.
 
 *Modifications demandées* nécessite GitLab 16.10 ou ultérieur ; les versions plus anciennes affichent tout le reste.
+
+**Projets que je maintiens** (facultatif, 10 au plus, par exemple `acme/web, acme/tools/cli`) : quand le dernier
+pipeline de la branche par défaut d’un projet a échoué, il va dans *À corriger*.
 
 ## Bitbucket
 

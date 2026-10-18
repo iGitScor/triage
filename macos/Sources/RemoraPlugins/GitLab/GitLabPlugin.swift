@@ -1,7 +1,8 @@
 import Foundation
 import RemoraCore
 
-/// Merge requests you opened and those where you are a reviewer, on gitlab.com or self-hosted.
+/// Merge requests you opened and those where you are a reviewer, on gitlab.com or self-hosted; for the projects you
+/// maintain, a failed pipeline on the default branch.
 public struct GitLabPlugin: SourcePlugin {
     public static let manifest = PluginManifest(
         id: "gitlab",
@@ -11,6 +12,10 @@ public struct GitLabPlugin: SourcePlugin {
         fields: [
             .host("https://gitlab.com"),
             .token("Personal access token", help: "Token with the read_api scope."),
+            ConfigField(
+                key: "repositories", label: "Projects I maintain", placeholder: "acme/web, acme/tools/cli",
+                isOptional: true,
+                help: "Optional. When the last pipeline of a project's default branch failed, it goes to To fix."),
         ],
         setupSteps: [
             "If you use self-hosted GitLab, set the host first.",
@@ -27,13 +32,16 @@ public struct GitLabPlugin: SourcePlugin {
         },
         egress: Egress(
             hosts: ["gitlab.com"],
-            description: "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host."),
+            description:
+                "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host, and the default branch's pipelines of the projects you maintain."
+        ),
         logo: "gitlab"
     )
 
     private let accountID: UUID
     private let host: URL
     private let token: String
+    private let projects: [String]
     private let http: HTTPClient
     private let cache: any AccountCache
 
@@ -41,6 +49,7 @@ public struct GitLabPlugin: SourcePlugin {
         accountID = config.accountID
         host = try config.url("host")
         token = try config.required("token")
+        projects = Maintained.repositories(config.values["repositories"], nested: true)
         self.http = http
         cache = config.cache
     }
@@ -95,9 +104,37 @@ public struct GitLabPlugin: SourcePlugin {
         }
         // To-Dos are a bonus: their failure is a remark, and merge requests still come through.
         let toDo = try BestEffort.unwrap(await todos, "To-Dos", remarks: &remarks) ?? []
+        var failing: [InboxItem] = []
+        for project in projects {
+            let item = try await BestEffort.value("Projects you maintain", remarks: &remarks) {
+                try await failed(project)
+            }
+            if let item = item ?? nil { failing.append(item) }
+        }
         return SourceSnapshot(
-            identity: user.username, items: results.map(\.0) + toDo.compactMap { $0.item(accountID: accountID) },
+            identity: user.username,
+            items: results.map(\.0) + toDo.compactMap { $0.item(accountID: accountID) } + failing,
             remarks: remarks)
+    }
+
+    /// A project you maintain whose default branch's last finished pipeline failed: to fix. Same as Windows.
+    private func failed(_ project: String) async throws -> InboxItem? {
+        // The project by its path, encoded as one segment; then by its id.
+        var components = URLComponents(url: host.appending(path: "api/v4/projects"), resolvingAgainstBaseURL: false)!
+        components.percentEncodedPath += "/" + project.replacingOccurrences(of: "/", with: "%2F")
+        let info = try await http.decode(
+            Project.self, from: .get(components.url!, headers: ["PRIVATE-TOKEN": token]), using: .api(snakeCase: true))
+        guard let branch = info.defaultBranch else { return nil }
+        let pipelines: [BranchPipeline] = try await get(
+            "projects/\(info.id)/pipelines", ["ref": branch, "scope": "finished", "per_page": "1"])
+        guard let pipeline = pipelines.first, pipeline.status == "failed" else { return nil }
+        // The commit's title says what broke it; without it, the pipeline still shows.
+        let commit: Commit? = try? await get("projects/\(info.id)/repository/commits/\(pipeline.sha)")
+        return Maintained.failing(
+            accountID: accountID, pluginID: Self.manifest.id, local: "ci/\(project)/\(pipeline.id)",
+            title: commit.map { Readable.text($0.title) } ?? "Pipeline #\(pipeline.id)",
+            context: "\(project) · \(branch)", preview: nil, url: URL(lenient: pipeline.webUrl),
+            date: pipeline.updatedAt)
     }
 
     /// The REST way, one merge request at a time. Best-effort: a call that fails leaves that part out instead of
@@ -382,3 +419,20 @@ extension GitLabPlugin {
         }
     }
 }
+
+// MARK: - Projects you maintain
+
+struct Project: Decodable {
+    var id: Int
+    var defaultBranch: String?
+}
+
+struct BranchPipeline: Decodable {
+    var id: Int
+    var status: String
+    var sha: String
+    var webUrl: String
+    var updatedAt: Date
+}
+
+struct Commit: Decodable { var title: String }

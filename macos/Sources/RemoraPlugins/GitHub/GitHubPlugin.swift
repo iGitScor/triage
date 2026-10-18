@@ -1,7 +1,8 @@
 import Foundation
 import RemoraCore
 
-/// Pull requests you opened and those awaiting your review, through a single GraphQL query.
+/// Pull requests you opened and those awaiting your review, through a single GraphQL query; for the repositories you
+/// maintain, a failing default branch and open critical or high security alerts, through the REST API.
 public struct GitHubPlugin: SourcePlugin {
     public static let manifest = PluginManifest(
         id: "github",
@@ -15,12 +16,19 @@ public struct GitHubPlugin: SourcePlugin {
                 help:
                     "A fine-grained token with read-only Pull requests and Issues, or a classic token with repo and read:org."
             ),
+            ConfigField(
+                key: "repositories", label: "Repositories I maintain", placeholder: "acme/web, acme/api",
+                isOptional: true,
+                help:
+                    "Optional. A failing default branch and open critical or high security alerts go to To fix. The token also needs read-only Actions, Dependabot alerts and Code scanning alerts."
+            ),
         ],
         setupSteps: [
             // Read-only and limited to what Remora reads, rather than the whole `repo` scope.
             "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues.",
             "Pick the owner (you, or your organization) and All repositories, set an expiration, generate it and paste it below.",
             "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org.",
+            "To see the checks and security alerts of repositories you maintain, also give the token read-only Actions, Dependabot alerts and Code scanning alerts.",
         ],
         setupURL: { config in
             let host = (try? config.url("host")) ?? URL(string: "https://github.com")!
@@ -34,14 +42,17 @@ public struct GitHubPlugin: SourcePlugin {
         egress: Egress(
             hosts: ["api.github.com", "github.com", "avatars.githubusercontent.com"],
             description:
-                "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host)."
+                "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host), and the checks and security alerts of the repositories you maintain."
         ),
         logo: "github"
     )
 
     private let accountID: UUID
     private let endpoint: URL
+    /// The REST API: api.github.com, or the Enterprise host's /api/v3.
+    private let rest: URL
     private let token: String
+    private let repositories: [String]
     private let http: HTTPClient
 
     public init(config: PluginConfig, http: HTTPClient) throws {
@@ -51,7 +62,9 @@ public struct GitHubPlugin: SourcePlugin {
             host.host == "github.com"
             ? URL(string: "https://api.github.com/graphql")!
             : host.appending(path: "api/graphql")
+        rest = host.host == "github.com" ? URL(string: "https://api.github.com")! : host.appending(path: "api/v3")
         token = try config.required("token")
+        repositories = Maintained.repositories(config.values["repositories"], nested: false)
         self.http = http
     }
 
@@ -65,7 +78,61 @@ public struct GitHubPlugin: SourcePlugin {
             ])
         let request = try URLRequest.post(endpoint, json: body, headers: ["Authorization": "bearer \(token)"])
         let (response, answer) = try await http.decodeWithResponse(GraphQLResponse.self, from: request)
-        return try Self.snapshot(from: response, accountID: accountID, resume: answer.resumeDate())
+        var snapshot = try Self.snapshot(from: response, accountID: accountID, resume: answer.resumeDate())
+        for repository in repositories {
+            snapshot.items += try await maintained(repository, remarks: &snapshot.remarks)
+        }
+        return snapshot
+    }
+
+    /// The security alerts listed per repository, most recent first.
+    static let alertsPerRepository = 10
+
+    private func get<T: Decodable>(_ repository: String, _ path: String = "", _ query: [String: String] = [:])
+        async throws -> T
+    {
+        let url = rest.appending(path: "repos/\(repository)\(path.isEmpty ? "" : "/\(path)")", query: query)
+        let headers = ["Authorization": "Bearer \(token)", "Accept": "application/vnd.github+json"]
+        return try await http.decode(T.self, from: .get(url, headers: headers), using: .api(snakeCase: true))
+    }
+
+    /// A repository you maintain: its default branch's last finished run when it failed, and its open critical or
+    /// high security alerts (Dependabot, and code scanning where it is set up). Best effort: a part that can't be
+    /// read is a remark, except a rate limit, which fails the fetch. Same as Windows.
+    private func maintained(_ repository: String, remarks: inout [String]) async throws -> [InboxItem] {
+        guard
+            let info: Repo = try await BestEffort.value(
+                "Repositories you maintain", remarks: &remarks, { try await get(repository) })
+        else { return [] }
+        var items: [InboxItem] = []
+        let branch = info.defaultBranch
+        do {
+            let runs: Runs = try await get(
+                repository, "actions/runs",
+                ["branch": branch, "status": "completed", "per_page": "1", "exclude_pull_requests": "true"])
+            if let item = runs.workflowRuns.first?.failing(accountID: accountID, repository: repository, branch: branch)
+            {
+                items.append(item)
+            }
+        } catch HTTPError.status(404) {
+            // No Actions on this repository.
+        } catch {
+            try BestEffort.note("Checks on the default branch", error, remarks: &remarks)
+        }
+        let severe = ["state": "open", "severity": "critical,high", "per_page": String(Self.alertsPerRepository)]
+        let dependabot: [DependabotAlert]? = try await BestEffort.value("Security alerts", remarks: &remarks) {
+            try await get(repository, "dependabot/alerts", severe)
+        }
+        items += (dependabot ?? []).map { $0.item(accountID: accountID, repository: repository) }
+        do {
+            let scanning: [CodeScanningAlert] = try await get(repository, "code-scanning/alerts", severe)
+            items += scanning.map { $0.item(accountID: accountID, repository: repository) }
+        } catch HTTPError.status(let code) where code == 403 || code == 404 {
+            // Code scanning needs GitHub Advanced Security, often off: no remark at every refresh.
+        } catch {
+            try BestEffort.note("Security alerts", error, remarks: &remarks)
+        }
+        return items
     }
 
     static func snapshot(from response: GraphQLResponse, accountID: UUID, resume: Date? = nil) throws -> SourceSnapshot
@@ -312,5 +379,90 @@ struct PullRequest: Decodable {
             people.append(person)
         }
         return people
+    }
+}
+
+// MARK: - Repositories you maintain
+
+struct Repo: Decodable { var defaultBranch: String }
+
+struct Runs: Decodable {
+    var workflowRuns: [Run] = []
+
+    struct Run: Decodable {
+        var id: Int
+        var name: String?
+        var displayTitle: String?
+        var conclusion: String?
+        var htmlUrl: String
+        var updatedAt: Date
+
+        func failing(accountID: UUID, repository: String, branch: String) -> InboxItem? {
+            guard ["failure", "timed_out", "startup_failure"].contains(conclusion ?? "") else { return nil }
+            return Maintained.failing(
+                accountID: accountID, pluginID: GitHubPlugin.manifest.id, local: "ci/\(repository)/\(id)",
+                title: Readable.text(displayTitle ?? name ?? branch), context: "\(repository) · \(branch)",
+                preview: name, url: URL(lenient: htmlUrl), date: updatedAt)
+        }
+    }
+}
+
+/// Critical alerts are urgent, high ones high.
+private func severity(_ level: String?) -> Priority? {
+    switch level {
+    case "critical": .urgent
+    case "high": .high
+    default: nil
+    }
+}
+
+private func alert(
+    accountID: UUID, local: String, title: String, repository: String, url: String, date: Date, priority: Priority?
+) -> InboxItem {
+    InboxItem(
+        id: InboxItem.makeID(account: accountID, local: local), accountID: accountID,
+        pluginID: GitHubPlugin.manifest.id, bundle: .fix, title: title, context: repository, url: URL(lenient: url),
+        date: date, needsAction: true, priority: priority)
+}
+
+struct DependabotAlert: Decodable {
+    struct Advisory: Decodable {
+        var summary: String
+        var severity: String?
+    }
+    struct Dependency: Decodable { var package: Package? }
+    struct Package: Decodable { var name: String }
+
+    var number: Int
+    var htmlUrl: String
+    var createdAt: Date
+    var securityAdvisory: Advisory
+    var dependency: Dependency?
+
+    func item(accountID: UUID, repository: String) -> InboxItem {
+        let summary = securityAdvisory.summary
+        return alert(
+            accountID: accountID, local: "alert/\(repository)/dependabot/\(number)",
+            title: dependency?.package.map { "\($0.name): \(summary)" } ?? summary, repository: repository,
+            url: htmlUrl, date: createdAt, priority: severity(securityAdvisory.severity))
+    }
+}
+
+struct CodeScanningAlert: Decodable {
+    struct Rule: Decodable {
+        var description: String?
+        var securitySeverityLevel: String?
+    }
+
+    var number: Int
+    var htmlUrl: String
+    var createdAt: Date
+    var rule: Rule
+
+    func item(accountID: UUID, repository: String) -> InboxItem {
+        alert(
+            accountID: accountID, local: "alert/\(repository)/code-scanning/\(number)",
+            title: rule.description ?? "Code scanning alert #\(number)", repository: repository, url: htmlUrl,
+            date: createdAt, priority: severity(rule.securitySeverityLevel))
     }
 }

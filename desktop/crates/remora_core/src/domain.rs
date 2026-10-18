@@ -542,6 +542,21 @@ impl ConfigField {
         }
     }
 
+    /// A free text the plugin may do without.
+    pub fn text(key: &str, label: &str, placeholder: &str, help: &str) -> Self {
+        ConfigField {
+            key: key.into(),
+            label: label.into(),
+            placeholder: placeholder.into(),
+            default_value: String::new(),
+            is_secret: false,
+            is_optional: true,
+            help: Some(help.into()),
+            managed_key: None,
+            is_toggle: false,
+        }
+    }
+
     pub fn host(default: &str) -> Self {
         ConfigField {
             key: "host".into(),

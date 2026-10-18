@@ -1,13 +1,16 @@
 use crate::code_review::{Checks, CodeReview};
 use crate::{
-    decode, url_with_query, AccountCache, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot,
-    IDENTITY_LIFETIME,
+    decode, maintained_repositories, partial, rate_limit_of, url_with_query, AccountCache, HttpClient, PluginConfig,
+    PluginError, Request, SourcePlugin, SourceSnapshot, IDENTITY_LIFETIME,
 };
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
 use remora_core::ReviewState;
-use remora_core::{ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest};
+use remora_core::{
+    badge, Badge, ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Message, Person, PluginManifest,
+    Tone,
+};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -25,6 +28,12 @@ pub fn manifest() -> PluginManifest {
         fields: vec![
             ConfigField::host("https://gitlab.com"),
             ConfigField::token("Personal access token", "Token with the read_api scope."),
+            ConfigField::text(
+                "repositories",
+                "Projects I maintain",
+                "acme/web, acme/tools/cli",
+                "Optional. When the last pipeline of a project's default branch failed, it goes to To fix.",
+            ),
         ],
         setup_steps: vec![
             "If you use self-hosted GitLab, set the host first.".into(),
@@ -35,7 +44,9 @@ pub fn manifest() -> PluginManifest {
         setup_url: Some("{host}/-/user_settings/personal_access_tokens?name=Remora&scopes=read_api".into()),
         egress: Egress {
             hosts: vec!["gitlab.com".into()],
-            description: "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host.".into(),
+            description: "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host, and the \
+                          default branch's pipelines of the projects you maintain."
+                .into(),
             external_ai: false,
         },
         logo: Some("gitlab".into()),
@@ -43,11 +54,13 @@ pub fn manifest() -> PluginManifest {
     }
 }
 
-/// Merge requests you opened and those where you are a reviewer, on gitlab.com or self-hosted.
+/// Merge requests you opened and those where you are a reviewer, on gitlab.com or self-hosted; for the projects you
+/// maintain, a failed pipeline on the default branch.
 pub struct GitLabPlugin {
     account_id: String,
     host: String,
     token: String,
+    projects: Vec<String>,
     http: Arc<dyn HttpClient>,
     cache: Arc<AccountCache>,
 }
@@ -58,6 +71,7 @@ impl GitLabPlugin {
             account_id: config.account_id.clone(),
             host: config.url("host")?,
             token: config.required("token")?,
+            projects: maintained_repositories(config.values.get("repositories").map_or("", String::as_str), true),
             http,
             cache: config.cache.clone(),
         })
@@ -66,6 +80,33 @@ impl GitLabPlugin {
     async fn get<T: DeserializeOwned>(&self, path: &str, query: &[(&str, &str)]) -> Result<T, PluginError> {
         let url = url_with_query(&self.host, &format!("api/v4/{path}"), query)?;
         decode(self.http.as_ref(), Request::get(url).header("PRIVATE-TOKEN", self.token.clone())).await
+    }
+
+    /// A project you maintain whose default branch's last finished pipeline failed: to fix. Best effort: a project
+    /// that can't be read is a remark, except a rate limit, which fails the fetch.
+    async fn maintained(&self, project: &str) -> Result<(Option<InboxItem>, Option<Message>), PluginError> {
+        let failing = async {
+            let info: Project = self.get(&format!("projects/{}", project.replace('/', "%2F")), &[]).await?;
+            let Some(branch) = info.default_branch else { return Ok(None) };
+            let base = format!("projects/{}", info.id);
+            let pipelines: Vec<BranchPipeline> = self
+                .get(
+                    &format!("{base}/pipelines"),
+                    &[("ref", branch.as_str()), ("scope", "finished"), ("per_page", "1")],
+                )
+                .await?;
+            let Some(pipeline) = pipelines.into_iter().next().filter(|p| p.status == "failed") else { return Ok(None) };
+            // The commit's title says what broke it; without it, the pipeline still shows.
+            let commit = self.get::<Commit>(&format!("{base}/repository/commits/{}", pipeline.sha), &[]).await.ok();
+            Ok::<_, PluginError>(Some(pipeline.item(&self.account_id, project, &branch, commit)))
+        };
+        match failing.await {
+            Ok(item) => Ok((item, None)),
+            Err(error) => match rate_limit_of(&error) {
+                Some(limit) => Err(limit),
+                None => Ok((None, Some(partial("Projects you maintain", &error)))),
+            },
+        }
     }
 
     /// The REST way, one merge request at a time. Best-effort: a call that fails leaves that part out instead of
@@ -307,7 +348,64 @@ impl SourcePlugin for GitLabPlugin {
             // Without approvals, an approved merge request would wait as if it weren't: say so.
             remarks.push(crate::partial("Approvals, pipelines or changed files", &error));
         }
+        for project in &self.projects {
+            let (item, remark) = self.maintained(project).await?;
+            items.extend(item);
+            if let Some(remark) = remark.filter(|r| !remarks.contains(r)) {
+                remarks.push(remark);
+            }
+        }
         Ok(SourceSnapshot { identity: user.username, items, remarks })
+    }
+}
+
+#[derive(Deserialize)]
+struct Project {
+    id: u64,
+    default_branch: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct BranchPipeline {
+    id: u64,
+    status: String,
+    sha: String,
+    web_url: String,
+    updated_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize)]
+struct Commit {
+    title: String,
+}
+
+impl BranchPipeline {
+    /// The default branch is red: to fix, said by the checks badge (and notified once). Same as GitHub.
+    fn item(self, account_id: &str, project: &str, branch: &str, commit: Option<Commit>) -> InboxItem {
+        InboxItem {
+            id: InboxItem::make_id(account_id, format!("ci/{project}/{}", self.id)),
+            account_id: account_id.into(),
+            plugin_id: "gitlab".into(),
+            bundle: InboxBundle::fix(),
+            title: commit.map_or_else(|| format!("Pipeline #{}", self.id), |c| remora_core::text::readable(&c.title)),
+            context: format!("{project} · {branch}"),
+            preview: None,
+            url: Some(self.web_url),
+            app_url: None,
+            author: None,
+            participants: vec![],
+            badges: vec![Badge::new(badge::CHECKS_FAILING, "Checks failed", Tone::Negative).notifying("Checks failed")],
+            date: self.updated_at,
+            needs_action: true,
+            priority: None,
+            due: None,
+            expires: None,
+            changes: None,
+            suggested_people: None,
+            recurrence: None,
+            reactions: None,
+            reason: None,
+        }
     }
 }
 
@@ -757,5 +855,38 @@ pub(crate) mod tests {
         assert_eq!(mention.preview.as_deref(), Some("@alice can you look?"));
         assert_eq!(mention.author.as_ref().map(|a| a.name.as_str()), Some("frank"));
         assert!(snapshot.remarks.is_empty());
+    }
+
+    /// A project whose default branch's last pipeline failed is to fix; a passing one is nothing; one that can't be
+    /// read is a remark. Same cases as macOS.
+    #[tokio::test]
+    async fn a_failed_pipeline_on_the_default_branch_is_to_fix() {
+        let fetch = |pipeline: &'static str| async move {
+            let http = StubHttp::paths(&[
+                ("/api/v4/user", r#"{"username": "alice"}"#),
+                ("/api/v4/merge_requests", "[]"),
+                ("/api/v4/todos", "[]"),
+                ("/api/v4/projects/acme%2Ftools%2Fcli", r#"{"id": 7, "default_branch": "main"}"#),
+                ("/api/v4/projects/7/pipelines?ref=main", pipeline),
+                ("/api/v4/projects/7/repository/commits/abc", r#"{"title": "Bump *ruby*"}"#),
+            ]);
+            let config =
+                config(&[("host", "gitlab.acme.io"), ("token", "t"), ("repositories", "acme/tools/cli, acme/gone")]);
+            GitLabPlugin::new(&config, Arc::new(http)).unwrap().fetch().await.unwrap()
+        };
+        let red = fetch(r#"[{"id": 9, "status": "failed", "sha": "abc", "web_url": "https://gitlab.acme.io/acme/tools/cli/-/pipelines/9", "updated_at": "2026-10-08T12:00:00Z"}]"#).await;
+        assert_eq!(red.items.len(), 1);
+        let item = &red.items[0];
+        assert_eq!((item.title.as_str(), item.context.as_str()), ("Bump ruby", "acme/tools/cli · main"));
+        assert_eq!(item.bundle, InboxBundle::fix());
+        assert!(item.has_badge(badge::CHECKS_FAILING) && item.needs_action);
+        assert_eq!(red.remarks.len(), 1, "acme/gone can't be read");
+        assert_eq!(red.remarks[0].args[0], "Projects you maintain");
+
+        let green = fetch(
+            r#"[{"id": 9, "status": "success", "sha": "abc", "web_url": "u", "updated_at": "2026-10-08T12:00:00Z"}]"#,
+        )
+        .await;
+        assert!(green.items.is_empty());
     }
 }

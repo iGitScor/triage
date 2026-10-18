@@ -1,9 +1,15 @@
 use crate::code_review::{Checks, CodeReview};
-use crate::{decode_with_reset, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
+use crate::{
+    decode, decode_with_reset, maintained_repositories, partial, rate_limit_of, url_with_query, HttpClient,
+    PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot,
+};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use remora_core::ReviewState;
-use remora_core::{ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest};
+use remora_core::{
+    badge, Badge, ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Message as Remark, Person,
+    PluginManifest, Priority, Tone,
+};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -20,19 +26,27 @@ pub fn manifest() -> PluginManifest {
                 "Personal access token",
                 "A fine-grained token with read-only Pull requests and Issues, or a classic token with repo and read:org.",
             ),
+            ConfigField::text(
+                "repositories",
+                "Repositories I maintain",
+                "acme/web, acme/api",
+                "Optional. A failing default branch and open critical or high security alerts go to To fix. The token \
+                 also needs read-only Actions, Dependabot alerts and Code scanning alerts.",
+            ),
         ],
         setup_steps: vec![
             // Read-only and limited to what Remora reads, rather than the whole `repo` scope.
             "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues.".into(),
             "Pick the owner (you, or your organization) and All repositories, set an expiration, generate it and paste it below.".into(),
             "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org.".into(),
+            "To see the checks and security alerts of repositories you maintain, also give the token read-only Actions, Dependabot alerts and Code scanning alerts.".into(),
         ],
         setup_label: "Create a token".into(),
         setup_url: Some("{host}/settings/personal-access-tokens/new?name=Remora&description=Remora%20reads%20your%20pull%20requests%2C%20reviews%20and%20issues&pull_requests=read&issues=read&metadata=read".into()),
         egress: Egress {
             hosts: vec!["api.github.com".into(), "github.com".into(), "avatars.githubusercontent.com".into()],
             description: "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub \
-                          Enterprise host)."
+                          Enterprise host), and the checks and security alerts of the repositories you maintain."
                 .into(),
             external_ai: false,
         },
@@ -41,13 +55,20 @@ pub fn manifest() -> PluginManifest {
     }
 }
 
-/// Pull requests you opened and those awaiting your review, through a single GraphQL query.
+/// Pull requests you opened and those awaiting your review, through a single GraphQL query; for the repositories you
+/// maintain, a failing default branch and open critical or high security alerts, through the REST API.
 pub struct GitHubPlugin {
     account_id: String,
     endpoint: String,
+    /// The REST API: api.github.com, or the Enterprise host's /api/v3.
+    rest: String,
     token: String,
+    repositories: Vec<String>,
     http: Arc<dyn HttpClient>,
 }
+
+/// The security alerts listed per repository, most recent first.
+const ALERTS_PER_REPOSITORY: usize = 10;
 
 impl GitHubPlugin {
     pub fn new(config: &PluginConfig, http: Arc<dyn HttpClient>) -> Result<Self, PluginError> {
@@ -57,7 +78,20 @@ impl GitHubPlugin {
         } else {
             format!("{host}/api/graphql")
         };
-        Ok(GitHubPlugin { account_id: config.account_id.clone(), endpoint, token: config.required("token")?, http })
+        let rest = if host.ends_with("://github.com") {
+            "https://api.github.com".to_string()
+        } else {
+            format!("{host}/api/v3")
+        };
+        let repositories = maintained_repositories(config.values.get("repositories").map_or("", String::as_str), false);
+        Ok(GitHubPlugin {
+            account_id: config.account_id.clone(),
+            endpoint,
+            rest,
+            token: config.required("token")?,
+            repositories,
+            http,
+        })
     }
 
     /// `reset`: when GitHub's rate limit resets, from the answer's headers.
@@ -139,7 +173,252 @@ impl SourcePlugin for GitHubPlugin {
         let request =
             Request::post_json(&self.endpoint, &body)?.header("Authorization", format!("bearer {}", self.token));
         let (response, reset) = decode_with_reset::<GraphQlResponse>(self.http.as_ref(), request).await?;
-        Self::snapshot(response, &self.account_id, reset)
+        let mut snapshot = Self::snapshot(response, &self.account_id, reset)?;
+        for repository in &self.repositories {
+            let (items, remarks) = self.maintained(repository).await?;
+            snapshot.items.extend(items);
+            for remark in remarks {
+                if !snapshot.remarks.contains(&remark) {
+                    snapshot.remarks.push(remark);
+                }
+            }
+        }
+        Ok(snapshot)
+    }
+}
+
+impl GitHubPlugin {
+    async fn get<T: serde::de::DeserializeOwned>(
+        &self,
+        repository: &str,
+        path: &str,
+        query: &[(&str, &str)],
+    ) -> Result<T, PluginError> {
+        let path = if path.is_empty() { format!("repos/{repository}") } else { format!("repos/{repository}/{path}") };
+        let url = url_with_query(&self.rest, &path, query)?;
+        let request = Request::get(url)
+            .header("Authorization", format!("Bearer {}", self.token))
+            .header("Accept", "application/vnd.github+json");
+        decode(self.http.as_ref(), request).await
+    }
+
+    /// A repository you maintain: its default branch's last finished run when it failed, and its open critical or
+    /// high security alerts (Dependabot, and code scanning where it is set up). Best effort: a part that can't be
+    /// read is a remark, except a rate limit, which fails the fetch.
+    async fn maintained(&self, repository: &str) -> Result<(Vec<InboxItem>, Vec<Remark>), PluginError> {
+        let (mut items, mut remarks) = (vec![], vec![]);
+        let note = |what: &str, error: PluginError, remarks: &mut Vec<Remark>| match rate_limit_of(&error) {
+            Some(limit) => Err(limit),
+            None => {
+                remarks.push(partial(what, &error));
+                Ok(())
+            }
+        };
+        let info: Info = match self.get(repository, "", &[]).await {
+            Ok(info) => info,
+            Err(error) => {
+                note("Repositories you maintain", error, &mut remarks)?;
+                return Ok((items, remarks));
+            }
+        };
+        let branch = info.default_branch;
+        let runs = self
+            .get::<Runs>(
+                repository,
+                "actions/runs",
+                &[("branch", &branch), ("status", "completed"), ("per_page", "1"), ("exclude_pull_requests", "true")],
+            )
+            .await;
+        match runs {
+            Ok(runs) => items.extend(
+                runs.workflow_runs
+                    .into_iter()
+                    .next()
+                    .and_then(|run| run.failing(&self.account_id, repository, &branch)),
+            ),
+            // No Actions on this repository.
+            Err(PluginError::Status(404)) => {}
+            Err(error) => note("Checks on the default branch", error, &mut remarks)?,
+        }
+        let per_page = ALERTS_PER_REPOSITORY.to_string();
+        let severe = [("state", "open"), ("severity", "critical,high"), ("per_page", per_page.as_str())];
+        match self.get::<Vec<DependabotAlert>>(repository, "dependabot/alerts", &severe).await {
+            Ok(alerts) => items.extend(alerts.into_iter().map(|a| a.item(&self.account_id, repository))),
+            Err(error) => note("Security alerts", error, &mut remarks)?,
+        }
+        match self.get::<Vec<CodeScanningAlert>>(repository, "code-scanning/alerts", &severe).await {
+            Ok(alerts) => items.extend(alerts.into_iter().map(|a| a.item(&self.account_id, repository))),
+            // Code scanning needs GitHub Advanced Security, often off: no remark at every refresh.
+            Err(PluginError::Status(403 | 404)) => {}
+            Err(error) => note("Security alerts", error, &mut remarks)?,
+        }
+        Ok((items, remarks))
+    }
+}
+
+#[derive(Deserialize)]
+struct Info {
+    default_branch: String,
+}
+
+#[derive(Deserialize)]
+struct Runs {
+    #[serde(default)]
+    workflow_runs: Vec<Run>,
+}
+
+#[derive(Deserialize)]
+struct Run {
+    id: u64,
+    name: Option<String>,
+    display_title: Option<String>,
+    conclusion: Option<String>,
+    html_url: String,
+    updated_at: DateTime<Utc>,
+}
+
+impl Run {
+    /// The default branch is red: to fix, said by the checks badge (and notified once).
+    fn failing(self, account_id: &str, repository: &str, branch: &str) -> Option<InboxItem> {
+        if !matches!(self.conclusion.as_deref(), Some("failure" | "timed_out" | "startup_failure")) {
+            return None;
+        }
+        let title = self.display_title.or(self.name.clone()).unwrap_or_else(|| branch.to_string());
+        Some(maintained_item(
+            account_id,
+            format!("ci/{repository}/{}", self.id),
+            remora_core::text::readable(&title),
+            format!("{repository} · {branch}"),
+            self.name,
+            self.html_url,
+            self.updated_at,
+            None,
+            vec![Badge::new(badge::CHECKS_FAILING, "Checks failed", Tone::Negative).notifying("Checks failed")],
+        ))
+    }
+}
+
+#[derive(Deserialize)]
+struct DependabotAlert {
+    number: u64,
+    html_url: String,
+    created_at: DateTime<Utc>,
+    security_advisory: Advisory,
+    dependency: Option<Dependency>,
+}
+
+#[derive(Deserialize)]
+struct Advisory {
+    summary: String,
+    severity: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct Dependency {
+    package: Option<Package>,
+}
+
+#[derive(Deserialize)]
+struct Package {
+    name: String,
+}
+
+impl DependabotAlert {
+    fn item(self, account_id: &str, repository: &str) -> InboxItem {
+        let package = self.dependency.and_then(|d| d.package).map(|p| p.name);
+        let title = match package {
+            Some(package) => format!("{package}: {}", self.security_advisory.summary),
+            None => self.security_advisory.summary,
+        };
+        maintained_item(
+            account_id,
+            format!("alert/{repository}/dependabot/{}", self.number),
+            title,
+            repository.into(),
+            None,
+            self.html_url,
+            self.created_at,
+            severity(self.security_advisory.severity.as_deref()),
+            vec![],
+        )
+    }
+}
+
+#[derive(Deserialize)]
+struct CodeScanningAlert {
+    number: u64,
+    html_url: String,
+    created_at: DateTime<Utc>,
+    rule: Rule,
+}
+
+#[derive(Deserialize)]
+struct Rule {
+    description: Option<String>,
+    security_severity_level: Option<String>,
+}
+
+impl CodeScanningAlert {
+    fn item(self, account_id: &str, repository: &str) -> InboxItem {
+        maintained_item(
+            account_id,
+            format!("alert/{repository}/code-scanning/{}", self.number),
+            self.rule.description.unwrap_or_else(|| format!("Code scanning alert #{}", self.number)),
+            repository.into(),
+            None,
+            self.html_url,
+            self.created_at,
+            severity(self.rule.security_severity_level.as_deref()),
+            vec![],
+        )
+    }
+}
+
+/// Critical alerts are urgent, high ones high.
+fn severity(level: Option<&str>) -> Option<Priority> {
+    match level {
+        Some("critical") => Some(Priority::Urgent),
+        Some("high") => Some(Priority::High),
+        _ => None,
+    }
+}
+
+/// Something to fix in a repository you maintain.
+#[allow(clippy::too_many_arguments)]
+fn maintained_item(
+    account_id: &str,
+    local_id: String,
+    title: String,
+    context: String,
+    preview: Option<String>,
+    url: String,
+    date: DateTime<Utc>,
+    priority: Option<Priority>,
+    badges: Vec<Badge>,
+) -> InboxItem {
+    InboxItem {
+        id: InboxItem::make_id(account_id, &local_id),
+        account_id: account_id.into(),
+        plugin_id: "github".into(),
+        bundle: InboxBundle::fix(),
+        title,
+        context,
+        preview,
+        url: Some(url),
+        app_url: None,
+        author: None,
+        participants: vec![],
+        badges,
+        date,
+        needs_action: true,
+        priority,
+        due: None,
+        expires: None,
+        changes: None,
+        suggested_people: None,
+        recurrence: None,
+        reactions: None,
+        reason: None,
     }
 }
 
@@ -608,5 +887,73 @@ pub(crate) mod tests {
         assert_eq!(task.author.as_ref().map(|a| a.name.as_str()), Some("grace"));
         assert!(task.needs_action);
         assert_eq!(snapshot.remarks, [crate::truncated("GitHub")]);
+    }
+    const REPOSITORY: &str = r#"{"default_branch": "main"}"#;
+    const RED_RUN: &str = r#"{"workflow_runs": [{"id": 42, "name": "CI", "display_title": "Bump *serde*",
+      "conclusion": "failure", "html_url": "https://github.com/acme/web/actions/runs/42",
+      "updated_at": "2026-10-08T12:00:00Z"}]}"#;
+    const DEPENDABOT: &str = r#"[{"number": 3, "html_url": "https://github.com/acme/web/security/dependabot/3",
+      "created_at": "2026-10-07T08:00:00Z", "dependency": {"package": {"name": "lodash"}},
+      "security_advisory": {"summary": "Prototype pollution", "severity": "critical"}}]"#;
+    const CODE_SCANNING: &str = r#"[{"number": 5, "html_url": "https://github.com/acme/web/security/code-scanning/5",
+      "created_at": "2026-10-06T08:00:00Z", "rule": {"description": "SQL injection", "security_severity_level": "high"}}]"#;
+
+    fn maintaining(routes: &[(&'static str, &str)]) -> GitHubPlugin {
+        let mut all = vec![("/graphql", RESPONSE)];
+        all.extend_from_slice(routes);
+        GitHubPlugin::new(
+            &config(&[("host", "github.com"), ("token", "t"), ("repositories", "acme/web")]),
+            Arc::new(StubHttp::paths(&all)),
+        )
+        .unwrap()
+    }
+
+    /// A red default branch and open critical or high alerts are things to fix. Same cases as macOS.
+    #[tokio::test]
+    async fn a_failing_default_branch_and_security_alerts_are_to_fix() {
+        let plugin = maintaining(&[
+            ("/repos/acme/web", REPOSITORY),
+            ("/repos/acme/web/actions/runs?branch=main", RED_RUN),
+            ("/repos/acme/web/dependabot/alerts?severity=critical%2Chigh", DEPENDABOT),
+            ("/repos/acme/web/code-scanning/alerts", CODE_SCANNING),
+        ]);
+        let snapshot = plugin.fetch().await.unwrap();
+        assert!(snapshot.remarks.is_empty(), "{:?}", snapshot.remarks);
+        let fix: Vec<_> = snapshot.items.iter().filter(|i| i.bundle == InboxBundle::fix()).collect();
+        assert_eq!(fix.len(), 3);
+        let ci = fix.iter().find(|i| i.has_badge(badge::CHECKS_FAILING)).unwrap();
+        assert_eq!((ci.title.as_str(), ci.context.as_str()), ("Bump serde", "acme/web · main"));
+        assert_eq!(ci.preview.as_deref(), Some("CI"));
+        assert_eq!(ci.url.as_deref(), Some("https://github.com/acme/web/actions/runs/42"));
+        assert!(ci.needs_action && ci.badges[0].notify.is_some());
+        let dependabot = fix.iter().find(|i| i.title.starts_with("lodash")).unwrap();
+        assert_eq!(dependabot.title, "lodash: Prototype pollution");
+        assert_eq!((dependabot.context.as_str(), dependabot.priority), ("acme/web", Some(Priority::Urgent)));
+        let scanning = fix.iter().find(|i| i.title == "SQL injection").unwrap();
+        assert_eq!(scanning.priority, Some(Priority::High));
+        assert_ne!(dependabot.id, scanning.id);
+    }
+
+    /// A green run is nothing; no Actions or no code scanning is silent; alerts that can't be read say so.
+    #[tokio::test]
+    async fn a_green_branch_is_nothing_and_unreadable_alerts_are_a_remark() {
+        let green = RED_RUN.replace("failure", "success");
+        let plugin = maintaining(&[
+            ("/repos/acme/web", REPOSITORY),
+            ("/repos/acme/web/actions/runs", &green),
+            ("/repos/acme/web/dependabot/alerts", "{\"message\": \"nope\"}"),
+        ]);
+        let snapshot = plugin.fetch().await.unwrap();
+        assert!(!snapshot.items.iter().any(|i| i.bundle == InboxBundle::fix()));
+        assert_eq!(snapshot.remarks.len(), 1, "{:?}", snapshot.remarks);
+        assert!(
+            snapshot.remarks[0].text.starts_with("Security alerts couldn’t be read"),
+            "{}",
+            snapshot.remarks[0].text
+        );
+
+        let missing = maintaining(&[]).fetch().await.unwrap();
+        assert!(missing.remarks[0].text.starts_with("Repositories you maintain couldn’t be read"));
+        assert!(missing.items.iter().any(|i| i.bundle == InboxBundle::authored()), "pull requests still listed");
     }
 }

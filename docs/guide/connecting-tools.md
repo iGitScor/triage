@@ -32,6 +32,10 @@ If your organization uses SAML single sign-on, click **Configure SSO** next to t
 it for the organization, or its repositories stay invisible.
 :::
 
+**Repositories I maintain** (optional, up to 10, such as `acme/web, acme/api`): when the last run on a repository's
+default branch failed, or it has open critical or high Dependabot or code scanning alerts, they go to *To fix*.
+Give the token read-only **Actions**, **Dependabot alerts** and **Code scanning alerts** too.
+
 ## GitLab
 
 Shows your merge requests, the ones you review, their approvals and pipelines, and your other To-Dos: an issue
@@ -44,6 +48,9 @@ assigned to you goes to *To do*, a mention to *Mentions*. Mark a To-Do done in G
 3. Paste it and click **Connect**.
 
 *Changes requested* needs GitLab 16.10 or later; older instances show everything else.
+
+**Projects I maintain** (optional, up to 10, such as `acme/web, acme/tools/cli`): when the last pipeline on a
+project's default branch failed, it goes to *To fix*.
 
 ## Bitbucket
 
