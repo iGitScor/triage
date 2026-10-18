@@ -79,9 +79,10 @@ vérifie d’abord, en quelques minutes, ce qui bloquerait de toute façon la pu
 version des sources, aucune vulnérabilité connue ni problème de licence (cargo-deny), et les pages du site commitées
 sont celles qu’écrit `site/build.py`. Puis il construit les deux apps en parallèle avec les
 mêmes contrôles que la CI : l’app Mac est testée, reçoit un numéro de build (`CFBundleVersion`, le numéro
-d’exécution), est compilée en Universal, signée, et empaquetée en `Remora.dmg` avec les licences ; l’app Windows
-passe la vérification des traductions, la vérification de types, clippy et les tests avant la construction de
-`Remora-Setup.exe`. Pendant ce temps, un job `ci-passed` attend les exécutions de la CI sur le commit tagué (Format,
+d’exécution), est compilée en Universal, signée, et empaquetée en `Remora.dmg` avec les licences (`make -C macos dmg` : dmgbuild, figé par
+empreinte, dispose la fenêtre sur `macos/dmg/background.tiff`, rendu depuis `site/og/dmg.html` par
+`site/og/render.sh dmg`) ; l’app Windows passe la vérification des traductions, la vérification de types, clippy et
+les tests avant la construction de `Remora-Setup.exe` et `Remora.msi`. Pendant ce temps, un job `ci-passed` attend les exécutions de la CI sur le commit tagué (Format,
 macOS, Windows et Linux, site, dépendances) et échoue si l’une n’a pas réussi : taguez un commit dont la CI est passée,
 et ne poussez pas sur `main` avant qu’elle le soit (un nouveau push annule les exécutions en cours). Ce n’est que si
 tout réussit qu’un dernier job publie la version GitHub, avec chaque

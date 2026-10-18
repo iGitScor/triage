@@ -44,6 +44,10 @@ jobs:
       - name: Package
         if: github.event_name != 'pull_request'
         run: ditto -c -k --keepParent build/Remora.app build/Remora-macos.zip
+      # The DMG as the release makes it (window, background, licences), so a broken layout shows before a tag.
+      - name: The DMG builds
+        if: github.event_name != 'pull_request'
+        run: make dmg && ls -l build/Remora.dmg
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: github.event_name != 'pull_request'
         with:

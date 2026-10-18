@@ -109,13 +109,14 @@ jobs:
           codesign -d -r- build/Remora.app
       - name: Package the DMG
         run: |
-          mkdir -p build/dmg
-          cp -R build/Remora.app build/dmg/
-          ln -s /Applications build/dmg/Applications
-          cp ../LICENSE build/dmg/LICENSE.txt
-          cp Resources/LICENCES.txt build/dmg/Third-party\ licences.txt
-          cp Resources/Outfit-OFL.txt build/dmg/
-          hdiutil create -volname Remora -srcfolder build/dmg -ov -format UDZO build/Remora.dmg
+          # The window laid out on dmg/background.tiff, with dmgbuild pinned by hash (macos/Makefile).
+          make dmg
+          # What the user and the updater find in it: the app, signed as built, and the shortcut to Applications.
+          hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$RUNNER_TEMP/dmg" build/Remora.dmg
+          codesign --verify --strict "$RUNNER_TEMP/dmg/Remora.app"
+          test -L "$RUNNER_TEMP/dmg/Applications" && test -f "$RUNNER_TEMP/dmg/Licences/LICENSE.txt"
+          hdiutil detach "$RUNNER_TEMP/dmg"
+          ls -l build/Remora.dmg
           shasum -a 256 build/Remora.dmg | sed 's| build/| |' > build/Remora.dmg.sha256
           # Next to the DMG, so the artifact keeps every file at the same level.
           mv Remora.dmg.cdx.json build/

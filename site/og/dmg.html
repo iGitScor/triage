@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- The DMG window's background (660×440, and twice that), rendered by render.sh into macos/dmg/. Not deployed.
+     Finder draws the icons and their names on top: the app at (170, 200), Applications at (490, 200), Licences at
+     (600, 352), as macos/dmg/settings.py places them. -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/site/tokens.css" />
+    <link rel="stylesheet" href="/site/site.css" />
+    <link rel="stylesheet" href="/site/remora.css" />
+    <link rel="stylesheet" href="/_og/dmg.css" />
+  </head>
+  <body>
+    <div class="dmg">
+      <span class="brand-remora"><span class="brand-disc" id="disc"></span><span class="brand-name">Remora</span></span>
+      <p class="hint">Drag Remora to <span class="mark">Applications</span><span class="fr">Glissez Remora dans Applications</span></p>
+      <svg class="arrow" viewBox="0 0 136 36" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 18 H122" stroke-dasharray="1 9" /><path d="M110 6 L126 18 L110 30" />
+      </svg>
+      <span class="spot app"></span>
+      <span class="spot apps"></span>
+      <div class="first">
+        <i>i</i>
+        <p><b>First launch:</b> right-click Remora in Applications → <b>Open</b>. On macOS 15 or later, open it once, then System Settings → Privacy &amp; Security → <b>Open Anyway</b>.<em>Premier lancement : clic droit sur Remora dans Applications → Ouvrir. Sous macOS 15 ou plus, ouvrez-le une fois, puis Réglages Système → Confidentialité et sécurité → Ouvrir quand même.</em></p>
+      </div>
+    </div>
+    <script>
+      document.getElementById('disc').innerHTML =
+        '<svg viewBox="5 35 88 32" fill="currentColor"><path d="M27 51C18 44 10 36 6 36C10 45 10 57 6 66C10 66 18 58 27 51Z"/><path fill-rule="evenodd" d="M35 38H79A13 13 0 0 1 79 64H35A13 13 0 0 1 35 38ZM77 51a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z"/></svg>'
+    </script>
+  </body>
+</html>
