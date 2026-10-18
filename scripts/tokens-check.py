@@ -1,46 +1,89 @@
 #!/usr/bin/env python3
-"""Fails when the docs theme's light or dark colours differ from the shared Myna tokens.
+"""Checks that Remora uses the Estuary design system's tokens (@iscor/design, pinned in package.json).
 
-site/public/site/tokens.css is the single source for the site, the docs and the Windows app. The docs follow
-VitePress's own light/dark switch, so docs/.vitepress/theme/custom.css sets each scheme's tokens again
-(`html:not(.dark)` and `html.dark`): every value there must equal the token of the same scheme.
+- The website's site/public/site/tokens.css is the package's dist/tokens.css, as is (the site is static: no
+  bundler to import it). `--write` copies it after an update of the package.
+- The Mac's colours (macos/Sources/Remora/Presentation/Theme.swift, `Myna`) equal the package's, in light and in dark,
+  opacity included. The Mac keeps its own file for what the package doesn't have yet: the Increase Contrast variants.
+
+The Windows app and the docs import the package's CSS themselves.
 """
 
+from __future__ import annotations
+
+import json
 import pathlib
 import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-TOKENS = ROOT / "site/public/site/tokens.css"
-THEME = ROOT / "docs/.vitepress/theme/custom.css"
+PACKAGE = ROOT / "node_modules/@iscor/design/dist"
+SITE = ROOT / "site/public/site/tokens.css"
+THEME = ROOT / "macos/Sources/Remora/Presentation/Theme.swift"
+
+if not PACKAGE.exists():
+    sys.exit("@iscor/design isn't installed: run `npm ci` at the repository's root.")
+
+problems = []
+package_css = (PACKAGE / "tokens.css").read_text()
+if "--write" in sys.argv:
+    SITE.write_text(package_css)
+elif SITE.read_text() != package_css:
+    problems.append(
+        f"{SITE.relative_to(ROOT)} isn't the package's tokens.css: run `python3 scripts/tokens-check.py --write`"
+    )
+
+tokens = json.loads((PACKAGE / "tokens.json").read_text())
 
 
-def block(css: str, selector: str) -> str:
-    """The body of the first rule for `selector`, braces matched."""
-    start = css.index(selector)
-    depth, opened = 0, css.index("{", start)
-    for index in range(opened, len(css)):
-        depth += {"{": 1, "}": -1}.get(css[index], 0)
+def camel(name: str) -> str:
+    return re.sub(r"-(\w)", lambda m: m.group(1).upper(), name)
+
+
+def rgba(value: str) -> tuple[str, float]:
+    """#rrggbb or #rrggbbaa → (RRGGBB, alpha rounded to 2 places)."""
+    return value[1:7].upper(), round(int(value[7:9], 16) / 255, 2) if len(value) == 9 else 1.0
+
+
+swift = THEME.read_text()
+
+
+def color_arguments(name: str) -> str | None:
+    """What is between the parentheses of `static let <name> = Color(…)`, nested ones included."""
+    start = swift.find(f"static let {name} = Color(")
+    if start < 0:
+        return None
+    depth, opened = 0, swift.index("(", start)
+    for index in range(opened, len(swift)):
+        depth += {"(": 1, ")": -1}.get(swift[index], 0)
         if depth == 0:
-            return css[opened + 1 : index]
-    raise ValueError(f"{selector} isn't closed")
+            return swift[opened + 1 : index]
+    return None
 
 
-def variables(body: str) -> dict[str, str]:
-    return {name: value.strip() for name, value in re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", body)}
+checked = 0
+for name in tokens["light"]:
+    arguments = color_arguments(camel(name))
+    if arguments is None:
+        continue  # a token the Mac doesn't use
+    checked += 1
+    found = dict(re.findall(r"(light|dark): 0x([0-9A-F]{6})", arguments))
+    opacity = re.search(r"(?<![\w])opacity: ([\d.]+)", arguments)
+    opacities = {
+        "light": float((re.search(r"lightOpacity: ([\d.]+)", arguments) or opacity or [None, 1])[1]),
+        "dark": float((re.search(r"darkOpacity: ([\d.]+)", arguments) or opacity or [None, 1])[1]),
+    }
+    for scheme in ("light", "dark"):
+        hex_value, alpha = rgba(tokens[scheme][name])
+        if found.get(scheme) != hex_value or round(opacities[scheme], 2) != alpha:
+            problems.append(
+                f"Myna.{camel(name)} ({scheme}) is 0x{found.get(scheme)} at {opacities[scheme]}, "
+                f"@iscor/design says 0x{hex_value} at {alpha}"
+            )
+disabled = re.search(r"static let disabledOpacity = ([\d.]+)", swift)
+if not disabled or float(disabled.group(1)) != tokens["base"]["disabled"]:
+    problems.append(f"Myna.disabledOpacity isn't the package's {tokens['base']['disabled']}")
 
-
-tokens = TOKENS.read_text()
-light = variables(block(tokens, ":root"))
-dark = {**light, **variables(block(block(tokens, "@media (prefers-color-scheme: dark)"), ":root"))}
-theme = THEME.read_text()
-
-problems = [
-    f"{scheme}: {name} is {value}, tokens.css says {expected.get(name)}"
-    for scheme, selector, expected in (("light", "html:not(.dark)", light), ("dark", "html.dark", dark))
-    for name, value in variables(block(theme, selector)).items()
-    if expected.get(name) != value
-]
 if problems:
-    sys.exit(f"{THEME.relative_to(ROOT)} differs from {TOKENS.relative_to(ROOT)}:\n  " + "\n  ".join(problems))
-print(f"✓ the docs theme matches {TOKENS.relative_to(ROOT)}")
+    sys.exit("Remora differs from @iscor/design:\n  " + "\n  ".join(problems))
+print(f"✓ the site's tokens.css and the Mac's {checked} colours match @iscor/design")

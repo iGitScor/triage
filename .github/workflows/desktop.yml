@@ -13,7 +13,6 @@ on:
       - "policy/**"
       - "scripts/make-notices.py"
       - "macos/Resources/Logos/**"
-      - "site/public/site/tokens.css"
       - ".github/workflows/desktop.yml"
   pull_request:
     paths:
@@ -26,7 +25,6 @@ on:
       - "policy/**"
       - "scripts/make-notices.py"
       - "macos/Resources/Logos/**"
-      - "site/public/site/tokens.css"
       - ".github/workflows/desktop.yml"
 
 # No debug info in CI builds: faster to compile and link, and a smaller cache. Releases build their own way.

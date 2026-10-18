@@ -13,7 +13,8 @@
       "!eval/intents.json",
       "!desktop/app/src/lib/bindings.ts",
       "!policy",
-      "!desktop/app/src-tauri/gen"
+      "!desktop/app/src-tauri/gen",
+      "!site/public/site/tokens.css"
     ]
   },
   "formatter": {

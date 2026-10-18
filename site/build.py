@@ -6,7 +6,7 @@
 The copy is in copy/en.json and copy/fr.json ($repo, $dmg, $tools… stand for the links and names below), the page
 markup in templates/ (string.Template), and this file puts them together; the one-line fragments repeated in lists
 (cards, rows, buttons) are the small helpers below. Screenshots come from macos/scripts/screenshots.sh and
-desktop/app/scripts/screenshots.mjs (make screenshots). Same design system as Myna (site.css, tokens.css).
+desktop/app/scripts/screenshots.mjs (make screenshots). Same design system as Myna: Estuary (@iscor/design; tokens.css is its file, kept equal by scripts/tokens-check.py).
 """
 
 from __future__ import annotations

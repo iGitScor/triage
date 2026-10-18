@@ -1,44 +1,5 @@
-/* Remora for Windows. Colours and type come from the shared Myna tokens (site/public/site/tokens.css),
-   which follow the system scheme; Settings → General → Theme forces one with data-theme on <html>. */
-
-:root[data-theme="light"] {
-  --backdrop: #f0f0e8;
-  --surface: #f7f7f1;
-  --card: #e8e8df;
-  --card-2: #dcdcd2;
-  --field: #ffffff;
-  --border: #d0d0c8;
-  --ink: #111111;
-  --ink-soft: #333330;
-  --muted: #55554e;
-  --line: rgba(17, 17, 17, 0.08);
-  --accent-soft: rgba(185, 255, 102, 0.35);
-  --accent-text: #356509;
-  --ok: #146b50;
-  --warn: #725200;
-  --danger: #a82c23;
-  color-scheme: light;
-}
-
-:root[data-theme="dark"] {
-  --backdrop: #0e0e14;
-  --surface: #13131c;
-  --card: #1a1a26;
-  --card-2: #242433;
-  --field: #13131c;
-  --border: #2a2a3a;
-  --ink: #e4e4ec;
-  --ink-soft: #c4c4d0;
-  --muted: #8c8ca2;
-  --line: rgba(255, 255, 255, 0.08);
-  --accent-soft: rgba(185, 255, 102, 0.14);
-  --accent-text: #b9ff66;
-  --ok: #34d399;
-  --warn: #fbbf24;
-  --danger: #f87171;
-  color-scheme: dark;
-}
-
+/* Remora for Windows. Colours and type come from the Estuary design system (@iscor/design, imported in main.ts),
+   which follows the system scheme; Settings → General → Theme forces one with data-theme on <html>. */
 *,
 *::before,
 *::after {

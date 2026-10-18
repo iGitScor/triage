@@ -2,7 +2,8 @@ import AppKit
 import RemoraCore
 import SwiftUI
 
-/// Myna design tokens (see site/public/site/tokens.css), resolved for light and dark appearance.
+/// The Estuary design system's tokens (@iscor/design), resolved for light and dark appearance, with Increase Contrast
+/// variants the package doesn't have yet. scripts/tokens-check.py keeps the light and dark values equal to the package's.
 enum Myna {
     // Each token has a high-contrast variant, used when Increase Contrast is on:
     // darker inks and borders on light, lighter ones on dark, and stronger hairlines.
@@ -39,7 +40,7 @@ enum Myna {
             contrastOpacity: max(opacity, 0.9))
     }
 
-    /// A control that can't be used yet (`--disabled-opacity` in tokens.css): dimmed, same in both schemes.
+    /// A control that can't be used yet (`--disabled-opacity` in @iscor/design): dimmed, same in both schemes.
     static let disabledOpacity = 0.45
 
     static let radiusLarge: CGFloat = 18

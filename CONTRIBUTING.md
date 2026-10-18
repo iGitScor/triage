@@ -15,8 +15,8 @@ Thanks for helping. This page gets you from a fresh clone to a change ready for 
 | [`site/`](site) | The marketing pages, written by `site/build.py`, served with the docs by Cloudflare | Python 3 |
 
 Some files feed more than one folder: the French dictionary (`macos/scripts/translations_fr.py`) serves both apps,
-and the tool logos (`macos/Resources/Logos`) and design tokens (`site/public/site/tokens.css`) are shared with the
-Windows app.
+and the tool logos (`macos/Resources/Logos`) are shared with the Windows app. The design tokens come from the
+Estuary design system (`@iscor/design`): see `scripts/tokens-check.py`.
 
 ## First run
 

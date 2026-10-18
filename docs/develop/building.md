@@ -21,7 +21,7 @@ Windows workflow also runs when one of its shared files changes.
 |---|---|---|
 | `macos/scripts/translations_fr.py` | Both apps' French: `Localizable.strings` and `desktop/app/src/i18n/fr.json` | `make i18n`; `make i18n-check` fails when a string has no French or a file is stale |
 | `scripts/make-emoji.py` | The emoji tables of both apps (`Emoji.swift`, `emoji.rs`) | `make i18n-check` |
-| `site/public/site/tokens.css` | The site, the docs (`docs/.vitepress/theme`) and the Windows app (`main.ts`) | `scripts/tokens-check.py` (in `make format-check`) for the docs' light and dark copies; the Mac's `Theme.swift` mirrors it by hand |
+| The Estuary design system ([`@iscor/design`](https://design.iscor.me), pinned in `package.json`) | The Windows app (`main.ts`) and the docs (`docs/.vitepress/theme`) import its CSS; the site serves a copy, `site/public/site/tokens.css`; the Mac's `Theme.swift` keeps its own colours, for Increase Contrast | `scripts/tokens-check.py` (in `make format-check`): the site's copy is the package's file (`--write` copies it after an update), and the Mac's colours are the package's |
 | `macos/Resources/Logos/` | The Windows app's tool logos (`Logo.svelte`) | Imported directly; the Windows dev server may read only this folder and `site/public/site` |
 | `macos/Resources/Info.plist` | The version, set for both apps by `make version` and read by the site | `scripts/version.py --check` in the release workflow |
 | Test counts in the READMEs and Windows docs | Counted from the code | `scripts/test-counts.py` (the pre-commit hook and `make format-check`) |
