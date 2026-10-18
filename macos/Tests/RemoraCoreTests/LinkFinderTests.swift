@@ -55,7 +55,10 @@ struct LinkFinderTests {
         #expect(LinkFinder.normalized("feat!: New search") == "New search")
     }
 
-    @Test(.enabled(if: NLEmbedding.wordEmbedding(for: .english) != nil))
+    @Test(
+        .enabled(
+            if: NLEmbedding.wordEmbedding(for: .english) != nil,
+            "Needs Apple's English word embeddings, which macOS downloads on demand"))
     func distinctiveWordsLinkButOrdinaryOnesDoNot() {
         let finder = LinkFinder(similarity: [
             KeywordSimilarity(), RareTokenSimilarity(),
@@ -70,8 +73,13 @@ struct LinkFinderTests {
         #expect(links["3"] == nil, "sharing the ordinary word “address” is not a link")
     }
 
-    /// A first name or a typo shared by two unrelated titles is no link; a product or library name still is.
-    @Test(.enabled(if: NLEmbedding.wordEmbedding(for: .english) != nil))
+    /// A first name or a typo shared by two unrelated titles is no link; a product or library name still is. Needs both
+    /// word lists: with one missing, only technical words count (`withoutBothVocabulariesOnlyTechnicalWordsLink`).
+    @Test(
+        .enabled(
+            if: NLEmbedding.wordEmbedding(for: .english) != nil && NLEmbedding.wordEmbedding(for: .french) != nil,
+            "Needs Apple's English and French word embeddings, which macOS downloads on demand (French is often missing on CI runners)"
+        ))
     func typosAndNamesAreNotDistinctive() {
         let rare = RareTokenSimilarity()
         #expect(rare.isTypo("recieve") && !rare.isTypo("nanoid") && !rare.isTypo("dotfile"))
