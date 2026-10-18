@@ -37,6 +37,8 @@
   --r-xl: 34px;
   --r-lg: 26px;
   --r-md: 18px;
+  /* A control that can't be used yet (Connect before the fields are filled): dimmed, same in both schemes. */
+  --disabled-opacity: 0.45;
   --font: "Outfit Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, monospace;
   color-scheme: light;

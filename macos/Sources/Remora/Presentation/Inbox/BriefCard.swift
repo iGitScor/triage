@@ -30,7 +30,7 @@ struct BriefCard: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(model.isBriefFresh)
-                    .opacity(model.isBriefFresh ? 0.35 : 1)
+                    .opacity(model.isBriefFresh ? Myna.disabledOpacity : 1)
                     .help(
                         model.isBriefFresh
                             ? L("This brief is still fresh (Settings → General → Assistant)") : L("Write a new brief")

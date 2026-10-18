@@ -39,6 +39,9 @@ enum Myna {
             contrastOpacity: max(opacity, 0.9))
     }
 
+    /// A control that can't be used yet (`--disabled-opacity` in tokens.css): dimmed, same in both schemes.
+    static let disabledOpacity = 0.45
+
     static let radiusLarge: CGFloat = 18
     static let radiusMedium: CGFloat = 12
 

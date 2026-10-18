@@ -215,6 +215,7 @@ struct ActionButton: View {
     let action: () -> Void
 
     @State private var hovering = false
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         Button(action: action) {
@@ -227,9 +228,10 @@ struct ActionButton: View {
                 .padding(.vertical, 5)
                 .background(background, in: Capsule())
                 .contentShape(Capsule())
+                .opacity(isEnabled ? 1 : Myna.disabledOpacity)
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .onHover { hovering = $0 && isEnabled }
     }
 
     private var background: Color {
@@ -242,14 +244,25 @@ struct PillButtonStyle: ButtonStyle {
     var prominent = true
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Myna.font(13, .semibold))
-            .foregroundStyle(prominent ? Myna.onAccent : Myna.ink)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(prominent ? Myna.accent : Myna.card, in: Capsule())
-            .opacity(configuration.isPressed ? 0.8 : 1)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+        Pill(configuration: configuration, prominent: prominent)
+    }
+
+    /// A view, to read whether the button is enabled: one that can't be used yet looks it.
+    private struct Pill: View {
+        let configuration: Configuration
+        let prominent: Bool
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(Myna.font(13, .semibold))
+                .foregroundStyle(prominent ? Myna.onAccent : Myna.ink)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(prominent ? Myna.accent : Myna.card, in: Capsule())
+                .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : Myna.disabledOpacity)
+                .scaleEffect(configuration.isPressed && isEnabled ? 0.97 : 1)
+        }
     }
 }
 
