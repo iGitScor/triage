@@ -55,4 +55,22 @@ struct CommandRunnerTests {
         }
         #expect(Date.now.timeIntervalSince(started) < 10, "killed after the grace, not after 30 s")
     }
+
+    /// More hanging programs than the machine has cores, at once: each is still stopped on time. Blocking reads used
+    /// to hold every cooperative thread, and the timers never ran (seen on CI's three-core runners).
+    @Test func manyHangingProgramsAreAllStoppedOnTime() async {
+        let started = Date.now
+        let count = ProcessInfo.processInfo.activeProcessorCount * 2 + 2
+        await withTaskGroup(of: Void.self) { group in
+            for _ in 0..<count {
+                group.addTask {
+                    await #expect(throws: CommandError.timedOut) {
+                        try await ProcessCommandRunner(timeout: 0.3).run(
+                            URL(fileURLWithPath: "/bin/sh"), arguments: ["-c", "trap '' TERM; exec sleep 30"])
+                    }
+                }
+            }
+        }
+        #expect(Date.now.timeIntervalSince(started) < 15, "every one killed after the grace, not after 30 s")
+    }
 }

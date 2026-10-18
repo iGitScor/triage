@@ -49,17 +49,17 @@ public struct ProcessCommandRunner: CommandRunner {
                 try? stdin.fileHandleForWriting.close()
             }
         }
-        let deadline = Task {
-            try await Task.sleep(for: .seconds(timeout))
-            Self.stop(process)
-        }
+        // On a Dispatch timer, not a Task: the reads below block threads, and with several programs at once Swift's
+        // few cooperative threads could all be waiting on them, leaving no thread to stop a program that hangs.
+        let deadline = DispatchWorkItem { Self.stop(process) }
+        DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: deadline)
         defer { deadline.cancel() }
 
         // Both pipes are read at once: a program that fills one while we wait on the other would block. A cancelled
         // request stops the program too, rather than leaving it running.
         let (data, errorData) = try await withTaskCancellationHandler {
-            async let standardOutput = Task.detached { try output.fileHandleForReading.readToEnd() ?? Data() }.value
-            async let standardError = Task.detached { try errors.fileHandleForReading.readToEnd() ?? Data() }.value
+            async let standardOutput = Self.readAll(output.fileHandleForReading)
+            async let standardError = Self.readAll(errors.fileHandleForReading)
             return try await (standardOutput, standardError)
         } onCancel: {
             Self.stop(process)
@@ -73,8 +73,17 @@ public struct ProcessCommandRunner: CommandRunner {
         return data
     }
 
-    /// How long a program has to quit once asked (SIGTERM) before it is killed (SIGKILL).
-    static let grace: Duration = .seconds(3)
+    /// How long a program has to quit once asked (SIGTERM) before it is killed (SIGKILL), in seconds.
+    static let grace: TimeInterval = 3
+
+    /// Reads to the end on a Dispatch thread: a blocking read never holds one of Swift's cooperative threads.
+    static func readAll(_ handle: FileHandle) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global().async {
+                continuation.resume(with: Result { try handle.readToEnd() ?? Data() })
+            }
+        }
+    }
 
     /// Asks the program to quit, and kills it if it's still running after `grace`: one that ignores SIGTERM doesn't
     /// stay behind.
@@ -82,8 +91,7 @@ public struct ProcessCommandRunner: CommandRunner {
         guard process.isRunning else { return }
         process.terminate()
         let pid = process.processIdentifier
-        Task.detached {
-            try? await Task.sleep(for: grace)
+        DispatchQueue.global().asyncAfter(deadline: .now() + grace) {
             if process.isRunning { kill(pid, SIGKILL) }
         }
     }
