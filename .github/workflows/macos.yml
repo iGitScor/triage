@@ -33,7 +33,14 @@ jobs:
         run: python3 scripts/make-strings.py --check
       # Any compiler warning fails, in the tests and in the app, as clippy's -D warnings does on Windows.
       - name: Test
-        run: swift test -Xswiftc -warnings-as-errors
+        shell: bash
+        run: |
+          set -o pipefail
+          swift test -Xswiftc -warnings-as-errors 2>&1 | tee test.log
+      # A green run says which tests it skipped and why, in its summary.
+      - name: Skipped tests
+        if: always()
+        run: python3 scripts/skipped-tests.py test.log
       # Pull requests build the debug app, from the tests' build: the app target is checked without an optimized
       # compile. Pushes build the release app and keep it as an artifact.
       - name: Build the app (signed ad hoc on CI)

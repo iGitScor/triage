@@ -152,7 +152,10 @@ struct SnoozeAdvisorTests {
     /// Calibration pairs plus unseen ones. Precision over recall: related topics with no shared or
     /// near vocabulary ("Speed up the CI pipeline" ~ "Cache dependencies to make builds faster", 1.16)
     /// are missed on purpose rather than risking wrong groups.
-    @Test(.enabled(if: NLEmbedding.wordEmbedding(for: .english) != nil))
+    @Test(
+        .enabled(
+            if: NLEmbedding.wordEmbedding(for: .english) != nil,
+            "Needs Apple's English word embeddings, which macOS downloads on demand"))
     func embeddingSimilaritySeparatesTopics() {
         let model = EmbeddingSimilarity()
         #expect(model.similar("Move the image resizer to the new queue", "Move the image queue consumer to SQS"))

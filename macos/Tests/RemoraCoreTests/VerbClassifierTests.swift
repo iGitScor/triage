@@ -154,7 +154,9 @@ struct VerbClassifierTests {
     @Test(
         .enabled(
             if: NLEmbedding.sentenceEmbedding(for: .english) != nil
-                && NLEmbedding.sentenceEmbedding(for: .french) != nil))
+                && NLEmbedding.sentenceEmbedding(for: .french) != nil,
+            "Needs Apple's English and French sentence embeddings, which macOS downloads on demand (often missing on CI runners)"
+        ))
     func embeddingsSortUnseenSentences() {
         let model = EmbeddingIntentClassifier()
         let cases: [(String, TextIntent)] = [
@@ -186,7 +188,9 @@ struct VerbClassifierTests {
     @Test(
         .enabled(
             if: NLEmbedding.sentenceEmbedding(for: .english) != nil
-                && NLEmbedding.sentenceEmbedding(for: .french) != nil))
+                && NLEmbedding.sentenceEmbedding(for: .french) != nil,
+            "Needs Apple's English and French sentence embeddings, which macOS downloads on demand (often missing on CI runners)"
+        ))
     func concurrentMessagesGetTheSameAnswers() {
         let texts = [
             "Would love your feedback on the new onboarding flow", "The incident is resolved",
@@ -213,7 +217,10 @@ struct VerbClassifierTests {
 
     /// The examples are embedded once; the distance computed from their vectors must be Apple's, so the
     /// calibrated margin keeps its meaning.
-    @Test(.enabled(if: NLEmbedding.sentenceEmbedding(for: .english) != nil))
+    @Test(
+        .enabled(
+            if: NLEmbedding.sentenceEmbedding(for: .english) != nil,
+            "Needs Apple's English sentence embeddings, which macOS downloads on demand (often missing on CI runners)"))
     func cachedVectorsGiveApplesDistance() throws {
         let embedding = try #require(NLEmbedding.sentenceEmbedding(for: .english))
         let pairs = [

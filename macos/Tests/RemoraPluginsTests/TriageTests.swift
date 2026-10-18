@@ -46,7 +46,10 @@ struct TriageTests {
     }
 
     /// Real Claude Code. Opt in with REMORA_LIVE_CLAUDE=1.
-    @Test(.enabled(if: ProcessInfo.processInfo.environment["REMORA_LIVE_CLAUDE"] == "1"))
+    @Test(
+        .enabled(
+            if: ProcessInfo.processInfo.environment["REMORA_LIVE_CLAUDE"] == "1",
+            "Calls the real Claude API: set REMORA_LIVE_CLAUDE=1"))
     func liveTriage() async throws {
         let plugin = try ClaudeCodePlugin(config: config([:]), http: URLSessionHTTPClient())
         let suggestions = try await plugin.triage(items, now: .now)

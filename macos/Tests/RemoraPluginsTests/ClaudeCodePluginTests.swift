@@ -34,7 +34,10 @@ struct ClaudeCodePluginTests {
     }
 
     /// Calls the real Claude Code on this Mac. Opt in with REMORA_LIVE_CLAUDE=1 (uses a little of your plan).
-    @Test(.enabled(if: ProcessInfo.processInfo.environment["REMORA_LIVE_CLAUDE"] == "1"))
+    @Test(
+        .enabled(
+            if: ProcessInfo.processInfo.environment["REMORA_LIVE_CLAUDE"] == "1",
+            "Calls the real Claude API: set REMORA_LIVE_CLAUDE=1"))
     func liveBrief() async throws {
         let plugin = try ClaudeCodePlugin(config: config([:]), http: URLSessionHTTPClient())
         let brief = try await plugin.brief([item], now: .now)
@@ -197,7 +200,10 @@ struct ClaudeCodePluginTests {
     }
 
     /// Calls the real Claude Code with Haiku. Opt in with REMORA_LIVE_CLAUDE=1.
-    @Test(.enabled(if: ProcessInfo.processInfo.environment["REMORA_LIVE_CLAUDE"] == "1"))
+    @Test(
+        .enabled(
+            if: ProcessInfo.processInfo.environment["REMORA_LIVE_CLAUDE"] == "1",
+            "Calls the real Claude API: set REMORA_LIVE_CLAUDE=1"))
     func liveDigest() async throws {
         let plugin = try ClaudeCodePlugin(config: config([:]), http: URLSessionHTTPClient())
         let summary = try await plugin.digest([item], topic: "To review", now: .now)

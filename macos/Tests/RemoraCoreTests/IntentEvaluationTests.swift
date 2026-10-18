@@ -75,7 +75,9 @@ struct IntentEvaluationTests {
     @Test(
         .enabled(
             if: NLEmbedding.sentenceEmbedding(for: .english) != nil
-                && NLEmbedding.sentenceEmbedding(for: .french) != nil))
+                && NLEmbedding.sentenceEmbedding(for: .french) != nil,
+            "Needs Apple's English and French sentence embeddings, which macOS downloads on demand (often missing on CI runners)"
+        ))
     func embeddingsMeetTheirFloors() throws {
         let embeddings = EmbeddingIntentClassifier()
         try measure("macos.embeddings") { embeddings.intent(of: $0) }
