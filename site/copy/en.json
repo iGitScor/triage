@@ -695,7 +695,7 @@
       "minutes": "Integer (minutes)"
     },
     "mdm_caption": "Configuration profile payload",
-    "windows": "The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune).",
+    "windows": "The Windows app follows the same model: Credential Manager for tokens, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> for data, and the policy under <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (Group Policy or Intune). For a fleet, <a href=\"$repo/releases/latest/download/Remora.msi\">Remora.msi</a> installs it for every user, as <a href=\"/docs/admin/deployment\">the deployment guide</a> explains.",
     "more": "Data flows, MDM profile and deployment, for IT and compliance teams",
     "more_href": "/docs/admin/"
   },

@@ -698,7 +698,7 @@
       "minutes": "Entier (minutes)"
     },
     "mdm_caption": "Contenu du profil de configuration",
-    "windows": "L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune).",
+    "windows": "L’app Windows suit le même modèle : le Gestionnaire d’identification pour les jetons, <code>%LOCALAPPDATA%\\fr.igitscor.remora</code> pour les données, et la politique sous <code>HKLM\\SOFTWARE\\Policies\\Remora</code> (stratégie de groupe ou Intune). Pour une flotte, <a href=\"$repo/releases/latest/download/Remora.msi\">Remora.msi</a> l’installe pour tous les utilisateurs, comme l’explique <a href=\"/docs/fr/admin/deploiement\">le guide de déploiement</a>.",
     "more": "Flux de données, profil MDM et déploiement, pour la DSI et la conformité",
     "more_href": "/docs/fr/admin/"
   },

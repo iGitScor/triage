@@ -30,6 +30,7 @@ What changed in each release of Remora, for the people who use it. Downloads are
   reads at 7:1, and status chips (checks, errors, warnings) read better on every platform.
 - A button that can't be used yet looks it (*Connect* before the fields are filled, *Apply 0 changes*, *Check
   now* while checking), on every platform.
+- Mac: a command-line tool that hangs (a Claude Code run) is stopped on time, even when several run at once.
 - Claude Code gets only what it needs from Remora's environment and its own setup, not other tools' tokens; on a
   Mac, a run that is cancelled or too long is killed if it doesn't quit.
 - When more than three items look like the same one, the closest are linked, not the first ones listed.
