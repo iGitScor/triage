@@ -127,6 +127,9 @@ struct ItemRow: View {
             parts.append(L("Started %@", startedAt.formatted(.relative(presentation: .named))))
         }
         if state.remindedAt != nil { parts.append(L("Reminder")) }
+        if let handedOffAt = state.handedOffAt {
+            parts.append(L("Handed off %@", handedOffAt.formatted(.relative(presentation: .named))))
+        }
         if let snooze = state.snooze {
             parts.append(L("Snoozed until %@", snooze.until.formatted(.dateTime.weekday(.wide).hour().minute())))
         }
@@ -249,7 +252,7 @@ struct ItemRow: View {
         let times = state.snooze == nil ? 0 : model.snoozeCount(item)
         let reactions = item.reactions ?? []
         if !badges.isEmpty || !reactions.isEmpty || !item.participants.isEmpty || state.remindedAt != nil
-            || state.startedAt != nil
+            || state.startedAt != nil || state.handedOffAt != nil
             || state.pinned || reason != nil || times >= 2 || !linked.isEmpty
         {
             HStack(spacing: 4) {
@@ -262,6 +265,13 @@ struct ItemRow: View {
                 }
                 if state.remindedAt != nil {
                     BadgeChip(badge: Badge(id: .reminder, label: L("Reminder"), symbol: "bell.fill", tone: .accent))
+                }
+                if let handedOffAt = state.handedOffAt {
+                    BadgeChip(
+                        badge: Badge(
+                            id: .handedOff,
+                            label: L("Handed off %@", handedOffAt.formatted(.relative(presentation: .named))),
+                            symbol: "paperplane", tone: .neutral))
                 }
                 if let reason {
                     BadgeChip(badge: Badge(id: .reason, label: reason.title, symbol: reason.symbol, tone: .neutral))
@@ -332,6 +342,12 @@ struct ItemRow: View {
             Divider()
         }
         Button(L(state.pinned ? "Unpin" : "Pin")) { model.togglePin(item) }
+        // A prompt for the agent the user picks, written here from what Remora has; nothing is sent.
+        Button("Copy as a prompt for an agent") {
+            let prompt = model.handOff(item)
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(prompt, forType: .string)
+        }
         if state.startedAt == nil {
             Button("Start") { model.start(item) }
         } else {

@@ -195,6 +195,7 @@
 "Copied" = "Copié";
 "Copy" = "Copier";
 "Copy & open" = "Copier et ouvrir";
+"Copy as a prompt for an agent" = "Copier comme prompt pour un agent";
 "Copy link" = "Copier le lien";
 "Copy the token (Notion shows it only once) and paste it below." = "Copiez le jeton (Notion ne l’affiche qu’une fois) et collez-le ci-dessous.";
 "Copy the “User OAuth Token” (it starts with xoxp-) and paste it below." = "Copiez le « User OAuth Token » (il commence par xoxp-) et collez-le ci-dessous.";
@@ -273,6 +274,7 @@
 "Group message" = "Message de groupe";
 "Group reminders by day" = "Regrouper les rappels par jour";
 "Group them at set times" = "Les regrouper à heures fixes";
+"Handed off %@" = "Confié %@";
 "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %@. %@\n%@\nThanks!" = "Salut %@, petite relance sur « %@ » : en attente de relecture depuis %@. %@\n%@\nMerci !";
 "Hi %@, a gentle ping on “%@”: it has been waiting for a review for %d day(s). %@\n%@\nThanks!" = "Salut %@, petite relance sur « %@ » : en attente de relecture depuis %d jour(s). %@\n%@\nMerci !";
 "Hi %@, could you review “%@”? %@\n%@\nThanks!" = "Salut %@, pourrais-tu relire « %@ » ? %@\n%@\nMerci !";
@@ -454,6 +456,7 @@
 "Privacy" = "Confidentialité";
 "Projects I maintain" = "Projets que je maintiens";
 "Projects you maintain" = "les projets que vous maintenez";
+"Prompt copied" = "Prompt copié";
 "Pull requests you opened and those you review. Bitbucket Cloud or Data Center." = "Les pull requests que vous avez ouvertes et celles que vous relisez. Bitbucket Cloud ou Data Center.";
 "Pull requests you opened, review requests and issues assigned to you. Works with GitHub Enterprise." = "Vos pull requests, les demandes de relecture et les tickets qui vous sont assignés. Compatible GitHub Enterprise.";
 "Pull requests you review or opened, with votes and policy checks, and work items assigned to you. Works with Azure DevOps Server." = "Les pull requests à relire et les vôtres, avec votes et vérifications de stratégie, et les éléments de travail qui vous sont assignés. Compatible Azure DevOps Server.";

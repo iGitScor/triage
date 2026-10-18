@@ -48,6 +48,13 @@ gardé ici par prudence*. Si un message vous attend mais est allé ailleurs, **M
 droit sur Mac, le bouton flèche sur Windows et Linux) l’y garde, quels que soient ses mots ; Annuler le remet. Seulement
 dans ce sens : Terminé s’occupe déjà du reste, et une correction ne peut jamais cacher une question.
 
+Pour qu’un agent prépare quelque chose (Claude Code, Codex, Gemini…), **Copier comme prompt pour un agent** (clic droit
+sur Mac, l’avion en papier sur Windows et Linux) copie un prompt prêt : quoi faire selon l’onglet (rédiger une réponse,
+relire, trouver un correctif), le lien, qui demande et le message. Collez-le dans l’agent de votre choix. Remora
+l’écrit sur votre ordinateur, n’envoie rien, et laisse le texte de côté pour un outil dont le contenu est masqué. La
+ligne indique ensuite *Confié*, pour ne pas l’oublier ni le faire deux fois ; l’élément reste à sa place jusqu’à ce
+que l’outil montre la réponse ou le correctif.
+
 Ce qu’a écrit une app, un bot ou un compte d’agent (Dependabot, une app Slack ou Teams, Automation for Jira) porte
 la marque **Bot** à côté de sa provenance, telle que l’outil la donne : Remora ne devine jamais d’après un nom.
 **Réglages → Général → Regrouper les bots et agents à part** les place en dernier dans *À moi*, toujours comptés :

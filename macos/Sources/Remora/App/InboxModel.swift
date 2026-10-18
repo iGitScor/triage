@@ -761,6 +761,16 @@ final class InboxModel {
         update(item) { $0.movedToReplyAt = .now }
     }
 
+    /// Hands the item to an agent: the prompt to copy, and the row says so (with Undo). Nothing is sent.
+    func handOff(_ item: InboxItem) -> String {
+        let source = PluginRegistry.manifests.first { $0.id == item.pluginID }?.name ?? L("Reminder")
+        let prompt = Handoff.prompt(
+            for: item, source: source, hidden: effectivePreferences.hiddenContentPlugins.contains(item.pluginID))
+        remember(L("Prompt copied"))
+        update(item) { $0.handedOffAt = .now }
+        return prompt
+    }
+
     func snooze(
         _ item: InboxItem,
         until date: Date,

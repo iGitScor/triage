@@ -193,6 +193,19 @@ struct InboxModelTests {
         #expect(model.undoPoint == nil, "nothing to undo either")
     }
 
+    /// Handing off copies a prompt and marks the row, with Undo; the item stays where it is.
+    @Test func handingOffMarksTheRowWithUndo() async throws {
+        let harness = Harness()
+        let model = try await harness.connected()
+        let item = try issue(model)
+        let prompt = model.handOff(item)
+        #expect(prompt.contains("Where: Linear · ENG-42") && prompt.contains("Item: \(item.title)"))
+        #expect(model.state(of: item).handedOffAt != nil)
+        #expect(model.layout.groups.flatMap(\.items).contains { $0.id == item.id }, "still in the inbox")
+        model.undo()
+        #expect(model.state(of: item).handedOffAt == nil)
+    }
+
     /// The search narrows what the inbox shows, never the count or what the assistant reads.
     @Test func searchingOnlyNarrowsWhatIsShown() async throws {
         let harness = Harness()

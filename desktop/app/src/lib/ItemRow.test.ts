@@ -198,3 +198,22 @@ describe('a row, why it is sorted there', () => {
     expect(row({}).queryByRole('button', { name: 'Put in To reply' })).toBeNull()
   })
 })
+
+describe('a row, handed off to an agent', () => {
+  it('copies the prompt, with an Undo, and says it was handed off', async () => {
+    const offers: Offer[] = []
+    const stop = onOffer((o) => offers.push(o))
+    const writeText = vi.fn(() => Promise.resolve())
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    invoke.mockImplementationOnce(() => Promise.resolve('Review this pull request…'))
+    const { button } = row({})
+    await fireEvent.click(button('Copy as a prompt for an agent'))
+    expect(invoke).toHaveBeenLastCalledWith('hand_off', { id: 'github/1' })
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('Review this pull request…'))
+    await waitFor(() => expect(offers.map((o) => o.message)).toEqual(['Prompt copied']))
+    stop()
+    cleanup()
+    const handed = row({ state: state({ handedOffAt: new Date().toISOString() }) })
+    expect(handed.container.querySelector('.chips')?.textContent).toContain('Handed off')
+  })
+})

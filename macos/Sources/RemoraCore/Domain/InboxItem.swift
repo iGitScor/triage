@@ -238,6 +238,7 @@ public struct BadgeID: RawRepresentable, Hashable, Codable, Sendable {
     public static let reason = BadgeID(rawValue: "reason")
     public static let times = BadgeID(rawValue: "times")
     public static let started = BadgeID(rawValue: "started")
+    public static let handedOff = BadgeID(rawValue: "handedOff")
     public static let link = BadgeID(rawValue: "link")
 }
 

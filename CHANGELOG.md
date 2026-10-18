@@ -9,6 +9,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - **Show count of** → *A dot when something needs me*: the menu bar (or the tray's tooltip) says something waits,
   not how many, for a calmer day.
+- **Copy as a prompt for an agent** on a row: a ready prompt for Claude Code, Codex or any agent, written on your
+  computer (nothing is sent, a hidden tool's text stays out); the row then says *Handed off*.
 - GitHub and GitLab: list the repositories you maintain, and a failing default branch goes to *To fix*, with
   GitHub's open critical or high security alerts (Dependabot, code scanning).
 

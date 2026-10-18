@@ -478,6 +478,28 @@ impl Inbox {
         self.update(id, |s| s.moved_to_reply_at = Some(now));
     }
 
+    /// Hands the item to an agent: the prompt to copy, and the row says so (with Undo). Nothing is sent. The prompt
+    /// asks for what the item's tab means, so the item is looked up as shown.
+    pub fn hand_off(&mut self, id: &str, now: DateTime<Utc>) -> Option<String> {
+        let layout = self.layout(now, "");
+        let shown = layout
+            .in_progress
+            .iter()
+            .chain(layout.my_turn_items())
+            .chain(layout.waiting.iter().flat_map(|g| g.items.iter()))
+            .chain(&layout.snoozed)
+            .chain(&layout.done)
+            .find(|i| i.id == id)
+            .cloned();
+        let item = shown.or_else(|| self.item(id))?;
+        let source = registry::manifest(&item.plugin_id).map_or_else(|| "Reminder".to_string(), |m| m.name);
+        let prompt =
+            remora_core::handoff_prompt(&item, &source, self.effective_preferences().hides_content(&item.plugin_id));
+        self.remember();
+        self.update(id, |s| s.handed_off_at = Some(now));
+        Some(prompt)
+    }
+
     pub fn snooze(
         &mut self,
         id: &str,
@@ -821,6 +843,25 @@ mod tests {
 
     fn snapshot(items: Vec<InboxItem>) -> Vec<FetchResult> {
         vec![("a1".into(), Ok(SourceSnapshot { identity: "alice".into(), items, remarks: vec![] }))]
+    }
+
+    /// Handing off copies a prompt asking for what the item's tab means, and marks the row with Undo; the item stays
+    /// where it is, and a hidden tool's text stays out. As macOS.
+    #[test]
+    fn handing_off_marks_the_row_with_undo() {
+        let mut inbox = inbox();
+        inbox.apply(snapshot(vec![item("r", InboxBundle::reviews())]), now());
+        let prompt = inbox.hand_off("r", now()).expect("a prompt");
+        assert!(prompt.starts_with("Review this pull request"), "{prompt}");
+        assert!(prompt.contains("Item: Item r"), "{prompt}");
+        assert_eq!(inbox.states["r"].handed_off_at, Some(now()));
+        assert!(inbox.layout(now(), "").my_turn_items().any(|i| i.id == "r"), "still in the inbox");
+        assert!(inbox.undo());
+        assert!(!inbox.states.contains_key("r"));
+
+        inbox.preferences.hidden_content_plugins = vec!["*".into()];
+        assert!(!inbox.hand_off("r", now()).unwrap().contains("Item r"));
+        assert_eq!(inbox.hand_off("missing", now()), None);
     }
 
     /// Put in To reply by the user: it stays there across refreshes, says so, and Undo puts it back. A message already

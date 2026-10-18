@@ -51,6 +51,14 @@ async function moveToReply() {
   offer(t('Put in To reply'), t('Undo'), api.undo)
 }
 
+/** A prompt for the agent the user picks, copied; the row says it was handed off, with Undo. Nothing is sent. */
+async function handOff() {
+  const prompt = await api.handOff(item.id)
+  if (prompt == null) return
+  await navigator.clipboard.writeText(prompt)
+  offer(t('Prompt copied'), t('Undo'), api.undo)
+}
+
 /** Done, with Undo for a few seconds. Moving an item back to the inbox needs none. */
 async function markDone() {
   const marking = !done
@@ -98,12 +106,13 @@ function open(event: MouseEvent) {
           {#if reviewers.more}<span class="more muted">+{reviewers.more}</span>{/if}
         </span>
       {/if}
-      {#if item.badges.length || item.reactions?.length || itemState?.remindedAt || itemState?.startedAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2}
+      {#if item.badges.length || item.reactions?.length || itemState?.remindedAt || itemState?.startedAt || itemState?.handedOffAt || itemState?.pinned || itemState?.snooze?.reason || (extras?.snoozedTimes ?? 0) >= 2}
         <span class="chips">
           {#if itemState?.snooze?.reason}<span class="chip">{t(reasonLabel(itemState.snooze.reason))}</span>{/if}
           {#if (extras?.snoozedTimes ?? 0) >= 2}<span class="chip warning">{t('Snoozed %d×', extras?.snoozedTimes ?? 0)}</span>{/if}
           {#if itemState?.startedAt}<span class="chip accent">{t('Started %@', relative(itemState.startedAt))}</span>{/if}
           {#if itemState?.remindedAt}<span class="chip accent">{t('Reminder')}</span>{/if}
+          {#if itemState?.handedOffAt}<span class="chip">{t('Handed off %@', relative(itemState.handedOffAt))}</span>{/if}
           {#if itemState?.pinned}<span class="chip">{t('Pinned')}</span>{/if}
           {#each item.badges as badge (badge.id)}<span class="chip {badge.tone}">{t(badge.label)}</span>{/each}
           {#if item.reactions?.length}
@@ -182,6 +191,7 @@ function open(event: MouseEvent) {
     {#if canMoveToReply(item)}
       <button type="button" class="action" data-action="to-reply" onclick={moveToReply} aria-label={t('Put in To reply')} title={t('Put in To reply')}><Icon name="reply" size={14} /></button>
     {/if}
+    <button type="button" class="action" data-action="hand-off" onclick={handOff} aria-label={t('Copy as a prompt for an agent')} title={t('Copy as a prompt for an agent')}><Icon name="send" size={14} /></button>
     {#if item.recurrence}
       <button type="button" class="action" onclick={() => api.stopRepeating(item.id)} aria-label={t('Stop repeating')} title={t('Stop repeating')}><Icon name="repeat" size={14} /></button>
     {/if}

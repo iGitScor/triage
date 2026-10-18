@@ -11,10 +11,13 @@ public struct ItemState: Hashable, Codable, Sendable {
     /// When the user put a message Remora sorted elsewhere in To reply: it stays there, whatever its words say. Only
     /// towards To reply, so a correction can never hide a request.
     public var movedToReplyAt: Date?
+    /// When the user handed it to an agent (a prompt copied): the row says so, so it isn't forgotten or done twice.
+    /// The item stays where it is, and leaves as usual when the tool shows the reply or the fix.
+    public var handedOffAt: Date?
 
     public init(
         pinned: Bool = false, done: Mark? = nil, snooze: Snooze? = nil, remindedAt: Date? = nil, startedAt: Date? = nil,
-        movedToReplyAt: Date? = nil
+        movedToReplyAt: Date? = nil, handedOffAt: Date? = nil
     ) {
         self.pinned = pinned
         self.done = done
@@ -22,10 +25,12 @@ public struct ItemState: Hashable, Codable, Sendable {
         self.remindedAt = remindedAt
         self.startedAt = startedAt
         self.movedToReplyAt = movedToReplyAt
+        self.handedOffAt = handedOffAt
     }
 
     public var isEmpty: Bool {
         !pinned && done == nil && snooze == nil && remindedAt == nil && startedAt == nil && movedToReplyAt == nil
+            && handedOffAt == nil
     }
 
     /// Remembers the item's fingerprint so new activity brings it back.

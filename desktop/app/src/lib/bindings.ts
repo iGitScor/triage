@@ -236,7 +236,12 @@ startedAt?: string,
  * When the user put a message Remora sorted elsewhere in To reply: it stays there, whatever its words say. Only
  * towards To reply, so a correction can never hide a request.
  */
-movedToReplyAt?: string, };
+movedToReplyAt?: string, 
+/**
+ * When the user handed it to an agent (a prompt copied): the row says so, so it isn't forgotten or done twice.
+ * The item stays where it is, and leaves as usual when the tool shows the reply or the fix.
+ */
+handedOffAt?: string, };
 
 /**
  * What the UI shows: what you're on, pinned items, your turn, waiting on others, snoozed, done.

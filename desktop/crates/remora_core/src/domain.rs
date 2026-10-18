@@ -405,6 +405,11 @@ pub struct ItemState {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub moved_to_reply_at: Option<DateTime<Utc>>,
+    /// When the user handed it to an agent (a prompt copied): the row says so, so it isn't forgotten or done twice.
+    /// The item stays where it is, and leaves as usual when the tool shows the reply or the fix.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub handed_off_at: Option<DateTime<Utc>>,
 }
 
 impl ItemState {
@@ -415,6 +420,7 @@ impl ItemState {
             && self.reminded_at.is_none()
             && self.started_at.is_none()
             && self.moved_to_reply_at.is_none()
+            && self.handed_off_at.is_none()
     }
 }
 

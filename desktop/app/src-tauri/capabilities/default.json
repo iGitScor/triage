@@ -11,6 +11,7 @@
     "allow-toggle-done",
     "allow-toggle-pin",
     "allow-move-to-reply",
+    "allow-hand-off",
     "allow-start",
     "allow-stop",
     "allow-clear-done",

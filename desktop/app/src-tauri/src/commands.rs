@@ -51,6 +51,14 @@ pub async fn move_to_reply(app: AppHandle, state: State<'_, AppState>, id: Strin
     Ok(())
 }
 
+/// The prompt to copy for an agent; the row says it was handed off, with Undo. Nothing is sent.
+#[tauri::command]
+pub async fn hand_off(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<Option<String>> {
+    let prompt = state.inbox.lock().await.hand_off(&id, Utc::now());
+    changed(&app).await;
+    Ok(prompt)
+}
+
 #[tauri::command]
 pub async fn start(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<()> {
     state.inbox.lock().await.start(&id, Utc::now());
