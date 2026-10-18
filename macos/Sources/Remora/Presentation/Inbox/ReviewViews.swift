@@ -13,11 +13,11 @@ struct ReviewPrepLine: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "stopwatch").font(.system(size: 10, weight: .semibold))
-                    Text(prep.summary).font(Myna.font(11.5, .medium)).lineLimit(1).fixedSize()
+                    Text(prep.summary).font(RemoraDesign.font(11.5, .medium)).lineLimit(1).fixedSize()
                     if prep.testsTouched {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(Myna.ok)
+                            .foregroundStyle(RemoraDesign.ok)
                             .help(L("tests"))
                     }
                     // Longer labels (French) fit fewer chips: the rest folds into "+N".
@@ -31,25 +31,25 @@ struct ReviewPrepLine: View {
                         .font(.system(size: 9, weight: .bold))
                         .rotationEffect(.degrees(expanded ? 0 : -90))
                 }
-                .foregroundStyle(Myna.inkSoft)
+                .foregroundStyle(RemoraDesign.inkSoft)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             if expanded {
                 ForEach(prep.topFiles, id: \.path) { file in
                     HStack {
-                        Text(file.path).font(Myna.system(11)).lineLimit(1).truncationMode(.head)
+                        Text(file.path).font(RemoraDesign.system(11)).lineLimit(1).truncationMode(.head)
                         Spacer()
                         if let additions = file.additions, let deletions = file.deletions {
-                            Text("+\(additions) −\(deletions)").font(Myna.system(11))
-                                .foregroundStyle(Myna.muted)
+                            Text("+\(additions) −\(deletions)").font(RemoraDesign.system(11))
+                                .foregroundStyle(RemoraDesign.muted)
                         }
                     }
                 }
             }
         }
         .padding(8)
-        .background(Myna.line, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(RemoraDesign.line, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private func flags(shown: Int) -> some View {
@@ -61,8 +61,10 @@ struct ReviewPrepLine: View {
                         tone: flag == .lockfileOnly ? .neutral : .warning))
             }
             if prep.flags.count > shown {
-                Text("+\(prep.flags.count - shown)").font(Myna.font(10.5, .semibold)).foregroundStyle(Myna.muted)
-                    .help(prep.flags.dropFirst(shown).map(\.title).joined(separator: ", "))
+                Text("+\(prep.flags.count - shown)").font(RemoraDesign.font(10.5, .semibold)).foregroundStyle(
+                    RemoraDesign.muted
+                )
+                .help(prep.flags.dropFirst(shown).map(\.title).joined(separator: ", "))
             }
         }
         .fixedSize()
@@ -85,7 +87,7 @@ struct ReviewSession: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(L("Review session"), systemImage: "play.circle.fill").font(Myna.font(15, .semibold))
+                Label(L("Review session"), systemImage: "play.circle.fill").font(RemoraDesign.font(15, .semibold))
                 Spacer()
                 IconButton(symbol: "xmark", help: "Close", size: 24, action: dismiss)
             }
@@ -95,19 +97,21 @@ struct ReviewSession: View {
                         "%d of %d · ~%d min left", index + 1, queue.count,
                         ReviewQueue.remainingMinutes(Array(queue[index...]), pace: model.learning.reviewPace))
                 )
-                .font(Myna.font(11.5))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11.5))
+                .foregroundStyle(RemoraDesign.muted)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(item.shownContext).font(Myna.font(11.5, .medium)).foregroundStyle(Myna.muted)
-                    Text(item.title).font(Myna.font(14, .semibold)).foregroundStyle(Myna.ink)
+                    Text(item.shownContext).font(RemoraDesign.font(11.5, .medium)).foregroundStyle(RemoraDesign.muted)
+                    Text(item.title).font(RemoraDesign.font(14, .semibold)).foregroundStyle(RemoraDesign.ink)
                     if let author = item.author {
-                        Text(L("by %@", author.name)).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                        Text(L("by %@", author.name)).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
                     }
                     HStack(spacing: 4) { ForEach(item.badges) { BadgeChip(badge: $0) } }
                     if let prep = ReviewPrep(item, pace: model.learning.reviewPace) { ReviewPrepLine(prep: prep) }
                 }
                 .padding(12)
-                .background(Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+                .background(
+                    RemoraDesign.card, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous)
+                )
                 HStack(spacing: 6) {
                     Button {
                         model.open(diffItem(item))
@@ -127,14 +131,16 @@ struct ReviewSession: View {
                         advance()
                     }
                 }
-                Text(L("⏎ open · D done · S snooze · → skip · Esc close")).font(Myna.font(10.5)).foregroundStyle(
-                    Myna.muted)
+                Text(L("⏎ open · D done · S snooze · → skip · Esc close")).font(RemoraDesign.font(10.5))
+                    .foregroundStyle(
+                        RemoraDesign.muted)
             } else {
                 VStack(spacing: 8) {
-                    Image(systemName: "checkmark.seal.fill").font(.system(size: 30)).foregroundStyle(Myna.accentText)
-                    Text(L("All reviewed")).font(Myna.font(16, .semibold))
-                    Text(L("%d min", max(1, Int(Date.now.timeIntervalSince(started) / 60)))).font(Myna.font(12))
-                        .foregroundStyle(Myna.muted)
+                    Image(systemName: "checkmark.seal.fill").font(.system(size: 30)).foregroundStyle(
+                        RemoraDesign.accentText)
+                    Text(L("All reviewed")).font(RemoraDesign.font(16, .semibold))
+                    Text(L("%d min", max(1, Int(Date.now.timeIntervalSince(started) / 60)))).font(RemoraDesign.font(12))
+                        .foregroundStyle(RemoraDesign.muted)
                     Button(L("Close"), action: dismiss).buttonStyle(PillButtonStyle())
                 }
                 .frame(maxWidth: .infinity)
@@ -142,7 +148,9 @@ struct ReviewSession: View {
             }
         }
         .padding(16)
-        .background(Myna.surface, in: RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous))
+        .background(
+            RemoraDesign.surface, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusLarge, style: .continuous)
+        )
         .shadow(color: .black.opacity(0.2), radius: 20, y: 6)
         .padding(16)
         .focusable()

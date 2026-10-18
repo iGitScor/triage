@@ -15,6 +15,18 @@ flowchart TB
   Plugins --> Core
 ```
 
+## Names
+
+One app, a few names, each kept for a reason:
+
+| Name | Where | Can it change? |
+|---|---|---|
+| **Remora** | The product, the binaries, the `remora` command, the `Remora*` modules and `remora_*` crates | It is the name |
+| **triage** | The GitHub repository | Kept: released apps fetch their updates from `github.com/iGitScor/triage/releases/latest/…`. GitHub redirects a renamed repository, but every installed copy would then depend on that redirect |
+| **triage.iscor.me** | The website and these docs | Kept: links, search results and the apps' help links point there |
+| **fr.igitscor.remora** | The bundle identifier, the MDM preference domain, the Keychain and Credential Manager service, the Windows and Linux data folders | **Never**: tokens, data and organizations' policies are keyed on it |
+| **RemoraDesign** | The Mac's look in code (`RemoraDesign.ink`…) | A layer over the Estuary design system (`@iscor/design`): its colours, made into `EstuaryTokens.swift`, plus what is the app's own (sizes, fonts, tones). Not `Estuary`, the name of the package's own Swift type |
+
 ## RemoraCore
 
 **Domain** (`Sources/RemoraCore/Domain`)
@@ -114,7 +126,7 @@ notifications are scheduled with the system, so they fire even if Remora isn't r
 - `Infrastructure/`: `JSONStore` (Application Support files), `Keychain`, `ManagedPolicy`, `Notifier`, `Fonts`.
   `InboxModel` reaches all of them, the network and link opening through `AppEnvironment`, so `Tests/RemoraTests`
   runs it on a temporary folder with stand-ins: never your data, tokens or notifications.
-- `Presentation/`: Myna theme (`Theme.swift`), inbox views, settings generated from manifests.
+- `Presentation/`: the look (`RemoraDesign.swift`, over the generated `EstuaryTokens.swift`), inbox views, settings generated from manifests.
 - `Presentation/MenuBar/`: the AppKit status item. A click opens the inbox popover; a drag runs a
   mouse-tracking loop that maps the distance to a time with `SnoozeClock`. The drag bubble (`DragHUD`) is
   plain AppKit because SwiftUI doesn't redraw during that loop; the quick-add box is a SwiftUI floating panel.

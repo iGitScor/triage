@@ -225,13 +225,13 @@ struct TextSizeTests {
     @Test func theTextSizeIsAppliedAndKept() {
         let harness = Harness()
         let model = harness.model()
-        #expect(Myna.textScale == 1 && Myna.smallestText == 11)
+        #expect(RemoraDesign.textScale == 1 && RemoraDesign.smallestText == 11)
         model.preferences.textSize = .larger
-        #expect(Myna.textScale == 1.3)
+        #expect(RemoraDesign.textScale == 1.3)
         _ = harness.model()
-        #expect(Myna.textScale == 1.3, "read back at launch")
+        #expect(RemoraDesign.textScale == 1.3, "read back at launch")
         model.preferences.textSize = .standard
-        #expect(Myna.textScale == 1)
+        #expect(RemoraDesign.textScale == 1)
     }
 }
 

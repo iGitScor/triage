@@ -35,15 +35,15 @@ struct RepeatPicker: View {
                         .datePickerStyle(.field)
                         .labelsHidden()
                     } else {
-                        Text(L("No end")).foregroundStyle(Myna.muted)
+                        Text(L("No end")).foregroundStyle(RemoraDesign.muted)
                     }
                 }
                 if endsBeforeStart {
-                    Text(L("The end is before the first reminder.")).foregroundStyle(Myna.danger)
+                    Text(L("The end is before the first reminder.")).foregroundStyle(RemoraDesign.danger)
                 }
             }
         }
-        .font(Myna.font(12))
+        .font(RemoraDesign.font(12))
     }
 
     /// Whether the choice can't be saved.

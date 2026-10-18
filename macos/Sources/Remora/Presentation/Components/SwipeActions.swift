@@ -41,7 +41,7 @@ private struct SwipeActionsModifier: ViewModifier {
         content
             .offset(x: offset)
             .background { revealed }
-            .clipShape(RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous))
             .onGeometryChange(for: CGFloat.self) {
                 $0.size.width
             } action: {
@@ -62,7 +62,7 @@ private struct SwipeActionsModifier: ViewModifier {
             HStack {
                 if offset < 0 { Spacer() }
                 Label(L(action.label), systemImage: action.symbol)
-                    .font(Myna.font(13, armed ? .bold : .medium))
+                    .font(RemoraDesign.font(13, armed ? .bold : .medium))
                     .scaleEffect(armed ? 1.08 : 1)
                     .opacity(min(1, abs(offset) / threshold))
                 if offset > 0 { Spacer() }

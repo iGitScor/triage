@@ -83,7 +83,7 @@ struct InboxView: View {
             footer
         }
         .frame(width: Self.size.width, height: Self.size.height)
-        .background(Myna.backdrop)
+        .background(RemoraDesign.backdrop)
         .background {
             // ⌘F and ⌘R work wherever the focus is, the search field included.
             Group {
@@ -169,7 +169,7 @@ struct InboxView: View {
     private var header: some View {
         HStack(spacing: 8) {
             RemoraMark()
-            Text("Remora").font(Myna.font(18, .bold)).foregroundStyle(Myna.ink)
+            Text("Remora").font(RemoraDesign.font(18, .bold)).foregroundStyle(RemoraDesign.ink)
             Spacer()
             if model.preferences.wholeInboxBrief, model.assistantAccount != nil || model.assistant.brief != nil {
                 ActionButton(label: "Brief", symbol: "sparkles", prominent: showBrief) {

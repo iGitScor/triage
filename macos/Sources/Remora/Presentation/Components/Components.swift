@@ -9,10 +9,10 @@ struct Avatar: View {
         // Remote images only from allowed tools' hosts; initials otherwise.
         RemoteImage(url: person?.avatarURL, mode: .fill) {
             Text(person?.initials ?? "")
-                .font(Myna.font(size * 0.38, .semibold))
-                .foregroundStyle(Myna.inkSoft)
+                .font(RemoraDesign.font(size * 0.38, .semibold))
+                .foregroundStyle(RemoraDesign.inkSoft)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Myna.card2)
+                .background(RemoraDesign.card2)
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
@@ -66,8 +66,8 @@ struct PeopleStack: View {
             }
             if people.count > limit {
                 Text("+\(people.count - limit)")
-                    .font(Myna.font(9, .semibold))
-                    .foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(9, .semibold))
+                    .foregroundStyle(RemoraDesign.muted)
                     .padding(.leading, 8)
             }
         }
@@ -94,19 +94,19 @@ struct PeopleStack: View {
         if let symbol {
             Image(systemName: symbol)
                 .font(.system(size: 5.5, weight: .black))
-                .foregroundStyle(person.review == .changesRequested ? Myna.onDark : Myna.onAccent)
+                .foregroundStyle(person.review == .changesRequested ? RemoraDesign.onDark : RemoraDesign.onAccent)
                 .frame(width: 9, height: 9)
                 .background(ring(for: person), in: Circle())
-                .overlay(Circle().strokeBorder(Myna.card, lineWidth: 1))
+                .overlay(Circle().strokeBorder(RemoraDesign.card, lineWidth: 1))
                 .offset(x: 2, y: 2)
         }
     }
 
     private func ring(for person: Person) -> Color {
         switch person.review {
-        case .approved: Myna.accentDeep
-        case .changesRequested: Myna.color(for: .negative).foreground
-        case nil: Myna.card
+        case .approved: RemoraDesign.accentDeep
+        case .changesRequested: RemoraDesign.color(for: .negative).foreground
+        case nil: RemoraDesign.card
         }
     }
 }
@@ -115,12 +115,12 @@ struct BadgeChip: View {
     let badge: Badge
 
     var body: some View {
-        let colors = Myna.color(for: badge.tone)
+        let colors = RemoraDesign.color(for: badge.tone)
         HStack(spacing: 3) {
             if let symbol = badge.symbol {
                 Image(systemName: symbol).font(.system(size: 8.5, weight: .bold))
             }
-            Text(badge.label).font(Myna.font(10.5, .semibold)).lineLimit(1)
+            Text(badge.label).font(RemoraDesign.font(10.5, .semibold)).lineLimit(1)
         }
         .fixedSize()
         .foregroundStyle(colors.foreground)
@@ -145,20 +145,22 @@ struct ReactionChips: View {
                         RemoteImage(url: image, mode: .fit) { Color.clear }
                             .frame(width: 13, height: 13)
                     } else {
-                        Text(reaction.emoji).font(Myna.system(11, design: .default)).lineLimit(1)
+                        Text(reaction.emoji).font(RemoraDesign.system(11, design: .default)).lineLimit(1)
                     }
                     if reaction.count > 1 {
-                        Text("\(reaction.count)").font(Myna.font(10, .semibold)).foregroundStyle(Myna.inkSoft)
+                        Text("\(reaction.count)").font(RemoraDesign.font(10, .semibold)).foregroundStyle(
+                            RemoraDesign.inkSoft)
                     }
                 }
                 .fixedSize()
                 .padding(.horizontal, 5)
                 .padding(.vertical, 1.5)
-                .background(reaction.mine ? Myna.accentSoft : Myna.line, in: Capsule())
-                .overlay(Capsule().strokeBorder(reaction.mine ? Myna.accentText : .clear, lineWidth: 1))
+                .background(reaction.mine ? RemoraDesign.accentSoft : RemoraDesign.line, in: Capsule())
+                .overlay(Capsule().strokeBorder(reaction.mine ? RemoraDesign.accentText : .clear, lineWidth: 1))
             }
             if reactions.count > limit {
-                Text("+\(reactions.count - limit)").font(Myna.font(10, .semibold)).foregroundStyle(Myna.muted)
+                Text("+\(reactions.count - limit)").font(RemoraDesign.font(10, .semibold)).foregroundStyle(
+                    RemoraDesign.muted)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -189,7 +191,7 @@ struct IconButton: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: size * 0.45, weight: .semibold))
-                .foregroundStyle(prominent ? Myna.onAccent : Myna.ink)
+                .foregroundStyle(prominent ? RemoraDesign.onAccent : RemoraDesign.ink)
                 .frame(width: size, height: size)
                 .background(background, in: Circle())
                 .contentShape(Circle())
@@ -202,8 +204,8 @@ struct IconButton: View {
     }
 
     private var background: Color {
-        if prominent { return hovering ? Myna.accentDeep : Myna.accent }
-        return hovering ? Myna.card2 : .clear
+        if prominent { return hovering ? RemoraDesign.accentDeep : RemoraDesign.accent }
+        return hovering ? RemoraDesign.card2 : .clear
     }
 }
 
@@ -222,21 +224,21 @@ struct ActionButton: View {
             Label(L(label), systemImage: symbol)
                 .lineLimit(1)
                 .fixedSize()
-                .font(Myna.font(11.5, .semibold))
-                .foregroundStyle(prominent ? Myna.onAccent : Myna.ink)
+                .font(RemoraDesign.font(11.5, .semibold))
+                .foregroundStyle(prominent ? RemoraDesign.onAccent : RemoraDesign.ink)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 5)
                 .background(background, in: Capsule())
                 .contentShape(Capsule())
-                .opacity(isEnabled ? 1 : Myna.disabledOpacity)
+                .opacity(isEnabled ? 1 : RemoraDesign.disabledOpacity)
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 && isEnabled }
     }
 
     private var background: Color {
-        if prominent { return hovering ? Myna.accentDeep : Myna.accent }
-        return hovering ? Myna.card2 : Myna.card
+        if prominent { return hovering ? RemoraDesign.accentDeep : RemoraDesign.accent }
+        return hovering ? RemoraDesign.card2 : RemoraDesign.card
     }
 }
 
@@ -255,12 +257,12 @@ struct PillButtonStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .font(Myna.font(13, .semibold))
-                .foregroundStyle(prominent ? Myna.onAccent : Myna.ink)
+                .font(RemoraDesign.font(13, .semibold))
+                .foregroundStyle(prominent ? RemoraDesign.onAccent : RemoraDesign.ink)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(prominent ? Myna.accent : Myna.card, in: Capsule())
-                .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : Myna.disabledOpacity)
+                .background(prominent ? RemoraDesign.accent : RemoraDesign.card, in: Capsule())
+                .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : RemoraDesign.disabledOpacity)
                 .scaleEffect(configuration.isPressed && isEnabled ? 0.97 : 1)
         }
     }
@@ -269,11 +271,11 @@ struct PillButtonStyle: ButtonStyle {
 struct SoonBadge: View {
     var body: some View {
         Text("Soon")
-            .font(Myna.font(10, .bold))
-            .foregroundStyle(Myna.onAccent)
+            .font(RemoraDesign.font(10, .bold))
+            .foregroundStyle(RemoraDesign.onAccent)
             .padding(.horizontal, 6)
             .padding(.vertical, 1.5)
-            .background(Myna.accent, in: Capsule())
+            .background(RemoraDesign.accent, in: Capsule())
     }
 }
 
@@ -282,8 +284,11 @@ struct RemoraMark: View {
     var size: CGFloat = 26
 
     var body: some View {
-        Image(nsImage: RemoraArt.mark(size: size, disc: NSColor(Myna.accent), fish: NSColor(Myna.onAccent)))
-            .frame(width: size, height: size)
+        Image(
+            nsImage: RemoraArt.mark(
+                size: size, disc: NSColor(RemoraDesign.accent), fish: NSColor(RemoraDesign.onAccent))
+        )
+        .frame(width: size, height: size)
     }
 }
 

@@ -21,21 +21,21 @@ struct DraftPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(L("Draft")).font(Myna.font(15, .semibold)).foregroundStyle(Myna.ink)
+                Text(L("Draft")).font(RemoraDesign.font(15, .semibold)).foregroundStyle(RemoraDesign.ink)
                 Spacer()
                 IconButton(symbol: "xmark", help: "Close", size: 24, action: dismiss)
             }
-            Text(subject.item.title).font(Myna.font(12)).foregroundStyle(Myna.muted).lineLimit(1)
+            Text(subject.item.title).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.muted).lineLimit(1)
             TextEditor(text: $text)
-                .font(Myna.font(13))
+                .font(RemoraDesign.font(13))
                 .scrollContentBackground(.hidden)
                 .padding(8)
                 .frame(minHeight: 130)
-                .background(Myna.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Myna.border))
+                .background(RemoraDesign.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(RemoraDesign.border))
             Text(L("Written on this Mac. Remora doesn’t send it: paste it in Slack, GitHub or GitLab."))
-                .font(Myna.font(11))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11))
+                .foregroundStyle(RemoraDesign.muted)
             HStack {
                 ActionButton(
                     label: copied ? "Copied" : "Copy", symbol: copied ? "checkmark" : "doc.on.doc", action: copy)
@@ -53,7 +53,9 @@ struct DraftPanel: View {
             }
         }
         .padding(16)
-        .background(Myna.surface, in: RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous))
+        .background(
+            RemoraDesign.surface, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusLarge, style: .continuous)
+        )
         .shadow(color: .black.opacity(0.2), radius: 20, y: 6)
         .padding(16)
         .onAppear { text = subject.text }

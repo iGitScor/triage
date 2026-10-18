@@ -14,10 +14,10 @@ struct InsightCard: View {
                 HStack(spacing: 8) {
                     Image(systemName: symbol(insight))
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(Myna.onAccent)
+                        .foregroundStyle(RemoraDesign.onAccent)
                         .frame(width: 22, height: 22)
-                        .background(Myna.accent, in: Circle())
-                    Text(title(insight)).font(Myna.font(13.5, .semibold)).foregroundStyle(Myna.ink)
+                        .background(RemoraDesign.accent, in: Circle())
+                    Text(title(insight)).font(RemoraDesign.font(13.5, .semibold)).foregroundStyle(RemoraDesign.ink)
                     Spacer()
                     if insights.count > 1 {
                         Button {
@@ -25,16 +25,16 @@ struct InsightCard: View {
                         } label: {
                             Label("\(index % insights.count + 1)/\(insights.count)", systemImage: "chevron.right")
                                 .labelStyle(.titleAndIcon)
-                                .font(Myna.font(11, .semibold))
-                                .foregroundStyle(Myna.muted)
+                                .font(RemoraDesign.font(11, .semibold))
+                                .foregroundStyle(RemoraDesign.muted)
                         }
                         .buttonStyle(.plain)
                         .help(L("Next suggestion"))
                     }
                 }
                 Text(message(insight))
-                    .font(Myna.font(12))
-                    .foregroundStyle(Myna.inkSoft)
+                    .font(RemoraDesign.font(12))
+                    .foregroundStyle(RemoraDesign.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 6) {
                     ForEach(actions(insight), id: \.label) { action in
@@ -45,13 +45,17 @@ struct InsightCard: View {
                     Spacer()
                     Button(L("Not now")) { withAnimation(.snappy) { model.dismiss(insight) } }
                         .buttonStyle(.plain)
-                        .font(Myna.font(11.5))
-                        .foregroundStyle(Myna.muted)
+                        .font(RemoraDesign.font(11.5))
+                        .foregroundStyle(RemoraDesign.muted)
                 }
             }
             .padding(12)
-            .background(Myna.surface, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous).strokeBorder(Myna.border))
+            .background(
+                RemoraDesign.surface, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous).strokeBorder(
+                    RemoraDesign.border))
         }
     }
 
@@ -143,16 +147,16 @@ struct TriagePanel: View {
     var body: some View {
         if model.assistant.isTriaging {
             Label(L("The assistant is looking at your snoozed items…"), systemImage: "sparkles")
-                .font(Myna.font(12))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(12))
+                .foregroundStyle(RemoraDesign.muted)
                 .padding(.horizontal, 2)
         } else if let error = model.assistant.triageError {
-            Text(error).font(Myna.font(12)).foregroundStyle(Myna.danger)
+            Text(error).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.danger)
         } else if !model.assistant.triageSuggestions.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label(L("The assistant’s suggestions"), systemImage: "sparkles")
-                        .font(Myna.font(13, .semibold))
+                        .font(RemoraDesign.font(13, .semibold))
                     Spacer()
                     IconButton(symbol: "xmark", help: "Close", size: 22) { model.discardTriage() }
                 }
@@ -163,8 +167,8 @@ struct TriagePanel: View {
                 }
                 if model.assistant.triageSuggestions.contains(where: { $0.action == .done || $0.action == .now }) {
                     Text(L("“Let it go” and “Do it now” are yours to tick."))
-                        .font(Myna.font(11))
-                        .foregroundStyle(Myna.onDark(opacity: 0.6))
+                        .font(RemoraDesign.font(11))
+                        .foregroundStyle(RemoraDesign.onDark(opacity: 0.6))
                 }
                 let selected = TriageSuggestion.selection(model.assistant.triageSuggestions, toggled: toggled)
                 Button {
@@ -175,9 +179,10 @@ struct TriagePanel: View {
                 .buttonStyle(PillButtonStyle())
                 .disabled(selected.isEmpty)
             }
-            .foregroundStyle(Myna.onDark)
+            .foregroundStyle(RemoraDesign.onDark)
             .padding(12)
-            .background(Myna.dark, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+            .background(
+                RemoraDesign.dark, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous))
         }
     }
 
@@ -189,12 +194,12 @@ struct TriagePanel: View {
         } label: {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: included ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(included ? Myna.accent : Myna.onDark(opacity: 0.4))
+                    .foregroundStyle(included ? RemoraDesign.accent : RemoraDesign.onDark(opacity: 0.4))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title).font(Myna.font(12.5, .medium)).lineLimit(1)
+                    Text(item.title).font(RemoraDesign.font(12.5, .medium)).lineLimit(1)
                     Text("\(label(suggestion)) · \(suggestion.reason)")
-                        .font(Myna.font(11.5))
-                        .foregroundStyle(Myna.onDark(opacity: 0.65))
+                        .font(RemoraDesign.font(11.5))
+                        .foregroundStyle(RemoraDesign.onDark(opacity: 0.65))
                         .lineLimit(2)
                 }
                 Spacer(minLength: 0)

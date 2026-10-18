@@ -39,7 +39,7 @@ private final class LineView: NSView {
     var dark = false
 
     override func draw(_ dirtyRect: NSRect) {
-        let ink = (dark ? Myna.onDark : Myna.ink).resolved(dark: false)
+        let ink = (dark ? RemoraDesign.onDark : RemoraDesign.ink).resolved(dark: false)
 
         // A slightly slack line.
         let line = NSBezierPath()
@@ -53,7 +53,7 @@ private final class LineView: NSView {
         // The float, two thirds down the line.
         let float = NSPoint(x: anchor.x + (tip.x - anchor.x) * 0.66, y: anchor.y + (tip.y - anchor.y) * 0.66)
         let bobber = NSBezierPath(ovalIn: NSRect(x: float.x - 5, y: float.y - 5, width: 10, height: 10))
-        Myna.accent.resolved(dark: dark).setFill()
+        RemoraDesign.accent.resolved(dark: dark).setFill()
         bobber.fill()
         ink.setStroke()
         bobber.lineWidth = 1.2

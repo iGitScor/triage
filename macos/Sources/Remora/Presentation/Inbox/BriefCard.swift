@@ -15,13 +15,13 @@ struct BriefCard: View {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(Myna.onAccent)
+                    .foregroundStyle(RemoraDesign.onAccent)
                     .frame(width: 22, height: 22)
-                    .background(Myna.accent, in: Circle())
-                Text("Your brief").font(Myna.font(14, .semibold))
+                    .background(RemoraDesign.accent, in: Circle())
+                Text("Your brief").font(RemoraDesign.font(14, .semibold))
                 Spacer()
                 if model.assistant.isBriefing {
-                    ProgressView().controlSize(.small).tint(Myna.accent)
+                    ProgressView().controlSize(.small).tint(RemoraDesign.accent)
                 } else {
                     Button {
                         Task { await model.makeBrief() }
@@ -30,7 +30,7 @@ struct BriefCard: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(model.isBriefFresh)
-                    .opacity(model.isBriefFresh ? Myna.disabledOpacity : 1)
+                    .opacity(model.isBriefFresh ? RemoraDesign.disabledOpacity : 1)
                     .help(
                         model.isBriefFresh
                             ? L("This brief is still fresh (Settings → General → Assistant)") : L("Write a new brief")
@@ -40,11 +40,11 @@ struct BriefCard: View {
             }
 
             if let error = model.assistant.briefError {
-                Text(error).font(Myna.font(12)).foregroundStyle(Myna.danger)
+                Text(error).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.danger)
             } else if let brief = model.assistant.brief {
                 Text(brief.summary)
-                    .font(Myna.font(13))
-                    .foregroundStyle(Myna.onDark(opacity: 0.85))
+                    .font(RemoraDesign.font(13))
+                    .foregroundStyle(RemoraDesign.onDark(opacity: 0.85))
                     .fixedSize(horizontal: false, vertical: true)
                 // Only what is still in the inbox: an item done or snoozed since leaves the list.
                 let current = Dictionary(model.briefItems.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -53,18 +53,19 @@ struct BriefCard: View {
                     FocusRow(rank: index + 1, item: pair.1, reason: pair.0.reason)
                 }
                 Text(footer(for: brief))
-                    .font(Myna.font(10.5))
-                    .foregroundStyle(Myna.onDark(opacity: 0.5))
+                    .font(RemoraDesign.font(10.5))
+                    .foregroundStyle(RemoraDesign.onDark(opacity: 0.5))
             } else {
-                Text("The assistant is reading your inbox…").font(Myna.font(12.5)).foregroundStyle(
-                    Myna.onDark(opacity: 0.7))
+                Text("The assistant is reading your inbox…").font(RemoraDesign.font(12.5)).foregroundStyle(
+                    RemoraDesign.onDark(opacity: 0.7))
             }
         }
-        .foregroundStyle(Myna.onDark)
+        .foregroundStyle(RemoraDesign.onDark)
         .padding(14)
-        .background(Myna.dark, in: RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous))
+        .background(RemoraDesign.dark, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusLarge, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous).strokeBorder(Myna.border.opacity(0.6))
+            RoundedRectangle(cornerRadius: RemoraDesign.radiusLarge, style: .continuous).strokeBorder(
+                RemoraDesign.border.opacity(0.6))
         )
         .task { if model.assistant.brief == nil { await model.makeBrief() } }
     }
@@ -100,13 +101,14 @@ private struct FocusRow: View {
     private var content: some View {
         HStack(alignment: .top, spacing: 10) {
             Text("\(rank)")
-                .font(Myna.font(11, .bold))
-                .foregroundStyle(Myna.onAccent)
+                .font(RemoraDesign.font(11, .bold))
+                .foregroundStyle(RemoraDesign.onAccent)
                 .frame(width: 20, height: 20)
-                .background(Myna.accent, in: Circle())
+                .background(RemoraDesign.accent, in: Circle())
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.title).font(Myna.font(12.5, .medium)).lineLimit(1)
-                Text(reason).font(Myna.font(11.5)).foregroundStyle(Myna.onDark(opacity: 0.6)).lineLimit(2)
+                Text(item.title).font(RemoraDesign.font(12.5, .medium)).lineLimit(1)
+                Text(reason).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.onDark(opacity: 0.6)).lineLimit(
+                    2)
             }
             Spacer(minLength: 0)
         }

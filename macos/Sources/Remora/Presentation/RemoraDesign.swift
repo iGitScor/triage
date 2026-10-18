@@ -2,9 +2,9 @@ import AppKit
 import RemoraCore
 import SwiftUI
 
-/// Remora's look: the Estuary design system's colours (MynaTokens.swift, made from @iscor/design by
+/// Remora's look: the Estuary design system's colours (EstuaryTokens.swift, made from @iscor/design by
 /// scripts/tokens-check.py), and what is the Mac app's own: its sizes, its fonts, the selection.
-enum Myna {
+enum RemoraDesign {
     /// The selection: ink at 60 %, opaque with Increase Contrast. Remora's own, not a design system token.
     static let selection = translucent(ink, opacity: 0.6, contrastOpacity: 1)
 

@@ -75,25 +75,31 @@ private struct QuickReminderView: View {
             HStack(spacing: 6) {
                 Image(systemName: "alarm.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Myna.onAccent)
+                    .foregroundStyle(RemoraDesign.onAccent)
                     .frame(width: 20, height: 20)
-                    .background(Myna.accent, in: Circle())
-                Text(SnoozeClock().describe(date)).font(Myna.font(12.5, .semibold)).foregroundStyle(Myna.accentText)
+                    .background(RemoraDesign.accent, in: Circle())
+                Text(SnoozeClock().describe(date)).font(RemoraDesign.font(12.5, .semibold)).foregroundStyle(
+                    RemoraDesign.accentText)
             }
             TextField("Remind me to…", text: $title)
                 .textFieldStyle(.plain)
-                .font(Myna.font(15, .medium))
-                .foregroundStyle(Myna.ink)
+                .font(RemoraDesign.font(15, .medium))
+                .foregroundStyle(RemoraDesign.ink)
                 .focused($focused)
                 .onSubmit(submit)
                 .onExitCommand(perform: cancel)
             RepeatPicker(rule: $rule, until: $until, start: date)
-            Text("Enter to save · Esc to cancel").font(Myna.font(10.5)).foregroundStyle(Myna.muted)
+            Text("Enter to save · Esc to cancel").font(RemoraDesign.font(10.5)).foregroundStyle(RemoraDesign.muted)
         }
         .padding(14)
         .frame(width: 300, alignment: .leading)
-        .background(Myna.surface, in: RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous).strokeBorder(Myna.border))
+        .background(
+            RemoraDesign.surface, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusLarge, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: RemoraDesign.radiusLarge, style: .continuous).strokeBorder(
+                RemoraDesign.border)
+        )
         .preferredColorScheme(colorScheme)
         .onAppear { focused = true }
     }

@@ -2,7 +2,7 @@ import AppKit
 import CoreText
 import SwiftUI
 
-/// Loads Myna's Outfit variable font and instantiates it at any weight.
+/// Loads the Outfit variable font (Estuary's typeface) and instantiates it at any weight.
 enum Fonts {
     /// Loaded and registered once, on first use: a `static let` is initialized exactly once, thread-safely, and a
     /// font descriptor is immutable, so sharing it is safe.

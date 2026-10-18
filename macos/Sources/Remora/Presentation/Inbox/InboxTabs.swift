@@ -18,22 +18,22 @@ struct TabSwitch: View {
                         if value == .inProgress {
                             Image(systemName: "play.fill").font(.system(size: 11, weight: .bold))
                         } else {
-                            Text(value.title).font(Myna.font(13, .semibold)).lineLimit(1).fixedSize()
+                            Text(value.title).font(RemoraDesign.font(13, .semibold)).lineLimit(1).fixedSize()
                         }
                         if let count = counts[value], count > 0 {
                             Text("\(count)")
-                                .font(Myna.font(11, .bold))
-                                .foregroundStyle(selected ? Myna.onAccent : Myna.muted)
+                                .font(RemoraDesign.font(11, .bold))
+                                .foregroundStyle(selected ? RemoraDesign.onAccent : RemoraDesign.muted)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 1)
-                                .background(selected ? Myna.accent : Myna.line, in: Capsule())
+                                .background(selected ? RemoraDesign.accent : RemoraDesign.line, in: Capsule())
                         }
                     }
-                    .foregroundStyle(selected ? Myna.onDark : Myna.ink)
+                    .foregroundStyle(selected ? RemoraDesign.onDark : RemoraDesign.ink)
                     .frame(maxWidth: value == .inProgress ? nil : .infinity)
                     .padding(.horizontal, value == .inProgress ? 10 : 0)
                     .padding(.vertical, 7)
-                    .background(selected ? Myna.dark : .clear, in: Capsule())
+                    .background(selected ? RemoraDesign.dark : .clear, in: Capsule())
                     .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -45,7 +45,7 @@ struct TabSwitch: View {
             }
         }
         .padding(4)
-        .background(Myna.card, in: Capsule())
+        .background(RemoraDesign.card, in: Capsule())
     }
 }
 
@@ -66,17 +66,17 @@ struct ArchiveButton: View {
             HStack(spacing: 4) {
                 Image(systemName: symbol).font(.system(size: 11, weight: .semibold))
                 if compact {
-                    if let count, count > 0 { Text("\(count)").font(Myna.font(11.5, .semibold)) }
+                    if let count, count > 0 { Text("\(count)").font(RemoraDesign.font(11.5, .semibold)) }
                 } else {
                     Text(count.map { $0 > 0 ? "\(tab.title) \($0)" : tab.title } ?? tab.title).font(
-                        Myna.font(11.5, .semibold)
+                        RemoraDesign.font(11.5, .semibold)
                     ).lineLimit(1)
                 }
             }
-            .foregroundStyle(selected ? Myna.onDark : Myna.muted)
+            .foregroundStyle(selected ? RemoraDesign.onDark : RemoraDesign.muted)
             .padding(.horizontal, 9)
             .padding(.vertical, 8)
-            .background(selected ? Myna.dark : Myna.card, in: Capsule())
+            .background(selected ? RemoraDesign.dark : RemoraDesign.card, in: Capsule())
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -98,7 +98,7 @@ struct SearchField: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").foregroundStyle(Myna.muted)
+            Image(systemName: "magnifyingglass").foregroundStyle(RemoraDesign.muted)
             TextField("Search", text: $text)
                 .textFieldStyle(.plain)
                 .focused(focus, equals: .search)
@@ -118,15 +118,15 @@ struct SearchField: View {
                     Image(systemName: "xmark.circle.fill")
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(Myna.muted)
+                .foregroundStyle(RemoraDesign.muted)
                 .help("Clear search")
                 .accessibilityLabel(L("Clear search"))
             }
         }
-        .font(Myna.font(13))
+        .font(RemoraDesign.font(13))
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
-        .background(Myna.field, in: Capsule())
-        .overlay(Capsule().strokeBorder(Myna.border))
+        .background(RemoraDesign.field, in: Capsule())
+        .overlay(Capsule().strokeBorder(RemoraDesign.border))
     }
 }

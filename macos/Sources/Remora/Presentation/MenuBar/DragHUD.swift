@@ -7,17 +7,17 @@ final class DragHUD {
     private static let size = NSSize(width: 230, height: 54)
     private static let barWidth: CGFloat = 200
 
-    /// Myna tokens for one appearance, high-contrast variants included.
+    /// RemoraDesign's colours for one appearance, high-contrast variants included.
     private struct Palette {
         var background, border, text, icon, track, fill: NSColor
 
         @MainActor init(dark: Bool, contrast: Bool) {
-            background = (dark ? Myna.dark : Myna.surface).resolved(dark: false)
-            border = Myna.border.resolved(dark: dark)
-            text = (dark ? Myna.onDark : Myna.ink).resolved(dark: false)
-            icon = Myna.accentText.resolved(dark: dark)
+            background = (dark ? RemoraDesign.dark : RemoraDesign.surface).resolved(dark: false)
+            border = RemoraDesign.border.resolved(dark: dark)
+            text = (dark ? RemoraDesign.onDark : RemoraDesign.ink).resolved(dark: false)
+            icon = RemoraDesign.accentText.resolved(dark: dark)
             track = text.withAlphaComponent(contrast ? 0.35 : dark ? 0.15 : 0.1)
-            fill = (dark ? Myna.accent : Myna.accentDeep).resolved(dark: false)
+            fill = (dark ? RemoraDesign.accent : RemoraDesign.accentDeep).resolved(dark: false)
         }
     }
 

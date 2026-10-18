@@ -13,7 +13,7 @@ struct SettingsView: View {
             PrivacyPane().tabItem { Label("Privacy", systemImage: "lock.shield") }
         }
         .frame(width: 560, height: 520)
-        .tint(Myna.accentDeep)
+        .tint(RemoraDesign.accentDeep)
         .preferredColorScheme(model.preferences.appearance.colorScheme)
         // Drawn again with the new size when it changes.
         .id(model.preferences.textSize)
@@ -29,7 +29,7 @@ private struct SourcesPane: View {
             VStack(alignment: .leading, spacing: 16) {
                 heading("Connected")
                 if model.accounts.isEmpty {
-                    Text("Nothing connected yet.").font(Myna.font(13)).foregroundStyle(Myna.muted)
+                    Text("Nothing connected yet.").font(RemoraDesign.font(13)).foregroundStyle(RemoraDesign.muted)
                 }
                 ForEach(model.accounts) { AccountRow(account: $0) }
                 heading("Add a source")
@@ -39,14 +39,14 @@ private struct SourcesPane: View {
             }
             .padding(20)
         }
-        .background(Myna.backdrop)
+        .background(RemoraDesign.backdrop)
         .sheet(item: Binding(get: { adding.map(ManifestBox.init) }, set: { adding = $0?.manifest })) { box in
             ConnectForm(manifest: box.manifest) { adding = nil }
         }
     }
 
     private func heading(_ title: String) -> some View {
-        Text(L(title)).font(Myna.font(13, .semibold)).foregroundStyle(Myna.muted).padding(.top, 4)
+        Text(L(title)).font(RemoraDesign.font(13, .semibold)).foregroundStyle(RemoraDesign.muted).padding(.top, 4)
     }
 
     private func tiles(_ manifests: [PluginManifest]) -> some View {
@@ -87,37 +87,38 @@ private struct AccountRow: View {
         HStack(spacing: 12) {
             Image(systemName: manifest?.symbol ?? "questionmark")
                 .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Myna.onAccent)
+                .foregroundStyle(RemoraDesign.onAccent)
                 .frame(width: 32, height: 32)
-                .background(Myna.accent, in: Circle())
+                .background(RemoraDesign.accent, in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 if editing {
                     TextField(manifest?.name ?? "Name", text: $draft)
                         .textFieldStyle(.roundedBorder)
-                        .font(Myna.font(14, .semibold))
+                        .font(RemoraDesign.font(14, .semibold))
                         .focused($focused)
                         .onSubmit(save)
                         .onExitCommand { editing = false }
                 } else {
                     HStack(spacing: 6) {
                         Text(account.name ?? manifest?.name ?? account.pluginID)
-                            .font(Myna.font(14, .semibold))
-                            .foregroundStyle(Myna.ink)
+                            .font(RemoraDesign.font(14, .semibold))
+                            .foregroundStyle(RemoraDesign.ink)
                         if account.name != nil, let manifest {
-                            Text(manifest.name).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                            Text(manifest.name).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
                         }
                         Button(action: startEditing) { Image(systemName: "pencil") }
                             .buttonStyle(.plain)
-                            .foregroundStyle(Myna.muted)
+                            .foregroundStyle(RemoraDesign.muted)
                             .help("Rename")
                             .accessibilityLabel(L("Rename"))
                     }
                 }
                 let failure = model.sync.errors[account.id]
                 if let failure {
-                    Text(failure.message).font(Myna.font(11.5)).foregroundStyle(Self.color(failure.kind)).lineLimit(2)
+                    Text(failure.message).font(RemoraDesign.font(11.5)).foregroundStyle(Self.color(failure.kind))
+                        .lineLimit(2)
                 } else {
-                    Text(account.subtitle).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                    Text(account.subtitle).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
                 }
                 // A new token goes in here, keeping the account's Done, snoozes and pins: after a rejection, or any
                 // time (a token about to expire). Not for an account without one (Claude Code).
@@ -130,8 +131,8 @@ private struct AccountRow: View {
                 }
                 ForEach(model.sync.remarks[account.id] ?? [], id: \.self) { remark in
                     Label(remark, systemImage: "info.circle")
-                        .font(Myna.font(11.5))
-                        .foregroundStyle(Myna.inkSoft)
+                        .font(RemoraDesign.font(11.5))
+                        .foregroundStyle(RemoraDesign.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -151,15 +152,16 @@ private struct AccountRow: View {
                 }
         }
         .padding(12)
-        .background(Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        .background(
+            RemoraDesign.card, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous))
     }
 
     /// Calm for what isn't the tool's fault or only means waiting; a warning for a token to replace.
     static func color(_ kind: FailureKind) -> Color {
         switch kind {
-        case .offline, .rateLimited: Myna.muted
-        case .auth: Myna.color(for: .warning).foreground
-        case .unreachable, .other: Myna.danger
+        case .offline, .rateLimited: RemoraDesign.muted
+        case .auth: RemoraDesign.color(for: .warning).foreground
+        case .unreachable, .other: RemoraDesign.danger
         }
     }
 
@@ -187,21 +189,22 @@ private struct PluginTile: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: manifest.symbol)
                 .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Myna.onDark)
+                .foregroundStyle(RemoraDesign.onDark)
                 .frame(width: 30, height: 30)
-                .background(Myna.dark, in: Circle())
+                .background(RemoraDesign.dark, in: Circle())
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    Text(manifest.name).font(Myna.font(13.5, .semibold)).foregroundStyle(Myna.ink)
+                    Text(manifest.name).font(RemoraDesign.font(13.5, .semibold)).foregroundStyle(RemoraDesign.ink)
                     if manifest.isComingSoon { SoonBadge() }
                 }
                 if let refusal {
                     Label(refusal, systemImage: "lock.fill")
-                        .font(Myna.font(11))
-                        .foregroundStyle(Myna.inkSoft)
+                        .font(RemoraDesign.font(11))
+                        .foregroundStyle(RemoraDesign.inkSoft)
                         .lineLimit(3)
                 } else {
-                    Text(L(manifest.summary)).font(Myna.font(11)).foregroundStyle(Myna.muted).lineLimit(3)
+                    Text(L(manifest.summary)).font(RemoraDesign.font(11)).foregroundStyle(RemoraDesign.muted).lineLimit(
+                        3)
                 }
             }
             Spacer(minLength: 0)
@@ -209,8 +212,8 @@ private struct PluginTile: View {
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
         .background(
-            hovering && available ? Myna.card2 : Myna.card,
-            in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous)
+            hovering && available ? RemoraDesign.card2 : RemoraDesign.card,
+            in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous)
         )
         .opacity(available ? 1 : 0.6)
         .contentShape(Rectangle())
@@ -266,7 +269,7 @@ private struct ConnectForm: View {
                         }
                     }
                     if let error {
-                        Text(error).font(Myna.font(12)).foregroundStyle(Myna.danger)
+                        Text(error).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.danger)
                     }
                 }
                 .padding(22)
@@ -285,7 +288,7 @@ private struct ConnectForm: View {
                     .keyboardShortcut(.defaultAction)
             }
             .padding(16)
-            .overlay(alignment: .top) { Myna.line.frame(height: 1) }
+            .overlay(alignment: .top) { RemoraDesign.line.frame(height: 1) }
         }
         .frame(width: 460, height: 560)
         .onAppear {
@@ -302,12 +305,12 @@ private struct ConnectForm: View {
             HStack(spacing: 10) {
                 Image(systemName: manifest.symbol)
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Myna.onAccent)
+                    .foregroundStyle(RemoraDesign.onAccent)
                     .frame(width: 30, height: 30)
-                    .background(Myna.accent, in: Circle())
-                Text("Connect \(manifest.name)").font(Myna.font(17, .semibold))
+                    .background(RemoraDesign.accent, in: Circle())
+                Text("Connect \(manifest.name)").font(RemoraDesign.font(17, .semibold))
             }
-            Text(L(manifest.summary)).font(Myna.font(12.5)).foregroundStyle(Myna.muted)
+            Text(L(manifest.summary)).font(RemoraDesign.font(12.5)).foregroundStyle(RemoraDesign.muted)
         }
     }
 
@@ -315,12 +318,12 @@ private struct ConnectForm: View {
     /// placeholder, the field would be named "github.com", or nothing at all for a token.
     private func field(_ label: String, help: String?, @ViewBuilder input: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(L(label)).font(Myna.font(12, .semibold)).accessibilityHidden(true)
+            Text(L(label)).font(RemoraDesign.font(12, .semibold)).accessibilityHidden(true)
             input().textFieldStyle(.roundedBorder)
                 .accessibilityLabel(L(label))
                 .accessibilityHint(help.map { L($0) } ?? "")
             if let help {
-                Text(L(help)).font(Myna.font(11)).foregroundStyle(Myna.muted).accessibilityHidden(true)
+                Text(L(help)).font(RemoraDesign.font(11)).foregroundStyle(RemoraDesign.muted).accessibilityHidden(true)
             }
         }
     }
@@ -334,12 +337,12 @@ private struct ConnectForm: View {
                     get: { (locked ? forced : values[field.key]) == "true" },
                     set: { values[field.key] = $0 ? "true" : "" })
             )
-            .font(Myna.font(12, .semibold))
+            .font(RemoraDesign.font(12, .semibold))
             .disabled(locked)
             .help(locked ? L("Managed by your organization") : "")
             .accessibilityHint(field.help.map { L($0) } ?? "")
             if let help = field.help {
-                Text(L(help)).font(Myna.font(11)).foregroundStyle(Myna.muted).accessibilityHidden(true)
+                Text(L(help)).font(RemoraDesign.font(11)).foregroundStyle(RemoraDesign.muted).accessibilityHidden(true)
             }
         }
     }
@@ -403,24 +406,24 @@ private struct SetupGuide: View {
             ForEach(Array(manifest.setupSteps.enumerated()), id: \.offset) { index, step in
                 HStack(alignment: .top, spacing: 10) {
                     Text("\(index + 1)")
-                        .font(Myna.font(11, .bold))
-                        .foregroundStyle(Myna.onAccent)
+                        .font(RemoraDesign.font(11, .bold))
+                        .foregroundStyle(RemoraDesign.onAccent)
                         .frame(width: 20, height: 20)
-                        .background(Myna.accent, in: Circle())
+                        .background(RemoraDesign.accent, in: Circle())
                     Text(L(step))
-                        .font(Myna.font(12.5))
-                        .foregroundStyle(Myna.ink)
+                        .font(RemoraDesign.font(12.5))
+                        .foregroundStyle(RemoraDesign.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             if let url = manifest.setupURL?(config) {
                 Link(destination: url) {
                     Label(L(manifest.setupLabel), systemImage: "arrow.up.right")
-                        .font(Myna.font(13, .semibold))
-                        .foregroundStyle(Myna.onDark)
+                        .font(RemoraDesign.font(13, .semibold))
+                        .foregroundStyle(RemoraDesign.onDark)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
-                        .background(Myna.dark, in: Capsule())
+                        .background(RemoraDesign.dark, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .padding(.leading, 30)
@@ -428,7 +431,8 @@ private struct SetupGuide: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Myna.card, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        .background(
+            RemoraDesign.card, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous))
     }
 }
 
@@ -484,8 +488,8 @@ private struct GeneralPane: View {
                 )
                 .managedByOrganization(ManagedPolicy.isForced(ManagedPolicy.openInAppsKey))
                 Text(L("Slack and Linear open in their app; ⌥-click opens the web page instead."))
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(11.5))
+                    .foregroundStyle(RemoraDesign.muted)
                 Toggle(
                     "Open at login",
                     isOn: Binding(
@@ -500,7 +504,8 @@ private struct GeneralPane: View {
                     ) { SMAppService.openSystemSettingsLoginItems() }
                 }
                 if let loginError {
-                    Text(L("Couldn’t change it: %@", loginError)).font(Myna.font(11.5)).foregroundStyle(Myna.danger)
+                    Text(L("Couldn’t change it: %@", loginError)).font(RemoraDesign.font(11.5)).foregroundStyle(
+                        RemoraDesign.danger)
                 }
             }
             Section("Menu bar") {
@@ -534,7 +539,7 @@ private struct GeneralPane: View {
                     )
                     .help(L("Reminders and snoozes coming back don’t wait."))
                     Text(L("Reminders and snoozes coming back don’t wait."))
-                        .font(Myna.font(11)).foregroundStyle(Myna.muted)
+                        .font(RemoraDesign.font(11)).foregroundStyle(RemoraDesign.muted)
                 }
             }
             Section {
@@ -549,14 +554,14 @@ private struct GeneralPane: View {
                 Text(
                     "Notifications still say where something happened (mention, channel, repository), not what was written."
                 )
-                .font(Myna.font(11.5))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11.5))
+                .foregroundStyle(RemoraDesign.muted)
             }
             Section("Assistant") {
                 Toggle("Whole-inbox brief", isOn: $model.preferences.wholeInboxBrief)
                 Text("Off: no Brief button and no brief is written. The ✦ summary on each bundle stays available.")
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(11.5))
+                    .foregroundStyle(RemoraDesign.muted)
                 Picker("Reuse a brief or summary for", selection: $model.preferences.briefCacheMinutes) {
                     Text("Always write a new one").tag(0)
                     ForEach([5, 15, 30, 60, 120], id: \.self) {
@@ -564,8 +569,8 @@ private struct GeneralPane: View {
                     }
                 }
                 Text("While fresh, Remora shows it again instead of asking the assistant.")
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(11.5))
+                    .foregroundStyle(RemoraDesign.muted)
                 // What the assistant used, and an optional cap on it.
                 if ManagedPolicy.isForced(ManagedPolicy.aiDailyLimitKey) {
                     LabeledContent(L("Daily limit"), value: limitLabel(model.effectivePreferences.assistantDailyLimit))
@@ -578,8 +583,8 @@ private struct GeneralPane: View {
                 Text(
                     "Each brief, summary or triage is one request. Past the limit, the assistant waits until tomorrow."
                 )
-                .font(Myna.font(11.5))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11.5))
+                .foregroundStyle(RemoraDesign.muted)
                 LabeledContent(L("Used today"), value: usageLabel(model.assistant.usage.today()))
                 LabeledContent(L("This month"), value: usageLabel(model.assistant.usage.thisMonth()))
             }
@@ -594,8 +599,8 @@ private struct GeneralPane: View {
                 Text("Send to the assistant")
             } footer: {
                 Text("Items from a tool that's off never reach the assistant: not in the brief, summaries or triage.")
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(11.5))
+                    .foregroundStyle(RemoraDesign.muted)
             }
             Section("Snooze") {
                 Toggle("Bring snoozed items back early on new activity", isOn: $model.preferences.wakeOnActivity)
@@ -603,8 +608,8 @@ private struct GeneralPane: View {
             Section("Bots and agents") {
                 Toggle("Group bots and agents apart", isOn: $model.preferences.groupBots)
                 Text("Their items go last in My turn, still counted, so people come first.")
-                    .font(Myna.font(11.5))
-                    .foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(11.5))
+                    .foregroundStyle(RemoraDesign.muted)
             }
             Section("Appearance") {
                 Picker("Theme", selection: $model.preferences.appearance) {
@@ -621,7 +626,7 @@ private struct GeneralPane: View {
                 }
                 if model.openShortcutTaken {
                     Text(L("Another app already uses this shortcut: pick another one."))
-                        .font(Myna.font(11)).foregroundStyle(Myna.danger)
+                        .font(RemoraDesign.font(11)).foregroundStyle(RemoraDesign.danger)
                 }
             }
             UpdatesSection(version: Self.version)
@@ -652,8 +657,10 @@ private struct GeneralPane: View {
     /// A short explanation with the button that fixes it.
     private func hint(_ text: String, action: String, perform: @escaping () -> Void) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Myna.color(for: .warning).foreground)
-            Text(text).font(Myna.font(11.5)).foregroundStyle(Myna.inkSoft).fixedSize(horizontal: false, vertical: true)
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(
+                RemoraDesign.color(for: .warning).foreground)
+            Text(text).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.inkSoft).fixedSize(
+                horizontal: false, vertical: true)
             Spacer(minLength: 4)
             Button(action, action: perform).controlSize(.small)
         }
@@ -714,12 +721,13 @@ private struct UpdatesSection: View {
             LabeledContent("Version", value: version)
             if !updater.isSupported {
                 Text(L("This copy of Remora doesn’t update itself: download new versions from the releases page."))
-                    .font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
             } else if !model.privacy.updatesAllowed {
-                Text(L("Your organization installs new versions of Remora.")).font(Myna.font(11.5)).foregroundStyle(
-                    Myna.muted
-                )
-                .help(L("Managed by your organization"))
+                Text(L("Your organization installs new versions of Remora.")).font(RemoraDesign.font(11.5))
+                    .foregroundStyle(
+                        RemoraDesign.muted
+                    )
+                    .help(L("Managed by your organization"))
             } else {
                 Toggle(
                     "Check for updates automatically",
@@ -738,8 +746,8 @@ private struct UpdatesSection: View {
                 Text(
                     "Once a day, Remora asks GitHub whether a new version is out. Nothing about you or your inbox is sent. A new version is installed only when you choose, and only if it is signed by Remora’s release key."
                 )
-                .font(Myna.font(11.5))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11.5))
+                .foregroundStyle(RemoraDesign.muted)
             }
         }
     }
@@ -748,9 +756,9 @@ private struct UpdatesSection: View {
         switch updater.state {
         case .available(let offer):
             HStack {
-                Text(L("Remora %@ is available.", offer.version.description)).font(Myna.font(12, .semibold))
+                Text(L("Remora %@ is available.", offer.version.description)).font(RemoraDesign.font(12, .semibold))
                 if let notes = offer.notes.flatMap(URL.init(string:)), UpdateHosts.allows(notes) {
-                    Link(L("What’s new"), destination: notes).font(Myna.font(11.5))
+                    Link(L("What’s new"), destination: notes).font(RemoraDesign.font(11.5))
                 }
                 Spacer()
                 Button(L("Install and relaunch")) { Task { await updater.install() } }
@@ -758,18 +766,19 @@ private struct UpdatesSection: View {
         case .installing:
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text(L("Downloading and checking the new version…")).font(Myna.font(11.5)).foregroundStyle(Myna.inkSoft)
+                Text(L("Downloading and checking the new version…")).font(RemoraDesign.font(11.5)).foregroundStyle(
+                    RemoraDesign.inkSoft)
             }
         default:
             HStack {
                 switch updater.state {
                 case .checking:
                     ProgressView().controlSize(.small)
-                    Text(L("Checking…")).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                    Text(L("Checking…")).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
                 case .upToDate:
-                    Text(L("Remora is up to date.")).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                    Text(L("Remora is up to date.")).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
                 case .failed(let message):
-                    Text(message).font(Myna.font(11.5)).foregroundStyle(Myna.danger).fixedSize(
+                    Text(message).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.danger).fixedSize(
                         horizontal: false, vertical: true)
                 default:
                     EmptyView()

@@ -21,20 +21,20 @@ struct ItemRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 header
                 Text(item.title)
-                    .font(Myna.font(13.5, .medium))
-                    .foregroundStyle(Myna.ink)
+                    .font(RemoraDesign.font(13.5, .medium))
+                    .foregroundStyle(RemoraDesign.ink)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 if let preview = item.preview {
                     Text(preview)
-                        .font(Myna.font(12))
-                        .foregroundStyle(Myna.muted)
+                        .font(RemoraDesign.font(12))
+                        .foregroundStyle(RemoraDesign.muted)
                         .lineLimit(2)
                 }
                 if let note = state.snooze?.note {
                     Label(note, systemImage: "note.text")
-                        .font(Myna.font(11.5))
-                        .foregroundStyle(Myna.inkSoft)
+                        .font(RemoraDesign.font(11.5))
+                        .foregroundStyle(RemoraDesign.inkSoft)
                 }
                 footer
                 // Remora's word on why it is in this tab, when it was a guess or your correction: a band of its own, as
@@ -54,11 +54,11 @@ struct ItemRow: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(background, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        .background(background, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous))
         .overlay {
             if selected {
-                RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous).strokeBorder(
-                    Myna.selection, lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous).strokeBorder(
+                    RemoraDesign.selection, lineWidth: 1.5)
             }
         }
         .overlay(alignment: .topTrailing) { if showsActions { actions } }
@@ -175,15 +175,16 @@ struct ItemRow: View {
         return SwipeAction(
             label: isDone ? "Inbox" : "Done",
             symbol: isDone ? "tray.and.arrow.up" : "checkmark",
-            tint: Myna.accent,
-            foreground: Myna.onAccent,
+            tint: RemoraDesign.accent,
+            foreground: RemoraDesign.onAccent,
             dismisses: true
         ) { withAnimation(.snappy) { model.toggleDone(item) } }
     }
 
     private var snoozeSwipe: SwipeAction {
         SwipeAction(
-            label: "Snooze", symbol: "moon.zzz", tint: Myna.dark, foreground: Myna.onDark, dismisses: false,
+            label: "Snooze", symbol: "moon.zzz", tint: RemoraDesign.dark, foreground: RemoraDesign.onDark,
+            dismisses: false,
             perform: onSnooze)
     }
 
@@ -191,9 +192,9 @@ struct ItemRow: View {
         if item.bundle == .reminders {
             Image(systemName: "alarm.fill")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(Myna.onAccent)
+                .foregroundStyle(RemoraDesign.onAccent)
                 .frame(width: 28, height: 28)
-                .background(Myna.accent, in: Circle())
+                .background(RemoraDesign.accent, in: Circle())
         } else {
             Avatar(person: item.author)
         }
@@ -203,24 +204,24 @@ struct ItemRow: View {
         HStack(spacing: 6) {
             if let account = model.accountLabel(for: item) {
                 Text(account)
-                    .font(Myna.font(10, .semibold))
-                    .foregroundStyle(Myna.inkSoft)
+                    .font(RemoraDesign.font(10, .semibold))
+                    .foregroundStyle(RemoraDesign.inkSoft)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 1)
-                    .background(Myna.line, in: Capsule())
+                    .background(RemoraDesign.line, in: Capsule())
             }
             Text(item.shownContext)
-                .font(Myna.font(11, .medium))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11, .medium))
+                .foregroundStyle(RemoraDesign.muted)
                 .lineLimit(1)
             // Written by an app, a bot or an agent, as the source says.
             if item.fromBot {
                 Label(L("Bot"), systemImage: "cpu")
-                    .font(Myna.font(10, .semibold))
-                    .foregroundStyle(Myna.inkSoft)
+                    .font(RemoraDesign.font(10, .semibold))
+                    .foregroundStyle(RemoraDesign.inkSoft)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 1)
-                    .background(Myna.line, in: Capsule())
+                    .background(RemoraDesign.line, in: Capsule())
                     .fixedSize()
             }
             Spacer(minLength: 4)
@@ -229,18 +230,18 @@ struct ItemRow: View {
                     snooze.until.formatted(.dateTime.weekday(.abbreviated).hour().minute()),
                     systemImage: snooze.mode == .hide ? "moon.zzz" : "bell"
                 )
-                .font(Myna.font(10.5, .medium))
-                .foregroundStyle(Myna.accentText)
+                .font(RemoraDesign.font(10.5, .medium))
+                .foregroundStyle(RemoraDesign.accentText)
             } else if !showsActions {
                 if let reason = model.learning.reason(item) {
                     Image(systemName: "star.fill")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(Myna.accentText)
+                        .foregroundStyle(RemoraDesign.accentText)
                         .help(reason)
                 }
                 LiveText { item.date.shortRelative }
-                    .font(Myna.font(11))
-                    .foregroundStyle(Myna.muted)
+                    .font(RemoraDesign.font(11))
+                    .foregroundStyle(RemoraDesign.muted)
             }
         }
     }
@@ -324,7 +325,7 @@ struct ItemRow: View {
             }
         }
         .padding(4)
-        .background(Myna.surface, in: Capsule())
+        .background(RemoraDesign.surface, in: Capsule())
         .shadow(color: .black.opacity(0.08), radius: 4, y: 1)
         .padding(6)
     }
@@ -368,9 +369,9 @@ struct ItemRow: View {
 
     private var background: Color {
         if state.remindedAt != nil || state.startedAt != nil || (item.hasBadge(.approved) && item.bundle == .authored) {
-            return showsActions ? Myna.accentSoft.opacity(1.4) : Myna.accentSoft
+            return showsActions ? RemoraDesign.accentSoft.opacity(1.4) : RemoraDesign.accentSoft
         }
-        return showsActions ? Myna.card2 : Myna.card
+        return showsActions ? RemoraDesign.card2 : RemoraDesign.card
     }
 }
 
@@ -382,14 +383,15 @@ private struct WhyLine: View {
 
     var body: some View {
         Label {
-            Text(L("Remora:")).font(Myna.font(11.5, .semibold)) + Text(" " + label).font(Myna.font(11.5))
+            Text(L("Remora:")).font(RemoraDesign.font(11.5, .semibold))
+                + Text(" " + label).font(RemoraDesign.font(11.5))
         } icon: {
             Image(systemName: symbol).font(.system(size: 11))
         }
-        .foregroundStyle(Myna.inkSoft)
+        .foregroundStyle(RemoraDesign.inkSoft)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Myna.accentSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(RemoraDesign.accentSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
@@ -401,20 +403,20 @@ private struct WaitingHelpLine: View {
         HStack(spacing: 6) {
             switch help {
             case .suggestReviewers(let people):
-                Text(L("No reviewer yet")).font(Myna.font(11.5, .medium)).foregroundStyle(Myna.inkSoft)
+                Text(L("No reviewer yet")).font(RemoraDesign.font(11.5, .medium)).foregroundStyle(RemoraDesign.inkSoft)
                 PeopleStack(people: people)
                 Spacer(minLength: 4)
                 ActionButton(label: "Ask for review", symbol: "person.badge.plus", action: draft)
             case .nudge(let people, let days):
                 Text(L("Waiting on %@ for %d d", people.map(\.name).joined(separator: ", "), days))
-                    .font(Myna.font(11.5, .medium))
-                    .foregroundStyle(Myna.inkSoft)
+                    .font(RemoraDesign.font(11.5, .medium))
+                    .foregroundStyle(RemoraDesign.inkSoft)
                     .lineLimit(1)
                 Spacer(minLength: 4)
                 ActionButton(label: "Draft a nudge", symbol: "hand.wave", action: draft)
             }
         }
         .padding(8)
-        .background(Myna.accentSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(RemoraDesign.accentSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }

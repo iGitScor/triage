@@ -5,7 +5,7 @@ Slack mentions and DMs, Notion tasks, and your own reminders. An assistant (Clau
 model) can brief you on what to handle first.
 
 Inspired by [gitbar](https://gitbar.app) (MR widget), Gestimer (drag to set a reminder) and Google Inbox
-(bundles, Done, Pin, Snooze). Styled with the Myna design tokens.
+(bundles, Done, Pin, Snooze). Styled with the Estuary design system (`@iscor/design`), through `RemoraDesign`.
 
 Product overview, features and sources: [../README.md](../README.md).
 

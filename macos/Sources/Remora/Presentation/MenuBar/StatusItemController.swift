@@ -394,12 +394,12 @@ enum MenuBarTitle {
         return "\(text) (\(elapsed))"
     }
 
-    /// Myna branding: an ink fish and counters on a lime capsule, shown when something needs you.
+    /// Remora's branding: an ink fish and counters on a lime capsule, shown when something needs you.
     /// Not a template image, so it keeps its colors on light and dark menu bars.
     /// Focused on a task in progress: lime on ink, so it reads differently from the usual count.
     static func pill(_ content: Content, motion: Motion = .still, height: CGFloat = 18) -> NSImage {
-        let lime = NSColor(Myna.accent)
-        let dark = NSColor(Myna.onAccent)
+        let lime = NSColor(RemoraDesign.accent)
+        let dark = NSColor(RemoraDesign.onAccent)
         let (ink, fill) = content.focused ? (lime, dark) : (dark, lime)
         let title = make(content, motion: motion, color: ink)
         let fish = NSSize(width: 22, height: 11)

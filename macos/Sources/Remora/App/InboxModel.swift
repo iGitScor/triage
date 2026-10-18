@@ -69,7 +69,7 @@ final class InboxModel {
             if oldValue.wakeOnActivity != preferences.wakeOnActivity || oldValue.groupBots != preferences.groupBots {
                 layoutChanged()
             }
-            Myna.textScale = preferences.textSize.scale
+            RemoraDesign.textScale = preferences.textSize.scale
             if oldValue.allowedPlugins != preferences.allowedPlugins
                 || oldValue.allowExternalAI != preferences.allowExternalAI
             {
@@ -132,7 +132,7 @@ final class InboxModel {
         }
         let preferences = read(files.preferences) ?? Preferences()
         self.preferences = preferences
-        Myna.textScale = preferences.textSize.scale
+        RemoraDesign.textScale = preferences.textSize.scale
         sync = SyncEngine()
         spotlight = SpotlightService(index: environment.spotlight, demo: environment.demo)
         if isDemo {

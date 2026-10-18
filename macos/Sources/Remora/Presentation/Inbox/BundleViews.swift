@@ -29,15 +29,17 @@ struct BundleHeader: View {
                 HStack(spacing: 8) {
                     Image(systemName: symbol)
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Myna.onAccent)
+                        .foregroundStyle(RemoraDesign.onAccent)
                         .frame(width: 20, height: 20)
-                        .background(Myna.accent, in: Circle())
+                        .background(RemoraDesign.accent, in: Circle())
                     // On one line whatever the actions take: they give way, the title doesn't.
-                    Text(L(title)).font(Myna.font(13, .semibold)).foregroundStyle(Myna.ink).lineLimit(1).fixedSize()
-                    Text("\(count)").font(Myna.font(12, .medium)).foregroundStyle(Myna.muted).fixedSize()
+                    Text(L(title)).font(RemoraDesign.font(13, .semibold)).foregroundStyle(RemoraDesign.ink).lineLimit(1)
+                        .fixedSize()
+                    Text("\(count)").font(RemoraDesign.font(12, .medium)).foregroundStyle(RemoraDesign.muted)
+                        .fixedSize()
                     Image(systemName: "chevron.down")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(Myna.muted)
+                        .foregroundStyle(RemoraDesign.muted)
                         .rotationEffect(.degrees(collapsed ? -90 : 0))
                 }
                 .contentShape(Rectangle())
@@ -58,9 +60,9 @@ struct BundleHeader: View {
                 Button(action: summarize) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(summaryShown ? Myna.onAccent : Myna.accentText)
+                        .foregroundStyle(summaryShown ? RemoraDesign.onAccent : RemoraDesign.accentText)
                         .frame(width: 22, height: 22)
-                        .background(summaryShown ? Myna.accent : .clear, in: Circle())
+                        .background(summaryShown ? RemoraDesign.accent : .clear, in: Circle())
                 }
                 .buttonStyle(.plain)
                 .help(L(summaryShown ? "Hide the summary" : "Summarize this bundle"))
@@ -69,8 +71,8 @@ struct BundleHeader: View {
             if let startSession {
                 Button(action: startSession) {
                     Label("Start session", systemImage: "play.fill")
-                        .font(Myna.font(11.5, .semibold))
-                        .foregroundStyle(Myna.accentText)
+                        .font(RemoraDesign.font(11.5, .semibold))
+                        .foregroundStyle(RemoraDesign.accentText)
                 }
                 .buttonStyle(.plain)
             }
@@ -82,7 +84,7 @@ struct BundleHeader: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Myna.accentText)
+                        .foregroundStyle(RemoraDesign.accentText)
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
@@ -110,23 +112,24 @@ struct BundleSummaryLine: View {
             if loading {
                 ProgressView().controlSize(.mini)
             } else {
-                Image(systemName: "sparkles").font(.system(size: 10, weight: .bold)).foregroundStyle(Myna.accentText)
+                Image(systemName: "sparkles").font(.system(size: 10, weight: .bold)).foregroundStyle(
+                    RemoraDesign.accentText)
             }
             Group {
                 if let error {
-                    Text(error).foregroundStyle(Myna.danger)
+                    Text(error).foregroundStyle(RemoraDesign.danger)
                 } else if let text, !loading {
-                    Text(text).foregroundStyle(Myna.inkSoft)
+                    Text(text).foregroundStyle(RemoraDesign.inkSoft)
                 } else {
-                    Text("Summarizing…").foregroundStyle(Myna.muted)
+                    Text("Summarizing…").foregroundStyle(RemoraDesign.muted)
                 }
             }
-            .font(Myna.font(12))
+            .font(RemoraDesign.font(12))
             .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
         .padding(10)
-        .background(Myna.accentSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(RemoraDesign.accentSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
@@ -145,8 +148,8 @@ struct OverflowHelp: View {
             HStack(spacing: 6) {
                 Button(action: showAll) {
                     Label(L("Show %d more", rest.count), systemImage: "chevron.down")
-                        .font(Myna.font(12, .semibold))
-                        .foregroundStyle(Myna.ink)
+                        .font(RemoraDesign.font(12, .semibold))
+                        .foregroundStyle(RemoraDesign.ink)
                 }
                 .buttonStyle(.plain)
                 Spacer()
@@ -155,18 +158,19 @@ struct OverflowHelp: View {
                     ActionButton(label: "Summarize", symbol: "sparkles", action: summarize)
                 }
             }
-            Text(digest).font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+            Text(digest).font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
             if summarizing {
-                Text(L("Summarizing…")).font(Myna.font(12)).foregroundStyle(Myna.muted)
+                Text(L("Summarizing…")).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.muted)
             } else if let summary {
                 Label(summary, systemImage: "sparkles")
-                    .font(Myna.font(12))
-                    .foregroundStyle(Myna.inkSoft)
+                    .font(RemoraDesign.font(12))
+                    .foregroundStyle(RemoraDesign.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(10)
-        .background(Myna.line, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        .background(
+            RemoraDesign.line, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous))
     }
 
     /// "4 low priority · 1 overdue · oldest 26 d", computed locally.

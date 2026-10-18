@@ -36,13 +36,13 @@ struct TimePicker: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    Text(title).font(Myna.font(15, .semibold)).foregroundStyle(Myna.ink)
+                    Text(title).font(RemoraDesign.font(15, .semibold)).foregroundStyle(RemoraDesign.ink)
                     Spacer()
                     IconButton(symbol: "xmark", help: "Close", size: 24, action: dismiss)
                 }
 
                 if let subtitle {
-                    Text(subtitle).font(Myna.font(12)).foregroundStyle(Myna.muted).lineLimit(1)
+                    Text(subtitle).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.muted).lineLimit(1)
                 }
 
                 if !isReminder {
@@ -51,18 +51,19 @@ struct TimePicker: View {
                     }
                     if reason == .motivation, let nudge {
                         Label(nudge, systemImage: "lightbulb")
-                            .font(Myna.font(12, .medium))
-                            .foregroundStyle(Myna.accentText)
+                            .font(RemoraDesign.font(12, .medium))
+                            .foregroundStyle(RemoraDesign.accentText)
                             .padding(10)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Myna.accentSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .background(
+                                RemoraDesign.accentSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                     if reason == .waiting {
                         Toggle(L("Until there’s news"), isOn: $untilNews)
-                            .font(Myna.font(12.5))
+                            .font(RemoraDesign.font(12.5))
                             .toggleStyle(.switch)
                             .controlSize(.small)
-                            .tint(Myna.accentDeep)
+                            .tint(RemoraDesign.accentDeep)
                     }
                 }
 
@@ -72,10 +73,12 @@ struct TimePicker: View {
                 if !isMany {
                     TextField(L(isReminder ? "Remind me to…" : "Add a note (optional)"), text: $text)
                         .textFieldStyle(.plain)
-                        .font(Myna.font(13))
+                        .font(RemoraDesign.font(13))
                         .padding(10)
-                        .background(Myna.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Myna.border))
+                        .background(RemoraDesign.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(RemoraDesign.border)
+                        )
                         .focused($focused)
                         .onSubmit(confirm)
                 }
@@ -110,7 +113,9 @@ struct TimePicker: View {
         .scrollIndicators(.never)
         .frame(maxHeight: 548)
         .fixedSize(horizontal: false, vertical: true)
-        .background(Myna.surface, in: RoundedRectangle(cornerRadius: Myna.radiusLarge, style: .continuous))
+        .background(
+            RemoraDesign.surface, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusLarge, style: .continuous)
+        )
         .shadow(color: .black.opacity(0.2), radius: 20, y: 6)
         .padding(16)
         .onAppear {
@@ -193,7 +198,7 @@ private struct ReasonPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(L("Why? (optional)")).font(Myna.font(11.5, .semibold)).foregroundStyle(Myna.muted)
+            Text(L("Why? (optional)")).font(RemoraDesign.font(11.5, .semibold)).foregroundStyle(RemoraDesign.muted)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 6)], alignment: .leading, spacing: 6) {
                 ForEach(SnoozeReason.allCases, id: \.self) { value in
                     let selected = reason == value
@@ -202,13 +207,13 @@ private struct ReasonPicker: View {
                         changed(reason)
                     } label: {
                         Label(value.title, systemImage: value.symbol)
-                            .font(Myna.font(11.5, .medium))
+                            .font(RemoraDesign.font(11.5, .medium))
                             .lineLimit(1)
-                            .foregroundStyle(selected ? Myna.onDark : Myna.ink)
+                            .foregroundStyle(selected ? RemoraDesign.onDark : RemoraDesign.ink)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 6)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(selected ? Myna.dark : Myna.card, in: Capsule())
+                            .background(selected ? RemoraDesign.dark : RemoraDesign.card, in: Capsule())
                             .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -229,7 +234,7 @@ private struct ModeSwitch: View {
             segment(.remind, "Keep & remind me", "bell")
         }
         .padding(3)
-        .background(Myna.card, in: Capsule())
+        .background(RemoraDesign.card, in: Capsule())
     }
 
     private func segment(_ value: Snooze.Mode, _ label: String, _ symbol: String) -> some View {
@@ -237,11 +242,11 @@ private struct ModeSwitch: View {
             mode = value
         } label: {
             Label(L(label), systemImage: symbol)
-                .font(Myna.font(12, .medium))
-                .foregroundStyle(mode == value ? Myna.onDark : Myna.ink)
+                .font(RemoraDesign.font(12, .medium))
+                .foregroundStyle(mode == value ? RemoraDesign.onDark : RemoraDesign.ink)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
-                .background(mode == value ? Myna.dark : .clear, in: Capsule())
+                .background(mode == value ? RemoraDesign.dark : .clear, in: Capsule())
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -259,9 +264,9 @@ private struct PresetButton: View {
             HStack(spacing: 8) {
                 Image(systemName: preset.symbol).font(.system(size: 13, weight: .semibold))
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(preset.label).font(Myna.font(12.5, .semibold))
+                    Text(preset.label).font(RemoraDesign.font(12.5, .semibold))
                     Text(preset.date.formatted(.dateTime.weekday(.abbreviated).hour().minute()))
-                        .font(Myna.font(10.5))
+                        .font(RemoraDesign.font(10.5))
                         .opacity(0.7)
                 }
                 Spacer(minLength: 0)
@@ -270,12 +275,15 @@ private struct PresetButton: View {
                     Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).accessibilityHidden(true)
                 }
             }
-            .foregroundStyle(selected ? Myna.onAccent : Myna.ink)
+            .foregroundStyle(selected ? RemoraDesign.onAccent : RemoraDesign.ink)
             .padding(10)
-            .background(selected ? Myna.accent : Myna.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(
+                selected ? RemoraDesign.accent : RemoraDesign.card,
+                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(Myna.accentText, lineWidth: selected ? 1.5 : 0)
+                    .strokeBorder(RemoraDesign.accentText, lineWidth: selected ? 1.5 : 0)
             )
             .contentShape(Rectangle())
         }
@@ -302,18 +310,20 @@ private struct Scrubber: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(clock.describe(date))
-                .font(Myna.font(13, .semibold))
-                .foregroundStyle(Myna.accentText)
+                .font(RemoraDesign.font(13, .semibold))
+                .foregroundStyle(RemoraDesign.accentText)
                 .contentTransition(.numericText())
             GeometryReader { geometry in
                 let knob: CGFloat = 22
                 let x = (geometry.size.width - knob) * progress
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Myna.card).frame(height: 8)
-                    Capsule().fill(Myna.accent).frame(width: x + knob / 2, height: 8)
+                    Capsule().fill(RemoraDesign.card).frame(height: 8)
+                    Capsule().fill(RemoraDesign.accent).frame(width: x + knob / 2, height: 8)
                     Circle()
-                        .fill(Myna.dark)
-                        .overlay(Image(systemName: "clock.fill").font(.system(size: 10)).foregroundStyle(Myna.accent))
+                        .fill(RemoraDesign.dark)
+                        .overlay(
+                            Image(systemName: "clock.fill").font(.system(size: 10)).foregroundStyle(RemoraDesign.accent)
+                        )
                         .frame(width: knob, height: knob)
                         .offset(x: x)
                 }
@@ -331,7 +341,8 @@ private struct Scrubber: View {
             .focused($focused)
             .overlay(
                 // accentText, not the lime accent: lime on the light surface is about 1.1:1.
-                RoundedRectangle(cornerRadius: 12).strokeBorder(Myna.accentText, lineWidth: focused ? 2 : 0).padding(-3)
+                RoundedRectangle(cornerRadius: 12).strokeBorder(RemoraDesign.accentText, lineWidth: focused ? 2 : 0)
+                    .padding(-3)
             )
             .onKeyPress(.rightArrow) {
                 step(1)
@@ -356,15 +367,15 @@ private struct Scrubber: View {
                 Spacer()
                 Text("1 week")
             }
-            .font(Myna.font(10))
-            .foregroundStyle(Myna.muted)
+            .font(RemoraDesign.font(10))
+            .foregroundStyle(RemoraDesign.muted)
             // An exact date and time, by keyboard too, and beyond a week.
             DatePicker(
                 L("Exact date"), selection: $date, in: Date.now..., displayedComponents: [.date, .hourAndMinute]
             )
             .datePickerStyle(.compact)
-            .font(Myna.font(11.5))
-            .foregroundStyle(Myna.muted)
+            .font(RemoraDesign.font(11.5))
+            .foregroundStyle(RemoraDesign.muted)
         }
     }
 }

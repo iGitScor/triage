@@ -34,11 +34,11 @@ struct PrivacyPane: View {
                     L("Remora only talks to the tools you allow. No analytics, no telemetry."),
                     systemImage: "lock.shield"
                 )
-                .font(Myna.font(12.5))
+                .font(RemoraDesign.font(12.5))
                 if managed {
                     Label(L("Managed by your organization"), systemImage: "building.columns")
-                        .font(Myna.font(12.5, .semibold))
-                        .foregroundStyle(Myna.accentText)
+                        .font(RemoraDesign.font(12.5, .semibold))
+                        .foregroundStyle(RemoraDesign.accentText)
                 }
             }
 
@@ -50,16 +50,17 @@ struct PrivacyPane: View {
                         "The assistant sends the titles, contexts, authors and statuses of inbox items to its provider: Anthropic for Claude, or the server you set. When off, only a server on this computer can write the brief, summaries and triage."
                     )
                 )
-                .font(Myna.font(11.5))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11.5))
+                .foregroundStyle(RemoraDesign.muted)
             }
 
             Section(L("Allowed tools")) {
                 ForEach(PluginRegistry.manifests + PluginRegistry.assistantManifests, id: \.id) { manifest in
                     Toggle(isOn: allowed(manifest.id)) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(manifest.name).font(Myna.font(13, .medium))
-                            Text(L(manifest.egress.description)).font(Myna.font(11)).foregroundStyle(Myna.muted)
+                            Text(manifest.name).font(RemoraDesign.font(13, .medium))
+                            Text(L(manifest.egress.description)).font(RemoraDesign.font(11)).foregroundStyle(
+                                RemoraDesign.muted)
                         }
                     }
                     .disabled(managed)
@@ -70,28 +71,28 @@ struct PrivacyPane: View {
 
             Section(L("Data flows")) {
                 if model.accounts.isEmpty {
-                    Text(L("Nothing connected.")).foregroundStyle(Myna.muted)
+                    Text(L("Nothing connected.")).foregroundStyle(RemoraDesign.muted)
                 }
                 ForEach(model.accounts) { account in
                     if let manifest = PluginRegistry.manifest(account.pluginID) {
                         let refusal = model.privacy.refusal(for: account)
                         VStack(alignment: .leading, spacing: 3) {
                             HStack {
-                                Text(account.name ?? manifest.name).font(Myna.font(13, .semibold))
+                                Text(account.name ?? manifest.name).font(RemoraDesign.font(13, .semibold))
                                 Spacer()
                                 Label(
                                     refusal == nil ? L("Allowed") : L("Blocked"),
                                     systemImage: refusal == nil ? "checkmark.circle.fill" : "nosign"
                                 )
-                                .font(Myna.font(11.5, .semibold))
-                                .foregroundStyle(refusal == nil ? Myna.ok : Myna.danger)
+                                .font(RemoraDesign.font(11.5, .semibold))
+                                .foregroundStyle(refusal == nil ? RemoraDesign.ok : RemoraDesign.danger)
                             }
                             let hosts = model.privacy.allowedHosts(for: account, manifest: manifest)
                             Text(hosts.isEmpty ? localProgram(account) : hosts.joined(separator: ", "))
-                                .font(Myna.font(11.5, .medium))
-                                .foregroundStyle(Myna.inkSoft)
-                            Text(refusal ?? L(manifest.egress.description)).font(Myna.font(11)).foregroundStyle(
-                                Myna.muted)
+                                .font(RemoraDesign.font(11.5, .medium))
+                                .foregroundStyle(RemoraDesign.inkSoft)
+                            Text(refusal ?? L(manifest.egress.description)).font(RemoraDesign.font(11)).foregroundStyle(
+                                RemoraDesign.muted)
                         }
                     }
                 }
@@ -103,46 +104,48 @@ struct PrivacyPane: View {
                         "AI agents such as Claude Desktop, Claude Code or Gemini CLI can ask Remora what waits on you, through MCP. They read the inbox; they never write to your tools."
                     )
                 )
-                .font(Myna.font(11.5))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11.5))
+                .foregroundStyle(RemoraDesign.muted)
                 if !LocalAPIPolicy.allowed() {
                     Label(L("Turned off by your organization."), systemImage: "building.columns")
-                        .font(Myna.font(12, .semibold))
+                        .font(RemoraDesign.font(12, .semibold))
                 } else if model.agentReads.isEmpty {
-                    Text(L("No agent has asked yet.")).font(Myna.font(12)).foregroundStyle(Myna.muted)
+                    Text(L("No agent has asked yet.")).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.muted)
                 } else {
                     // The most recent first; the name is what the agent says it is.
                     ForEach(Array(model.agentReads.suffix(5).reversed().enumerated()), id: \.offset) { _, read in
                         HStack {
-                            Text(read.agent).font(Myna.font(12.5, .medium))
-                            Text(Self.asked(read)).font(Myna.font(12)).foregroundStyle(Myna.inkSoft)
+                            Text(read.agent).font(RemoraDesign.font(12.5, .medium))
+                            Text(Self.asked(read)).font(RemoraDesign.font(12)).foregroundStyle(RemoraDesign.inkSoft)
                             Spacer()
                             Text(read.at, format: .relative(presentation: .named))
-                                .font(Myna.font(11.5)).foregroundStyle(Myna.muted)
+                                .font(RemoraDesign.font(11.5)).foregroundStyle(RemoraDesign.muted)
                         }
                     }
                 }
                 Link(L("How to set it up"), destination: URL(string: "https://triage.iscor.me/docs/guide/agents")!)
-                    .font(Myna.font(12))
+                    .font(RemoraDesign.font(12))
             }
 
             Section(L("Data on this Mac")) {
-                Text(AppFolder.url.path).font(Myna.system(11)).textSelection(.enabled)
-                Text(L("Inbox cache, settings and snooze history. Tokens are in the Keychain.")).font(Myna.font(11))
-                    .foregroundStyle(Myna.muted)
+                Text(AppFolder.url.path).font(RemoraDesign.system(11)).textSelection(.enabled)
+                Text(L("Inbox cache, settings and snooze history. Tokens are in the Keychain.")).font(
+                    RemoraDesign.font(11)
+                )
+                .foregroundStyle(RemoraDesign.muted)
                 Toggle(L("Find inbox items in Spotlight"), isOn: $model.preferences.spotlight)
                 Text(
                     L(
                         "Puts each item’s title and where it comes from in this Mac’s Spotlight index, never previews or people. Tools whose content is hidden stay out. Turning this off, disconnecting a tool or erasing removes them."
                     )
                 )
-                .font(Myna.font(11))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(11))
+                .foregroundStyle(RemoraDesign.muted)
                 // A file Remora couldn't read (kept aside, never overwritten) or save.
                 ForEach(model.storageIssues) { issue in
                     Label(issue.message, systemImage: "exclamationmark.triangle.fill")
-                        .font(Myna.font(11.5))
-                        .foregroundStyle(Myna.color(for: .warning).foreground)
+                        .font(RemoraDesign.font(11.5))
+                        .foregroundStyle(RemoraDesign.color(for: .warning).foreground)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {

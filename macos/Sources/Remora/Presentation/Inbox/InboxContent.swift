@@ -70,18 +70,19 @@ extension InboxView {
                                 message: "Items you mark as done show up here until they change.")
                         } else {
                             HStack {
-                                Text("\(layout.done.count) done").font(Myna.font(12.5, .medium)).foregroundStyle(
-                                    Myna.muted)
+                                Text("\(layout.done.count) done").font(RemoraDesign.font(12.5, .medium))
+                                    .foregroundStyle(
+                                        RemoraDesign.muted)
                                 Spacer()
                                 Button {
                                     withAnimation(.snappy) { model.clear(layout.done) }
                                 } label: {
                                     Label("Clear all", systemImage: "trash")
-                                        .font(Myna.font(12, .semibold))
-                                        .foregroundStyle(Myna.ink)
+                                        .font(RemoraDesign.font(12, .semibold))
+                                        .foregroundStyle(RemoraDesign.ink)
                                         .padding(.horizontal, 10)
                                         .padding(.vertical, 5)
-                                        .background(Myna.card, in: Capsule())
+                                        .background(RemoraDesign.card, in: Capsule())
                                 }
                                 .buttonStyle(.plain)
                                 .help("Remove these items from the Done list. They come back if something new happens.")
@@ -191,11 +192,12 @@ struct EmptyState: View {
         VStack(spacing: 10) {
             Image(systemName: symbol)
                 .font(.system(size: 30, weight: .semibold))
-                .foregroundStyle(Myna.onAccent)
+                .foregroundStyle(RemoraDesign.onAccent)
                 .frame(width: 72, height: 72)
-                .background(Myna.accent, in: Circle())
-            Text(L(title)).font(Myna.font(17, .semibold)).foregroundStyle(Myna.ink)
-            Text(L(message)).font(Myna.font(12.5)).foregroundStyle(Myna.muted).multilineTextAlignment(.center)
+                .background(RemoraDesign.accent, in: Circle())
+            Text(L(title)).font(RemoraDesign.font(17, .semibold)).foregroundStyle(RemoraDesign.ink)
+            Text(L(message)).font(RemoraDesign.font(12.5)).foregroundStyle(RemoraDesign.muted).multilineTextAlignment(
+                .center)
             if let action {
                 Button(L(action.label), action: action.perform).buttonStyle(PillButtonStyle())
             }
@@ -211,10 +213,10 @@ private struct Onboarding: View {
     var body: some View {
         VStack(spacing: 14) {
             RemoraMark(size: 72)
-            Text("One inbox for your work").font(Myna.font(18, .semibold)).foregroundStyle(Myna.ink)
+            Text("One inbox for your work").font(RemoraDesign.font(18, .semibold)).foregroundStyle(RemoraDesign.ink)
             Text("Connect the places that need you: code reviews, chat mentions, tasks.")
-                .font(Myna.font(12.5))
-                .foregroundStyle(Myna.muted)
+                .font(RemoraDesign.font(12.5))
+                .foregroundStyle(RemoraDesign.muted)
                 .multilineTextAlignment(.center)
             HStack(spacing: 6) {
                 ForEach(PluginRegistry.manifests, id: \.id) { manifest in
@@ -222,11 +224,11 @@ private struct Onboarding: View {
                         manifest.isComingSoon ? L("%@ · soon", manifest.name) : manifest.name,
                         systemImage: manifest.symbol
                     )
-                    .font(Myna.font(11.5, .medium))
-                    .foregroundStyle(Myna.inkSoft)
+                    .font(RemoraDesign.font(11.5, .medium))
+                    .foregroundStyle(RemoraDesign.inkSoft)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 4)
-                    .background(Myna.card, in: Capsule())
+                    .background(RemoraDesign.card, in: Capsule())
                 }
             }
             HStack(spacing: 8) {

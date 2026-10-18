@@ -16,6 +16,18 @@ flowchart TB
   Plugins --> Core
 ```
 
+## Noms
+
+Une app, quelques noms, chacun gardé pour une raison :
+
+| Nom | Où | Peut-il changer ? |
+|---|---|---|
+| **Remora** | Le produit, les binaires, la commande `remora`, les modules `Remora*` et les crates `remora_*` | C’est le nom |
+| **triage** | Le dépôt GitHub | Gardé : les apps publiées cherchent leurs mises à jour sur `github.com/iGitScor/triage/releases/latest/…`. GitHub redirige un dépôt renommé, mais chaque copie installée dépendrait alors de cette redirection |
+| **triage.iscor.me** | Le site et cette documentation | Gardé : les liens, les résultats de recherche et les liens d’aide des apps y mènent |
+| **fr.igitscor.remora** | L’identifiant de l’app, le domaine des préférences MDM, le service du trousseau et du Gestionnaire d’identification, les dossiers de données sous Windows et Linux | **Jamais** : les jetons, les données et les politiques des organisations en dépendent |
+| **RemoraDesign** | L’apparence du Mac dans le code (`RemoraDesign.ink`…) | Une surcouche du design system Estuary (`@iscor/design`) : ses couleurs, transformées en `EstuaryTokens.swift`, plus ce qui est propre à l’app (tailles, polices, tons). Pas `Estuary`, le nom du type Swift du paquet lui-même |
+
 ## RemoraCore
 
 **Domaine** (`Sources/RemoraCore/Domain`)
@@ -126,7 +138,7 @@ rappel sont programmées auprès du système : elles arrivent même si Remora n�
   `Fonts`. `InboxModel` y accède, comme au réseau et à l’ouverture des liens, via `AppEnvironment` : ainsi
   `Tests/RemoraTests` le fait tourner dans un dossier temporaire avec des stand-ins, jamais sur vos données, vos
   jetons ou vos notifications.
-- `Presentation/` : thème Myna (`Theme.swift`), vues de la boîte, réglages générés à partir des manifestes.
+- `Presentation/` : l’apparence (`RemoraDesign.swift`, sur le `EstuaryTokens.swift` généré), vues de la boîte, réglages générés à partir des manifestes.
 - `Presentation/MenuBar/` : l’élément AppKit de la barre des menus. Un clic ouvre la boîte dans un popover ; un
   glisser lance une boucle de suivi de la souris qui convertit la distance en heure avec `SnoozeClock`. La bulle
   du glisser (`DragHUD`) est en AppKit pur, car SwiftUI ne redessine pas pendant cette boucle ; la saisie rapide

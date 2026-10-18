@@ -6,13 +6,13 @@ extension InboxView {
     @ViewBuilder private var updated: some View {
         if let last = model.sync.lastRefresh {
             LiveText { L("Updated %@", last.formatted(.relative(presentation: .named))) }
-                .foregroundStyle(Myna.muted)
+                .foregroundStyle(RemoraDesign.muted)
             // A list cut at its limit or a missing permission: the details are in Settings.
             let remarks = model.sync.remarks.values.flatMap { $0 }
             if !remarks.isEmpty {
                 Button(action: showSettings) { Image(systemName: "info.circle") }
                     .buttonStyle(.plain)
-                    .foregroundStyle(Myna.muted)
+                    .foregroundStyle(RemoraDesign.muted)
                     .help(remarks.joined(separator: "\n"))
                     .accessibilityLabel(remarks.joined(separator: " "))
                     .accessibilityHint(L("Opens Settings to see why"))
@@ -66,11 +66,11 @@ extension InboxView {
                 } icon: {
                     Image(systemName: "wifi.slash")
                 }
-                .foregroundStyle(Myna.muted)
+                .foregroundStyle(RemoraDesign.muted)
             case .reconnect(let ids):
                 Button(action: showSettings) {
                     Label(reconnectText(ids), systemImage: "key.fill")
-                        .foregroundStyle(Myna.color(for: .warning).foreground)
+                        .foregroundStyle(RemoraDesign.color(for: .warning).foreground)
                 }
                 .buttonStyle(.plain)
                 .help(ids.compactMap { model.sync.errors[$0]?.message }.joined(separator: "\n"))
@@ -81,7 +81,7 @@ extension InboxView {
                         L("%d source failing", plural: "%d sources failing", count),
                         systemImage: "exclamationmark.triangle.fill"
                     )
-                    .foregroundStyle(Myna.danger)
+                    .foregroundStyle(RemoraDesign.danger)
                 }
                 .buttonStyle(.plain)
                 .help(model.sync.errors.values.map(\.message).joined(separator: "\n"))
@@ -96,7 +96,7 @@ extension InboxView {
                 Image(systemName: "keyboard")
             }
             .buttonStyle(.plain)
-            .foregroundStyle(Myna.muted)
+            .foregroundStyle(RemoraDesign.muted)
             .help("Keyboard shortcuts")
             .accessibilityLabel(L("Keyboard shortcuts"))
             .popover(isPresented: $showShortcuts, arrowEdge: .top) { ShortcutsList() }
@@ -106,17 +106,17 @@ extension InboxView {
                 Label("Reminder", systemImage: "plus")
             }
             .buttonStyle(.plain)
-            .foregroundStyle(Myna.ink)
+            .foregroundStyle(RemoraDesign.ink)
             .help("New reminder (or drag down from the menu bar icon)")
             Button("Quit") { NSApp.terminate(nil) }
                 .buttonStyle(.plain)
-                .foregroundStyle(Myna.muted)
+                .foregroundStyle(RemoraDesign.muted)
         }
-        .font(Myna.font(11.5))
+        .font(RemoraDesign.font(11.5))
         .padding(.horizontal, Self.gutter + 2)
         .padding(.vertical, 12)
-        .background(Myna.surface)
-        .overlay(alignment: .top) { Myna.line.frame(height: 1) }
+        .background(RemoraDesign.surface)
+        .overlay(alignment: .top) { RemoraDesign.line.frame(height: 1) }
     }
 }
 
@@ -127,19 +127,21 @@ struct UndoBar: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(Myna.accent)
-            Text(point.message).font(Myna.font(12.5, .medium)).foregroundStyle(Myna.onDark)
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(RemoraDesign.accent)
+            Text(point.message).font(RemoraDesign.font(12.5, .medium)).foregroundStyle(RemoraDesign.onDark)
             Spacer()
             Button(L("Undo")) { withAnimation(.snappy) { model.undo() } }
                 .buttonStyle(.plain)
-                .font(Myna.font(12.5, .semibold))
-                .foregroundStyle(Myna.accent)
+                .font(RemoraDesign.font(12.5, .semibold))
+                .foregroundStyle(RemoraDesign.accent)
                 .help(L("Undo") + " (⌘Z)")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
         // Dark in both themes: lime Undo on a light bar (dark mode's ink) could barely be read.
-        .background(Myna.dark, in: RoundedRectangle(cornerRadius: Myna.radiusMedium, style: .continuous))
+        .background(
+            RemoraDesign.dark, in: RoundedRectangle(cornerRadius: RemoraDesign.radiusMedium, style: .continuous)
+        )
         .padding(.horizontal, InboxView.gutter)
         .padding(.bottom, 6)
         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -172,9 +174,9 @@ private struct ShortcutsList: View {
         Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 6) {
             ForEach(rows, id: \.keys) { row in
                 GridRow {
-                    Text(row.keys).font(Myna.system(12, .semibold, design: .rounded)).foregroundStyle(
-                        Myna.ink)
-                    Text(L(row.action)).font(Myna.font(12.5)).foregroundStyle(Myna.inkSoft)
+                    Text(row.keys).font(RemoraDesign.system(12, .semibold, design: .rounded)).foregroundStyle(
+                        RemoraDesign.ink)
+                    Text(L(row.action)).font(RemoraDesign.font(12.5)).foregroundStyle(RemoraDesign.inkSoft)
                 }
             }
         }
