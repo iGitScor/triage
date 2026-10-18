@@ -2,56 +2,27 @@ import AppKit
 import RemoraCore
 import SwiftUI
 
-/// The Estuary design system's tokens (@iscor/design), resolved for light and dark appearance, with Increase Contrast
-/// variants the package doesn't have yet. scripts/tokens-check.py keeps the light and dark values equal to the package's.
+/// Remora's look: the Estuary design system's colours (MynaTokens.swift, made from @iscor/design by
+/// scripts/tokens-check.py), and what is the Mac app's own: its sizes, its fonts, the selection.
 enum Myna {
-    // Each token has a high-contrast variant, used when Increase Contrast is on:
-    // darker inks and borders on light, lighter ones on dark, and stronger hairlines.
-    static let backdrop = Color(light: 0xF0F0E8, dark: 0x0E0E14)
-    static let surface = Color(light: 0xF7F7F1, dark: 0x13131C, contrast: (0xFFFFFF, 0x000000))
-    static let card = Color(light: 0xE8E8DF, dark: 0x1A1A26)
-    static let card2 = Color(light: 0xDCDCD2, dark: 0x242433, contrast: (0xCFCFC4, 0x2E2E40))
-    static let field = Color(light: 0xFFFFFF, dark: 0x13131C, contrast: (0xFFFFFF, 0x000000))
-    static let border = Color(light: 0xD0D0C8, dark: 0x2A2A3A, contrast: (0x6E6E66, 0x8C8CA2))
-    static let ink = Color(light: 0x111111, dark: 0xE4E4EC, contrast: (0x000000, 0xFFFFFF))
-    static let inkSoft = Color(light: 0x333330, dark: 0xC4C4D0, contrast: (0x111111, 0xF0F0F6))
-    static let muted = Color(light: 0x55554E, dark: 0x8C8CA2, contrast: (0x2E2E2A, 0xC4C4D0))
-    static let selection = Color(
-        light: 0x111111, dark: 0xE4E4EC, opacity: 0.6, contrast: (0x000000, 0xFFFFFF), contrastOpacity: 1
-    )
-    static let line = Color(light: 0x111111, dark: 0xFFFFFF, opacity: 0.08, contrastOpacity: 0.35)
-    static let accent = Color(light: 0xB9FF66, dark: 0xB9FF66)
-    static let accentDeep = Color(light: 0x9DE049, dark: 0x9DE049, contrast: (0x6FA82A, 0xB9FF66))
-    static let accentSoft = Color(
-        light: 0xB9FF66, dark: 0xB9FF66, lightOpacity: 0.35, darkOpacity: 0.14, contrastOpacity: (0.6, 0.3)
-    )
-    static let accentText = Color(light: 0x356509, dark: 0xB9FF66, contrast: (0x224403, 0xB9FF66))
-    static let onAccent = Color(light: 0x111111, dark: 0x111111, contrast: (0x000000, 0x000000))
-    static let dark = Color(light: 0x111111, dark: 0x07070B, contrast: (0x000000, 0x000000))
-    static let onDark = Color(light: 0xF0F0E8, dark: 0xF0F0E8, contrast: (0xFFFFFF, 0xFFFFFF))
-    static let ok = Color(light: 0x146B50, dark: 0x34D399, contrast: (0x014530, 0x6EE7B7))
-    static let warn = Color(light: 0x725200, dark: 0xFBBF24, contrast: (0x503800, 0xFCD34D))
-    static let danger = Color(light: 0xA82C23, dark: 0xF87171, contrast: (0x7A1009, 0xFDA6A6))
-    // Under a status chip: its colour reads on them at 4.5:1 (7:1 with Increase Contrast).
-    static let okSoft = Color(
-        light: 0x146B50, dark: 0x34D399, lightOpacity: 0.11, darkOpacity: 0.16, contrast: (0x014530, 0x6EE7B7),
-        contrastOpacity: (0.14, 0.19))
-    static let warnSoft = Color(
-        light: 0x725200, dark: 0xFBBF24, lightOpacity: 0.16, darkOpacity: 0.16, contrast: (0x503800, 0xFCD34D),
-        contrastOpacity: (0.14, 0.2))
-    static let dangerSoft = Color(
-        light: 0xA82C23, dark: 0xF87171, lightOpacity: 0.13, darkOpacity: 0.16, contrast: (0x7A1009, 0xFDA6A6),
-        contrastOpacity: (0.13, 0.13))
+    /// The selection: ink at 60 %, opaque with Increase Contrast. Remora's own, not a design system token.
+    static let selection = translucent(ink, opacity: 0.6, contrastOpacity: 1)
 
     /// Secondary text on `dark` surfaces: translucent, but nearly opaque with Increase Contrast.
     static func onDark(opacity: Double) -> Color {
-        Color(
-            light: 0xF0F0E8, dark: 0xF0F0E8, opacity: opacity, contrast: (0xFFFFFF, 0xFFFFFF),
-            contrastOpacity: max(opacity, 0.9))
+        translucent(onDark, opacity: opacity, contrastOpacity: max(opacity, 0.9))
     }
 
-    /// A control that can't be used yet (`--disabled-opacity` in @iscor/design): dimmed, same in both schemes.
-    static let disabledOpacity = 0.45
+    /// A token at another opacity, which Increase Contrast raises.
+    private static func translucent(_ token: Color, opacity: Double, contrastOpacity: Double) -> Color {
+        let base = NSColor(token)
+        return Color(
+            nsColor: NSColor(name: nil) { appearance in
+                var resolved = base
+                appearance.performAsCurrentDrawingAppearance { resolved = NSColor(cgColor: base.cgColor) ?? base }
+                return resolved.withAlphaComponent(appearance.isHighContrast ? contrastOpacity : opacity)
+            })
+    }
 
     static let radiusLarge: CGFloat = 18
     static let radiusMedium: CGFloat = 12

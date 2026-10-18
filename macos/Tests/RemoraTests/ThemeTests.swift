@@ -49,6 +49,19 @@ struct ThemeTests {
     }
 
     /// Every text size, the monospaced and rounded ones too, keeps the 11 pt floor and follows Settings → General.
+    /// The selection and the dark bands' secondary text, derived from the generated tokens, keep their values.
+    @Test func derivedColoursKeepTheirValues() {
+        let selection = resolve(Myna.selection, dark: false, contrast: false)
+        #expect(selection.usingColorSpace(.sRGB) == NSColor(hex: 0x111111, alpha: 0.6))
+        #expect(resolve(Myna.selection, dark: true, contrast: true).usingColorSpace(.sRGB) == NSColor(hex: 0xFFFFFF))
+        #expect(
+            resolve(Myna.onDark(opacity: 0.5), dark: true, contrast: false).usingColorSpace(.sRGB)
+                == NSColor(hex: 0xF0F0E8, alpha: 0.5))
+        #expect(
+            resolve(Myna.onDark(opacity: 0.5), dark: false, contrast: true).usingColorSpace(.sRGB)
+                == NSColor(hex: 0xFFFFFF, alpha: 0.9))
+    }
+
     @Test func textSizesFollowTheSetting() {
         defer { Myna.textScale = 1 }
         #expect(Myna.textSize(9) == 11 && Myna.textSize(13) == 13)
