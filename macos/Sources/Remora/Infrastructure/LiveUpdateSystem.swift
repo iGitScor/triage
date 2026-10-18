@@ -75,7 +75,8 @@ struct LiveUpdateSystem: UpdateSystem {
         try? FileManager.default.removeItem(at: mount)
 
         do {
-            try Self.verify(staging, version: version)
+            try Self.verify(
+                staging, version: version, identifier: Bundle.main.bundleIdentifier, requirement: Self.ownRequirement())
             _ = try FileManager.default.replaceItemAt(current, withItemAt: staging)
         } catch {
             try? FileManager.default.removeItem(at: staging.deletingLastPathComponent())
@@ -85,21 +86,18 @@ struct LiveUpdateSystem: UpdateSystem {
 
     /// Same bundle identifier, the promised version, and signed so that it meets this app's designated requirement:
     /// with the release certificate, only an app signed by that same certificate does.
-    static func verify(_ app: URL, version: AppVersion) throws {
+    /// The second line of defence, after the download's Ed25519 signature: the copied app must be this app
+    /// (`identifier`), the promised version, and signed by the same developer (`requirement`, the running app's
+    /// designated requirement). Parameters so it is tested on throwaway apps (`LiveUpdateSystemTests`).
+    static func verify(_ app: URL, version: AppVersion, identifier: String?, requirement: SecRequirement?) throws {
         let info = NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist")) as? [String: Any] ?? [:]
-        guard info["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier else { throw UpdateError.wrongApp }
+        guard let identifier, info["CFBundleIdentifier"] as? String == identifier else { throw UpdateError.wrongApp }
         guard (info["CFBundleShortVersionString"] as? String).flatMap(AppVersion.init) == version else {
             throw UpdateError.wrongVersion
         }
-
-        var running: SecCode?
-        var runningStatic: SecStaticCode?
-        var requirement: SecRequirement?
         var staticCode: SecStaticCode?
-        guard SecCodeCopySelf([], &running) == errSecSuccess, let running,
-            SecCodeCopyStaticCode(running, [], &runningStatic) == errSecSuccess, let runningStatic,
-            SecCodeCopyDesignatedRequirement(runningStatic, [], &requirement) == errSecSuccess, let requirement,
-            SecStaticCodeCreateWithPath(app as CFURL, [], &staticCode) == errSecSuccess, let staticCode
+        guard let requirement, SecStaticCodeCreateWithPath(app as CFURL, [], &staticCode) == errSecSuccess,
+            let staticCode
         else {
             throw UpdateError.notSameDeveloper
         }
@@ -110,6 +108,18 @@ struct LiveUpdateSystem: UpdateSystem {
     }
 
     /// Quits, and a small shell waits for this process to end before opening the new app.
+    /// The running app's designated requirement: who signed it. Nil when it can't be read, and then nothing installs.
+    static func ownRequirement() -> SecRequirement? {
+        var running: SecCode?
+        var runningStatic: SecStaticCode?
+        var requirement: SecRequirement?
+        guard SecCodeCopySelf([], &running) == errSecSuccess, let running,
+            SecCodeCopyStaticCode(running, [], &runningStatic) == errSecSuccess, let runningStatic,
+            SecCodeCopyDesignatedRequirement(runningStatic, [], &requirement) == errSecSuccess
+        else { return nil }
+        return requirement
+    }
+
     func relaunch() {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
