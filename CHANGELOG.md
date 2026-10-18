@@ -3,6 +3,13 @@
 What changed in each release of Remora, for the people who use it. Downloads are on the
 [releases page](https://github.com/iGitScor/triage/releases).
 
+## Unreleased
+
+### Changed
+
+- Mac: while macOS hasn't downloaded its English or French word list yet, two items are no longer linked because
+  they share an ordinary word ("réunion", "address"); ticket keys and technical names still link them.
+
 ## 0.12.0 (2026-10-18)
 
 ### Added

@@ -81,6 +81,25 @@ struct LinkFinderTests {
         #expect(rare.similar("Upgrade nanoid in checkout", "nanoid collisions in order ids"))
     }
 
+    /// Without both on-device vocabularies (macOS fetches them on demand), ordinary words never link: only words with a
+    /// digit, a dash or an underscore do. Runs everywhere, with made-up vocabularies.
+    @Test func withoutBothVocabulariesOnlyTechnicalWordsLink() {
+        let english: (String) -> Bool = { ["address", "review", "update", "form", "invoice"].contains($0) }
+        for rare in [
+            RareTokenSimilarity(vocabularies: [], expected: 2),
+            RareTokenSimilarity(vocabularies: [english], expected: 2),
+        ] {
+            #expect(!rare.similar("Update the address form", "New address on the invoice"))
+            #expect(!rare.similar("Réunion produit demain", "Compte rendu de la réunion"), "French unknown, not rare")
+            #expect(rare.similar("Fix ENG-1234 crash", "eng-1234 still crashes"))
+            #expect(rare.similar("Bump left_pad to 2.0", "left_pad breaks the build"))
+        }
+        // With both, a word neither knows is distinctive again.
+        let complete = RareTokenSimilarity(vocabularies: [english, { _ in false }], expected: 2)
+        #expect(complete.similar("Upgrade nanoid in checkout", "nanoid collisions in order ids"))
+        #expect(!complete.similar("Update the address form", "New address on the invoice"))
+    }
+
     /// Two tools mentioning UTF-8 are not about the same thing; a Linear key typed in lower case in Slack is.
     @Test func versionsDoNotLinkButALowerCaseKnownKeyDoes() {
         let issue = item("1", "linear", "Close Dotfile cases", context: "CE-1380")

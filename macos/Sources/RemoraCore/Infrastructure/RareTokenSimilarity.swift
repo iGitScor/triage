@@ -6,14 +6,27 @@ import NaturalLanguage
 /// digit or a dash, or when it isn't in the on-device English or French vocabulary, and is neither a typo of a word
 /// that is (one letter changed, added, dropped, or two swapped: "recieve") nor a person's name ("Sacha"): those are
 /// shared by unrelated titles all the time.
+///
+/// macOS downloads those vocabularies on demand. While one is missing, every word of its language would look
+/// distinctive and an ordinary word ("réunion", "address") would link unrelated items: then only words with a digit,
+/// a dash or an underscore count.
 public final class RareTokenSimilarity: SimilarityModel, @unchecked Sendable {
-    private let vocabularies: [NLEmbedding]
+    private let vocabularies: [(String) -> Bool]
+    /// Both vocabularies loaded: ordinary words can be told apart.
+    private let complete: Bool
     /// Whether an out-of-vocabulary word is a typo, measured once per word.
     private var typos: [String: Bool] = [:]
     private let lock = NSLock()
 
-    public init() {
-        vocabularies = [NLLanguage.english, .french].compactMap { NLEmbedding.wordEmbedding(for: $0) }
+    public convenience init() {
+        let embeddings = [NLLanguage.english, .french].compactMap { NLEmbedding.wordEmbedding(for: $0) }
+        self.init(vocabularies: embeddings.map { embedding in { embedding.contains($0) } }, expected: 2)
+    }
+
+    /// `vocabularies`: whether each language knows a word; `expected`: how many there should be.
+    init(vocabularies: [(String) -> Bool], expected: Int) {
+        self.vocabularies = vocabularies
+        complete = vocabularies.count == expected
     }
 
     public func similar(_ a: String, _ b: String) -> Bool {
@@ -29,11 +42,11 @@ public final class RareTokenSimilarity: SimilarityModel, @unchecked Sendable {
         return Set(
             tokens.filter { token in
                 if token.contains(where: { $0.isNumber || $0 == "-" || $0 == "_" }) { return true }
-                return !known(token) && !isTypo(token) && !names.contains(token)
+                return complete && !known(token) && !isTypo(token) && !names.contains(token)
             })
     }
 
-    private func known(_ word: String) -> Bool { vocabularies.contains { $0.contains(word) } }
+    private func known(_ word: String) -> Bool { vocabularies.contains { $0(word) } }
 
     /// One edit away from a known word: a letter changed, added or dropped, or two neighbours swapped.
     func isTypo(_ word: String) -> Bool {
