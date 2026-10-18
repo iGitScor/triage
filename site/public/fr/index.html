@@ -217,13 +217,17 @@
               </g>
               <rect class="soft" x="380" y="13" width="44" height="10" rx="5" />
               <rect class="soft" x="436" y="13" width="64" height="10" rx="5" />
-              <path class="rod" d="M326 30 C 326 110, 250 150, 236 222" />
+              <path class="rod" d="M326 30 C 326 110, 250 150, 236 222" pathLength="260" />
               <g class="catch">
                 <path class="rod" d="M236 222 q -2 12 8 12" />
                 <rect class="bubble" x="150" y="244" width="196" height="62" rx="16" />
                 <text class="bubble-text" x="248" y="270" text-anchor="middle">dans 25 min</text>
                 <text class="bubble-sub" x="248" y="291" text-anchor="middle">10:06 · relâchez pour le nommer</text>
                 <text class="hint" x="372" y="282">↓ plus bas : plus tard</text>
+              </g>
+              <!-- The pointer that drags the fish down, along the line (animated only when motion is welcome). -->
+              <g class="hand" aria-hidden="true">
+                <path d="M0 0 L0 17 L4.6 12.6 L7.6 19.6 L10.4 18.4 L7.4 11.6 L13.4 11.6 Z" />
               </g>
             </svg>
           </figure>

@@ -387,28 +387,142 @@
   opacity: 0.1;
 }
 
+.line-art .hand {
+  display: none;
+  fill: var(--ink);
+  stroke: var(--surface);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+/* The gesture, over and over: the pointer takes the fish in the menu bar, pulls the line down, the reminder's time
+   appears, it lets go, and it all starts again. Still and complete when motion is unwelcome. */
 @media (prefers-reduced-motion: no-preference) {
+  .line-art .rod,
+  .line-art .catch,
+  .line-art .hand,
+  .line-art .highlight {
+    animation-duration: 7s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+
   .line-art .rod {
     stroke-dasharray: 260;
-    stroke-dashoffset: 260;
-    animation: cast 1.6s 0.4s ease-out forwards;
+    animation-name: cast;
   }
 
   .line-art .catch {
-    opacity: 0;
-    animation: rise 0.5s 1.8s ease-out forwards;
+    animation-name: rise;
+  }
+
+  .line-art .highlight {
+    animation-name: grab;
+  }
+
+  .line-art .hand {
+    display: inline;
+    offset-path: path("M326 30 C 326 110, 250 150, 236 222");
+    offset-rotate: 0deg;
+    /* The pointer's tip rides the line. */
+    offset-anchor: 0 0;
+    animation-name: pull;
+  }
+
+  /* It shrinks around its tip while it holds the fish: on the arrow inside, so the ride along the line isn't scaled. */
+  .line-art .hand path {
+    transform-box: fill-box;
+    transform-origin: 0 0;
+    animation: press 7s ease-in-out infinite;
   }
 }
 
 @keyframes cast {
-  to {
+  0%,
+  14% {
+    stroke-dashoffset: 260;
+    opacity: 1;
+  }
+  46%,
+  84% {
     stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  94% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 260;
+    opacity: 0;
   }
 }
 
 @keyframes rise {
-  to {
+  0%,
+  42% {
+    opacity: 0;
+  }
+  50%,
+  84% {
     opacity: 1;
+  }
+  94%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes grab {
+  0%,
+  8% {
+    opacity: 0.1;
+  }
+  12%,
+  40% {
+    opacity: 0.28;
+  }
+  50%,
+  100% {
+    opacity: 0.1;
+  }
+}
+
+@keyframes pull {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  12% {
+    offset-distance: 0%;
+  }
+  46%,
+  84% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  92%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes press {
+  0%,
+  8% {
+    scale: 1;
+  }
+  12%,
+  74% {
+    scale: 0.86;
+  }
+  80%,
+  100% {
+    scale: 1;
   }
 }
 
