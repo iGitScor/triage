@@ -90,7 +90,8 @@ impl TraySummary {
         let dot = inbox.preferences().tray_count == TrayCount::Dot;
         let (count, show_count) = match inbox.preferences().tray_count {
             TrayCount::WaitingOnMe => (layout.action_count(), true),
-            TrayCount::Everything => (layout.my_turn_items().count() + layout.waiting_count(), true),
+            // Never Waiting: nothing there waits on you, whatever the setting counts.
+            TrayCount::Everything => (layout.my_turn_items().count(), true),
             TrayCount::Dot => (layout.action_count(), true),
             TrayCount::Hidden => (layout.action_count(), false),
         };

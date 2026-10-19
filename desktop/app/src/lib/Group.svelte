@@ -15,8 +15,14 @@ let {
   onsnoozeall,
   ondraft,
   onreview,
+  mine = false,
+  cut = [],
 }: {
   group: Group
+  /** In My turn: the header says how many of its items come later (not counted). */
+  mine?: boolean
+  /** Accounts whose lists stopped at 50: their numbers are a minimum. */
+  cut?: string[]
   states: Record<string, ItemState>
   accounts: Record<string, string>
   extras?: Record<string, ItemExtras>
@@ -87,6 +93,16 @@ const shown = $derived(all ? group.items : group.items.slice(0, LIMIT))
 const quiet = $derived(
   group.bundle.id === 'verb.read' || group.bundle.id === 'verb.awaiting' || group.bundle.id === 'verb.blocked',
 )
+/** "23", or "12 · 11 later" in My turn when some aren't counted; a "+" when a list behind it stopped at 50. As macOS. */
+const headerCount = $derived.by(() => {
+  const plus = group.items.some((i) => cut.includes(i.accountId)) ? '+' : ''
+  const total = group.items.length
+  if (!mine || group.bundle.id === 'verb.read' || group.bundle.id === 'verb.finished') return `${total}${plus}`
+  const later = total - group.counted
+  if (later === 0) return `${group.counted}${plus}`
+  if (group.counted === 0) return t('%@ later', `${later}${plus}`)
+  return t('%@ · %@ later', `${group.counted}${plus}`, `${later}${plus}`)
+})
 </script>
 
 <section class="group">
@@ -94,7 +110,7 @@ const quiet = $derived(
     <button type="button" class="header row" aria-expanded={open} onclick={() => (open = !open)}>
       <span class="dot" class:quiet><Icon name={icons[group.bundle.id] ?? 'todo'} size={14} /></span>
       <strong>{t(group.bundle.title)}</strong>
-      <span class="muted">{group.items.length}</span>
+      <span class="muted">{headerCount}</span>
       <span class="chevron" class:closed={!open}><Icon name="chevron" size={14} /></span>
     </button>
     {#if onreview && group.bundle.id === 'code.review' && group.items.length > 1}

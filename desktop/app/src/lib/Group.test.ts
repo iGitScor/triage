@@ -27,7 +27,11 @@ const item = (id: string): Item => ({
   priority: null,
   due: null,
 })
-const group = (count: number): GroupData => ({ bundle, items: Array.from({ length: count }, (_, i) => item(`i${i}`)) })
+const group = (count: number): GroupData => ({
+  bundle,
+  items: Array.from({ length: count }, (_, i) => item(`i${i}`)),
+  counted: 0,
+})
 const menuButton = (container: HTMLElement) => container.querySelector('[aria-haspopup=menu]') as HTMLButtonElement
 const entries = (container: HTMLElement) => [...container.querySelectorAll('[role=menuitem]')].map((e) => e.textContent)
 
@@ -64,5 +68,27 @@ describe('Group actions', () => {
     await fireEvent.keyDown(container.querySelector('[role=menuitem]')!, { key: 'Escape' })
     expect(container.querySelector('[role=menu]')).toBeNull()
     expect(document.activeElement).toBe(menuButton(container))
+  })
+})
+
+describe('Group header', () => {
+  const tasks: Bundle = { id: 'docs.tasks', title: 'To do', rank: 5 }
+  const todo = (counted: number, total: number): GroupData => ({
+    bundle: tasks,
+    items: Array.from({ length: total }, (_, i) => ({ ...item(`t${i}`), bundle: tasks })),
+    counted,
+  })
+  const header = (props: { group: GroupData; mine?: boolean; cut?: string[] }) =>
+    render(Group, { props: { states: {}, accounts: {}, onsnooze: () => {}, ...props } }).container.querySelector(
+      '.muted',
+    )?.textContent
+
+  // In My turn, what isn't counted comes later; a "+" when a list stopped at 50; Waiting and To read just count. As macOS.
+  it('says what comes later, and when a list was cut', () => {
+    expect(header({ group: todo(12, 23), mine: true })).toBe('12 · 11 later')
+    expect(header({ group: todo(12, 23), mine: true, cut: ['a1'] })).toBe('12+ · 11+ later')
+    expect(header({ group: todo(0, 3), mine: true })).toBe('3 later')
+    expect(header({ group: todo(12, 23) })).toBe('23')
+    expect(header({ group: group(2), mine: true })).toBe('2')
   })
 })

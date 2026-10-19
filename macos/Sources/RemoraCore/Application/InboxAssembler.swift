@@ -28,10 +28,23 @@ public struct InboxLayout: Equatable, Sendable {
 
     /// Items per plugin, the plugin holding the most pressing verb first (to reply, to review, to fix…),
     /// then the busiest.
+    /// What a group's header says: how many, and in My turn how many of them aren't counted ("12 · 11 later",
+    /// backlog or low priority); a "+" when a list behind them stopped at 50, so the numbers are a minimum.
+    public static func headerCount(_ items: [InboxItem], mine: Bool, cut: Bool) -> String {
+        let plus = cut ? "+" : ""
+        guard mine, let bundle = items.first?.bundle, !bundle.isQuiet else { return "\(items.count)\(plus)" }
+        let counted = items.filter(\.counts).count
+        let later = items.count - counted
+        if later == 0 { return "\(counted)\(plus)" }
+        if counted == 0 { return L("%@ later", "\(later)\(plus)") }
+        return L("%@ · %@ later", "\(counted)\(plus)", "\(later)\(plus)")
+    }
+
     public func countsBySource(actionableOnly: Bool) -> [(pluginID: String, count: Int)] {
         var counts: [String: Int] = [:]
         var mostPressing: [String: Int] = [:]
-        for item in actionableOnly ? myTurnItems.filter(\.counts) : inbox {
+        // Never Waiting: nothing there waits on you, whatever the setting counts.
+        for item in actionableOnly ? myTurnItems.filter(\.counts) : myTurnItems {
             counts[item.pluginID, default: 0] += 1
             mostPressing[item.pluginID] = min(mostPressing[item.pluginID] ?? .max, item.bundle.rank)
         }
@@ -142,7 +155,7 @@ public struct InboxAssembler: Sendable {
 
 extension InboxItem {
     /// Counted in the menu bar and announced on arrival.
-    var counts: Bool { !bundle.isQuiet && priority != .low }
+    public var counts: Bool { !bundle.isQuiet && priority != .low }
 
     func matches(_ query: String) -> Bool {
         let query = query.trimmingCharacters(in: .whitespaces)

@@ -33,7 +33,7 @@ extension InboxView {
                             )
                         }
                         if !layout.pinned.isEmpty {
-                            section(id: "pinned", title: "Pinned", symbol: "pin.fill", items: layout.pinned)
+                            section(id: "pinned", title: "Pinned", symbol: "pin.fill", items: layout.pinned, mine: true)
                         }
                         groups(layout.myTurn, in: .myTurn)
                     case .waiting:
@@ -111,19 +111,20 @@ extension InboxView {
         ForEach(groups) { group in
             section(
                 id: "\(tab.rawValue)/\(group.id)", title: group.bundle.title, symbol: group.bundle.symbol,
-                items: group.items, bundle: group.bundle)
+                items: group.items, bundle: group.bundle, mine: tab == .myTurn)
         }
     }
 
     @ViewBuilder private func section(
-        id: String, title: String, symbol: String, items: [InboxItem], bundle: InboxBundle? = nil
+        id: String, title: String, symbol: String, items: [InboxItem], bundle: InboxBundle? = nil, mine: Bool = false
     ) -> some View {
+        let cut = model.cutAccounts
         let canSummarize =
             bundle != nil && model.assistantAccount != nil && model.assistantPolicy.items(items).count >= 2
         BundleHeader(
             title: title,
             symbol: symbol,
-            count: items.count,
+            count: InboxLayout.headerCount(items, mine: mine, cut: items.contains { cut.contains($0.accountID) }),
             collapsed: collapsed.contains(id),
             summaryShown: showingSummary.contains(id),
             toggle: { withAnimation(.snappy) { collapsed.formSymmetricDifference([id]) } },

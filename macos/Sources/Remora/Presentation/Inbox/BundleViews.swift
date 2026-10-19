@@ -4,7 +4,8 @@ import SwiftUI
 struct BundleHeader: View {
     let title: String
     let symbol: String
-    let count: Int
+    /// "23", or "12 · 11 later" in My turn (`InboxLayout.headerCount`).
+    let count: String
     let collapsed: Bool
     let summaryShown: Bool
     let toggle: () -> Void
@@ -35,7 +36,7 @@ struct BundleHeader: View {
                     // On one line whatever the actions take: they give way, the title doesn't.
                     Text(L(title)).font(RemoraDesign.font(13, .semibold)).foregroundStyle(RemoraDesign.ink).lineLimit(1)
                         .fixedSize()
-                    Text("\(count)").font(RemoraDesign.font(12, .medium)).foregroundStyle(RemoraDesign.muted)
+                    Text(count).font(RemoraDesign.font(12, .medium)).foregroundStyle(RemoraDesign.muted)
                         .fixedSize()
                     Image(systemName: "chevron.down")
                         .font(.system(size: 9, weight: .bold))

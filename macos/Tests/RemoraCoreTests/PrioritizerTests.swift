@@ -43,6 +43,22 @@ struct PrioritizerTests {
             ])
     }
 
+    /// A group in My turn says how many of its rows aren't counted, and "+" when a list stopped at 50; Waiting and
+    /// To read just say how many. The menu bar never counts Waiting, whatever the setting. As Windows.
+    @Test func headersSayWhatIsLaterAndTheMenuBarSkipsWaiting() {
+        let rows = [item("a"), item("b", priority: .low), item("c", priority: .low)]
+        #expect(InboxLayout.headerCount(rows, mine: true, cut: false) == "1 · 2 later")
+        #expect(InboxLayout.headerCount(rows, mine: true, cut: true) == "1+ · 2+ later")
+        #expect(InboxLayout.headerCount(Array(rows.dropFirst()), mine: true, cut: false) == "2 later")
+        #expect(InboxLayout.headerCount(rows, mine: false, cut: false) == "3")
+        #expect(InboxLayout.headerCount([makeItem("r", bundle: .read)], mine: true, cut: false) == "1")
+        var waiting = item("w")
+        waiting.bundle = .awaiting
+        let layout = InboxAssembler().layout(items: rows + [waiting], states: [:], now: now)
+        #expect(layout.countsBySource(actionableOnly: false).map(\.count) == [3])
+        #expect(layout.countsBySource(actionableOnly: true).map(\.count) == [1])
+    }
+
     @Test func lowPriorityIsShownButNotCounted() {
         let layout = InboxAssembler().layout(items: [item("a", priority: .low), item("b")], states: [:], now: now)
         #expect(layout.myTurnItems.count == 2)

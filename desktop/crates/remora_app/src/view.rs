@@ -33,6 +33,8 @@ pub struct InboxView {
     pub demo: bool,
     /// Account names to show next to items, only when a tool has several accounts.
     pub account_names: HashMap<String, String>,
+    /// Accounts whose lists stopped at 50 at their last sync: what they show is a minimum, said with a "+".
+    pub cut_accounts: Vec<String>,
     /// Pinned, snoozed until, reminded: what the user decided about each item.
     pub states: HashMap<String, ItemState>,
     /// What Remora can tell about each shown item: review prep, help with what you wait on, the same
@@ -279,6 +281,12 @@ pub fn inbox_view(inbox: &Inbox, query: &str, demo: bool, tr: &dyn Fn(&str) -> S
         connected: !inbox.accounts().is_empty(),
         demo,
         account_names,
+        cut_accounts: inbox
+            .accounts()
+            .iter()
+            .filter(|a| inbox.remarks_of(&a.id).iter().any(|m| m.code == "truncated"))
+            .map(|a| a.id.clone())
+            .collect(),
         states: inbox.states().clone(),
     }
 }

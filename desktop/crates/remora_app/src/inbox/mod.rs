@@ -317,6 +317,11 @@ impl Inbox {
         self.sync.health()
     }
 
+    /// What the last sync of one account said: a cut list, a missing permission.
+    pub fn remarks_of(&self, account: &str) -> Vec<Message> {
+        self.sync.remarks_of(account)
+    }
+
     pub fn remarks(&self) -> Vec<Message> {
         self.sync.remarks()
     }

@@ -146,7 +146,12 @@ isToggle?: boolean, };
  */
 export type Focus = { id: string, reason: string, };
 
-export type Group = { bundle: Bundle, items: Array<Item>, };
+export type Group = { bundle: Bundle, items: Array<Item>, 
+/**
+ * How many of its items are counted (not quiet, not low): in My turn, its header says the others come later
+ * (Swift's `InboxLayout.headerCount`).
+ */
+counted: number, };
 
 export type HelpView = { kind: 'suggestReviewers' | 'nudge', people: Array<Person>, days?: number, };
 
@@ -166,6 +171,10 @@ remarks: Array<Message>, connected: boolean, demo: boolean,
  * Account names to show next to items, only when a tool has several accounts.
  */
 accountNames: { [key in string]: string }, 
+/**
+ * Accounts whose lists stopped at 50 at their last sync: what they show is a minimum, said with a "+".
+ */
+cutAccounts: Array<string>, 
 /**
  * Pinned, snoozed until, reminded: what the user decided about each item.
  */

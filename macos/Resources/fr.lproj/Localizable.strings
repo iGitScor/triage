@@ -10,9 +10,11 @@
 "%@ isn’t Claude Code. Run `where.exe claude` in a terminal and paste the path it shows." = "%@ n’est pas Claude Code. Lancez `where.exe claude` dans un terminal et collez le chemin affiché.";
 "%@ isn’t Claude Code. Run `which claude` in Terminal and paste the path it shows." = "%@ n’est pas Claude Code. Lancez `which claude` dans le Terminal et collez le chemin affiché.";
 "%@ isn’t Claude Code. Run `which claude` in a terminal and paste the path it shows." = "%@ n’est pas Claude Code. Lancez `which claude` dans un terminal et collez le chemin affiché.";
+"%@ later" = "%@ plus tard";
 "%@ needs reconnecting" = "%@ doit être reconnecté";
 "%@ on your message in %@" = "%@ sur votre message dans %@";
 "%@ tokens" = "%@ jetons";
+"%@ · %@ later" = "%@ · %@ plus tard";
 "%@ · new one possible in %d min" = "%@ · nouveau possible dans %d min";
 "%@ · soon" = "%@ · bientôt";
 "%@, approved" = "%@, approuvé";

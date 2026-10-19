@@ -2,7 +2,7 @@
   "accounts": [
     {
       "allowed": true,
-      "egress": "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host).",
+      "egress": "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host), and the checks and security alerts of the repositories you maintain.",
       "error": null,
       "errorKind": null,
       "hosts": ["api.github.com", "github.com", "avatars.githubusercontent.com"],
@@ -17,7 +17,7 @@
     },
     {
       "allowed": true,
-      "egress": "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host.",
+      "egress": "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host, and the default branch's pipelines of the projects you maintain.",
       "error": null,
       "errorKind": null,
       "hosts": ["gitlab.com"],
@@ -72,6 +72,7 @@
       "snoozed": 4,
       "waiting": 3
     },
+    "cutAccounts": [],
     "demo": true,
     "errors": [],
     "extras": {
@@ -118,8 +119,8 @@
     },
     "insights": [
       {
-        "at": "2026-10-19T07:00:00Z",
-        "id": "pileUp/1792393200.0",
+        "at": "2026-10-26T08:00:00Z",
+        "id": "pileUp/1793001600.0",
         "items": [
           {
             "accountId": "github",
@@ -137,7 +138,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-17T12:51:43.879182Z",
+            "date": "2026-10-18T21:04:54.210848Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -177,7 +178,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-17T12:31:43.879182Z",
+            "date": "2026-10-18T20:44:54.210848Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -211,7 +212,7 @@
               "title": "To review"
             },
             "context": "acme/search #77",
-            "date": "2026-10-17T02:31:43.879182Z",
+            "date": "2026-10-18T10:44:54.210848Z",
             "due": null,
             "id": "demo/11",
             "needsAction": true,
@@ -238,7 +239,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-19T22:51:43.879182Z",
+            "date": "2026-09-21T07:04:54.210848Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -271,7 +272,7 @@
               "title": "To review"
             },
             "context": "acme/web #491",
-            "date": "2026-10-17T12:51:43.879182Z",
+            "date": "2026-10-18T21:04:54.210848Z",
             "due": null,
             "id": "demo/10",
             "needsAction": true,
@@ -311,7 +312,7 @@
               "title": "To review"
             },
             "context": "acme/web #490",
-            "date": "2026-10-17T12:31:43.879182Z",
+            "date": "2026-10-18T20:44:54.210848Z",
             "due": null,
             "id": "demo/9",
             "needsAction": true,
@@ -344,7 +345,7 @@
               "title": "To do"
             },
             "context": "ENG-12",
-            "date": "2026-09-19T22:51:43.879182Z",
+            "date": "2026-09-21T07:04:54.210848Z",
             "due": null,
             "id": "demo/12",
             "needsAction": true,
@@ -359,7 +360,7 @@
         "kind": "stale"
       }
     ],
-    "lastRefresh": "2026-10-17T17:31:43.914743Z",
+    "lastRefresh": "2026-10-19T01:44:54.263265Z",
     "layout": {
       "done": [],
       "inProgress": [],
@@ -370,6 +371,7 @@
             "rank": 1,
             "title": "To reply"
           },
+          "counted": 4,
           "items": [
             {
               "accountId": "slack",
@@ -387,7 +389,7 @@
                 "title": "To reply"
               },
               "context": "#sales",
-              "date": "2026-10-17T17:11:43.879182Z",
+              "date": "2026-10-19T01:24:54.210848Z",
               "due": null,
               "id": "demo/16",
               "needsAction": true,
@@ -417,7 +419,7 @@
                 "title": "To reply"
               },
               "context": "#releases",
-              "date": "2026-10-17T17:01:43.879182Z",
+              "date": "2026-10-19T01:14:54.210848Z",
               "due": null,
               "id": "demo/3",
               "needsAction": true,
@@ -456,7 +458,7 @@
                 "title": "To reply"
               },
               "context": "Direct message",
-              "date": "2026-10-17T15:11:43.879182Z",
+              "date": "2026-10-18T23:24:54.210848Z",
               "due": null,
               "id": "demo/4",
               "needsAction": true,
@@ -494,7 +496,7 @@
                 "title": "To reply"
               },
               "context": "#product",
-              "date": "2026-10-17T14:11:43.879182Z",
+              "date": "2026-10-18T22:24:54.210848Z",
               "due": null,
               "id": "demo/18",
               "needsAction": true,
@@ -516,6 +518,7 @@
             "rank": 2,
             "title": "To review"
           },
+          "counted": 3,
           "items": [
             {
               "accountId": "github",
@@ -546,7 +549,7 @@
                 "title": "To review"
               },
               "context": "acme/web #482",
-              "date": "2026-10-17T17:19:43.879182Z",
+              "date": "2026-10-19T01:32:54.210848Z",
               "due": null,
               "id": "demo/1",
               "needsAction": true,
@@ -599,7 +602,7 @@
                 "title": "To review"
               },
               "context": "acme/web #495",
-              "date": "2026-10-17T16:46:43.879182Z",
+              "date": "2026-10-19T00:59:54.210848Z",
               "due": null,
               "id": "demo/19",
               "needsAction": true,
@@ -639,7 +642,7 @@
                 "title": "To review"
               },
               "context": "acme/platform !1290",
-              "date": "2026-10-17T15:56:43.879182Z",
+              "date": "2026-10-19T00:09:54.210848Z",
               "due": null,
               "id": "demo/2",
               "needsAction": true,
@@ -665,6 +668,7 @@
             "rank": 3,
             "title": "To fix"
           },
+          "counted": 1,
           "items": [
             {
               "accountId": "github",
@@ -695,7 +699,7 @@
                 "title": "To fix"
               },
               "context": "acme/inbox #75",
-              "date": "2026-10-17T10:51:43.879182Z",
+              "date": "2026-10-18T19:04:54.210848Z",
               "due": null,
               "id": "demo/6",
               "needsAction": true,
@@ -721,6 +725,7 @@
             "rank": 4,
             "title": "Ready to merge"
           },
+          "counted": 1,
           "items": [
             {
               "accountId": "github",
@@ -757,7 +762,7 @@
                 "title": "Ready to merge"
               },
               "context": "acme/inbox #77",
-              "date": "2026-10-17T17:23:43.879182Z",
+              "date": "2026-10-19T01:36:54.210848Z",
               "due": null,
               "id": "demo/5",
               "needsAction": true,
@@ -789,6 +794,7 @@
             "rank": 5,
             "title": "To do"
           },
+          "counted": 1,
           "items": [
             {
               "accountId": "linear",
@@ -813,7 +819,7 @@
                 "title": "To do"
               },
               "context": "ENG-31",
-              "date": "2026-10-16T08:11:43.879182Z",
+              "date": "2026-10-17T16:24:54.210848Z",
               "due": null,
               "id": "demo/8",
               "needsAction": true,
@@ -832,6 +838,7 @@
             "rank": 8,
             "title": "To read"
           },
+          "counted": 0,
           "items": [
             {
               "accountId": "slack",
@@ -849,7 +856,7 @@
                 "title": "To read"
               },
               "context": "#ops",
-              "date": "2026-10-17T16:16:43.879182Z",
+              "date": "2026-10-19T00:29:54.210848Z",
               "due": null,
               "id": "demo/17",
               "needsAction": false,
@@ -885,7 +892,7 @@
             "title": "To review"
           },
           "context": "acme/web #491",
-          "date": "2026-10-17T12:51:43.879182Z",
+          "date": "2026-10-18T21:04:54.210848Z",
           "due": null,
           "id": "demo/10",
           "needsAction": true,
@@ -925,7 +932,7 @@
             "title": "To review"
           },
           "context": "acme/web #490",
-          "date": "2026-10-17T12:31:43.879182Z",
+          "date": "2026-10-18T20:44:54.210848Z",
           "due": null,
           "id": "demo/9",
           "needsAction": true,
@@ -959,7 +966,7 @@
             "title": "To review"
           },
           "context": "acme/search #77",
-          "date": "2026-10-17T02:31:43.879182Z",
+          "date": "2026-10-18T10:44:54.210848Z",
           "due": null,
           "id": "demo/11",
           "needsAction": true,
@@ -986,7 +993,7 @@
             "title": "To do"
           },
           "context": "ENG-12",
-          "date": "2026-09-19T22:51:43.879182Z",
+          "date": "2026-09-21T07:04:54.210848Z",
           "due": null,
           "id": "demo/12",
           "needsAction": true,
@@ -1005,6 +1012,7 @@
             "rank": 9,
             "title": "Waiting on others"
           },
+          "counted": 3,
           "items": [
             {
               "accountId": "slack",
@@ -1022,7 +1030,7 @@
                 "title": "Waiting on others"
               },
               "context": "Thread in #design",
-              "date": "2026-10-17T16:36:43.879182Z",
+              "date": "2026-10-19T00:49:54.210848Z",
               "due": null,
               "id": "demo/15",
               "needsAction": false,
@@ -1064,7 +1072,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #79",
-              "date": "2026-10-16T16:31:43.879182Z",
+              "date": "2026-10-18T00:44:54.210848Z",
               "due": null,
               "id": "demo/7",
               "needsAction": false,
@@ -1104,7 +1112,7 @@
                 "title": "Waiting on others"
               },
               "context": "acme/inbox #81",
-              "date": "2026-10-15T15:31:43.879182Z",
+              "date": "2026-10-16T23:44:54.210848Z",
               "due": null,
               "id": "demo/13",
               "needsAction": false,
@@ -1141,11 +1149,11 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792241503|",
+          "fingerprint": "1792357494|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
-          "until": "2026-10-19T07:00:00Z",
+          "until": "2026-10-26T08:00:00Z",
           "untilNews": null
         }
       },
@@ -1154,11 +1162,11 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792204303|diff",
+          "fingerprint": "1792320294|diff",
           "mode": "hide",
           "note": null,
           "reason": "motivation",
-          "until": "2026-10-19T07:00:00Z",
+          "until": "2026-10-26T08:00:00Z",
           "untilNews": null
         }
       },
@@ -1167,17 +1175,17 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1789858303|",
+          "fingerprint": "1789974294|",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
-          "until": "2026-10-19T07:00:00Z",
+          "until": "2026-10-26T08:00:00Z",
           "untilNews": null
         }
       },
       "demo/18": {
         "done": null,
-        "movedToReplyAt": "2026-10-17T17:31:43.879182Z",
+        "movedToReplyAt": "2026-10-19T01:44:54.210848Z",
         "pinned": false,
         "remindedAt": null,
         "snooze": null
@@ -1187,11 +1195,11 @@
         "pinned": false,
         "remindedAt": null,
         "snooze": {
-          "fingerprint": "1792240303|checks.passing,diff",
+          "fingerprint": "1792356294|checks.passing,diff",
           "mode": "hide",
           "note": null,
           "reason": "noTime",
-          "until": "2026-10-19T07:00:00Z",
+          "until": "2026-10-26T08:00:00Z",
           "untilNews": null
         }
       }
@@ -1252,16 +1260,16 @@
   "snoozeReturns": {
     "focus": "2026-10-19T07:00:00Z",
     "motivation": "2026-10-19T07:00:00Z",
-    "noTime": "2026-10-19T07:00:00Z",
-    "notUrgent": "2026-10-19T07:00:00Z",
-    "waiting": "2026-10-20T07:00:00Z"
+    "noTime": "2026-10-19T04:45:00Z",
+    "notUrgent": "2026-10-26T08:00:00Z",
+    "waiting": "2026-10-22T07:00:00Z"
   },
   "sources": [
     {
       "assistant": false,
       "manifest": {
         "egress": {
-          "description": "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host).",
+          "description": "Reads your pull requests, review requests and assigned issues from GitHub (or your GitHub Enterprise host), and the checks and security alerts of the repositories you maintain.",
           "externalAi": false,
           "hosts": ["api.github.com", "github.com", "avatars.githubusercontent.com"]
         },
@@ -1285,6 +1293,16 @@
             "label": "Personal access token",
             "managedKey": null,
             "placeholder": ""
+          },
+          {
+            "defaultValue": "",
+            "help": "Optional. A failing default branch and open critical or high security alerts go to To fix. The token also needs read-only Actions, Dependabot alerts and Code scanning alerts.",
+            "isOptional": true,
+            "isSecret": false,
+            "key": "repositories",
+            "label": "Repositories I maintain",
+            "managedKey": null,
+            "placeholder": "acme/web, acme/api"
           }
         ],
         "id": "github",
@@ -1294,7 +1312,8 @@
         "setupSteps": [
           "Click “Create a token”: GitHub opens a fine-grained token named Remora, with read-only Pull requests and Issues.",
           "Pick the owner (you, or your organization) and All repositories, set an expiration, generate it and paste it below.",
-          "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org."
+          "Repositories of several organizations: connect GitHub once per organization, or use a classic token with repo and read:org.",
+          "To see the checks and security alerts of repositories you maintain, also give the token read-only Actions, Dependabot alerts and Code scanning alerts."
         ],
         "setupUrl": "{host}/settings/personal-access-tokens/new?name=Remora&description=Remora%20reads%20your%20pull%20requests%2C%20reviews%20and%20issues&pull_requests=read&issues=read&metadata=read",
         "signIn": null,
@@ -1306,7 +1325,7 @@
       "assistant": false,
       "manifest": {
         "egress": {
-          "description": "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host.",
+          "description": "Reads your merge requests, approvals, pipelines and To-Dos from your GitLab host, and the default branch's pipelines of the projects you maintain.",
           "externalAi": false,
           "hosts": ["gitlab.com"]
         },
@@ -1330,6 +1349,16 @@
             "label": "Personal access token",
             "managedKey": null,
             "placeholder": ""
+          },
+          {
+            "defaultValue": "",
+            "help": "Optional. When the last pipeline of a project's default branch failed, it goes to To fix.",
+            "isOptional": true,
+            "isSecret": false,
+            "key": "repositories",
+            "label": "Projects I maintain",
+            "managedKey": null,
+            "placeholder": "acme/web, acme/tools/cli"
           }
         ],
         "id": "gitlab",

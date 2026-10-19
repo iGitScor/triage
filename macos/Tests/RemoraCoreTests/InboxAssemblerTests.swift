@@ -77,7 +77,9 @@ struct InboxAssemblerTests {
         let items = [makeItem("1", needsAction: true), makeItem("2", bundle: .authored), slack]
         let layout = assembler.layout(items: items, states: [:], now: now)
         #expect(layout.countsBySource(actionableOnly: true).map(\.count) == [1, 1])
-        #expect(layout.countsBySource(actionableOnly: false).first { $0.pluginID == "test" }?.count == 2)
+        #expect(
+            layout.countsBySource(actionableOnly: false).first { $0.pluginID == "test" }?.count == 1,
+            "your merge request under review waits on others: never counted")
     }
 
     @Test func clearedDoneItemsLeaveTheListUntilTheyChange() {

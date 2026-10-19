@@ -511,6 +511,8 @@ FR = {
     "Current sprint": "Sprint en cours",
     "Open for weeks": "Ouvert depuis des semaines",
     "Followed up": "Relancé",
+    "%@ later": "%@ plus tard",
+    "%@ · %@ later": "%@ · %@ plus tard",
     "Waiting over a day": "En attente depuis plus d’un jour",
     "Local program on this Mac": "Programme local sur ce Mac",
     "Data on this Mac": "Données sur ce Mac",

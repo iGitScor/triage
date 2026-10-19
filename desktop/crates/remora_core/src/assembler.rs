@@ -17,6 +17,9 @@ pub enum Placement {
 pub struct Group {
     pub bundle: InboxBundle,
     pub items: Vec<InboxItem>,
+    /// How many of its items are counted (not quiet, not low): in My turn, its header says the others come later
+    /// (Swift's `InboxLayout.headerCount`).
+    pub counted: usize,
 }
 
 /// What the UI shows: what you're on, pinned items, your turn, waiting on others, snoozed, done.
@@ -191,7 +194,8 @@ fn groups(
         .into_iter()
         .map(|(bundle, mut items)| {
             prioritizer.sort(&mut items);
-            Group { bundle, items }
+            let counted = items.iter().filter(|i| i.counts()).count();
+            Group { bundle, items, counted }
         })
         .collect();
     groups.sort_by(|a, b| a.bundle.rank.cmp(&b.bundle.rank).then(a.bundle.title.cmp(&b.bundle.title)));
@@ -303,6 +307,16 @@ mod tests {
         assert_eq!(mine, ["1", "3", "4", "5", "6"]);
         assert_eq!(layout.waiting_count(), 1);
         assert_eq!(layout.action_count(), 3, "To read and low priority are shown but not counted");
+    }
+
+    /// A group knows how many of its items are counted, for its header ("1 · 1 later"). As macOS.
+    #[test]
+    fn a_group_counts_what_is_counted() {
+        let mut low = item("2", InboxBundle::tasks());
+        low.priority = Some(Priority::Low);
+        let layout = assembler().layout(&[item("1", InboxBundle::tasks()), low], &HashMap::new(), now(), "");
+        let tasks = layout.my_turn.iter().find(|g| g.bundle == InboxBundle::tasks()).unwrap();
+        assert_eq!((tasks.items.len(), tasks.counted), (2, 1));
     }
 
     #[test]

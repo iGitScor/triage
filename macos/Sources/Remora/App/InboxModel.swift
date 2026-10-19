@@ -26,6 +26,17 @@ final class InboxModel {
     @ObservationIgnored let persistence: Persistence
 
     var accounts: [Account] { accountsService.accounts }
+
+    /// Accounts whose lists stopped at 50 at their last sync: what they show is a minimum.
+    var cutAccounts: Set<UUID> {
+        Set(
+            accounts.filter { account in
+                guard let name = PluginRegistry.manifests.first(where: { $0.id == account.pluginID })?.name else {
+                    return false
+                }
+                return (sync.remarks[account.id] ?? []).contains(SourceSnapshot.truncated(name))
+            }.map(\.id))
+    }
     private(set) var itemsByAccount: [UUID: [InboxItem]] {
         didSet {
             layoutChanged()

@@ -239,7 +239,7 @@ async function clearAll() {
           <h2 class="section-title">{t('Pinned')}</h2>
           {#each view.layout.pinned as item (item.id)}<ItemRow {item} state={view.states[item.id]} account={view.accountNames[item.accountId]} extras={view.extras[item.id]} onsnooze={(i) => (snoozing = [i])} {ondraft} />{/each}
         {/if}
-        {#each view.layout.myTurn as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} onreview={() => (reviewing = true)} />{/each}
+        {#each view.layout.myTurn as group (group.bundle.id)}<Group {group} mine cut={view.cutAccounts} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} onreview={() => (reviewing = true)} />{/each}
         {#if unread && !view.layout.pinned.length && !view.layout.myTurn.length}
           <div class="empty unread" role="status">
             {#if view.health.state === 'offline'}
@@ -257,7 +257,7 @@ async function clearAll() {
           </div>
         {:else if !view.layout.pinned.length && !view.layout.myTurn.length}<p class="empty muted">{t(empty.myTurn)}</p>{/if}
       {:else if tab === 'waiting'}
-        {#each view.layout.waiting as group (group.bundle.id)}<Group {group} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} />{/each}
+        {#each view.layout.waiting as group (group.bundle.id)}<Group {group} cut={view.cutAccounts} states={view.states} accounts={view.accountNames} extras={view.extras} assistant={view.assistant} onsnooze={(i) => (snoozing = [i])} onsnoozeall={(items) => (snoozing = items)} {ondraft} />{/each}
         {#if !view.layout.waiting.length}<p class="empty muted">{t(empty.waiting)}</p>{/if}
       {:else}
         {@const items = tab === 'snoozed' ? view.layout.snoozed : view.layout.done}

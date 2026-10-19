@@ -18,6 +18,7 @@ function view(inProgress = 0): InboxView {
     remarks: [],
     connected: true,
     demo: false,
+    cutAccounts: [],
     accountNames: {},
     states: {},
     health: { state: 'fine' },

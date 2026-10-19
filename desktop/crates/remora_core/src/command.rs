@@ -236,10 +236,10 @@ mod tests {
         let done = item("4", "linear", InboxBundle::reviews(), "Ship it", "ENG-1");
         InboxLayout {
             my_turn: vec![
-                Group { bundle: InboxBundle::reviews(), items: vec![review] },
-                Group { bundle: InboxBundle::mentions(), items: vec![mention] },
+                Group { bundle: InboxBundle::reviews(), items: vec![review], counted: 1 },
+                Group { bundle: InboxBundle::mentions(), items: vec![mention], counted: 1 },
             ],
-            waiting: vec![Group { bundle: InboxBundle::awaiting(), items: vec![waiting] }],
+            waiting: vec![Group { bundle: InboxBundle::awaiting(), items: vec![waiting], counted: 1 }],
             done: vec![done],
             ..InboxLayout::default()
         }
