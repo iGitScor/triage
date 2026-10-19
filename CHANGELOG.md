@@ -9,7 +9,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
@@ -52,7 +53,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
@@ -105,7 +107,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
@@ -133,7 +136,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
@@ -218,7 +222,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
@@ -364,7 +369,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
@@ -417,7 +423,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
@@ -480,7 +487,8 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 - The menu bar (or tray) never counts *Waiting*, even with **Show count of** → *Everything*, which now counts
   every row of *My turn*. In *My turn*, a group says what it doesn't count (*To do 12 · 11 later*: backlog, low
-  priority), with a *+* when a tool had more than the 50 Remora lists. Mac, Windows and Linux.
+  priority), with a *+* when a tool had more than the 50 Remora lists, on the *My turn* and *Waiting* tabs too.
+  Mac, Windows and Linux.
 - Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
   hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
   messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A

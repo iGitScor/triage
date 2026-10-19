@@ -6,6 +6,8 @@ struct TabSwitch: View {
     @Binding var tab: InboxView.Tab
     let tabs: [InboxView.Tab]
     let counts: [InboxView.Tab: Int]
+    /// Tabs holding items of a tool that had more than the 50 Remora lists: their count reads as a minimum, "14+".
+    var cut: Set<InboxView.Tab> = []
 
     var body: some View {
         HStack(spacing: 4) {
@@ -21,7 +23,7 @@ struct TabSwitch: View {
                             Text(value.title).font(RemoraDesign.font(13, .semibold)).lineLimit(1).fixedSize()
                         }
                         if let count = counts[value], count > 0 {
-                            Text("\(count)")
+                            Text("\(count)\(cut.contains(value) ? "+" : "")")
                                 .font(RemoraDesign.font(11, .bold))
                                 .foregroundStyle(selected ? RemoraDesign.onAccent : RemoraDesign.muted)
                                 .padding(.horizontal, 6)
@@ -40,7 +42,7 @@ struct TabSwitch: View {
                 .help(value.title)
                 // The In progress tab is an icon: say its name, its count, and which tab is selected.
                 .accessibilityLabel(value.title)
-                .accessibilityValue(counts[value].map { "\($0)" } ?? "")
+                .accessibilityValue(counts[value].map { "\($0)\(cut.contains(value) ? "+" : "")" } ?? "")
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }

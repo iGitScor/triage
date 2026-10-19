@@ -1,7 +1,7 @@
 <script lang="ts">
 import { listen } from '@tauri-apps/api/event'
 import { onMount } from 'svelte'
-import { api, type InboxView, type Item } from './api'
+import { api, type Group as GroupData, type InboxView, type Item } from './api'
 import Fish from './Fish.svelte'
 import Group from './Group.svelte'
 import Icon from './Icon.svelte'
@@ -80,6 +80,12 @@ let search: HTMLInputElement | undefined = $state()
 let showKeys = $state(false)
 
 /** The inbox's keys outside the list, as on the Mac: Ctrl+F searches, Ctrl+R refreshes (rowkeys.ts has the rest). */
+/** "+" after a tab's count when it holds items of a tool that had more than the 50 Remora lists. As macOS. */
+function cutIn(groups: GroupData[] | undefined): string {
+  const cut = view?.cutAccounts ?? []
+  return groups?.some((g) => g.items.some((i) => cut.includes(i.accountId))) ? '+' : ''
+}
+
 function onwindowkey(event: KeyboardEvent) {
   if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
   if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return
@@ -194,10 +200,10 @@ async function clearAll() {
         </button>
       {/if}
       <button type="button" role="tab" id="tab-myTurn" aria-selected={tab === 'myTurn'} aria-controls="inbox-panel" tabindex={tab === 'myTurn' ? 0 : -1} class="pill" class:selected={tab === 'myTurn'} onclick={() => (tab = 'myTurn')}>
-        {t('My turn')} <span class="count">{view?.counts.myTurn ?? 0}</span>
+        {t('My turn')} <span class="count">{view?.counts.myTurn ?? 0}{cutIn(view?.layout.myTurn)}</span>
       </button>
       <button type="button" role="tab" id="tab-waiting" aria-selected={tab === 'waiting'} aria-controls="inbox-panel" tabindex={tab === 'waiting' ? 0 : -1} class="pill" class:selected={tab === 'waiting'} onclick={() => (tab = 'waiting')}>
-        {t('Waiting')} <span class="count">{view?.counts.waiting ?? 0}</span>
+        {t('Waiting')} <span class="count">{view?.counts.waiting ?? 0}{cutIn(view?.layout.waiting)}</span>
       </button>
     </div>
     <button type="button" role="tab" id="tab-snoozed" aria-selected={tab === 'snoozed'} aria-controls="inbox-panel" tabindex={tab === 'snoozed' ? 0 : -1} class="pill" class:selected={tab === 'snoozed'} onclick={() => (tab = 'snoozed')}><Icon name="moon" size={14} />{t('Snoozed')} {view?.counts.snoozed || ''}</button>

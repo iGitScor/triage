@@ -51,6 +51,16 @@ struct InboxView: View {
     /// Long bundles show their most important items first and fold the rest.
     let visibleInBundle = 5
 
+    /// The tabs with items of a tool that had more than the 50 Remora lists.
+    private func cutTabs(_ layout: InboxLayout) -> Set<Tab> {
+        let cut = model.cutAccounts
+        guard !cut.isEmpty else { return [] }
+        var tabs: Set<Tab> = []
+        if layout.myTurnItems.contains(where: { cut.contains($0.accountID) }) { tabs.insert(.myTurn) }
+        if layout.waitingItems.contains(where: { cut.contains($0.accountID) }) { tabs.insert(.waiting) }
+        return tabs
+    }
+
     var body: some View {
         let layout = model.visibleLayout
         VStack(spacing: 0) {
@@ -62,7 +72,8 @@ struct InboxView: View {
                     counts: [
                         .inProgress: layout.inProgress.count, .myTurn: layout.actionCount,
                         .waiting: layout.waitingItems.count,
-                    ]
+                    ],
+                    cut: cutTabs(layout)
                 )
                 ArchiveButton(
                     tab: .snoozed, symbol: "moon.zzz", count: layout.snoozed.count, compact: !layout.inProgress.isEmpty,
