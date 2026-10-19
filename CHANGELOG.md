@@ -7,6 +7,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
@@ -42,6 +47,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
@@ -87,6 +97,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
@@ -107,6 +122,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
@@ -184,6 +204,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
@@ -322,6 +347,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
@@ -367,6 +397,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
@@ -422,6 +457,11 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Slack and Teams messages in *To reply* are ordered by how they reached you: someone who wrote again while you
+  hadn't answered first (*Followed up*, only while their last message still asks something), then one-to-one
+  messages, mentions of you, replies in a thread you started, group conversations, other thread replies. A
+  one-to-one message or a mention left a day says *Waiting over a day*. Nothing is hidden or uncounted. Mac,
+  Windows and Linux.
 - Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
   you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
   read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and

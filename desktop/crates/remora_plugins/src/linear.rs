@@ -437,6 +437,8 @@ impl Issue {
             reason: None,
             related: None,
             stage,
+            reach: None,
+            followed_up: None,
         };
         if self.in_review() {
             let changes = self.changes().iter().filter_map(|c| c.url.clone()).collect();
@@ -533,6 +535,8 @@ impl Notification {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }

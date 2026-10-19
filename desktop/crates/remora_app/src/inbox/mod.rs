@@ -609,6 +609,8 @@ impl Inbox {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         });
         self.persistence.save(REMINDERS, &self.reminders);
         self.snooze(&id, at, SnoozeMode::Hide, None, false);
@@ -830,6 +832,8 @@ mod tests {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 

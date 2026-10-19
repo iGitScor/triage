@@ -68,6 +68,8 @@ impl Demo {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         });
     }
 

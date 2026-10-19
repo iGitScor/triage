@@ -101,6 +101,10 @@ Inside each verb, Remora puts first:
    rest (a paused one among them), what waits to be triaged, the backlog. Its status or badge says
    which; an urgent or high ticket left unstarted for two weeks says *Open for weeks*. Nothing is hidden, and a
    status Remora can’t read stays with the rest;
+   For a Slack or Teams message, how it reached you: someone who wrote again while you hadn’t answered
+   (*Followed up*, only while their last message still asks something), then a one-to-one message, a mention of you,
+   a reply in a thread you started, a group conversation, a reply in a thread you only wrote in. A one-to-one message
+   or a mention left a day says *Waiting over a day*;
 4. the nearest due date;
 5. the most recent activity.
 

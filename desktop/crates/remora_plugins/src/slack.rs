@@ -5,7 +5,9 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, TimeZone, Utc};
 use regex::Regex;
-use remora_core::{ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Reaction, ReactionMeaning};
+use remora_core::{
+    ConfigField, Egress, InboxBundle, InboxItem, MessageReach, Person, PluginManifest, Reaction, ReactionMeaning,
+};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -116,6 +118,14 @@ impl SlackPlugin {
                 let m = head.message;
                 let mut item = m.item(account_id, head.bundle.clone(), &head.id, me, team);
                 item.reactions = reactions.get(&format!("{}/{}", m.channel.id, m.ts)).cloned();
+                item.reach = Some(if m.channel.is_im == Some(true) {
+                    MessageReach::Direct
+                } else if m.channel.is_mpim == Some(true) {
+                    MessageReach::Group
+                } else {
+                    MessageReach::Mention
+                });
+                item.followed_up = head.followed_up.then_some(true);
                 let mine = [InboxBundle::asked(), InboxBundle::answered(), InboxBundle::finished()];
                 if !mine.contains(&head.bundle) {
                     return item;
@@ -245,9 +255,20 @@ impl SlackPlugin {
                 .iter()
                 .filter(|r| r.date() > thread.date() && r.user.as_deref() != Some(me) && r.bot_id.is_none())
                 .collect();
-            if let Some(reply) = after.iter().filter(|r| !r.text.contains(&mention)).max_by_key(|r| r.date()) {
+            let others: Vec<&&Reply> = after.iter().filter(|r| !r.text.contains(&mention)).collect();
+            // A thread you started: its answers are to your question.
+            let root = replies.messages.iter().find(|r| r.ts == thread_ts);
+            let reach = if root.is_some_and(|r| r.user.as_deref() == Some(me)) {
+                MessageReach::OwnThread
+            } else {
+                MessageReach::Thread
+            };
+            if let Some(reply) = others.iter().max_by_key(|r| r.date()) {
                 let mut item = reply.item(&thread, &self.account_id, me, team);
                 item.reactions = reactions(&reply.reactions, me, custom);
+                item.reach = Some(reach);
+                let written = others.iter().filter(|r| r.user == reply.user).count();
+                item.followed_up = (written > 1).then_some(true);
                 items.push(item);
                 continue;
             }
@@ -261,7 +282,9 @@ impl SlackPlugin {
                 .messages
                 .iter()
                 .any(|r| r.date() < thread.date() && r.user.as_deref().is_some_and(|u| u != me) && r.bot_id.is_none());
-            items.push(unanswered(&thread, answered, on_yours, &self.account_id, me, team));
+            let mut item = unanswered(&thread, answered, on_yours, &self.account_id, me, team);
+            item.reach = Some(reach);
+            items.push(item);
         }
         // A thread that couldn't be read is said, not passed over.
         Ok((items, failed.iter().map(|e| crate::partial("Replies in your threads", e)).collect()))
@@ -290,6 +313,9 @@ struct Head<'a> {
     message: &'a Match,
     bundle: InboxBundle,
     id: String,
+    /// The same person wrote again since you last answered: two mentions of you in one channel, or two messages in
+    /// a conversation.
+    followed_up: bool,
 }
 
 /// How long after a mention a message of yours in the same channel counts as the answer, when it doesn't name the
@@ -312,7 +338,7 @@ fn conversations<'a>(mentions: &'a [Match], direct: &'a [Match], sent: &'a [Matc
             thread != m.ts && (thread == mention.thread_ts() || thread == mention.ts)
         });
         if in_its_thread {
-            heads.push(Head { message: mention, bundle: InboxBundle::finished(), id });
+            heads.push(Head { message: mention, bundle: InboxBundle::finished(), id, followed_up: false });
             continue;
         }
         let answer = later
@@ -324,9 +350,23 @@ fn conversations<'a>(mentions: &'a [Match], direct: &'a [Match], sent: &'a [Matc
             })
             .max_by_key(|m| m.date());
         heads.push(match answer {
-            Some(answer) => Head { message: answer, bundle: InboxBundle::answered(), id },
-            None => Head { message: mention, bundle: InboxBundle::mentions(), id },
+            Some(answer) => Head { message: answer, bundle: InboxBundle::answered(), id, followed_up: false },
+            None => Head { message: mention, bundle: InboxBundle::mentions(), id, followed_up: false },
         });
+    }
+    // A second mention of you by the same person in the same channel, both unanswered: the latest says so.
+    let mut waiting: HashMap<(&str, &str), Vec<usize>> = HashMap::new();
+    for (index, head) in heads.iter().enumerate().filter(|(_, h)| h.bundle == InboxBundle::mentions()) {
+        let key = (head.message.channel.id.as_str(), head.message.user.as_deref().unwrap_or(""));
+        waiting.entry(key).or_default().push(index);
+    }
+    let followed: Vec<usize> = waiting
+        .into_values()
+        .filter(|indices| indices.len() > 1)
+        .filter_map(|indices| indices.into_iter().max_by_key(|&i| heads[i].message.date()))
+        .collect();
+    for index in followed {
+        heads[index].followed_up = true;
     }
     let owned: Vec<&Match> = yours.clone();
     let theirs: HashMap<&str, &Match> =
@@ -340,11 +380,22 @@ fn conversations<'a>(mentions: &'a [Match], direct: &'a [Match], sent: &'a [Matc
         match ours.get(channel).copied() {
             Some(mine) if their.is_none_or(|t| mine.date() > t.date()) => {
                 let bundle = if their.is_none() { InboxBundle::asked() } else { InboxBundle::answered() };
-                heads.push(Head { message: mine, bundle, id: channel.to_string() });
+                heads.push(Head { message: mine, bundle, id: channel.to_string(), followed_up: false });
             }
             _ => {
                 if let Some(message) = their {
-                    heads.push(Head { message, bundle: InboxBundle::direct_messages(), id: channel.to_string() });
+                    let since = ours.get(channel).map(|m| m.date());
+                    let written = direct
+                        .iter()
+                        .filter(|m| m.channel.id == channel && m.user == message.user)
+                        .filter(|m| since.is_none_or(|since| m.date() > since))
+                        .count();
+                    heads.push(Head {
+                        message,
+                        bundle: InboxBundle::direct_messages(),
+                        id: channel.to_string(),
+                        followed_up: written > 1,
+                    });
                 }
             }
         }
@@ -629,6 +680,8 @@ impl Reply {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }
@@ -804,6 +857,8 @@ impl Match {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 
@@ -1265,6 +1320,10 @@ pub(crate) mod tests {
         assert_eq!(thread.context, "Thread in #design");
         assert!(thread.id.ends_with("/C1/thread/1700000100.0"));
         assert!(thread.bundle == InboxBundle::mentions() && thread.needs_action);
+        assert!(
+            thread.reach == Some(MessageReach::Thread) && thread.followed_up.is_none(),
+            "erin started it, and wrote once since yours"
+        );
         assert_eq!(
             *http.asked.lock().unwrap(),
             ["C1 1700000100.0 1700000200.0"],
@@ -1476,6 +1535,43 @@ pub(crate) mod tests {
 
         let asked = items(None, None, Some(matches(&[dm("1700000300.0", "Free for lunch?", "UME")]))).await;
         assert!(asked.len() == 1 && asked[0].bundle == InboxBundle::asked(), "they never wrote: your question waits");
+    }
+
+    /// How directly a message reached you: a one-to-one conversation, a group one, a mention. As macOS.
+    #[tokio::test]
+    async fn direct_group_and_mention() {
+        let group = r#"{"ts": "1700000300.0", "text": "Can you?", "user": "U4", "username": "U4", "channel": {"id": "G1", "is_mpim": true}}"#;
+        let items = items(
+            Some(matches(&[in_channel("1700000000.0", "<@UME> can you check?", "U2", None)])),
+            Some(matches(&[dm("1700000100.0", "Can you send it?", "U3"), group.to_string()])),
+            None,
+        )
+        .await;
+        let reach = |found: &dyn Fn(&InboxItem) -> bool| items.iter().find(|i| found(i)).and_then(|i| i.reach);
+        assert_eq!(reach(&|i| i.id.ends_with("/D1")), Some(MessageReach::Direct));
+        assert_eq!(reach(&|i| i.id.ends_with("/G1")), Some(MessageReach::Group));
+        assert_eq!(reach(&|i| i.id.contains("/C9/")), Some(MessageReach::Mention));
+    }
+
+    /// Two messages from them since your last one: followed up. One, or yours in between: not. Two mentions of you
+    /// by the same person in one channel: the latest is. As macOS.
+    #[tokio::test]
+    async fn a_second_message_since_your_last_is_a_follow_up() {
+        let first = dm("1700000100.0", "Can you send the deck?", "U2");
+        let again = dm("1700000900.0", "Any news on the deck?", "U2");
+        let yours = dm("1700000500.0", "Tomorrow", "UME");
+        let both = Some(matches(&[first, again.clone()]));
+        assert_eq!(items(None, both.clone(), None).await[0].followed_up, Some(true));
+        assert_eq!(items(None, Some(matches(&[again])), None).await[0].followed_up, None);
+        assert_eq!(items(None, both, Some(matches(&[yours]))).await[0].followed_up, None);
+        let mentions = matches(&[
+            in_channel("1700000000.0", "<@UME> can you check the logs?", "U2", None),
+            in_channel("1700003000.0", "<@UME> logs, please?", "U2", None),
+        ]);
+        let both = items(Some(mentions), None, None).await;
+        let followed: Vec<&str> =
+            both.iter().filter(|i| i.followed_up == Some(true)).map(|i| i.title.as_str()).collect();
+        assert_eq!(followed, ["@you logs, please?"]);
     }
 
     fn in_channel(ts: &str, text: &str, user: &str, thread: Option<&str>) -> String {

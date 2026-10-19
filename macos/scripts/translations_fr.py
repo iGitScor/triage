@@ -510,6 +510,8 @@ FR = {
     "Current cycle": "Cycle en cours",
     "Current sprint": "Sprint en cours",
     "Open for weeks": "Ouvert depuis des semaines",
+    "Followed up": "Relancé",
+    "Waiting over a day": "En attente depuis plus d’un jour",
     "Local program on this Mac": "Programme local sur ce Mac",
     "Data on this Mac": "Données sur ce Mac",
     "Inbox cache, settings and snooze history. Tokens are in the Keychain.": "Cache de la boîte, réglages et historique des reports. Les jetons sont dans le trousseau.",

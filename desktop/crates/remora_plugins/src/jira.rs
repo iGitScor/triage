@@ -548,6 +548,8 @@ impl Issue {
             reason: None,
             related: None,
             stage,
+            reach: None,
+            followed_up: None,
         };
         if open_change || in_review::status(self.fields.status.as_ref().map(|s| s.name.as_str())) {
             item.waiting_on_review(vec![])
@@ -602,6 +604,8 @@ impl Comment {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }
@@ -803,6 +807,8 @@ impl ConfluenceResult {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         })
     }
 }

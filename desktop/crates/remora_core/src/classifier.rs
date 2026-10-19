@@ -1,4 +1,5 @@
 use crate::badge;
+use chrono::{DateTime, Utc};
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -299,7 +300,16 @@ impl KeywordIntentClassifier {
 pub struct VerbClassifier;
 
 impl VerbClassifier {
-    pub fn classify(mut item: InboxItem) -> InboxItem {
+    pub fn classify(item: InboxItem) -> InboxItem {
+        Self::classify_at(item, Utc::now())
+    }
+
+    /// `now`: what a message left in To reply is compared to, to say it has waited a day.
+    pub fn classify_at(item: InboxItem, now: DateTime<Utc>) -> InboxItem {
+        Self::verb(item).marked_for_reply(now)
+    }
+
+    fn verb(mut item: InboxItem) -> InboxItem {
         match item.bundle.id.as_str() {
             "code.authored" => {
                 item.bundle = Self::verb_for_authored(&item);

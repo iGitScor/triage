@@ -63,6 +63,14 @@ pub struct InboxItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub stage: Option<crate::TaskStage>,
+    /// How directly a message reached you, to order To reply. Not in the fingerprint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub reach: Option<crate::MessageReach>,
+    /// The same person wrote again since you last answered (Slack). Not in the fingerprint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub followed_up: Option<bool>,
 }
 
 /// Why a message went where it is (Swift's `SortReason`): the words that decided, the model, nothing clear, or you.
@@ -287,6 +295,8 @@ pub mod badge {
     pub const BLOCKED: &str = "blocked";
     pub const CYCLE: &str = "cycle";
     pub const AGE: &str = "age";
+    /// Someone wrote again while their message waited on you.
+    pub const FOLLOWED_UP: &str = "followed.up";
     pub const IN_PROGRESS: &str = "inProgress";
     pub const INVITATION: &str = "invitation";
     pub const FLAGGED: &str = "flagged";

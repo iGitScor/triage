@@ -229,7 +229,15 @@ related?: Array<string>,
 /**
  * Where a ticket stands in its tracker, to order To do within one priority. Not in the fingerprint.
  */
-stage?: TaskStage, };
+stage?: TaskStage, 
+/**
+ * How directly a message reached you, to order To reply. Not in the fingerprint.
+ */
+reach?: MessageReach, 
+/**
+ * The same person wrote again since you last answered (Slack). Not in the fingerprint.
+ */
+followedUp?: boolean, };
 
 export type ItemExtras = { prep?: PrepView, help?: HelpView, linked?: Array<LinkedView>, ranking?: string, snoozedTimes?: number, };
 
@@ -352,6 +360,13 @@ signIn: SignIn | null, };
 export type Mark = { at: string, fingerprint: string, clearedAt: string | null, };
 
 export type Message = { code: string, args: Array<string>, text: string, };
+
+/**
+ * First to last: a one-to-one conversation, a mention of you by name, a reply in a thread you started, a group
+ * conversation, a reply in a thread you only wrote in. Only the order: everything stays in To reply and counted. A
+ * message from another tool (a GitHub, Jira or Linear comment) stands with the mentions. As macOS.
+ */
+export type MessageReach = "direct" | "mention" | "ownThread" | "group" | "thread";
 
 export type Person = { name: string, avatarUrl: string | null, 
 /**

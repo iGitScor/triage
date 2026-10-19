@@ -166,6 +166,7 @@ struct SlackPluginTests {
         #expect(thread.context == "Thread in #design")
         #expect(thread.id.hasSuffix("/C1/thread/1700000100.0"))
         #expect(thread.bundle == .mentions && thread.needsAction)
+        #expect(thread.reach == .thread && thread.followedUp == nil, "erin started it, and wrote once since yours")
         #expect(await http.repliesAsked == ["C1 1700000100.0 1700000200.0"], "one call, from your last message, no DM")
     }
 

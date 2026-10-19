@@ -473,6 +473,8 @@ impl CloudPullRequest {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }
@@ -640,6 +642,8 @@ impl DataCenterPullRequest {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }

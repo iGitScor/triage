@@ -7,7 +7,9 @@ use async_trait::async_trait;
 use chrono::{DateTime, Duration, Local, NaiveDateTime, Utc};
 use regex::Regex;
 use remora_core::badge;
-use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, SignIn, Tone};
+use remora_core::{
+    Badge, ConfigField, Egress, InboxBundle, InboxItem, MessageReach, Person, PluginManifest, Priority, SignIn, Tone,
+};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::sync::{Arc, LazyLock};
@@ -354,6 +356,8 @@ impl Message {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 
@@ -451,6 +455,8 @@ impl Event {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }
@@ -560,6 +566,8 @@ impl Chat {
             reason: None,
             related: None,
             stage: None,
+            reach: Some(if self.chat_type == "oneOnOne" { MessageReach::Direct } else { MessageReach::Group }),
+            followed_up: None,
         })
     }
 }

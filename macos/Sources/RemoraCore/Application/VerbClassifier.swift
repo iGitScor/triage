@@ -33,7 +33,14 @@ public struct VerbClassifier: Sendable {
         self.classifiers = classifiers
     }
 
-    public func classify(_ item: InboxItem) -> InboxItem {
+    public func classify(_ item: InboxItem) -> InboxItem { classify(item, now: .now) }
+
+    /// `now`: what a message left in To reply is compared to, to say it has waited a day.
+    public func classify(_ item: InboxItem, now: Date) -> InboxItem {
+        verb(of: item).markedForReply(now: now)
+    }
+
+    private func verb(of item: InboxItem) -> InboxItem {
         var item = item
         switch item.bundle.id {
         case InboxBundle.authored.id:

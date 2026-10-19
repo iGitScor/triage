@@ -422,6 +422,8 @@ fn maintained_item(
         reason: None,
         related: None,
         stage: None,
+        reach: None,
+        followed_up: None,
     }
 }
 
@@ -507,6 +509,8 @@ impl Issue {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         };
         if changes.is_empty() {
             item
@@ -738,6 +742,8 @@ impl PullRequest {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }

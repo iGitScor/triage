@@ -356,7 +356,7 @@ extension MicrosoftPlugin {
             let lines = MicrosoftPlugin.plain(message.body?.content ?? "").components(separatedBy: .newlines)
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
             let preview = lines.dropFirst().joined(separator: " ")
-            return InboxItem(
+            var item = InboxItem(
                 id: InboxItem.makeID(account: accountID, local: "chat/\(id)"),
                 accountID: accountID,
                 pluginID: MicrosoftPlugin.manifest.id,
@@ -369,6 +369,8 @@ extension MicrosoftPlugin {
                 date: date,
                 needsAction: !app
             )
+            item.reach = chatType == "oneOnOne" ? .direct : .group
+            return item
         }
     }
 }

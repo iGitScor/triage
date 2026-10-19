@@ -190,6 +190,9 @@ public struct SlackPlugin: SourcePlugin {
         var message: Match
         var bundle: InboxBundle
         var id: String
+        /// The same person wrote again since you last answered: two mentions of you in one channel, or two
+        /// messages in a conversation.
+        var followedUp = false
     }
 
     /// How long after a mention a message of yours in the same channel counts as the answer, when it doesn't name
@@ -222,13 +225,25 @@ public struct SlackPlugin: SourcePlugin {
                 answer.map { Head(message: $0, bundle: .answered, id: id) }
                     ?? Head(message: mention, bundle: .mentions, id: id))
         }
+        // A second mention of you by the same person in the same channel, both unanswered: the latest says so.
+        let waiting = Dictionary(grouping: heads.indices.filter { heads[$0].bundle == .mentions }) {
+            "\(heads[$0].message.channel.id)/\(heads[$0].message.user ?? "")"
+        }
+        for indices in waiting.values where indices.count > 1 {
+            if let latest = indices.max(by: { heads[$0].message.date < heads[$1].message.date }) {
+                heads[latest].followedUp = true
+            }
+        }
         let theirs = Dictionary(uniqueKeysWithValues: latestPerConversation(direct).map { ($0.channel.id, $0) })
         let ours = Dictionary(uniqueKeysWithValues: latestPerConversation(yours).map { ($0.channel.id, $0) })
         for channel in Set(theirs.keys).union(ours.keys).sorted() {
             if let mine = ours[channel], mine.date > (theirs[channel]?.date ?? .distantPast) {
                 heads.append(Head(message: mine, bundle: theirs[channel] == nil ? .asked : .answered, id: channel))
             } else if let message = theirs[channel] {
-                heads.append(Head(message: message, bundle: .directMessages, id: channel))
+                let since = ours[channel]?.date ?? .distantPast
+                let written = direct.filter { $0.channel.id == channel && $0.user == message.user && $0.date > since }
+                heads.append(
+                    Head(message: message, bundle: .directMessages, id: channel, followedUp: written.count > 1))
             }
         }
         return heads
@@ -295,9 +310,14 @@ public struct SlackPlugin: SourcePlugin {
             // Slack always sends the thread's first message too, whatever `oldest` says: only what came after yours.
             let after = replies.messages.filter { $0.date > mineLast.date && $0.user != me && $0.botId == nil }
             let others = after.filter { !$0.text.contains("<@\(me)>") }
+            // A thread you started: its answers are to your question.
+            let reach: MessageReach =
+                replies.messages.first { $0.ts == mineLast.threadTS }?.user == me ? .ownThread : .thread
             if let reply = others.max(by: { $0.date < $1.date }) {
                 var item = reply.item(in: mineLast, accountID: accountID, me: me, teamID: teamID)
                 item.reactions = Self.reactions(reply.reactions, me: me, custom: custom)
+                item.reach = reach
+                item.followedUp = others.filter { $0.user == reply.user }.count > 1 ? true : nil
                 items.append(item)
                 continue
             }
@@ -307,10 +327,11 @@ public struct SlackPlugin: SourcePlugin {
             let answered = replies.messages.contains {
                 $0.date < mineLast.date && $0.user != me && $0.user != nil && $0.botId == nil
             }
-            items.append(
-                Self.unanswered(
-                    mineLast, answered: answered, reactions: Self.reactions(yours?.reactions, me: me, custom: custom),
-                    accountID: accountID, me: me, teamID: teamID))
+            var item = Self.unanswered(
+                mineLast, answered: answered, reactions: Self.reactions(yours?.reactions, me: me, custom: custom),
+                accountID: accountID, me: me, teamID: teamID)
+            item.reach = reach
+            items.append(item)
         }
         return (items, failed)
     }
@@ -348,6 +369,8 @@ public struct SlackPlugin: SourcePlugin {
             var item = message.item(
                 accountID: accountID, bundle: head.bundle, id: head.id, me: me, teamID: teamID,
                 reactions: reactions["\(message.channel.id)/\(message.ts)"])
+            item.reach = message.channel.isIm == true ? .direct : message.channel.isMpim == true ? .group : .mention
+            item.followedUp = head.followedUp ? true : nil
             guard [InboxBundle.asked, .answered, .finished].contains(head.bundle) else { return item }
             item.bundle = head.bundle
             item.expires = nil

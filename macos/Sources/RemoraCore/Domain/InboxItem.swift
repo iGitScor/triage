@@ -39,6 +39,10 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     public var related: [URL]?
     /// Where a ticket stands in its tracker, to order To do within one priority. Not in the fingerprint.
     public var stage: TaskStage?
+    /// How directly a message reached you, to order To reply. Not in the fingerprint.
+    public var reach: MessageReach?
+    /// The same person wrote again since you last answered (Slack). Not in the fingerprint.
+    public var followedUp: Bool?
 
     public init(
         id: String,
@@ -242,6 +246,8 @@ public struct BadgeID: RawRepresentable, Hashable, Codable, Sendable {
     public static let blocked = BadgeID(rawValue: "blocked")
     public static let cycle = BadgeID(rawValue: "cycle")
     public static let age = BadgeID(rawValue: "age")
+    /// Someone wrote again while their message waited on you.
+    public static let followedUp = BadgeID(rawValue: "followed.up")
     public static let inProgress = BadgeID(rawValue: "inProgress")
     public static let invitation = BadgeID(rawValue: "invitation")
     public static let flagged = BadgeID(rawValue: "flagged")

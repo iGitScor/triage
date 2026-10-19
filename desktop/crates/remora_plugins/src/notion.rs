@@ -517,6 +517,8 @@ impl Page {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         };
         if in_review::status(self.status()) {
             item.waiting_on_review(vec![])

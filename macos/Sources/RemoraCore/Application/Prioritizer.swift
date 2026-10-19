@@ -1,7 +1,7 @@
 import Foundation
 
 /// Orders a bundle by importance rather than recency: overdue or due today first, then priority, then where a ticket
-/// stands (`TaskStage`), then your personal habits, then the nearest due date, then the most recent activity.
+/// stands (`TaskStage`) or how a message reached you (followed up first, then `MessageReach`), then your personal habits, then the nearest due date, then the most recent activity.
 public struct Prioritizer: Sendable {
     public var now: Date
     public var calendar: Calendar
@@ -22,6 +22,12 @@ public struct Prioritizer: Sendable {
             let priorityA = a.priority ?? .normal
             let priorityB = b.priority ?? .normal
             if priorityA != priorityB { return priorityA > priorityB }
+            let followedA = a.followedUp == true
+            let followedB = b.followedUp == true
+            if followedA != followedB { return followedA }
+            let reachA = a.reach ?? .mention
+            let reachB = b.reach ?? .mention
+            if reachA != reachB { return reachA < reachB }
             let stageA = a.stage ?? .todo
             let stageB = b.stage ?? .todo
             if stageA != stageB { return stageA < stageB }

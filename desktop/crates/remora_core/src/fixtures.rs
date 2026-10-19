@@ -32,6 +32,8 @@ pub fn item(id: &str, bundle: InboxBundle) -> InboxItem {
         reason: None,
         related: None,
         stage: None,
+        reach: None,
+        followed_up: None,
     }
 }
 

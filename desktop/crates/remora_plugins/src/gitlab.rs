@@ -260,6 +260,8 @@ impl GitLabPlugin {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }
@@ -409,6 +411,8 @@ impl BranchPipeline {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         }
     }
 }
@@ -489,6 +493,8 @@ impl Todo {
             reason: None,
             related: None,
             stage: None,
+            reach: None,
+            followed_up: None,
         })
     }
 }

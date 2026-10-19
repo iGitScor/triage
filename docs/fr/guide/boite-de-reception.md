@@ -108,6 +108,11 @@ Dans chaque verbe, Remora place d’abord :
    backlog. Son statut ou son badge dit lequel ; un ticket urgent ou haut pas commencé depuis
    deux semaines affiche *Ouvert depuis des semaines*. Rien n’est caché, et un statut que Remora ne sait pas lire
    reste avec le reste ;
+   Pour un message Slack ou Teams, la façon dont il vous est arrivé : quelqu’un qui a réécrit sans réponse de votre
+   part (*Relancé*, seulement si son dernier message demande encore quelque chose), puis un message en tête-à-tête, une
+   mention de vous, une réponse dans un fil que vous avez lancé, une conversation de groupe, une réponse dans un fil où
+   vous avez seulement écrit. Un message en tête-à-tête ou une mention laissés un jour affichent *En attente depuis plus
+   d’un jour* ;
 4. l’échéance la plus proche ;
 5. l’activité la plus récente.
 

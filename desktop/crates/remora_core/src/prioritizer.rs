@@ -1,4 +1,4 @@
-use crate::{InboxItem, Priority, TaskStage};
+use crate::{InboxItem, MessageReach, Priority, TaskStage};
 use chrono::{DateTime, Local, Utc};
 use std::cmp::Ordering;
 
@@ -6,7 +6,8 @@ use std::cmp::Ordering;
 pub type PersonalScore<'a> = &'a dyn Fn(&InboxItem) -> f64;
 
 /// Orders a bundle by importance rather than recency: overdue or due today first, then priority, then where a ticket
-/// stands (`TaskStage`), then your habits (when learned), then the nearest due date, then the most recent activity.
+/// stands (`TaskStage`) or how a message reached you (followed up first, then `MessageReach`), then your habits (when
+/// learned), then the nearest due date, then the most recent activity.
 pub struct Prioritizer<'a> {
     pub now: DateTime<Utc>,
     /// Breaks ties after explicit priority, never before it.
@@ -29,6 +30,8 @@ impl<'a> Prioritizer<'a> {
     fn compare(&self, a: &InboxItem, b: &InboxItem) -> Ordering {
         let pressing = self.is_pressing(b).cmp(&self.is_pressing(a));
         let priority = b.priority.unwrap_or(Priority::Normal).cmp(&a.priority.unwrap_or(Priority::Normal));
+        let followed = (b.followed_up == Some(true)).cmp(&(a.followed_up == Some(true)));
+        let reach = a.reach.unwrap_or(MessageReach::Mention).cmp(&b.reach.unwrap_or(MessageReach::Mention));
         let stage = a.stage.unwrap_or(TaskStage::Todo).cmp(&b.stage.unwrap_or(TaskStage::Todo));
         let due = match (a.due, b.due) {
             (Some(x), Some(y)) => x.cmp(&y),
@@ -44,7 +47,14 @@ impl<'a> Prioritizer<'a> {
                 Ordering::Equal
             }
         });
-        pressing.then(priority).then(stage).then(personal).then(due).then(b.date.cmp(&a.date))
+        pressing
+            .then(priority)
+            .then(followed)
+            .then(reach)
+            .then(stage)
+            .then(personal)
+            .then(due)
+            .then(b.date.cmp(&a.date))
     }
 
     /// Overdue or due today, in local time.
