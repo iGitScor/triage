@@ -1,10 +1,13 @@
 use crate::{decode, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Local, NaiveDate, TimeZone, Utc};
-use remora_core::{badge, in_review};
-use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone};
+use remora_core::{badge, in_review, link_finder};
+use remora_core::{
+    Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, TaskStage, Tone,
+};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 pub fn manifest() -> PluginManifest {
@@ -47,7 +50,10 @@ const ISSUES_QUERY: &str = r#"query {
     name
     assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
       nodes {
-        id identifier title url priority dueDate updatedAt state { name type }
+        id identifier title url priority dueDate createdAt updatedAt state { name type }
+        cycle { startsAt endsAt }
+        inverseRelations(first: 10) { nodes { type issue { identifier state { type } } } }
+        comments(last: 5) { nodes { resolvedAt user { isMe } botActor { id } } }
         attachments(first: 10) { nodes { url metadata } }
       }
       pageInfo { hasNextPage }
@@ -104,21 +110,42 @@ impl SourcePlugin for LinearPlugin {
                 None => (vec![], Some(crate::partial("Mentions and comments", &error))),
             },
         };
-        let now = Utc::now();
-        let mut items: Vec<InboxItem> =
-            issues.viewer.assigned_issues.nodes.iter().map(|i| i.item(&self.account_id)).collect();
-        items.extend(
-            notifications
-                .iter()
-                .filter(|n| n.read_at.is_none() && n.created_at > now - Duration::days(7) && n.is_actionable())
-                .map(|n| n.item(&self.account_id)),
-        );
-        let cut = issues.viewer.assigned_issues.page_info.as_ref().is_some_and(|p| p.has_next_page);
-        Ok(SourceSnapshot {
-            identity: issues.viewer.name,
+        let mut snapshot = Self::snapshot(issues.viewer, &notifications, &self.account_id, Utc::now());
+        snapshot.remarks.extend(failed);
+        Ok(snapshot)
+    }
+}
+
+impl LinearPlugin {
+    fn snapshot(
+        viewer: Viewer,
+        notifications: &[Notification],
+        account_id: &str,
+        now: DateTime<Utc>,
+    ) -> SourceSnapshot {
+        let unread: Vec<&Notification> = notifications
+            .iter()
+            .filter(|n| n.read_at.is_none() && n.created_at > now - Duration::days(7) && n.is_actionable())
+            .collect();
+        // An issue someone wrote to you about goes first in its priority: its comment's link is the issue's.
+        let discussed: HashSet<String> =
+            unread.iter().filter_map(|n| n.url.as_deref().map(link_finder::address)).collect();
+        let mut items: Vec<InboxItem> = viewer
+            .assigned_issues
+            .nodes
+            .iter()
+            .map(|i| {
+                let discussed = i.url.as_deref().is_some_and(|url| discussed.contains(&link_finder::address(url)));
+                i.item(account_id, now, discussed)
+            })
+            .collect();
+        items.extend(unread.iter().map(|n| n.item(account_id)));
+        let cut = viewer.assigned_issues.page_info.as_ref().is_some_and(|p| p.has_next_page);
+        SourceSnapshot {
+            identity: viewer.name,
             items,
-            remarks: cut.then(|| crate::truncated("Linear")).into_iter().chain(failed).collect(),
-        })
+            remarks: cut.then(|| crate::truncated("Linear")).into_iter().collect(),
+        }
     }
 }
 
@@ -178,6 +205,58 @@ struct Issue {
     state: Option<State>,
     #[serde(default)]
     attachments: Option<Nodes<Attachment>>,
+    #[serde(default)]
+    created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    cycle: Option<Cycle>,
+    /// Relations pointing at it: "blocks" from another issue blocks this one.
+    #[serde(default)]
+    inverse_relations: Option<Nodes<Relation>>,
+    /// The latest comments, oldest first.
+    #[serde(default)]
+    comments: Option<Nodes<IssueComment>>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct IssueComment {
+    resolved_at: Option<DateTime<Utc>>,
+    user: Option<CommentAuthor>,
+    /// Set when an integration wrote it (GitHub, Slack): not a person waiting on you.
+    bot_actor: Option<serde::de::IgnoredAny>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CommentAuthor {
+    is_me: Option<bool>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Cycle {
+    starts_at: Option<DateTime<Utc>>,
+    ends_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Deserialize)]
+struct Relation {
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    issue: Option<RelatedIssue>,
+}
+
+#[derive(Deserialize)]
+struct RelatedIssue {
+    identifier: String,
+    /// Only its type is asked for.
+    state: Option<RelatedState>,
+}
+
+#[derive(Deserialize)]
+struct RelatedState {
+    #[serde(rename = "type")]
+    kind: Option<String>,
 }
 
 /// A link on an issue. Its metadata is the integration's own: read leniently, so an unexpected shape never fails the
@@ -208,6 +287,70 @@ fn lenient_string<'de, D: serde::Deserializer<'de>>(decoder: D) -> Result<Option
 }
 
 impl Issue {
+    fn state_kind(&self) -> Option<&str> {
+        self.state.as_ref().and_then(|s| s.kind.as_deref())
+    }
+
+    /// The issues still open that block it.
+    fn blockers(&self) -> Vec<&str> {
+        let relations = self.inverse_relations.as_ref().map_or(&[][..], |r| &r.nodes);
+        relations
+            .iter()
+            .filter(|r| r.kind.as_deref() == Some("blocks"))
+            .filter_map(|r| r.issue.as_ref())
+            .filter(|other| {
+                let kind = other.state.as_ref().and_then(|s| s.kind.as_deref()).unwrap_or("");
+                !["completed", "canceled"].contains(&kind)
+            })
+            .map(|other| other.identifier.as_str())
+            .collect()
+    }
+
+    /// The latest comment written by a person is someone else's, and its thread isn't resolved: they wait on you,
+    /// even when Linear's notification was read long ago.
+    fn awaits_your_answer(&self) -> bool {
+        let comments = self.comments.as_ref().map_or(&[][..], |c| &c.nodes);
+        let Some(last) = comments.iter().rev().find(|c| c.bot_actor.is_none() && c.user.is_some()) else {
+            return false;
+        };
+        last.user.as_ref().and_then(|u| u.is_me) == Some(false) && last.resolved_at.is_none()
+    }
+
+    /// Started, then put aside ("Paused", "On hold"): it waits like an issue not started.
+    fn paused(&self) -> bool {
+        self.state_kind() == Some("started") && TaskStage::paused(self.state.as_ref().map(|s| s.name.as_str()))
+    }
+
+    fn in_current_cycle(&self, now: DateTime<Utc>) -> bool {
+        match self.cycle.as_ref() {
+            Some(Cycle { starts_at: Some(start), ends_at: Some(end) }) => *start <= now && now < *end,
+            _ => false,
+        }
+    }
+
+    /// Where it stands, from its status type. A comment waiting for you comes first, a blocker after the rest; a
+    /// status Linear doesn't type stands with the rest.
+    fn stage(&self, now: DateTime<Utc>, discussed: bool) -> Option<TaskStage> {
+        if discussed || self.awaits_your_answer() {
+            return Some(TaskStage::Discussed);
+        }
+        if !self.blockers().is_empty() {
+            return Some(TaskStage::Blocked);
+        }
+        if self.paused() {
+            return Some(TaskStage::Todo);
+        }
+        match self.state_kind() {
+            Some("started") => Some(TaskStage::Started),
+            Some("triage") => Some(TaskStage::Triage),
+            // A duplicate is another issue's: last, still shown.
+            Some("backlog" | "duplicate") => Some(TaskStage::Backlog),
+            _ if self.in_current_cycle(now) => Some(TaskStage::Planned),
+            Some("unstarted") => Some(TaskStage::Todo),
+            _ => None,
+        }
+    }
+
     /// Its pull and merge requests (Linear's GitHub and GitLab integrations, or a link pasted by hand).
     fn changes(&self) -> Vec<&Attachment> {
         let attachments = self.attachments.as_ref().map_or(&[][..], |a| &a.nodes);
@@ -224,7 +367,7 @@ impl Issue {
         self.changes().iter().any(|c| c.is_open()) || in_review::status(self.state.as_ref().map(|s| s.name.as_str()))
     }
 
-    /// Linear's 1 urgent … 4 low (0 none). Backlog counts as low unless urgent or high.
+    /// Linear's 1 urgent … 4 low (0 none). Backlog and duplicates count as low unless urgent or high.
     fn item_priority(&self) -> Priority {
         let mapped = match self.priority {
             Some(1) => Priority::Urgent,
@@ -232,14 +375,15 @@ impl Issue {
             Some(4) => Priority::Low,
             _ => Priority::Normal,
         };
-        if self.state.as_ref().and_then(|s| s.kind.as_deref()) == Some("backlog") && mapped < Priority::High {
+        if matches!(self.state_kind(), Some("backlog" | "duplicate")) && mapped < Priority::High {
             Priority::Low
         } else {
             mapped
         }
     }
 
-    fn item(&self, account_id: &str) -> InboxItem {
+    /// `discussed`: a mention or comment on it still unread in your Linear inbox.
+    fn item(&self, account_id: &str, now: DateTime<Utc>, discussed: bool) -> InboxItem {
         let mut badges = vec![];
         match self.priority {
             Some(1) => {
@@ -255,7 +399,19 @@ impl Issue {
         if let Some(state) = &self.state {
             badges.push(Badge::new(badge::STATUS, &state.name, Tone::Neutral));
         }
-        let priority = self.item_priority();
+        let stage = self.stage(now, discussed);
+        // Someone wrote to you: a low or backlog issue is counted again.
+        let discussed = stage == Some(TaskStage::Discussed);
+        let priority = if discussed { self.item_priority().max(Priority::Normal) } else { self.item_priority() };
+        let unstarted = self.state_kind() != Some("started") || self.paused();
+        let long_open = self.created_at.is_some_and(|created| now - created > TaskStage::LONG_OPEN);
+        badges.extend(TaskStage::badges(
+            discussed,
+            !self.blockers().is_empty(),
+            stage == Some(TaskStage::Planned),
+            priority >= Priority::High && unstarted && long_open,
+            false,
+        ));
         let item = InboxItem {
             id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
@@ -280,10 +436,13 @@ impl Issue {
             reactions: None,
             reason: None,
             related: None,
+            stage,
         };
         if self.in_review() {
             let changes = self.changes().iter().filter_map(|c| c.url.clone()).collect();
             item.waiting_on_review(changes)
+        } else if stage == Some(TaskStage::Blocked) {
+            item.blocked_by_another()
         } else {
             item
         }
@@ -373,6 +532,7 @@ impl Notification {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -483,6 +643,139 @@ pub(crate) mod tests {
         assert_eq!(snapshot.items[0].related, Some(vec!["https://github.com/acme/app/pull/9".to_string()]));
         assert!(!snapshot.items[0].needs_action);
         assert_eq!(snapshot.items[2].related, None, "no pull request to tie it to");
+    }
+
+    fn fixed_now() -> DateTime<Utc> {
+        Utc.timestamp_opt(1_800_000_000, 0).unwrap()
+    }
+
+    fn linear(extra: &str, priority: u8) -> Issue {
+        let json = format!(
+            r#"{{"id": "i1", "identifier": "ENG-42", "title": "Fix", "updatedAt": "2027-01-15T08:00:00Z",
+               "url": "https://linear.app/acme/issue/ENG-42/fix", "priority": {priority}, {extra}}}"#
+        );
+        serde_json::from_str(&json).unwrap()
+    }
+
+    /// Where an issue stands, from its status type and its cycle; a status Linear doesn't type isn't guessed. As
+    /// macOS.
+    #[test]
+    fn linear_stages_from_the_status_type_and_the_cycle() {
+        let now = fixed_now();
+        let cycle = r#""cycle": {"startsAt": "2027-01-10T00:00:00Z", "endsAt": "2027-01-24T00:00:00Z"}"#;
+        let stage = |extra: &str| linear(extra, 3).stage(now, false);
+        assert_eq!(stage(r#""state": {"name": "In Progress", "type": "started"}"#), Some(TaskStage::Started));
+        let planned = linear(&format!(r#""state": {{"name": "Todo", "type": "unstarted"}}, {cycle}"#), 3);
+        assert_eq!(planned.stage(now, false), Some(TaskStage::Planned));
+        assert!(planned.item("a", now, false).has_badge(badge::CYCLE));
+        assert_eq!(stage(r#""state": {"name": "Todo", "type": "unstarted"}"#), Some(TaskStage::Todo));
+        assert_eq!(stage(r#""state": {"name": "Triage", "type": "triage"}"#), Some(TaskStage::Triage));
+        assert_eq!(stage(r#""state": {"name": "Custom"}"#), None, "no guess");
+    }
+
+    /// Blocked by an issue still open: last in its priority, and said so. Not by a completed one. As macOS.
+    #[test]
+    fn a_linear_issue_blocked_by_an_open_one_goes_down() {
+        let now = fixed_now();
+        let relations = |kind: &str| {
+            linear(
+                &format!(
+                    r#""state": {{"name": "Todo", "type": "unstarted"}}, "inverseRelations": {{"nodes": [
+                      {{"type": "blocks", "issue": {{"identifier": "ENG-40", "state": {{"type": "{kind}"}}}}}},
+                      {{"type": "related", "issue": {{"identifier": "ENG-41"}}}}]}}"#
+                ),
+                3,
+            )
+        };
+        let blocked = relations("started");
+        assert_eq!(blocked.blockers(), ["ENG-40"]);
+        let item = blocked.item("a", now, false);
+        assert!(item.stage == Some(TaskStage::Blocked) && item.has_badge(badge::BLOCKED));
+        assert!(item.bundle == InboxBundle::blocked() && !item.needs_action, "it waits on ENG-40, in Waiting");
+        assert!(relations("completed").blockers().is_empty());
+    }
+
+    /// A comment waiting for you lifts the issue first in its priority, and a low one is counted again. As macOS.
+    #[test]
+    fn a_linear_issue_someone_wrote_about_comes_first() {
+        let viewer = Viewer {
+            name: "Alice".into(),
+            assigned_issues: Nodes {
+                nodes: vec![linear(r#""state": {"name": "Backlog", "type": "backlog"}"#, 4)],
+                page_info: None,
+            },
+        };
+        let comment: Notification = serde_json::from_str(
+            r#"{"id": "n1", "type": "issueNewComment", "url": "https://linear.app/acme/issue/ENG-42/old#comment-1",
+                "createdAt": "2027-01-15T07:00:00Z"}"#,
+        )
+        .unwrap();
+        let items = LinearPlugin::snapshot(viewer, &[comment], "a", fixed_now()).items;
+        let issue = items.iter().find(|i| i.context == "ENG-42").unwrap();
+        assert!(issue.stage == Some(TaskStage::Discussed) && issue.has_badge(badge::DISCUSSED));
+        assert!(issue.priority == Some(Priority::Normal) && issue.needs_action);
+    }
+
+    /// A comment from someone else, never answered nor resolved, lifts the issue even when Linear's notification was
+    /// read months ago; your answer, a resolved thread or a bot's comment don't. A duplicate, otherwise last. As macOS.
+    #[test]
+    fn a_linear_comment_left_unanswered_comes_first() {
+        let issue = |comments: &str| {
+            linear(
+                &format!(
+                    r#""state": {{"name": "Duplicate", "type": "duplicate"}}, "comments": {{"nodes": [{comments}]}}"#
+                ),
+                3,
+            )
+            .item("a", fixed_now(), false)
+        };
+        let theirs = r#"{"resolvedAt": null, "user": {"isMe": false}, "botActor": null}"#;
+        let mine = r#"{"resolvedAt": null, "user": {"isMe": true}, "botActor": null}"#;
+        let bot = r#"{"resolvedAt": null, "user": null, "botActor": {"id": "github"}}"#;
+        let unanswered = issue(theirs);
+        assert!(
+            unanswered.stage == Some(TaskStage::Discussed)
+                && unanswered.has_badge(badge::DISCUSSED)
+                && unanswered.needs_action
+        );
+        assert_eq!(
+            issue(&format!("{theirs}, {bot}")).stage,
+            Some(TaskStage::Discussed),
+            "a bot after them doesn't answer"
+        );
+        assert_eq!(issue(&format!("{theirs}, {mine}")).stage, Some(TaskStage::Backlog));
+        assert_eq!(
+            issue(r#"{"resolvedAt": "2027-01-01T00:00:00Z", "user": {"isMe": false}}"#).stage,
+            Some(TaskStage::Backlog)
+        );
+        assert_eq!(issue("").priority, Some(Priority::Low), "a duplicate counts as low");
+    }
+
+    /// Started, then paused: ranked as not started, and old enough to say so when it matters. As macOS.
+    #[test]
+    fn a_paused_issue_is_not_work_in_progress() {
+        let now = fixed_now();
+        let paused =
+            linear(r#""state": {"name": "Paused", "type": "started"}, "createdAt": "2026-12-01T00:00:00Z""#, 2);
+        assert_eq!(paused.stage(now, false), Some(TaskStage::Todo));
+        assert!(paused.item("a", now, false).has_badge(badge::AGE));
+        assert!(TaskStage::paused(Some("On hold")) && TaskStage::paused(Some("En pause")));
+        assert!(!TaskStage::paused(Some("In Progress")));
+    }
+
+    /// Urgent or high, not started, open for weeks: said on the row, without making Done come back. As macOS.
+    #[test]
+    fn an_urgent_issue_left_for_weeks_says_so() {
+        let now = fixed_now();
+        let old = linear(r#""state": {"name": "Todo", "type": "unstarted"}, "createdAt": "2026-12-01T00:00:00Z""#, 2);
+        let item = old.item("a", now, false);
+        assert!(item.has_badge(badge::AGE));
+        let mut aged = item.clone();
+        aged.badges.retain(|b| b.id != badge::AGE);
+        assert_eq!(aged.fingerprint(), item.fingerprint());
+        let started =
+            linear(r#""state": {"name": "In Progress", "type": "started"}, "createdAt": "2026-12-01T00:00:00Z""#, 2);
+        assert!(!started.item("a", now, false).has_badge(badge::AGE));
     }
 
     #[tokio::test]

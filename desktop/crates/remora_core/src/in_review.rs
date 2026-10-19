@@ -30,6 +30,13 @@ pub(crate) fn host_and_path(url: &str) -> (&str, &str) {
 }
 
 impl InboxItem {
+    /// Waiting on another ticket that blocks it: in Waiting until that one is done, when it comes back by itself.
+    pub fn blocked_by_another(mut self) -> InboxItem {
+        self.bundle = InboxBundle::blocked();
+        self.needs_action = false;
+        self
+    }
+
     /// Up for review: in Awaiting, nothing to do until the reviewers answer, tied to its pull requests when known.
     pub fn waiting_on_review(mut self, changes: Vec<String>) -> InboxItem {
         self.bundle = InboxBundle::awaiting();

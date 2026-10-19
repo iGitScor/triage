@@ -7,6 +7,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
@@ -36,6 +42,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
@@ -75,6 +87,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
@@ -89,6 +107,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
@@ -160,6 +184,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
@@ -292,6 +322,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
@@ -331,6 +367,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
@@ -380,6 +422,12 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- Linear and Jira tickets in *To do* are ordered by where they stand, within their priority: one with a comment for
+  you first (counted again if it was low; a Linear comment left unanswered counts even once its notification is
+  read), then what you started (not what's paused), the current cycle or sprint, the rest, triage, the backlog and
+  duplicates. A badge says why (*New comment*, *Current cycle*, *Current sprint*, *Open for weeks* on an urgent or
+  high ticket left unstarted). A ticket another open one blocks waits in a *Blocked* section of *Waiting*. Nothing is
+  hidden. Mac, Windows and Linux.
 - A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
   is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
   links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its

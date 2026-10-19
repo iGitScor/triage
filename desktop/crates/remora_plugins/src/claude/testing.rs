@@ -39,6 +39,7 @@ pub fn item(id: &str) -> InboxItem {
         reactions: None,
         reason: None,
         related: None,
+        stage: None,
     }
 }
 

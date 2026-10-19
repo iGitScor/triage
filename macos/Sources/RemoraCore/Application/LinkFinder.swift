@@ -77,7 +77,7 @@ public struct LinkFinder: Sendable {
 
     /// A page whatever the link's case, query, anchor or trailing slash. A Linear issue without its slug, which
     /// follows the title: a comment's link (`…/issue/ENG-42/old-title#comment-1`) is still its issue's.
-    static func address(_ url: URL) -> String {
+    public static func address(_ url: URL) -> String {
         var parts = url.path.lowercased().split(separator: "/").map(String.init)
         if url.host == "linear.app", parts.count > 3, parts[1] == "issue" { parts = Array(parts.prefix(3)) }
         return ([url.host?.lowercased() ?? ""] + parts).joined(separator: "/")

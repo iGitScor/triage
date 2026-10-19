@@ -37,6 +37,8 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     /// Pages the source ties this item to (a ticket's pull requests): linked for sure to the items at those
     /// addresses. Not in the fingerprint.
     public var related: [URL]?
+    /// Where a ticket stands in its tracker, to order To do within one priority. Not in the fingerprint.
+    public var stage: TaskStage?
 
     public init(
         id: String,
@@ -80,7 +82,8 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
 
     /// Changes whenever something noteworthy happens, so Done or snoozed items can resurface.
     public var fingerprint: String {
-        let badgeIDs = badges.map(\.id.rawValue).sorted().joined(separator: ",")
+        // A ticket that ages brings nothing new: Done stays done.
+        let badgeIDs = badges.filter { $0.id != .age }.map(\.id.rawValue).sorted().joined(separator: ",")
         return "\(date.timeIntervalSince1970)|\(badgeIDs)"
     }
 
@@ -233,6 +236,12 @@ public struct BadgeID: RawRepresentable, Hashable, Codable, Sendable {
     public static let due = BadgeID(rawValue: "due")
     public static let dueToday = BadgeID(rawValue: "due.today")
     public static let overdue = BadgeID(rawValue: "overdue")
+    /// A ticket someone wrote to you about (a mention or comment still unread), a ticket another one blocks, one in
+    /// the current cycle or sprint, an urgent or high one left unstarted for weeks.
+    public static let discussed = BadgeID(rawValue: "discussed")
+    public static let blocked = BadgeID(rawValue: "blocked")
+    public static let cycle = BadgeID(rawValue: "cycle")
+    public static let age = BadgeID(rawValue: "age")
     public static let inProgress = BadgeID(rawValue: "inProgress")
     public static let invitation = BadgeID(rawValue: "invitation")
     public static let flagged = BadgeID(rawValue: "flagged")

@@ -7,7 +7,9 @@ use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use regex::Regex;
 use remora_core::{badge, in_review};
-use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone};
+use remora_core::{
+    Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, TaskStage, Tone,
+};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -74,6 +76,8 @@ const ASSIGNED_JQL: &str = "assignee = currentUser() AND statusCategory != Done 
 /// Jira): they wait on the review, like a status "In Review".
 const OPEN_CHANGES_JQL: &str =
     "assignee = currentUser() AND statusCategory != Done AND development[pullrequests].open > 0";
+/// Assigned issues in a sprint that is open (Jira Software): planned now.
+const SPRINT_JQL: &str = "assignee = currentUser() AND statusCategory != Done AND sprint in openSprints()";
 /// Issues you watch (Jira adds you to those you create, are assigned or comment on) with recent activity: their
 /// comments are read for mentions of you.
 const WATCHED_JQL: &str = "watcher = currentUser() AND updated >= -7d ORDER BY updated DESC";
@@ -152,25 +156,51 @@ impl JiraPlugin {
         watched: &SearchPage,
         confluence: &ConfluencePage,
         with_open_changes: &HashSet<String>,
+        in_sprint: &HashSet<String>,
         host: &str,
         account_id: &str,
         now: DateTime<Utc>,
     ) -> SourceSnapshot {
-        let mut items: Vec<InboxItem> =
-            assigned.issues.iter().map(|i| i.item(host, account_id, with_open_changes.contains(&i.key))).collect();
         let week_ago = now - Duration::days(7);
-        for issue in &watched.issues {
-            let comments = issue.fields.comment.as_ref().map(|c| c.comments.as_slice()).unwrap_or_default();
-            items.extend(
-                comments
+        let mentioning: Vec<(&Issue, Vec<&Comment>)> = watched
+            .issues
+            .iter()
+            .map(|issue| {
+                let comments = issue.fields.comment.as_ref().map(|c| c.comments.as_slice()).unwrap_or_default();
+                let mentions = comments
                     .iter()
                     .filter(|c| {
                         jira_date(c.created.as_deref()).is_some_and(|d| d > week_ago)
                             && !me.is_author(c)
                             && c.body.mentions(me)
                     })
-                    .map(|c| c.item(issue, host, account_id)),
-            );
+                    .collect();
+                (issue, mentions)
+            })
+            .collect();
+        // An issue with a comment that mentions you goes first in its priority.
+        let discussed: HashSet<&str> = mentioning
+            .iter()
+            .filter(|(_, comments)| !comments.is_empty())
+            .map(|(issue, _)| issue.key.as_str())
+            .collect();
+        let mut items: Vec<InboxItem> = assigned
+            .issues
+            .iter()
+            .map(|i| {
+                let key = i.key.as_str();
+                i.item(
+                    host,
+                    account_id,
+                    with_open_changes.contains(key),
+                    in_sprint.contains(key),
+                    discussed.contains(key),
+                    now,
+                )
+            })
+            .collect();
+        for (issue, comments) in &mentioning {
+            items.extend(comments.iter().map(|c| c.item(issue, host, account_id)));
         }
         // Not the pages you changed last: you have seen those.
         items.extend(
@@ -203,13 +233,17 @@ impl SourcePlugin for JiraPlugin {
                 None
             }
         };
-        let (assigned, watched, with_changes) = futures::join!(
-            self.search(ASSIGNED_JQL, "summary,priority,duedate,status,updated", "50"),
+        // Quiet too: Jira without Jira Software has no sprints.
+        let (assigned, watched, with_changes, sprint) = futures::join!(
+            self.search(ASSIGNED_JQL, "summary,priority,duedate,status,created,updated,issuelinks", "50"),
             self.search(WATCHED_JQL, "summary,comment", "25"),
             with_changes,
+            self.search(SPRINT_JQL, "summary", "50"),
         );
         let with_open_changes: HashSet<String> =
             with_changes.map(|page| page.issues.into_iter().map(|i| i.key).collect()).unwrap_or_default();
+        let in_sprint: HashSet<String> =
+            sprint.map(|page| page.issues.into_iter().map(|i| i.key).collect()).unwrap_or_default();
         // Mentions are a bonus: if that search fails, assigned issues still come through, and a remark says so.
         let (watched, failed) = match watched {
             Ok(page) => (page, None),
@@ -235,6 +269,7 @@ impl SourcePlugin for JiraPlugin {
             &watched,
             &pages,
             &with_open_changes,
+            &in_sprint,
             &self.host,
             &self.account_id,
             Utc::now(),
@@ -331,13 +366,59 @@ struct Comments {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Status {
+    name: String,
+    status_category: Option<Category>,
+}
+
+#[derive(Deserialize)]
+struct Category {
+    key: Option<String>,
+}
+
+impl Status {
+    /// "new" (To Do), "indeterminate" (In Progress) or "done".
+    fn category(&self) -> Option<&str> {
+        self.status_category.as_ref().and_then(|c| c.key.as_deref())
+    }
+}
+
+#[derive(Deserialize)]
 struct Fields {
     summary: Option<String>,
     priority: Option<Named>,
     duedate: Option<String>,
-    status: Option<Named>,
+    status: Option<Status>,
+    created: Option<String>,
     updated: Option<String>,
     comment: Option<Comments>,
+    issuelinks: Option<Vec<Link>>,
+}
+
+/// A link to another issue. `inwardIssue` under "Blocks" reads "is blocked by" it.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Link {
+    #[serde(rename = "type")]
+    kind: Option<LinkKind>,
+    inward_issue: Option<LinkedIssue>,
+}
+
+#[derive(Deserialize)]
+struct LinkKind {
+    name: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct LinkedIssue {
+    key: String,
+    fields: Option<LinkedFields>,
+}
+
+#[derive(Deserialize)]
+struct LinkedFields {
+    status: Option<Status>,
 }
 
 #[derive(Deserialize)]
@@ -366,9 +447,55 @@ impl Issue {
         }
     }
 
+    fn category(&self) -> Option<&str> {
+        self.fields.status.as_ref().and_then(Status::category)
+    }
+
+    /// The issues not done yet that block it.
+    fn blockers(&self) -> Vec<&str> {
+        let links = self.fields.issuelinks.as_deref().unwrap_or_default();
+        links
+            .iter()
+            .filter(|l| l.kind.as_ref().and_then(|k| k.name.as_deref()) == Some("Blocks"))
+            .filter_map(|l| l.inward_issue.as_ref())
+            .filter(|other| {
+                other.fields.as_ref().and_then(|f| f.status.as_ref()).and_then(Status::category) != Some("done")
+            })
+            .map(|other| other.key.as_str())
+            .collect()
+    }
+
+    /// Where it stands, from its status category: In Progress is started, To Do planned when in an open sprint.
+    fn stage(&self, in_sprint: bool, discussed: bool) -> Option<TaskStage> {
+        if discussed {
+            return Some(TaskStage::Discussed);
+        }
+        if !self.blockers().is_empty() {
+            return Some(TaskStage::Blocked);
+        }
+        if TaskStage::paused(self.fields.status.as_ref().map(|s| s.name.as_str())) {
+            return Some(if in_sprint { TaskStage::Planned } else { TaskStage::Todo });
+        }
+        match self.category() {
+            Some("indeterminate") => Some(TaskStage::Started),
+            Some("new") => Some(if in_sprint { TaskStage::Planned } else { TaskStage::Todo }),
+            _ => in_sprint.then_some(TaskStage::Planned),
+        }
+    }
+
     /// `open_change`: a pull request is still open for it. Up for review then, or when its status says so.
-    fn item(&self, host: &str, account_id: &str, open_change: bool) -> InboxItem {
-        let priority = self.item_priority();
+    /// `in_sprint`: in an open sprint. `discussed`: a recent comment mentions you.
+    fn item(
+        &self,
+        host: &str,
+        account_id: &str,
+        open_change: bool,
+        in_sprint: bool,
+        discussed: bool,
+        now: DateTime<Utc>,
+    ) -> InboxItem {
+        // Someone wrote to you: a low issue is counted again.
+        let priority = if discussed { self.item_priority().max(Priority::Normal) } else { self.item_priority() };
         let mut badges = vec![];
         match priority {
             Priority::Urgent => {
@@ -384,6 +511,18 @@ impl Issue {
         if let Some(status) = &self.fields.status {
             badges.push(Badge::new(badge::STATUS, &status.name, Tone::Neutral));
         }
+        let stage = self.stage(in_sprint, discussed);
+        let unstarted = self.category() != Some("indeterminate")
+            || TaskStage::paused(self.fields.status.as_ref().map(|s| s.name.as_str()));
+        let long_open =
+            jira_date(self.fields.created.as_deref()).is_some_and(|created| now - created > TaskStage::LONG_OPEN);
+        badges.extend(TaskStage::badges(
+            discussed,
+            !self.blockers().is_empty(),
+            stage == Some(TaskStage::Planned),
+            priority >= Priority::High && unstarted && long_open,
+            true,
+        ));
         let item = InboxItem {
             id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
@@ -408,9 +547,12 @@ impl Issue {
             reactions: None,
             reason: None,
             related: None,
+            stage,
         };
         if open_change || in_review::status(self.fields.status.as_ref().map(|s| s.name.as_str())) {
             item.waiting_on_review(vec![])
+        } else if stage == Some(TaskStage::Blocked) {
+            item.blocked_by_another()
         } else {
             item
         }
@@ -459,6 +601,7 @@ impl Comment {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -659,6 +802,7 @@ impl ConfluenceResult {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         })
     }
 }
@@ -681,6 +825,8 @@ pub(crate) mod tests {
         watched: String,
         /// Keys with a pull request still open: none unless a test says.
         open_changes: String,
+        /// Keys in an open sprint: none unless a test says.
+        in_sprint: String,
         authorization: String,
     }
 
@@ -717,6 +863,8 @@ pub(crate) mod tests {
                 &self.watched
             } else if jql.contains("development[pullrequests]") {
                 &self.open_changes
+            } else if jql.contains("openSprints") {
+                &self.in_sprint
             } else {
                 &self.assigned
             };
@@ -771,6 +919,7 @@ pub(crate) mod tests {
             assigned: assigned_body.unwrap_or_else(|| assigned(&recent)),
             watched: watched(&recent, &old),
             open_changes: NO_ISSUES.into(),
+            in_sprint: NO_ISSUES.into(),
             authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
         };
         JiraPlugin::new(
@@ -851,6 +1000,7 @@ pub(crate) mod tests {
             watched: NO_ISSUES.into(),
             open_changes:
                 r#"{"issues": [{"id": "10001", "key": "OPS-7", "fields": {"summary": "TLS"}}], "isLast": true}"#.into(),
+            in_sprint: NO_ISSUES.into(),
             authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
         };
         plugin.http = Arc::new(stub);
@@ -861,6 +1011,36 @@ pub(crate) mod tests {
             "a key with an open pull request, a status Code Review"
         );
         assert!(cloud(None).fetch().await.unwrap().items.iter().all(|i| i.bundle != InboxBundle::awaiting()));
+    }
+
+    fn ticket(category: &str, links: &str) -> Issue {
+        let json = format!(
+            r#"{{"id": "1", "key": "CE-7", "fields": {{"summary": "Close", "issuelinks": {links},
+               "status": {{"name": "Status", "statusCategory": {{"key": "{category}"}}}}}}}}"#
+        );
+        serde_json::from_str(&json).unwrap()
+    }
+
+    /// Where an issue stands, from its status category, its sprint and the issues that block it. As macOS.
+    #[test]
+    fn jira_stages_from_the_category_the_sprint_and_the_links() {
+        assert_eq!(ticket("indeterminate", "[]").stage(false, false), Some(TaskStage::Started));
+        assert_eq!(ticket("new", "[]").stage(true, false), Some(TaskStage::Planned));
+        assert_eq!(ticket("new", "[]").stage(false, false), Some(TaskStage::Todo));
+        let blocked_by = |category: &str| {
+            format!(
+                r#"[{{"type": {{"name": "Blocks"}}, "inwardIssue": {{"key": "CE-1", "fields": {{"status": {{"name": "x",
+                     "statusCategory": {{"key": "{category}"}}}}}}}}}},
+                   {{"type": {{"name": "Blocks"}}, "outwardIssue": {{"key": "CE-9"}}}}]"#
+            )
+        };
+        assert_eq!(ticket("new", &blocked_by("indeterminate")).blockers(), ["CE-1"]);
+        assert!(ticket("new", &blocked_by("done")).blockers().is_empty());
+        let paused = r#"{"id": "1", "key": "CE-8", "fields": {"status": {"name": "On Hold", "statusCategory": {"key": "indeterminate"}}}}"#;
+        let paused: Issue = serde_json::from_str(paused).unwrap();
+        assert_eq!(paused.stage(false, false), Some(TaskStage::Todo));
+        let discussed = ticket("new", "[]").item("https://acme.atlassian.net", "a", false, false, true, Utc::now());
+        assert!(discussed.stage == Some(TaskStage::Discussed) && discussed.has_badge(badge::DISCUSSED));
     }
 
     #[tokio::test]
@@ -885,6 +1065,7 @@ pub(crate) mod tests {
             assigned: r#"{"issues": [], "total": 0}"#.into(),
             watched,
             open_changes: NO_ISSUES.into(),
+            in_sprint: NO_ISSUES.into(),
             authorization: "Bearer pat".into(),
         };
         // Data Center's Confluence is another server: the option is for Cloud.
@@ -908,6 +1089,7 @@ pub(crate) mod tests {
             assigned: assigned(&recent),
             watched: watched(&recent, &old),
             open_changes: NO_ISSUES.into(),
+            in_sprint: NO_ISSUES.into(),
             authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
         };
         crate::stub::EgressFixture {

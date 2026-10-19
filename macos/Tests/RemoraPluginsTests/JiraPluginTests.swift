@@ -13,6 +13,8 @@ struct JiraStub: HTTPClient {
     var confluence = JiraPluginTests.confluence
     /// The assigned issues with a pull request still open (Cloud's development panel).
     var withOpenChanges = #"{"issues": []}"#
+    /// The assigned issues in an open sprint.
+    var inSprint = #"{"issues": []}"#
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         #expect(request.value(forHTTPHeaderField: "Authorization") == expectedAuthorization)
@@ -24,7 +26,9 @@ struct JiraStub: HTTPClient {
             : url.path.hasSuffix("/myself")
                 ? myself
                 : jql?.hasPrefix("watcher") == true
-                    ? watched : jql?.contains("development[") == true ? withOpenChanges : assigned
+                    ? watched
+                    : jql?.contains("development[") == true
+                        ? withOpenChanges : jql?.contains("openSprints") == true ? inSprint : assigned
         return (Data(body.utf8), HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
     }
 }

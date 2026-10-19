@@ -10,7 +10,7 @@ description: Comment Remora range ce qui a besoin de vous. À moi et En attente,
 | Onglet | Ce qu’il contient |
 |---|---|
 | **À moi** | Quelqu’un attend après vous : une question, une demande de relecture, une correction, une tâche, un rappel revenu, votre merge request une fois approuvée, bloquée ou en échec. |
-| **En attente** | Vous attendez les autres : vos merge requests en relecture, vos brouillons, un ticket dont le travail est en relecture. |
+| **En attente** | Vous attendez les autres : vos merge requests en relecture, vos brouillons, un ticket dont le travail est en relecture, un ticket qu’un autre ticket ouvert bloque (*Bloqué*). |
 | **Reportés** | Ce que vous avez mis de côté. Voir [Reporter et rappels](./reporter-et-rappels). |
 | **Terminés** | Ce que vous avez terminé, jusqu’à ce qu’il y ait du nouveau. |
 
@@ -102,8 +102,14 @@ Dans chaque verbe, Remora place d’abord :
 2. la priorité de l’outil (Linear *Urgent*, Jira *Highest*, puis *High*…). La priorité basse et le Backlog de Linear sont
    affichés, pas comptés. Une demande de relecture déjà approuvée par quelqu’un passe en priorité basse : toujours à
    vous de regarder, mais elle peut attendre, ni comptée ni annoncée ;
-3. l’échéance la plus proche ;
-4. l’activité la plus récente.
+3. pour un ticket Linear ou Jira, où il en est : celui qui a un commentaire pour vous (*Nouveau commentaire*, qui
+   fait aussi recompter un ticket de priorité basse), puis ce que vous avez commencé, puis le cycle ou le sprint en
+   cours (*Cycle en cours*, *Sprint en cours*), le reste (dont ce qui est en pause), ce qui attend d’être trié, le
+   backlog. Son statut ou son badge dit lequel ; un ticket urgent ou haut pas commencé depuis
+   deux semaines affiche *Ouvert depuis des semaines*. Rien n’est caché, et un statut que Remora ne sait pas lire
+   reste avec le reste ;
+4. l’échéance la plus proche ;
+5. l’activité la plus récente.
 
 Après une vingtaine de vos actions, Remora apprend aussi, sur votre ordinateur, ce que vous traitez vite et ce que vous
 repoussez, et s’en sert pour départager. Une petite étoile sur un élément dit pourquoi il est remonté.

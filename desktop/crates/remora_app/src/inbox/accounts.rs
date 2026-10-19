@@ -383,6 +383,7 @@ impl Inbox {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 

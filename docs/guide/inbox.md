@@ -10,7 +10,7 @@ description: How Remora sorts what needs you. My turn and Waiting, the verbs (To
 | Tab | What’s in it |
 |---|---|
 | **My turn** | Someone is waiting on you: a question, a review request, a fix, a task, a reminder that came back, your merge request once it’s approved, blocked or failing. |
-| **Waiting** | You’re waiting on others: your merge requests under review, drafts, a ticket whose work is up for review. |
+| **Waiting** | You’re waiting on others: your merge requests under review, drafts, a ticket whose work is up for review, a ticket another open one blocks (*Blocked*). |
 | **Snoozed** | What you put away until later. See [Snooze and reminders](./snooze-and-reminders). |
 | **Done** | What you marked done, until something new happens on it. |
 
@@ -96,8 +96,13 @@ Inside each verb, Remora puts first:
 1. what’s overdue or due today;
 2. the tool’s priority (Linear *Urgent*, Jira *Highest*, then *High*…). Low priority and Linear’s Backlog are shown, not counted. A review request someone already approved counts as low
    priority: still yours to look at, but it can wait, and it’s neither counted nor announced;
-3. the nearest due date;
-4. the most recent activity.
+3. for a Linear or Jira ticket, where it stands: one with a comment for you (*New comment*, which also counts a
+   low one again), then what you started, then the current cycle or sprint (*Current cycle*, *Current sprint*), the
+   rest (a paused one among them), what waits to be triaged, the backlog. Its status or badge says
+   which; an urgent or high ticket left unstarted for two weeks says *Open for weeks*. Nothing is hidden, and a
+   status Remora can’t read stays with the rest;
+4. the nearest due date;
+5. the most recent activity.
 
 Once Remora has seen about twenty of your actions, it also learns, on your computer, what you usually handle quickly
 and what you push back, and uses it to break ties. A small star on an item says why it moved up.

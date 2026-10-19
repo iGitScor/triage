@@ -1,12 +1,12 @@
-use crate::{InboxItem, Priority};
+use crate::{InboxItem, Priority, TaskStage};
 use chrono::{DateTime, Local, Utc};
 use std::cmp::Ordering;
 
 /// How likely you are to handle an item quickly (log-odds, `PersonalRanker::score`).
 pub type PersonalScore<'a> = &'a dyn Fn(&InboxItem) -> f64;
 
-/// Orders a bundle by importance rather than recency: overdue or due today first, then priority,
-/// then your habits (when learned), then the nearest due date, then the most recent activity.
+/// Orders a bundle by importance rather than recency: overdue or due today first, then priority, then where a ticket
+/// stands (`TaskStage`), then your habits (when learned), then the nearest due date, then the most recent activity.
 pub struct Prioritizer<'a> {
     pub now: DateTime<Utc>,
     /// Breaks ties after explicit priority, never before it.
@@ -29,6 +29,7 @@ impl<'a> Prioritizer<'a> {
     fn compare(&self, a: &InboxItem, b: &InboxItem) -> Ordering {
         let pressing = self.is_pressing(b).cmp(&self.is_pressing(a));
         let priority = b.priority.unwrap_or(Priority::Normal).cmp(&a.priority.unwrap_or(Priority::Normal));
+        let stage = a.stage.unwrap_or(TaskStage::Todo).cmp(&b.stage.unwrap_or(TaskStage::Todo));
         let due = match (a.due, b.due) {
             (Some(x), Some(y)) => x.cmp(&y),
             (Some(_), None) => Ordering::Less,
@@ -43,7 +44,7 @@ impl<'a> Prioritizer<'a> {
                 Ordering::Equal
             }
         });
-        pressing.then(priority).then(personal).then(due).then(b.date.cmp(&a.date))
+        pressing.then(priority).then(stage).then(personal).then(due).then(b.date.cmp(&a.date))
     }
 
     /// Overdue or due today, in local time.
@@ -82,5 +83,33 @@ mod tests {
         Prioritizer::new(now()).sort(&mut items);
         let ids: Vec<&str> = items.iter().map(|i| i.id.as_str()).collect();
         assert_eq!(ids, ["overdue", "urgent", "high", "dueSoon", "recent", "low"]);
+    }
+
+    /// Within one priority, where a ticket stands: a comment for you, started, planned now, the rest (an unknown
+    /// stage among them), triage, blocked, backlog. Priority still comes first. As macOS.
+    #[test]
+    fn within_a_priority_the_stage_orders() {
+        let ticket = |id: &str, stage: Option<TaskStage>, priority: Option<Priority>| {
+            let mut item = task(id, priority, None, id.len() as i64);
+            item.stage = stage;
+            item
+        };
+        let mut items = vec![
+            ticket("backlog", Some(TaskStage::Backlog), None),
+            ticket("blocked", Some(TaskStage::Blocked), None),
+            ticket("triage", Some(TaskStage::Triage), None),
+            ticket("unknown", None, None),
+            ticket("todo", Some(TaskStage::Todo), None),
+            ticket("planned", Some(TaskStage::Planned), None),
+            ticket("started", Some(TaskStage::Started), None),
+            ticket("discussed", Some(TaskStage::Discussed), None),
+            ticket("highTodo", Some(TaskStage::Todo), Some(Priority::High)),
+        ];
+        Prioritizer::new(now()).sort(&mut items);
+        let ids: Vec<&str> = items.iter().map(|i| i.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            ["highTodo", "discussed", "started", "planned", "todo", "unknown", "triage", "blocked", "backlog"]
+        );
     }
 }

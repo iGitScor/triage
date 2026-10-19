@@ -39,6 +39,8 @@ public struct JiraPlugin: SourcePlugin {
     /// connected to Jira): they wait on the review, like a status "In Review".
     static let openChangesJQL =
         "assignee = currentUser() AND statusCategory != Done AND development[pullrequests].open > 0"
+    /// Assigned issues in a sprint that is open (Jira Software): planned now.
+    static let sprintJQL = "assignee = currentUser() AND statusCategory != Done AND sprint in openSprints()"
     /// Issues you watch (Jira adds you to those you create, are assigned or comment on) with recent activity: their
     /// comments are read for mentions of you.
     static let watchedJQL = "watcher = currentUser() AND updated >= -7d ORDER BY updated DESC"
@@ -73,9 +75,12 @@ public struct JiraPlugin: SourcePlugin {
 
     public func fetch() async throws -> SourceSnapshot {
         let me: Myself = try await cache.value("myself", lifetime: CacheLifetime.identity) { try await get("myself") }
-        async let assigned = search(Self.assignedJQL, fields: "summary,priority,duedate,status,updated", max: 50)
+        async let assigned = search(
+            Self.assignedJQL, fields: "summary,priority,duedate,status,created,updated,issuelinks", max: 50)
         // Quiet when it fails: Data Center, or a site without a Git tool, doesn't know the field.
         async let withChanges = isCloud ? try? search(Self.openChangesJQL, fields: "summary", max: 50) : nil
+        // Quiet too: Jira without Jira Software has no sprints.
+        async let inSprint = try? search(Self.sprintJQL, fields: "summary", max: 50)
         // Mentions are a bonus: if that search fails, assigned issues still come through, and a remark says so.
         var remarks: [String] = []
         let watched =
@@ -90,27 +95,35 @@ public struct JiraPlugin: SourcePlugin {
         }
         var snapshot = try await Self.snapshot(
             me: me, assigned: assigned, watched: watched, confluence: pages,
-            withOpenChanges: Set((await withChanges)?.issues.map(\.key) ?? []), host: host, accountID: accountID,
-            now: .now)
+            withOpenChanges: Set((await withChanges)?.issues.map(\.key) ?? []),
+            inSprint: Set((await inSprint)?.issues.map(\.key) ?? []), host: host, accountID: accountID, now: .now)
         snapshot.remarks += remarks
         return snapshot
     }
 
     static func snapshot(
         me: Myself, assigned: SearchPage, watched: SearchPage, confluence: ConfluencePage = ConfluencePage(),
-        withOpenChanges: Set<String> = [], host: URL, accountID: UUID, now: Date
+        withOpenChanges: Set<String> = [], inSprint: Set<String> = [], host: URL, accountID: UUID, now: Date
     ) -> SourceSnapshot {
-        let issues = assigned.issues.map {
-            $0.item(host: host, accountID: accountID, openChange: withOpenChanges.contains($0.key))
-        }
         let weekAgo = now.addingTimeInterval(-7 * .day)
-        let mentions = watched.issues.flatMap { issue in
-            (issue.fields.comment?.comments ?? [])
-                .filter { comment in
+        let mentioning = watched.issues.map { issue in
+            (
+                issue,
+                (issue.fields.comment?.comments ?? []).filter { comment in
                     guard let created = jiraDate(comment.created), created > weekAgo else { return false }
                     return !me.isAuthor(of: comment) && comment.body.mentions(me)
                 }
-                .map { $0.item(issue: issue, host: host, accountID: accountID) }
+            )
+        }
+        let mentions = mentioning.flatMap { issue, comments in
+            comments.map { $0.item(issue: issue, host: host, accountID: accountID) }
+        }
+        // An issue with a comment that mentions you goes first in its priority.
+        let discussed = Set(mentioning.filter { !$0.1.isEmpty }.map(\.0.key))
+        let issues = assigned.issues.map {
+            $0.item(
+                host: host, accountID: accountID, openChange: withOpenChanges.contains($0.key),
+                inSprint: inSprint.contains($0.key), discussed: discussed.contains($0.key), now: now)
         }
         // Not the pages you changed last: you have seen those.
         let pages = confluence.results
@@ -219,8 +232,44 @@ extension JiraPlugin {
             var priority: Named?
             var duedate: String?
             var status: Status?
+            var created: String?
             var updated: String?
             var comment: Comments?
+            var issuelinks: [Link]?
+        }
+
+        /// A link to another issue. `inwardIssue` under "Blocks" reads "is blocked by" it.
+        struct Link: Decodable {
+            struct Kind: Decodable { var name: String? }
+            struct Other: Decodable {
+                struct OtherFields: Decodable { var status: Fields.Status? }
+                var key: String
+                var fields: OtherFields?
+            }
+            var type: Kind?
+            var inwardIssue: Other?
+        }
+
+        /// The issues not done yet that block it.
+        var blockers: [String] {
+            (fields.issuelinks ?? []).compactMap { link in
+                guard link.type?.name == "Blocks", let other = link.inwardIssue,
+                    other.fields?.status?.statusCategory?.key != "done"
+                else { return nil }
+                return other.key
+            }
+        }
+
+        /// Where it stands, from its status category: In Progress is started, To Do planned when in an open sprint.
+        func stage(inSprint: Bool, discussed: Bool) -> TaskStage? {
+            if discussed { return .discussed }
+            if !blockers.isEmpty { return .blocked }
+            if TaskStage.paused(fields.status?.name) { return inSprint ? .planned : .todo }
+            switch fields.status?.statusCategory?.key {
+            case "indeterminate": return .started
+            case "new": return inSprint ? .planned : .todo
+            default: return inSprint ? .planned : nil
+            }
         }
 
         var id: String
@@ -230,9 +279,14 @@ extension JiraPlugin {
         func url(host: URL) -> URL { host.appending(path: "browse/\(key)") }
 
         /// `openChange`: a pull request is still open for it. Up for review then, or when its status says so.
-        func item(host: URL, accountID: UUID, openChange: Bool = false) -> InboxItem {
+        /// `inSprint`: in an open sprint. `discussed`: a recent comment mentions you.
+        func item(
+            host: URL, accountID: UUID, openChange: Bool = false, inSprint: Bool = false, discussed: Bool = false,
+            now: Date = .now
+        ) -> InboxItem {
             var badges: [Badge] = []
-            let priority = itemPriority
+            // Someone wrote to you: a low issue is counted again.
+            let priority = discussed ? max(itemPriority, .normal) : itemPriority
             switch priority {
             case .urgent:
                 badges.append(
@@ -246,7 +300,15 @@ extension JiraPlugin {
             let due = DueDate.parse(fields.duedate)
             if let due { badges.append(DueDate.badge(for: due)) }
             if let status = fields.status { badges.append(Badge(id: .status, label: status.name, tone: .neutral)) }
-            let item = InboxItem(
+            let stage = stage(inSprint: inSprint, discussed: discussed)
+            let unstarted =
+                fields.status?.statusCategory?.key != "indeterminate" || TaskStage.paused(fields.status?.name)
+            let longOpen =
+                JiraPlugin.jiraDate(fields.created).map { now.timeIntervalSince($0) > TaskStage.longOpen } ?? false
+            badges += TaskStage.badges(
+                discussed: discussed, blocked: !blockers.isEmpty, planned: stage == .planned,
+                longOpen: priority >= .high && unstarted && longOpen, sprint: true)
+            var item = InboxItem(
                 id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: JiraPlugin.manifest.id,
@@ -260,7 +322,9 @@ extension JiraPlugin {
                 priority: priority,
                 due: due
             )
-            return openChange || InReview.status(fields.status?.name) ? item.waitingOnReview() : item
+            item.stage = stage
+            if openChange || InReview.status(fields.status?.name) { return item.waitingOnReview() }
+            return stage == .blocked ? item.blockedByAnother() : item
         }
 
         /// Jira's default priorities by name (Highest … Lowest), and the older Blocker … Trivial.

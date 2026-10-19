@@ -628,6 +628,7 @@ impl Reply {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -802,6 +803,7 @@ impl Match {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 

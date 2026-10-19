@@ -102,7 +102,7 @@ fn addresses(item: &InboxItem) -> HashSet<String> {
 
 /// A page whatever the link's case, query, anchor or trailing slash. A Linear issue without its slug, which follows
 /// the title: a comment's link (`…/issue/ENG-42/old-title#comment-1`) is still its issue's.
-pub(crate) fn address(url: &str) -> String {
+pub fn address(url: &str) -> String {
     let (host, path) = crate::in_review::host_and_path(url);
     let host = host.to_lowercase();
     let path = path.to_lowercase();

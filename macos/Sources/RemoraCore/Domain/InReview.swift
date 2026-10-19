@@ -23,6 +23,14 @@ public enum InReview {
 }
 
 extension InboxItem {
+    /// Waiting on another ticket that blocks it: in Waiting until that one is done, when it comes back by itself.
+    public func blockedByAnother() -> InboxItem {
+        var item = self
+        item.bundle = .blocked
+        item.needsAction = false
+        return item
+    }
+
     /// Waiting on the review of `changes` (or on a review its status announces), tied to those pull requests.
     public func waitingOnReview(_ changes: [URL] = []) -> InboxItem {
         var item = self

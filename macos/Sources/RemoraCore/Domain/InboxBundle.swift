@@ -18,7 +18,7 @@ public struct InboxBundle: Hashable, Codable, Sendable, Identifiable {
     /// Whose turn the bundle is, when the bundle alone tells. Kinds leave it to `needsAction`.
     public var isMine: Bool? {
         switch id {
-        case Self.awaiting.id: false
+        case Self.awaiting.id, Self.blocked.id: false
         case Self.authored.id, Self.mentions.id, Self.directMessages.id, Self.asked.id, Self.answered.id: nil
         default: true
         }
@@ -43,6 +43,8 @@ extension InboxBundle {
     public static let read = InboxBundle(id: "verb.read", title: "To read", symbol: "text.alignleft", rank: 8)
     public static let awaiting = InboxBundle(
         id: "verb.awaiting", title: "Waiting on others", symbol: "hourglass", rank: 9)
+    /// A ticket another open ticket blocks (Linear, Jira): it waits on that one, in Waiting, until it's done.
+    public static let blocked = InboxBundle(id: "verb.blocked", title: "Blocked", symbol: "hand.raised", rank: 9)
     /// A conversation that needs nothing more from you: placed in Done until someone writes again.
     public static let finished = InboxBundle(
         id: "verb.finished", title: "Finished", symbol: "checkmark.circle", rank: 10)

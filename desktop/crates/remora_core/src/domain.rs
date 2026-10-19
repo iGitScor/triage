@@ -59,6 +59,10 @@ pub struct InboxItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub related: Option<Vec<String>>,
+    /// Where a ticket stands in its tracker, to order To do within one priority. Not in the fingerprint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub stage: Option<crate::TaskStage>,
 }
 
 /// Why a message went where it is (Swift's `SortReason`): the words that decided, the model, nothing clear, or you.
@@ -138,7 +142,8 @@ impl ChangedFile {
 impl InboxItem {
     /// Changes whenever something noteworthy happens, so Done or snoozed items can resurface.
     pub fn fingerprint(&self) -> String {
-        let mut ids: Vec<&str> = self.badges.iter().map(|b| b.id.as_str()).collect();
+        // A ticket that ages brings nothing new: Done stays done.
+        let mut ids: Vec<&str> = self.badges.iter().map(|b| b.id.as_str()).filter(|id| *id != badge::AGE).collect();
         ids.sort_unstable();
         format!("{}|{}", self.date.timestamp(), ids.join(","))
     }
@@ -276,6 +281,12 @@ pub mod badge {
     pub const DUE: &str = "due";
     pub const DUE_TODAY: &str = "due.today";
     pub const OVERDUE: &str = "overdue";
+    /// A ticket someone wrote to you about (a mention or comment still unread), a ticket another one blocks, one in
+    /// the current cycle or sprint, an urgent or high one left unstarted for weeks.
+    pub const DISCUSSED: &str = "discussed";
+    pub const BLOCKED: &str = "blocked";
+    pub const CYCLE: &str = "cycle";
+    pub const AGE: &str = "age";
     pub const IN_PROGRESS: &str = "inProgress";
     pub const INVITATION: &str = "invitation";
     pub const FLAGGED: &str = "flagged";
@@ -351,6 +362,10 @@ impl InboxBundle {
     pub fn awaiting() -> Self {
         Self::of("verb.awaiting", "Waiting on others", 9)
     }
+    /// A ticket another open ticket blocks (Linear, Jira): it waits on that one, in Waiting, until it's done.
+    pub fn blocked() -> Self {
+        Self::of("verb.blocked", "Blocked", 9)
+    }
     /// A conversation that needs nothing more from you: placed in Done until someone writes again.
     pub fn finished() -> Self {
         Self::of("verb.finished", "Finished", 10)
@@ -381,7 +396,7 @@ impl InboxBundle {
     /// Whose turn the bundle is, when the bundle alone tells. Kinds leave it to `needs_action`.
     pub fn is_mine(&self) -> Option<bool> {
         match self.id.as_str() {
-            "verb.awaiting" => Some(false),
+            "verb.awaiting" | "verb.blocked" => Some(false),
             "code.authored" | "chat.mentions" | "chat.direct" | "chat.asked" | "chat.answered" => None,
             _ => Some(true),
         }

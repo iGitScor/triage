@@ -298,6 +298,7 @@ impl AzureDevOpsPlugin {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -640,6 +641,7 @@ impl WorkItem {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         };
         if !open_changes.is_empty() || in_review::status(self.fields.state.as_deref()) {
             item.waiting_on_review(open_changes)

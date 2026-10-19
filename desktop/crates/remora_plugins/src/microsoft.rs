@@ -353,6 +353,7 @@ impl Message {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 
@@ -449,6 +450,7 @@ impl Event {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -557,6 +559,7 @@ impl Chat {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         })
     }
 }

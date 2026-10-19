@@ -225,7 +225,11 @@ reason?: SortReason,
  * Pages the source ties this item to (a ticket's pull requests): linked for sure to the items at those
  * addresses. Not in the fingerprint.
  */
-related?: Array<string>, };
+related?: Array<string>, 
+/**
+ * Where a ticket stands in its tracker, to order To do within one priority. Not in the fingerprint.
+ */
+stage?: TaskStage, };
 
 export type ItemExtras = { prep?: PrepView, help?: HelpView, linked?: Array<LinkedView>, ranking?: string, snoozedTimes?: number, };
 
@@ -555,6 +559,11 @@ assistant: boolean, };
  * What the inbox footer says about the sources, most important first.
  */
 export type SourcesHealth = { "state": "fine" } | { "state": "offline" } | { "state": "reconnect", accounts: Array<string>, } | { "state": "failing", count: number, };
+
+/**
+ * First to last: a comment for you, started, planned now, to do, triage, blocked, backlog.
+ */
+export type TaskStage = "discussed" | "started" | "planned" | "todo" | "triage" | "blocked" | "backlog";
 
 /**
  * The text size, as on the Mac: the window's content is zoomed by `scale`, and the window grows with it.

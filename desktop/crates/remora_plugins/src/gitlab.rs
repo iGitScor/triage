@@ -259,6 +259,7 @@ impl GitLabPlugin {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -407,6 +408,7 @@ impl BranchPipeline {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -486,6 +488,7 @@ impl Todo {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         })
     }
 }

@@ -24,6 +24,25 @@ struct PrioritizerTests {
             Prioritizer(now: now).sorted(items).map(\.id) == ["overdue", "urgent", "high", "dueSoon", "recent", "low"])
     }
 
+    /// Within one priority, where a ticket stands: a comment for you, started, planned now, the rest (an unknown
+    /// stage among them), triage, blocked, backlog. Priority still comes first. As Windows.
+    @Test func withinAPriorityTheStageOrders() {
+        func ticket(_ id: String, _ stage: TaskStage?, priority: Priority? = nil) -> InboxItem {
+            var item = item(id, priority: priority, minutesAgo: Double(id.count))
+            item.stage = stage
+            return item
+        }
+        let items = [
+            ticket("backlog", .backlog), ticket("blocked", .blocked), ticket("triage", .triage),
+            ticket("unknown", nil), ticket("todo", .todo), ticket("planned", .planned), ticket("started", .started),
+            ticket("discussed", .discussed), ticket("highTodo", .todo, priority: .high),
+        ]
+        #expect(
+            Prioritizer(now: now).sorted(items).map(\.id) == [
+                "highTodo", "discussed", "started", "planned", "todo", "unknown", "triage", "blocked", "backlog",
+            ])
+    }
+
     @Test func lowPriorityIsShownButNotCounted() {
         let layout = InboxAssembler().layout(items: [item("a", priority: .low), item("b")], states: [:], now: now)
         #expect(layout.myTurnItems.count == 2)

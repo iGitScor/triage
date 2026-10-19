@@ -51,12 +51,16 @@ public struct LinearPlugin: SourcePlugin {
     }
 
     static func snapshot(viewer: Viewer, notifications: [Notification], accountID: UUID, now: Date) -> SourceSnapshot {
-        let issues = viewer.assignedIssues.nodes.map { $0.item(accountID: accountID) }
         let weekAgo = now.addingTimeInterval(-7 * .day)
-        let mentions =
-            notifications
-            .filter { $0.readAt == nil && $0.createdAt > weekAgo && $0.isActionable }
-            .map { $0.item(accountID: accountID) }
+        let unread = notifications.filter { $0.readAt == nil && $0.createdAt > weekAgo && $0.isActionable }
+        // An issue someone wrote to you about goes first in its priority: its comment's link is the issue's.
+        let discussed = Set(unread.compactMap { $0.url.map(LinkFinder.address) })
+        let issues = viewer.assignedIssues.nodes.map {
+            $0.item(
+                accountID: accountID, now: now,
+                discussed: $0.url.map { discussed.contains(LinkFinder.address($0)) } ?? false)
+        }
+        let mentions = unread.map { $0.item(accountID: accountID) }
         let truncated = viewer.assignedIssues.pageInfo?.hasNextPage == true
         return SourceSnapshot(
             identity: viewer.name, items: issues + mentions,
@@ -87,7 +91,10 @@ public struct LinearPlugin: SourcePlugin {
             name
             assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
               nodes {
-                id identifier title url priority dueDate updatedAt state { name type }
+                id identifier title url priority dueDate createdAt updatedAt state { name type }
+                cycle { startsAt endsAt }
+                inverseRelations(first: 10) { nodes { type issue { identifier state { type } } } }
+                comments(last: 5) { nodes { resolvedAt user { isMe } botActor { id } } }
                 attachments(first: 10) { nodes { url metadata } }
               }
               pageInfo { hasNextPage }
@@ -143,6 +150,78 @@ extension LinearPlugin {
         var updatedAt: Date
         var state: State?
         var attachments: Nodes<Attachment>?
+        var createdAt: Date?
+        var cycle: Cycle?
+        /// Relations pointing at it: "blocks" from another issue blocks this one.
+        var inverseRelations: Nodes<Relation>?
+        /// The latest comments, oldest first.
+        var comments: Nodes<Comment>?
+
+        struct Comment: Decodable {
+            struct Author: Decodable { var isMe: Bool? }
+            struct Bot: Decodable { var id: String? }
+            var resolvedAt: Date?
+            var user: Author?
+            var botActor: Bot?
+        }
+
+        /// The latest comment written by a person is someone else's, and its thread isn't resolved: they wait on
+        /// you, even when Linear's notification was read long ago.
+        var awaitsYourAnswer: Bool {
+            guard let last = (comments?.nodes ?? []).last(where: { $0.botActor == nil && $0.user != nil }) else {
+                return false
+            }
+            return last.user?.isMe == false && last.resolvedAt == nil
+        }
+
+        /// Started, then put aside ("Paused", "On hold"): it waits like an issue not started.
+        var paused: Bool { state?.type == "started" && TaskStage.paused(state?.name) }
+
+        struct Cycle: Decodable {
+            var startsAt: Date?
+            var endsAt: Date?
+        }
+
+        struct Relation: Decodable {
+            struct Other: Decodable {
+                /// Only its type is asked for.
+                struct Kind: Decodable { var type: String? }
+                var identifier: String
+                var state: Kind?
+            }
+            var type: String?
+            var issue: Other?
+        }
+
+        /// The issues still open that block it.
+        var blockers: [String] {
+            (inverseRelations?.nodes ?? []).compactMap { relation in
+                guard relation.type == "blocks", let other = relation.issue,
+                    !["completed", "canceled"].contains(other.state?.type ?? "")
+                else { return nil }
+                return other.identifier
+            }
+        }
+
+        func inCurrentCycle(_ now: Date) -> Bool {
+            guard let start = cycle?.startsAt, let end = cycle?.endsAt else { return false }
+            return start <= now && now < end
+        }
+
+        /// Where it stands, from its status type. A comment waiting for you comes first, a blocker after the rest;
+        /// a status Linear doesn't type stands with the rest.
+        func stage(now: Date, discussed: Bool) -> TaskStage? {
+            if discussed || awaitsYourAnswer { return .discussed }
+            if !blockers.isEmpty { return .blocked }
+            if paused { return .todo }
+            switch state?.type {
+            case "started": return .started
+            case "triage": return .triage
+            // A duplicate is another issue's: last, still shown.
+            case "backlog", "duplicate": return .backlog
+            default: return inCurrentCycle(now) ? .planned : state?.type == "unstarted" ? .todo : nil
+            }
+        }
 
         /// Its pull and merge requests (Linear's GitHub and GitLab integrations, or a link pasted by hand).
         var changes: [Attachment] { (attachments?.nodes ?? []).filter { $0.url.map(InReview.isChange) ?? false } }
@@ -154,7 +233,8 @@ extension LinearPlugin {
             return changes.contains(where: \.isOpen) || InReview.status(state?.name)
         }
 
-        func item(accountID: UUID) -> InboxItem {
+        /// `discussed`: a mention or comment on it still unread in your Linear inbox.
+        func item(accountID: UUID, now: Date = .now, discussed: Bool = false) -> InboxItem {
             var badges: [Badge] = []
             switch priority {
             case 1:
@@ -169,8 +249,15 @@ extension LinearPlugin {
             let due = DueDate.parse(dueDate)
             if let due { badges.append(DueDate.badge(for: due)) }
             if let state { badges.append(Badge(id: .status, label: state.name, tone: .neutral)) }
-            let priority = itemPriority
-            let item = InboxItem(
+            let stage = stage(now: now, discussed: discussed)
+            // Someone wrote to you: a low or backlog issue is counted again.
+            let priority = stage == .discussed ? max(itemPriority, .normal) : itemPriority
+            let unstarted = state?.type != "started" || paused
+            let longOpen = createdAt.map { now.timeIntervalSince($0) > TaskStage.longOpen } ?? false
+            badges += TaskStage.badges(
+                discussed: stage == .discussed, blocked: !blockers.isEmpty, planned: stage == .planned,
+                longOpen: priority >= .high && unstarted && longOpen, sprint: false)
+            var item = InboxItem(
                 id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: LinearPlugin.manifest.id,
@@ -185,7 +272,9 @@ extension LinearPlugin {
                 due: due,
                 appURL: LinearPlugin.appURL(for: url)
             )
-            return inReview ? item.waitingOnReview(changes.compactMap(\.url)) : item
+            item.stage = stage
+            if inReview { return item.waitingOnReview(changes.compactMap(\.url)) }
+            return stage == .blocked ? item.blockedByAnother() : item
         }
 
         /// Linear's 1 urgent … 4 low (0 = none). Backlog counts as low unless urgent or high.
@@ -197,7 +286,7 @@ extension LinearPlugin {
                 case 4: .low
                 default: .normal
                 }
-            if state?.type == "backlog", mapped < .high { return .low }
+            if state?.type == "backlog" || state?.type == "duplicate", mapped < .high { return .low }
             return mapped
         }
     }

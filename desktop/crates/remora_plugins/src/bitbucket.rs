@@ -472,6 +472,7 @@ impl CloudPullRequest {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }
@@ -638,6 +639,7 @@ impl DataCenterPullRequest {
             reactions: None,
             reason: None,
             related: None,
+            stage: None,
         }
     }
 }

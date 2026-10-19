@@ -73,6 +73,7 @@ const icons: Record<string, string> = {
   'docs.tasks': 'todo',
   'verb.read': 'read',
   'verb.awaiting': 'hourglass',
+  'verb.blocked': 'stop',
   'chat.mentions': 'at',
   'chat.direct': 'chat',
   'code.authored': 'pull',
@@ -83,7 +84,9 @@ const LIMIT = 5
 let open = $state(true)
 let all = $state(false)
 const shown = $derived(all ? group.items : group.items.slice(0, LIMIT))
-const quiet = $derived(group.bundle.id === 'verb.read' || group.bundle.id === 'verb.awaiting')
+const quiet = $derived(
+  group.bundle.id === 'verb.read' || group.bundle.id === 'verb.awaiting' || group.bundle.id === 'verb.blocked',
+)
 </script>
 
 <section class="group">
