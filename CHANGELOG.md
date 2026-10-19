@@ -7,6 +7,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - Mac: while macOS hasn't downloaded its English or French word list yet, two items are no longer linked because
   they share an ordinary word ("réunion", "address"); ticket keys and technical names still link them.
 
@@ -29,6 +32,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - Before anything goes to the assistant, a secret pasted into a title, a context or a name (a GitHub, Slack, AI or
   cloud token, a private key) becomes `[secret]`, an e-mail address `[email]` and a phone number `[phone]`, on the
   computer.
@@ -61,6 +67,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - French requests typed with a curly apostrophe (*s’il vous plaît*), in the formal form (*qu’en pensez-vous*)
   or without a hyphen (*pourriez vous*, *peux tu*) go to *To reply*.
 
@@ -68,6 +77,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - Mac: a message is taken out of *To reply* only when its meaning is clearly information or a thank-you, so fewer
   requests said without a keyword end up in *To read* (on the test messages, 3 missed instead of 9).
 - A message that is only code or a link goes to *To read*, not *To reply*. On a Mac, a message clearly in another
@@ -132,6 +144,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - Claude API: a new account writes the brief and triage with Sonnet instead of Opus, enough for a short answer
   at low effort and far cheaper; accounts already connected keep their model. A model name Anthropic doesn't offer
   is said when you connect, naming the field to fix.
@@ -257,6 +272,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - Fewer requests to your tools: GitLab, Slack and Notion are asked who you are once an hour instead of at every
   refresh, and a list the server marks as unchanged comes back without its content. Less chance of hitting a rate
   limit.
@@ -289,6 +307,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - Mac: GitLab avatars from Gravatar appear, as on Windows; avatars load over https only.
 - Website: the download buttons offer Windows first to visitors on Windows, then the Mac.
 - Windows: Pin is an icon in an item's hover bar, so the bar fits on one line in French.
@@ -331,6 +352,9 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
+  nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
+  review now shows approvals and requested changes too. Mac, Windows and Linux.
 - Windows: rows show their reviewers and what each decided, and GitLab avatars from Gravatar appear. Avatars are
   fetched by Remora itself, only from the tools' hosts, and the window loads nothing from the internet.
 - Windows: a policy change from Group Policy or Intune applies at the next refresh, and user-scoped policies (HKCU)

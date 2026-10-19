@@ -117,6 +117,15 @@ mod tests {
         assert_eq!(found[0].kind, NoticeKind::Arrival);
     }
 
+    /// Low priority (a review request already approved, a Linear backlog item) is shown, not announced. As macOS.
+    #[test]
+    fn low_priority_arrival_is_quiet() {
+        let mut low = item("1", InboxBundle::reviews());
+        low.needs_action = true;
+        low.priority = Some(crate::Priority::Low);
+        assert!(notices(Some(&[]), &[low]).is_empty());
+    }
+
     #[test]
     fn notifying_badge_is_announced_once_and_silent_badges_are_ignored() {
         let before = vec![item("1", InboxBundle::authored())];

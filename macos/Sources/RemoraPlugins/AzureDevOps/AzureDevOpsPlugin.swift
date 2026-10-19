@@ -210,6 +210,7 @@ public struct AzureDevOpsPlugin: SourcePlugin {
             // The list has no last-updated date: the latest push stands for it when known.
             date: max(pr.creationDate, pushed ?? pr.creationDate),
             needsAction: review.needsAction(authored: authored),
+            priority: review.priority(authored: authored),
             changes: files.isEmpty ? nil : ChangeSet(files: files)
         )
     }

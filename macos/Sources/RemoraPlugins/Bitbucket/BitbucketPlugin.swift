@@ -320,7 +320,8 @@ extension BitbucketPlugin {
                     },
                     badges: review.badges(authored: authored),
                     date: updatedOn,
-                    needsAction: review.needsAction(authored: authored)
+                    needsAction: review.needsAction(authored: authored),
+                    priority: review.priority(authored: authored)
                 )
             }
         }
@@ -413,7 +414,8 @@ extension BitbucketPlugin {
                     },
                     badges: review.badges(authored: authored),
                     date: updatedDate.map { Date(timeIntervalSince1970: $0 / 1000) } ?? .now,
-                    needsAction: review.needsAction(authored: authored)
+                    needsAction: review.needsAction(authored: authored),
+                    priority: review.priority(authored: authored)
                 )
             }
         }

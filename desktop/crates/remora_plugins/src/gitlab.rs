@@ -243,7 +243,7 @@ impl GitLabPlugin {
             badges: review.badges(authored),
             date: mr.updated_at,
             needs_action: review.needs_action(authored),
-            priority: None,
+            priority: review.priority(authored),
             due: None,
             expires: None,
             changes: files.filter(|f| !f.is_empty()).map(|files| {

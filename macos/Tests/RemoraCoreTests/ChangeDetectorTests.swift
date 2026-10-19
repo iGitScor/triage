@@ -13,6 +13,13 @@ struct ChangeDetectorTests {
         #expect(notices.first?.kind == .arrival)
     }
 
+    /// Low priority (a review request already approved, a Linear backlog item) is shown, not announced. As Windows.
+    @Test func lowPriorityArrivalIsQuiet() {
+        var low = makeItem("1", needsAction: true)
+        low.priority = .low
+        #expect(ChangeDetector.notices(previous: [], current: [low]).isEmpty)
+    }
+
     @Test func newNotifyingBadgeIsAnnouncedOnce() {
         let before = [makeItem("1", bundle: .authored)]
         let after = [makeItem("1", bundle: .authored, badges: [approved])]

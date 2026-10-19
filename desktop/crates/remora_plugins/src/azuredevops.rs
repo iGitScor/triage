@@ -287,7 +287,7 @@ impl AzureDevOpsPlugin {
             // The list has no last-updated date: the latest push stands for it when known.
             date: pushed.map_or(pr.creation_date, |p| p.max(pr.creation_date)),
             needs_action: review.needs_action(authored),
-            priority: None,
+            priority: review.priority(authored),
             due: None,
             expires: None,
             changes: (!files.is_empty()).then(|| ChangeSet::new(files, None)),

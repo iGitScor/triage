@@ -612,6 +612,18 @@ struct Suggested {
     reviewer: Option<Actor>,
 }
 
+/// GitHub gives no `reviewDecision` when the repository requires no review: the latest reviews tell then, a request
+/// for changes first.
+fn decision<'a>(states: impl Iterator<Item = &'a str> + Clone) -> Option<&'static str> {
+    if states.clone().any(|s| s == "CHANGES_REQUESTED") {
+        Some("CHANGES_REQUESTED")
+    } else if states.into_iter().any(|s| s == "APPROVED") {
+        Some("APPROVED")
+    } else {
+        None
+    }
+}
+
 impl PullRequest {
     /// Paths and line counts only, for the review prep.
     fn change_set(&self) -> Option<ChangeSet> {
@@ -637,10 +649,13 @@ impl PullRequest {
             Some("PENDING") | Some("EXPECTED") => Checks::Running,
             _ => Checks::None,
         };
+        let states =
+            self.latest_opinionated_reviews.iter().flat_map(|c| c.nodes.iter().flatten()).map(|r| r.state.as_str());
+        let decision = self.review_decision.as_deref().or_else(|| decision(states));
         let review = CodeReview {
             is_draft: self.is_draft,
-            is_approved: self.review_decision.as_deref() == Some("APPROVED"),
-            changes_requested: self.review_decision.as_deref() == Some("CHANGES_REQUESTED"),
+            is_approved: decision == Some("APPROVED"),
+            changes_requested: decision == Some("CHANGES_REQUESTED"),
             has_conflicts: self.mergeable.as_deref() == Some("CONFLICTING"),
             checks,
             comments: self.comments.as_ref().map(|c| c.total_count).unwrap_or(0),
@@ -692,7 +707,7 @@ impl PullRequest {
             badges: review.badges(authored),
             date: self.updated_at,
             needs_action: review.needs_action(authored),
-            priority: None,
+            priority: review.priority(authored),
             due: None,
             expires: None,
             changes,
@@ -795,7 +810,29 @@ pub(crate) mod tests {
         assert!(authored.needs_action, "approved with failing checks: your turn");
 
         let review = snapshot.items.iter().find(|i| i.bundle == InboxBundle::reviews()).unwrap();
-        assert!(review.has_badge("conflicts") && review.needs_action);
+        assert!(review.has_badge("conflicts") && review.needs_action && review.priority.is_none());
+    }
+
+    /// A review request someone already approved can wait: still in To review, low, so neither counted nor
+    /// announced. In a repository that requires no review, GitHub gives no decision and the reviews tell. As macOS.
+    #[tokio::test]
+    async fn an_approved_review_request_can_wait() {
+        async fn review(reviews: &str) -> InboxItem {
+            let json = RESPONSE.replace(
+                r#""mergeable": "CONFLICTING","#,
+                &format!(r#""mergeable": "MERGEABLE", "latestOpinionatedReviews": {{"nodes": [{reviews}]}},"#),
+            );
+            let http = Arc::new(StubHttp::paths(&[("/graphql", json.as_str())]));
+            let plugin = GitHubPlugin::new(&config(&[("host", "github.com"), ("token", "t")]), http).unwrap();
+            plugin.fetch().await.unwrap().items.into_iter().find(|i| i.bundle == InboxBundle::reviews()).unwrap()
+        }
+        let approved = review(r#"{"state": "APPROVED", "author": {"login": "erin"}}"#).await;
+        assert!(approved.has_badge("approved") && approved.priority == Some(Priority::Low) && approved.needs_action);
+        let blocked = review(
+            r#"{"state": "APPROVED", "author": {"login": "erin"}}, {"state": "CHANGES_REQUESTED", "author": {"login": "gus"}}"#,
+        )
+        .await;
+        assert!(blocked.has_badge("changes") && blocked.priority.is_none());
     }
 
     /// The files of a PR you review (for the review prep), the suggested reviewers of yours (for the

@@ -90,7 +90,8 @@ again. *Clear all* clears it like the rest. When Remora isn't sure, it stays in 
 Inside each verb, Remora puts first:
 
 1. what’s overdue or due today;
-2. the tool’s priority (Linear *Urgent*, Jira *Highest*, then *High*…). Low priority and Linear’s Backlog are shown, not counted;
+2. the tool’s priority (Linear *Urgent*, Jira *Highest*, then *High*…). Low priority and Linear’s Backlog are shown, not counted. A review request someone already approved counts as low
+   priority: still yours to look at, but it can wait, and it’s neither counted nor announced;
 3. the nearest due date;
 4. the most recent activity.
 

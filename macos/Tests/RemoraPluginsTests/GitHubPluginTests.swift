@@ -93,7 +93,27 @@ struct GitHubPluginTests {
         #expect(review.changes?.files.map(\.path) == ["src/search/index.ts", "src/search/index.test.ts"])
         #expect(review.changes?.fileCount == 3)
         #expect(authored.changes == nil, "your own PRs don't need a review prep")
-        #expect(review.needsAction)
+        #expect(review.needsAction && review.priority == nil)
+    }
+
+    /// A review request someone already approved can wait: still in To review, low, so neither counted nor
+    /// announced. In a repository that requires no review, GitHub gives no decision and the reviews tell. As Windows.
+    @Test func anApprovedReviewRequestCanWait() async throws {
+        func review(_ reviews: String) async throws -> InboxItem {
+            let json = response.replacingOccurrences(
+                of: #""mergeable": "CONFLICTING","#,
+                with: #""mergeable": "MERGEABLE", "latestOpinionatedReviews": {"nodes": [\#(reviews)]},"#)
+            let snapshot = try await GitHubPlugin(
+                config: config(["host": "github.com", "token": "t"]), http: StubHTTP(routes: ["/graphql": json])
+            ).fetch()
+            return try #require(snapshot.items.first { $0.bundle == .reviews })
+        }
+        let approved = try await review(#"{"state": "APPROVED", "author": {"login": "erin"}}"#)
+        #expect(approved.hasBadge(.approved) && approved.priority == .low && approved.needsAction)
+        let blocked = try await review(
+            #"{"state": "APPROVED", "author": {"login": "erin"}}, {"state": "CHANGES_REQUESTED", "author": {"login": "gus"}}"#
+        )
+        #expect(blocked.hasBadge(.changes) && blocked.priority == nil)
     }
 
     @Test func surfacesGraphQLErrors() async throws {

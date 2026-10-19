@@ -38,7 +38,7 @@ public enum ChangeDetector {
 
         return current.flatMap { item -> [Notice] in
             guard let old = before[item.id] else {
-                guard item.needsAction else { return [] }
+                guard item.needsAction && item.counts else { return [] }
                 return [
                     Notice(
                         kind: .arrival,

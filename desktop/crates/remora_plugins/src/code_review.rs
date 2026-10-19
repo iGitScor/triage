@@ -1,5 +1,5 @@
 use remora_core::badge;
-use remora_core::{Badge, Tone};
+use remora_core::{Badge, Priority, Tone};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Checks {
@@ -28,6 +28,12 @@ impl CodeReview {
             return false;
         }
         !authored || self.is_approved || self.changes_requested || self.has_conflicts || self.checks == Checks::Failing
+    }
+
+    /// Someone else's request that is already approved: still yours to look at, last in its tab, but neither counted
+    /// nor announced. Back to normal as soon as the approval goes (new commits, changes requested).
+    pub fn priority(&self, authored: bool) -> Option<Priority> {
+        (!authored && self.is_approved && !self.changes_requested).then_some(Priority::Low)
     }
 
     pub fn badges(&self, authored: bool) -> Vec<Badge> {

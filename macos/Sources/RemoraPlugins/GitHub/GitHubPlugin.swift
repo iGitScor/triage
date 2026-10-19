@@ -317,10 +317,11 @@ struct PullRequest: Decodable {
 
     func item(accountID: UUID, bundle: InboxBundle, authored: Bool) -> InboxItem {
         let reviews = latestOpinionatedReviews?.all ?? []
+        let decision = reviewDecision ?? Self.decision(reviews.map(\.state))
         let review = CodeReview(
             isDraft: isDraft,
-            isApproved: reviewDecision == "APPROVED",
-            changesRequested: reviewDecision == "CHANGES_REQUESTED",
+            isApproved: decision == "APPROVED",
+            changesRequested: decision == "CHANGES_REQUESTED",
             hasConflicts: mergeable == "CONFLICTING",
             checks: checks,
             comments: comments?.totalCount ?? 0,
@@ -340,9 +341,16 @@ struct PullRequest: Decodable {
             badges: review.badges(authored: authored),
             date: updatedAt,
             needsAction: review.needsAction(authored: authored),
+            priority: review.priority(authored: authored),
             suggestedPeople: authored ? suggestedReviewers?.compactMap { $0?.reviewer?.person } : nil,
             changes: authored ? nil : changeSet
         )
+    }
+
+    /// GitHub gives no `reviewDecision` when the repository requires no review: the latest reviews tell then, a
+    /// request for changes first.
+    static func decision(_ states: [String]) -> String? {
+        states.contains("CHANGES_REQUESTED") ? "CHANGES_REQUESTED" : states.contains("APPROVED") ? "APPROVED" : nil
     }
 
     /// Paths and line counts only, for the review prep.

@@ -95,7 +95,8 @@ Dans chaque verbe, Remora place d’abord :
 
 1. ce qui est en retard ou à faire aujourd’hui ;
 2. la priorité de l’outil (Linear *Urgent*, Jira *Highest*, puis *High*…). La priorité basse et le Backlog de Linear sont
-   affichés, pas comptés ;
+   affichés, pas comptés. Une demande de relecture déjà approuvée par quelqu’un passe en priorité basse : toujours à
+   vous de regarder, mais elle peut attendre, ni comptée ni annoncée ;
 3. l’échéance la plus proche ;
 4. l’activité la plus récente.
 

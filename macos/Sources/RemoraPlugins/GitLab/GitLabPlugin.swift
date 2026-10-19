@@ -226,6 +226,7 @@ public struct GitLabPlugin: SourcePlugin {
             badges: review.badges(authored: authored),
             date: mr.updatedAt,
             needsAction: review.needsAction(authored: authored),
+            priority: review.priority(authored: authored),
             changes: files.flatMap { files in
                 files.isEmpty
                     ? nil

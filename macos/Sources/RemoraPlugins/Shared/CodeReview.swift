@@ -21,6 +21,12 @@ struct CodeReview {
         return isApproved || changesRequested || hasConflicts || checks == .failing
     }
 
+    /// Someone else's request that is already approved: still yours to look at, last in its tab, but neither counted
+    /// nor announced. Back to normal as soon as the approval goes (new commits, changes requested).
+    func priority(authored: Bool) -> Priority? {
+        !authored && isApproved && !changesRequested ? .low : nil
+    }
+
     func badges(authored: Bool) -> [Badge] {
         var badges: [Badge] = []
         if isDraft {
