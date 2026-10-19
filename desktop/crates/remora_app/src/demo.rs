@@ -66,6 +66,7 @@ impl Demo {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         });
     }
 

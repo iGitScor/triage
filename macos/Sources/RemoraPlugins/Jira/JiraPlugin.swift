@@ -35,6 +35,10 @@ public struct JiraPlugin: SourcePlugin {
     )
 
     static let assignedJQL = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC"
+    /// Assigned issues with a pull request still open, from Jira's development panel (Cloud, with a Git tool
+    /// connected to Jira): they wait on the review, like a status "In Review".
+    static let openChangesJQL =
+        "assignee = currentUser() AND statusCategory != Done AND development[pullrequests].open > 0"
     /// Issues you watch (Jira adds you to those you create, are assigned or comment on) with recent activity: their
     /// comments are read for mentions of you.
     static let watchedJQL = "watcher = currentUser() AND updated >= -7d ORDER BY updated DESC"
@@ -70,6 +74,8 @@ public struct JiraPlugin: SourcePlugin {
     public func fetch() async throws -> SourceSnapshot {
         let me: Myself = try await cache.value("myself", lifetime: CacheLifetime.identity) { try await get("myself") }
         async let assigned = search(Self.assignedJQL, fields: "summary,priority,duedate,status,updated", max: 50)
+        // Quiet when it fails: Data Center, or a site without a Git tool, doesn't know the field.
+        async let withChanges = isCloud ? try? search(Self.openChangesJQL, fields: "summary", max: 50) : nil
         // Mentions are a bonus: if that search fails, assigned issues still come through, and a remark says so.
         var remarks: [String] = []
         let watched =
@@ -83,7 +89,8 @@ public struct JiraPlugin: SourcePlugin {
                 ?? pages
         }
         var snapshot = try await Self.snapshot(
-            me: me, assigned: assigned, watched: watched, confluence: pages, host: host, accountID: accountID,
+            me: me, assigned: assigned, watched: watched, confluence: pages,
+            withOpenChanges: Set((await withChanges)?.issues.map(\.key) ?? []), host: host, accountID: accountID,
             now: .now)
         snapshot.remarks += remarks
         return snapshot
@@ -91,9 +98,11 @@ public struct JiraPlugin: SourcePlugin {
 
     static func snapshot(
         me: Myself, assigned: SearchPage, watched: SearchPage, confluence: ConfluencePage = ConfluencePage(),
-        host: URL, accountID: UUID, now: Date
+        withOpenChanges: Set<String> = [], host: URL, accountID: UUID, now: Date
     ) -> SourceSnapshot {
-        let issues = assigned.issues.map { $0.item(host: host, accountID: accountID) }
+        let issues = assigned.issues.map {
+            $0.item(host: host, accountID: accountID, openChange: withOpenChanges.contains($0.key))
+        }
         let weekAgo = now.addingTimeInterval(-7 * .day)
         let mentions = watched.issues.flatMap { issue in
             (issue.fields.comment?.comments ?? [])
@@ -220,7 +229,8 @@ extension JiraPlugin {
 
         func url(host: URL) -> URL { host.appending(path: "browse/\(key)") }
 
-        func item(host: URL, accountID: UUID) -> InboxItem {
+        /// `openChange`: a pull request is still open for it. Up for review then, or when its status says so.
+        func item(host: URL, accountID: UUID, openChange: Bool = false) -> InboxItem {
             var badges: [Badge] = []
             let priority = itemPriority
             switch priority {
@@ -236,7 +246,7 @@ extension JiraPlugin {
             let due = DueDate.parse(fields.duedate)
             if let due { badges.append(DueDate.badge(for: due)) }
             if let status = fields.status { badges.append(Badge(id: .status, label: status.name, tone: .neutral)) }
-            return InboxItem(
+            let item = InboxItem(
                 id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: JiraPlugin.manifest.id,
@@ -250,6 +260,7 @@ extension JiraPlugin {
                 priority: priority,
                 due: due
             )
+            return openChange || InReview.status(fields.status?.name) ? item.waitingOnReview() : item
         }
 
         /// Jira's default priorities by name (Highest … Lowest), and the older Blocker … Trivial.

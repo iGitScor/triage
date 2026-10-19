@@ -93,7 +93,13 @@ public struct AzureDevOpsPlugin: SourcePlugin {
         if cut || lists.contains(where: { $0.value.count >= Self.pageSize }) {
             remarks.insert(SourceSnapshot.truncated("Azure DevOps"), at: 0)
         }
-        let tasks = assigned.map { $0.item(host: host, accountID: accountID) }
+        // A work item waits on the review of its pull requests still active: those listed here, yours or to review.
+        let active = Dictionary(
+            lists.flatMap(\.value).map { ($0.artifact, $0.webURL(host: host)) }, uniquingKeysWith: { first, _ in first }
+        )
+        let tasks = assigned.map {
+            $0.item(host: host, accountID: accountID, openChanges: $0.pullRequests.compactMap { active[$0] })
+        }
         return SourceSnapshot(identity: me.providerDisplayName, items: results.map(\.0) + tasks, remarks: remarks)
     }
 
@@ -159,7 +165,9 @@ public struct AzureDevOpsPlugin: SourcePlugin {
         let found = try await http.decode(WIQLResult.self, from: request).workItems ?? []
         guard !found.isEmpty else { return ([], false) }
         let ids = found.map { String($0.id) }.joined(separator: ",")
-        let list: List<WorkItem> = try await get("_apis/wit/workitems", ["ids": ids, "errorPolicy": "omit"])
+        // With their links, for the pull requests they are tied to.
+        let list: List<WorkItem> = try await get(
+            "_apis/wit/workitems", ["ids": ids, "errorPolicy": "omit", "$expand": "relations"])
         // The order of the query: most recently changed first.
         let byID = Dictionary(list.value.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         return (found.compactMap { byID[$0.id] }, found.count >= Self.pageSize)
@@ -202,8 +210,7 @@ public struct AzureDevOpsPlugin: SourcePlugin {
             bundle: authored ? .authored : .reviews,
             title: Readable.text(pr.title),
             context: "\(repository.fullName) !\(pr.pullRequestId)",
-            url: host.appending(
-                components: repository.project.name, "_git", repository.name, "pullrequest", String(pr.pullRequestId)),
+            url: pr.webURL(host: host),
             author: pr.createdBy.map { Person(name: $0.displayName) },
             participants: participants,
             badges: review.badges(authored: authored),
@@ -286,6 +293,16 @@ extension AzureDevOpsPlugin {
         var createdBy: Identity?
         var repository: Repository
         var reviewers: [Reviewer]?
+
+        func webURL(host: URL) -> URL {
+            host.appending(
+                components: repository.project.name, "_git", repository.name, "pullrequest", String(pullRequestId))
+        }
+
+        /// How a work item's link names it: `vstfs:///Git/PullRequestId/{project}%2F{repository}%2F{id}`, lowercased.
+        var artifact: String {
+            "vstfs:///git/pullrequestid/\(repository.project.id)%2f\(repository.id)%2f\(pullRequestId)".lowercased()
+        }
     }
 
     struct Evaluation: Decodable, Sendable {
@@ -341,8 +358,24 @@ extension AzureDevOpsPlugin {
             }
         }
 
+        struct Relation: Decodable, Sendable {
+            var rel: String?
+            var url: String?
+        }
+
         var id: Int
         var fields: Fields
+        var relations: [Relation]?
+
+        /// The pull requests it is linked to, as `PullRequest.artifact` names them.
+        var pullRequests: [String] {
+            (relations ?? []).compactMap { relation in
+                guard relation.rel == "ArtifactLink", let url = relation.url?.lowercased(),
+                    url.hasPrefix("vstfs:///git/pullrequestid/")
+                else { return nil }
+                return url
+            }
+        }
 
         /// Priority 1 is high, 2 normal (the default), 3 and 4 low.
         var itemPriority: Priority {
@@ -353,7 +386,8 @@ extension AzureDevOpsPlugin {
             }
         }
 
-        func item(host: URL, accountID: UUID) -> InboxItem {
+        /// `openChanges`: its pull requests still active. Up for review then, or when its state says so.
+        func item(host: URL, accountID: UUID, openChanges: [URL] = []) -> InboxItem {
             let priority = itemPriority
             var badges: [Badge] = []
             if priority == .high {
@@ -363,7 +397,7 @@ extension AzureDevOpsPlugin {
             if let due { badges.append(DueDate.badge(for: due)) }
             if let state = fields.state { badges.append(Badge(id: .status, label: state, tone: .neutral)) }
             let kind = [fields.type, String(id)].compactMap { $0 }.joined(separator: " ")
-            return InboxItem(
+            let item = InboxItem(
                 id: InboxItem.makeID(account: accountID, local: "workitem/\(id)"),
                 accountID: accountID,
                 pluginID: AzureDevOpsPlugin.manifest.id,
@@ -377,6 +411,7 @@ extension AzureDevOpsPlugin {
                 priority: priority,
                 due: due
             )
+            return !openChanges.isEmpty || InReview.status(fields.state) ? item.waitingOnReview(openChanges) : item
         }
     }
 }

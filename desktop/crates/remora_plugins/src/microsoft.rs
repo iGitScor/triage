@@ -352,6 +352,7 @@ impl Message {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 
@@ -447,6 +448,7 @@ impl Event {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -554,6 +556,7 @@ impl Chat {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         })
     }
 }

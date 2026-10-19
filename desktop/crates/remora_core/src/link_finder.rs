@@ -39,6 +39,7 @@ impl LinkFinder {
         let candidates: Vec<&InboxItem> = items.iter().filter(|i| i.bundle != reminders).collect();
         let tickets = TicketKeys::known_in(candidates.iter().copied());
         let keys: Vec<HashSet<String>> = candidates.iter().map(|i| keys_of(i, &tickets)).collect();
+        let addresses: Vec<HashSet<String>> = candidates.iter().map(|i| addresses(i)).collect();
         let titles: Vec<String> = candidates.iter().map(|i| normalized(&i.title)).collect();
         let mut strong: HashMap<&str, Vec<String>> = HashMap::new();
         // Similar titles, with how close they are, to keep the closest when there are more than `limit`.
@@ -46,11 +47,14 @@ impl LinkFinder {
 
         for i in 0..candidates.len() {
             for j in i + 1..candidates.len() {
-                if candidates[i].plugin_id == candidates[j].plugin_id {
+                // The same page, or one the source ties to the other (a ticket's pull request, a comment's ticket):
+                // certain, even within one tool. Keys and titles only link different tools.
+                let same_page = !addresses[i].is_disjoint(&addresses[j]);
+                if !same_page && candidates[i].plugin_id == candidates[j].plugin_id {
                     continue;
                 }
                 let (a, b) = (candidates[i].id.as_str(), candidates[j].id.as_str());
-                if !keys[i].is_disjoint(&keys[j]) {
+                if same_page || !keys[i].is_disjoint(&keys[j]) {
                     strong.entry(a).or_default().push(b.to_string());
                     strong.entry(b).or_default().push(a.to_string());
                 } else if keyword_similar(&titles[i], &titles[j]) {
@@ -89,6 +93,24 @@ fn closeness(a: &str, b: &str) -> f64 {
 /// Ticket keys in the title, the context (a Linear identifier lives there) and the preview.
 fn keys_of(item: &InboxItem, tickets: &TicketKeys) -> HashSet<String> {
     tickets.keys(&[item.title.as_str(), &item.context, item.preview.as_deref().unwrap_or("")].join(" "))
+}
+
+/// Its page and the pages the source ties it to.
+fn addresses(item: &InboxItem) -> HashSet<String> {
+    item.url.iter().chain(item.related.iter().flatten()).map(|url| address(url)).collect()
+}
+
+/// A page whatever the link's case, query, anchor or trailing slash. A Linear issue without its slug, which follows
+/// the title: a comment's link (`…/issue/ENG-42/old-title#comment-1`) is still its issue's.
+pub(crate) fn address(url: &str) -> String {
+    let (host, path) = crate::in_review::host_and_path(url);
+    let host = host.to_lowercase();
+    let path = path.to_lowercase();
+    let mut parts: Vec<&str> = path.split('/').filter(|p| !p.is_empty()).collect();
+    if host == "linear.app" && parts.len() > 3 && parts[1] == "issue" {
+        parts.truncate(3);
+    }
+    std::iter::once(host.as_str()).chain(parts).collect::<Vec<_>>().join("/")
 }
 
 /// "[SOAK] chore(deps): Bump axios" → "Bump axios": tags and commit-style prefixes say nothing about the topic.
@@ -142,6 +164,26 @@ mod tests {
         item.title = title.into();
         item.context = context.into();
         item
+    }
+
+    /// A ticket and the pull request its tracker ties to it; a comment and its issue, in the same tool, whatever the
+    /// slug. Two items of one tool that share nothing stay apart. As macOS.
+    #[test]
+    fn pages_the_source_ties_link_for_sure() {
+        let mut ticket = task("1", "linear", "Close cases", "ENG-42");
+        ticket.url = Some("https://linear.app/acme/issue/ENG-42/new-title".into());
+        ticket.related = Some(vec!["https://github.com/acme/app/pull/9".into()]);
+        let mut pr = task("2", "github", "Something else entirely", "");
+        pr.url = Some("https://github.com/Acme/app/pull/9/".into());
+        let mut comment = task("3", "linear", "Erin commented", "");
+        comment.url = Some("https://linear.app/acme/issue/ENG-42/old-title#comment-1".into());
+        let mut other = task("4", "linear", "Erin commented", "");
+        other.url = Some("https://linear.app/acme/issue/ENG-50/other".into());
+        let links = LinkFinder::default().links(&[ticket, pr, comment, other]);
+        let mut linked = links["1"].clone();
+        linked.sort();
+        assert_eq!(linked, ["2", "3"]);
+        assert!(!links.contains_key("4"));
     }
 
     #[test]

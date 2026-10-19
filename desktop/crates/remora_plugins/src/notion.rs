@@ -6,7 +6,7 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::try_join_all;
-use remora_core::badge;
+use remora_core::{badge, in_review};
 use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Tone};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -491,7 +491,7 @@ impl Page {
         if let Some(due) = due {
             badges.push(due_badge(due));
         }
-        InboxItem {
+        let item = InboxItem {
             id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "notion".into(),
@@ -515,6 +515,12 @@ impl Page {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
+        };
+        if in_review::status(self.status()) {
+            item.waiting_on_review(vec![])
+        } else {
+            item
         }
     }
 }
@@ -587,6 +593,16 @@ pub(crate) mod tests {
         assert!(item.has_badge("overdue") && item.has_badge("status"));
         assert_eq!((item.bundle.clone(), item.needs_action), (InboxBundle::tasks(), true));
         assert!(snapshot.remarks.is_empty());
+    }
+
+    /// A task whose status says it is up for review waits on the reviewers. As macOS.
+    #[test]
+    fn a_task_in_review_waits_on_the_reviewers() {
+        let task =
+            |status: &str| serde_json::from_str::<Page>(&page("c", status)).unwrap().item("account", "Team tasks");
+        let review = task("In review");
+        assert_eq!((review.bundle, review.needs_action), (InboxBundle::awaiting(), false));
+        assert_eq!(task("In progress").bundle, InboxBundle::tasks());
     }
 
     /// A database that moved or lost its access is named in a remark; the others' tasks still show. When none can

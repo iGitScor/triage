@@ -322,7 +322,7 @@ extension NotionPlugin {
             var badges: [Badge] = []
             if let status { badges.append(Badge(id: .status, label: status, tone: .neutral)) }
             if let due { badges.append(DueDate.badge(for: due)) }
-            return InboxItem(
+            let item = InboxItem(
                 id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: NotionPlugin.manifest.id,
@@ -336,6 +336,7 @@ extension NotionPlugin {
                 needsAction: true,
                 due: due
             )
+            return InReview.status(status) ? item.waitingOnReview() : item
         }
     }
 

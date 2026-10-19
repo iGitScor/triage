@@ -86,7 +86,10 @@ public struct LinearPlugin: SourcePlugin {
           viewer {
             name
             assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
-              nodes { id identifier title url priority dueDate updatedAt state { name type } }
+              nodes {
+                id identifier title url priority dueDate updatedAt state { name type }
+                attachments(first: 10) { nodes { url metadata } }
+              }
               pageInfo { hasNextPage }
             }
           }
@@ -139,6 +142,17 @@ extension LinearPlugin {
         var dueDate: String?
         var updatedAt: Date
         var state: State?
+        var attachments: Nodes<Attachment>?
+
+        /// Its pull and merge requests (Linear's GitHub and GitLab integrations, or a link pasted by hand).
+        var changes: [Attachment] { (attachments?.nodes ?? []).filter { $0.url.map(InReview.isChange) ?? false } }
+
+        /// Up for review: a pull request still open, or a review status ("In Review"). Not from the backlog or triage,
+        /// which nobody has started.
+        var inReview: Bool {
+            guard state?.type != "backlog", state?.type != "triage" else { return false }
+            return changes.contains(where: \.isOpen) || InReview.status(state?.name)
+        }
 
         func item(accountID: UUID) -> InboxItem {
             var badges: [Badge] = []
@@ -156,7 +170,7 @@ extension LinearPlugin {
             if let due { badges.append(DueDate.badge(for: due)) }
             if let state { badges.append(Badge(id: .status, label: state.name, tone: .neutral)) }
             let priority = itemPriority
-            return InboxItem(
+            let item = InboxItem(
                 id: InboxItem.makeID(account: accountID, local: "\(id)"),
                 accountID: accountID,
                 pluginID: LinearPlugin.manifest.id,
@@ -171,6 +185,7 @@ extension LinearPlugin {
                 due: due,
                 appURL: LinearPlugin.appURL(for: url)
             )
+            return inReview ? item.waitingOnReview(changes.compactMap(\.url)) : item
         }
 
         /// Linear's 1 urgent … 4 low (0 = none). Backlog counts as low unless urgent or high.
@@ -184,6 +199,31 @@ extension LinearPlugin {
                 }
             if state?.type == "backlog", mapped < .high { return .low }
             return mapped
+        }
+    }
+
+    /// A link on an issue. Its metadata is the integration's own: read leniently, so an unexpected shape never fails
+    /// the fetch.
+    struct Attachment: Decodable {
+        var url: URL?
+        /// A pull request's state as the integration last saw it ("open", "merged", "closed"…), when it says.
+        var status: String?
+
+        /// Open unless the integration says it was merged or closed.
+        var isOpen: Bool { !["merged", "closed"].contains(status?.lowercased() ?? "") }
+
+        init(url: URL?, status: String? = nil) {
+            self.url = url
+            self.status = status
+        }
+
+        private enum CodingKeys: String, CodingKey { case url, metadata }
+        private struct Metadata: Decodable { var status: String? }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            url = URL(lenient: (try? container.decodeIfPresent(String.self, forKey: .url)) ?? nil)
+            status = (try? container.decodeIfPresent(Metadata.self, forKey: .metadata))??.status
         }
     }
 

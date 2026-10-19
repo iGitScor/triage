@@ -143,6 +143,7 @@ impl GitHubPlugin {
       id number title url updatedAt
       repository { nameWithOwner }
       author { __typename login avatarUrl }
+      closedByPullRequestsReferences(first: 5) { nodes { url } }
     }
     fragment PR on PullRequest {
       id number title url isDraft updatedAt additions deletions mergeable reviewDecision
@@ -419,6 +420,7 @@ fn maintained_item(
         recurrence: None,
         reactions: None,
         reason: None,
+        related: None,
     }
 }
 
@@ -464,11 +466,22 @@ struct Issue {
     updated_at: DateTime<Utc>,
     repository: Repository,
     author: Option<Actor>,
+    /// The open pull requests that will close it (linked in the sidebar or "Fixes #12").
+    #[serde(default)]
+    closed_by_pull_requests_references: Connection<Link>,
+}
+
+#[derive(Deserialize, Default)]
+struct Link {
+    url: String,
 }
 
 impl Issue {
+    /// Waits on the review of the pull requests that will close it, when there are.
     fn item(self, account_id: &str) -> InboxItem {
-        InboxItem {
+        let changes: Vec<String> =
+            self.closed_by_pull_requests_references.nodes.into_iter().flatten().map(|link| link.url).collect();
+        let item = InboxItem {
             id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "github".into(),
@@ -491,6 +504,12 @@ impl Issue {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
+        };
+        if changes.is_empty() {
+            item
+        } else {
+            item.waiting_on_review(changes)
         }
     }
 }
@@ -715,6 +734,7 @@ impl PullRequest {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -925,6 +945,31 @@ pub(crate) mod tests {
         assert!(task.needs_action);
         assert_eq!(snapshot.remarks, [crate::truncated("GitHub")]);
     }
+
+    /// An assigned issue a pull request will close waits on its review, tied to it. As macOS.
+    #[tokio::test]
+    async fn an_issue_with_a_closing_pull_request_waits_on_its_review() {
+        let issue = r#""assigned": {"issueCount": 1, "nodes": [{"id": "I_1", "number": 31, "title": "Crash",
+          "url": "https://github.com/acme/app/issues/31", "updatedAt": "2026-10-08T11:00:00Z",
+          "repository": {"nameWithOwner": "acme/app"},
+          "closedByPullRequestsReferences": {"nodes": [{"url": "https://github.com/acme/app/pull/32"}]}}]},"#;
+        let json = RESPONSE.replacen(
+            r#""viewer": {"login": "alice"},"#,
+            &format!(r#""viewer": {{"login": "alice"}}, {issue}"#),
+            1,
+        );
+        let plugin = GitHubPlugin::new(
+            &config(&[("host", "github.com"), ("token", "t")]),
+            Arc::new(StubHttp::paths(&[("/graphql", &json)])),
+        )
+        .unwrap();
+        let snapshot = plugin.fetch().await.unwrap();
+        let task = snapshot.items.iter().find(|i| i.context == "acme/app #31").unwrap();
+        assert_eq!(task.bundle, InboxBundle::awaiting());
+        assert!(!task.needs_action);
+        assert_eq!(task.related, Some(vec!["https://github.com/acme/app/pull/32".to_string()]));
+    }
+
     const REPOSITORY: &str = r#"{"default_branch": "main"}"#;
     const RED_RUN: &str = r#"{"workflow_runs": [{"id": 42, "name": "CI", "display_title": "Bump *serde*",
       "conclusion": "failure", "html_url": "https://github.com/acme/web/actions/runs/42",

@@ -627,6 +627,7 @@ impl Reply {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -800,6 +801,7 @@ impl Match {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 

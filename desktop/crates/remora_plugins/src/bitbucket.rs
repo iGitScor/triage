@@ -471,6 +471,7 @@ impl CloudPullRequest {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -636,6 +637,7 @@ impl DataCenterPullRequest {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }

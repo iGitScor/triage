@@ -20,16 +20,21 @@ public struct LinkFinder: Sendable {
         let candidates = items.filter { $0.bundle != .reminders }
         let tickets = TicketKeys(knownIn: candidates)
         let keys = candidates.map { Self.keys(of: $0, tickets) }
+        let addresses = candidates.map(Self.addresses)
         let titles = candidates.map { Self.normalized($0.title) }
         var strong: [String: [String]] = [:]
         /// Similar titles, with how close they are, to keep the closest when there are more than `limit`.
         var weak: [String: [(id: String, score: Double, date: Date)]] = [:]
 
         for i in candidates.indices {
-            for j in candidates.indices where j > i && candidates[i].pluginID != candidates[j].pluginID {
+            for j in candidates.indices where j > i {
                 let a = candidates[i].id
                 let b = candidates[j].id
-                if !keys[i].isDisjoint(with: keys[j]) {
+                // The same page, or one the source ties to the other (a ticket's pull request, a comment's ticket):
+                // certain, even within one tool. Keys and titles only link different tools.
+                let samePage = !addresses[i].isDisjoint(with: addresses[j])
+                guard samePage || candidates[i].pluginID != candidates[j].pluginID else { continue }
+                if samePage || !keys[i].isDisjoint(with: keys[j]) {
                     strong[a, default: []].append(b)
                     strong[b, default: []].append(a)
                 } else if remembered.similar(titles[i], titles[j], by: similarity) {
@@ -63,6 +68,19 @@ public struct LinkFinder: Sendable {
     /// Ticket keys in the title, the context (a Linear identifier lives there) and the preview.
     static func keys(of item: InboxItem, _ tickets: TicketKeys) -> Set<String> {
         tickets.keys([item.title, item.context, item.preview ?? ""].joined(separator: " "))
+    }
+
+    /// Its page and the pages the source ties it to.
+    static func addresses(of item: InboxItem) -> Set<String> {
+        Set(([item.url].compactMap { $0 } + (item.related ?? [])).map(address))
+    }
+
+    /// A page whatever the link's case, query, anchor or trailing slash. A Linear issue without its slug, which
+    /// follows the title: a comment's link (`…/issue/ENG-42/old-title#comment-1`) is still its issue's.
+    static func address(_ url: URL) -> String {
+        var parts = url.path.lowercased().split(separator: "/").map(String.init)
+        if url.host == "linear.app", parts.count > 3, parts[1] == "issue" { parts = Array(parts.prefix(3)) }
+        return ([url.host?.lowercased() ?? ""] + parts).joined(separator: "/")
     }
 
     /// "[SOAK] chore(deps): Bump axios" → "Bump axios": tags and commit-style prefixes say nothing about the topic.

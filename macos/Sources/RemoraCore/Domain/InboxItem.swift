@@ -34,6 +34,9 @@ public struct InboxItem: Identifiable, Hashable, Codable, Sendable {
     public var reactions: [Reaction]?
     /// Why Remora put a chat message where it is; nil for what the source sorted. Not in the fingerprint.
     public var reason: SortReason?
+    /// Pages the source ties this item to (a ticket's pull requests): linked for sure to the items at those
+    /// addresses. Not in the fingerprint.
+    public var related: [URL]?
 
     public init(
         id: String,

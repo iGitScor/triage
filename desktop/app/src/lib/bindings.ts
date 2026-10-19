@@ -220,7 +220,12 @@ reactions?: Array<Reaction> | null,
 /**
  * Why Remora put a chat message where it is; None for what the source sorted. Not in the fingerprint.
  */
-reason?: SortReason, };
+reason?: SortReason, 
+/**
+ * Pages the source ties this item to (a ticket's pull requests): linked for sure to the items at those
+ * addresses. Not in the fingerprint.
+ */
+related?: Array<string>, };
 
 export type ItemExtras = { prep?: PrepView, help?: HelpView, linked?: Array<LinkedView>, ranking?: string, snoozedTimes?: number, };
 

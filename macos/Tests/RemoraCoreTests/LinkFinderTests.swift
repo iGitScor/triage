@@ -13,6 +13,23 @@ struct LinkFinderTests {
         return item
     }
 
+    /// A ticket and the pull request its tracker ties to it; a comment and its issue, in the same tool, whatever
+    /// the slug. Two items of one tool that share nothing stay apart. As Windows.
+    @Test func pagesTheSourceTiesLinkForSure() {
+        var ticket = item("1", "linear", "Close cases", context: "ENG-42")
+        ticket.url = URL(string: "https://linear.app/acme/issue/ENG-42/new-title")
+        ticket.related = [URL(string: "https://github.com/acme/app/pull/9")!]
+        var pr = item("2", "github", "Something else entirely")
+        pr.url = URL(string: "https://github.com/Acme/app/pull/9/")
+        var comment = item("3", "linear", "Erin commented")
+        comment.url = URL(string: "https://linear.app/acme/issue/ENG-42/old-title#comment-1")
+        var other = item("4", "linear", "Erin commented")
+        other.url = URL(string: "https://linear.app/acme/issue/ENG-50/other")
+        let links = LinkFinder().links([ticket, pr, comment, other])
+        #expect(Set(links["1"] ?? []) == ["2", "3"])
+        #expect(links["4"] == nil)
+    }
+
     @Test func sharedTicketKeyLinksAcrossTools() {
         let issue = item("1", "linear", "Close Dotfile cases", context: "CE-1380")
         let pr = item("2", "github", "CE-1380: close cases on account closure")

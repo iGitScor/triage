@@ -174,6 +174,7 @@ public struct GitHubPlugin: SourcePlugin {
           id number title url updatedAt
           repository { nameWithOwner }
           author { __typename login avatarUrl }
+          closedByPullRequestsReferences(first: 5) { nodes { url } }
         }
         fragment PR on PullRequest {
           id number title url isDraft updatedAt additions deletions mergeable reviewDecision
@@ -242,9 +243,13 @@ struct AssignedIssue: Decodable {
     var updatedAt: Date
     var repository: PullRequest.Repository
     var author: PullRequest.Actor?
+    /// The open pull requests that will close it (linked in the sidebar or "Fixes #12").
+    var closedByPullRequestsReferences: Connection<Link>?
+    struct Link: Decodable { var url: URL }
 
+    /// Waits on the review of the pull requests that will close it, when there are.
     func item(accountID: UUID) -> InboxItem {
-        InboxItem(
+        let item = InboxItem(
             id: InboxItem.makeID(account: accountID, local: "\(id)"),
             accountID: accountID,
             pluginID: GitHubPlugin.manifest.id,
@@ -256,6 +261,8 @@ struct AssignedIssue: Decodable {
             date: updatedAt,
             needsAction: true
         )
+        let changes = closedByPullRequestsReferences?.all.map(\.url) ?? []
+        return changes.isEmpty ? item : item.waitingOnReview(changes)
     }
 }
 

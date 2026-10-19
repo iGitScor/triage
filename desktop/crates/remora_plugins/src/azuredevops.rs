@@ -8,8 +8,8 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
-use remora_core::badge;
 use remora_core::ReviewState;
+use remora_core::{badge, in_review};
 use remora_core::{
     Badge, ChangeSet, ChangedFile, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone,
 };
@@ -195,8 +195,9 @@ impl AzureDevOpsPlugin {
             return Ok((vec![], false));
         }
         let ids = found.iter().map(|r| r.id.to_string()).collect::<Vec<_>>().join(",");
-        let list: List<WorkItem> =
-            self.get("_apis/wit/workitems", &[("ids", &ids), ("errorPolicy", "omit")], Some(API_VERSION)).await?;
+        // With their links, for the pull requests they are tied to.
+        let query = [("ids", ids.as_str()), ("errorPolicy", "omit"), ("$expand", "relations")];
+        let list: List<WorkItem> = self.get("_apis/wit/workitems", &query, Some(API_VERSION)).await?;
         // The order of the query: most recently changed first.
         let mut by_id: HashMap<u64, WorkItem> = list.value.into_iter().map(|w| (w.id, w)).collect();
         let cut = found.len() >= PAGE_SIZE;
@@ -233,6 +234,7 @@ impl AzureDevOpsPlugin {
         account_id: &str,
         host: &str,
     ) -> InboxItem {
+        let url = pr.web_url(host);
         let reviewers = pr.reviewers.unwrap_or_default();
         let votes: Vec<i32> = reviewers.iter().map(|r| r.vote.unwrap_or(0)).collect();
         let changes_requested = votes.iter().any(|v| *v < 0);
@@ -279,7 +281,7 @@ impl AzureDevOpsPlugin {
             title: remora_core::text::readable(&pr.title),
             context: format!("{} !{id}", repository.full_name()),
             preview: None,
-            url: web_url(host, &[&repository.project.name, "_git", &repository.name, "pullrequest", &id]),
+            url,
             app_url: None,
             author: pr.created_by.map(|c| Person { name: c.display_name, avatar_url: None, review: None, bot: false }),
             participants,
@@ -295,6 +297,7 @@ impl AzureDevOpsPlugin {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -350,6 +353,13 @@ impl SourcePlugin for AzureDevOpsPlugin {
         );
         let (authored, reviewing) = (authored?.value, reviewing?.value);
         let mut cut = authored.len() >= PAGE_SIZE || reviewing.len() >= PAGE_SIZE;
+        // A work item waits on the review of its pull requests still active: those listed here, yours or to review.
+        let mut active: HashMap<String, String> = HashMap::new();
+        for pr in authored.iter().chain(&reviewing) {
+            if let Some(url) = pr.web_url(&self.host) {
+                active.entry(pr.artifact()).or_insert(url);
+            }
+        }
         let pulls = Self::pull_requests(authored.into_iter().chain(reviewing).collect(), &me.id);
         let mut items = Vec::with_capacity(pulls.len());
         let mut failed = None;
@@ -373,7 +383,10 @@ impl SourcePlugin for AzureDevOpsPlugin {
         match work {
             Ok((work, stopped)) => {
                 cut |= stopped;
-                items.extend(work.iter().map(|w| w.item(&self.host, &self.account_id)));
+                items.extend(work.iter().map(|w| {
+                    let open_changes = w.pull_requests().iter().filter_map(|a| active.get(a).cloned()).collect();
+                    w.item(&self.host, &self.account_id, open_changes)
+                }));
             }
             Err(error) => match crate::rate_limit_of(&error) {
                 Some(limit) => return Err(limit),
@@ -460,6 +473,21 @@ struct PullRequest {
     reviewers: Option<Vec<Reviewer>>,
 }
 
+impl PullRequest {
+    fn web_url(&self, host: &str) -> Option<String> {
+        let repository = &self.repository;
+        let id = self.pull_request_id.to_string();
+        web_url(host, &[&repository.project.name, "_git", &repository.name, "pullrequest", &id])
+    }
+
+    /// How a work item's link names it: `vstfs:///Git/PullRequestId/{project}%2F{repository}%2F{id}`, lowercased.
+    fn artifact(&self) -> String {
+        let repository = &self.repository;
+        format!("vstfs:///git/pullrequestid/{}%2f{}%2f{}", repository.project.id, repository.id, self.pull_request_id)
+            .to_lowercase()
+    }
+}
+
 #[derive(Deserialize)]
 struct PolicyKind {
     id: String,
@@ -539,9 +567,28 @@ struct WorkItemFields {
 struct WorkItem {
     id: u64,
     fields: WorkItemFields,
+    #[serde(default)]
+    relations: Option<Vec<Relation>>,
+}
+
+#[derive(Deserialize)]
+struct Relation {
+    rel: Option<String>,
+    url: Option<String>,
 }
 
 impl WorkItem {
+    /// The pull requests it is linked to, as `PullRequest::artifact` names them.
+    fn pull_requests(&self) -> Vec<String> {
+        self.relations
+            .iter()
+            .flatten()
+            .filter(|r| r.rel.as_deref() == Some("ArtifactLink"))
+            .filter_map(|r| r.url.as_deref().map(str::to_lowercase))
+            .filter(|url| url.starts_with("vstfs:///git/pullrequestid/"))
+            .collect()
+    }
+
     /// Priority 1 is high, 2 normal (the default), 3 and 4 low.
     fn item_priority(&self) -> Priority {
         match self.fields.priority {
@@ -551,7 +598,8 @@ impl WorkItem {
         }
     }
 
-    fn item(&self, host: &str, account_id: &str) -> InboxItem {
+    /// `open_changes`: its pull requests still active. Up for review then, or when its state says so.
+    fn item(&self, host: &str, account_id: &str, open_changes: Vec<String>) -> InboxItem {
         let priority = self.item_priority();
         let mut badges = vec![];
         if priority == Priority::High {
@@ -568,7 +616,7 @@ impl WorkItem {
         let kind = [self.fields.kind.as_deref(), Some(id.as_str())].into_iter().flatten().collect::<Vec<_>>().join(" ");
         let context =
             [self.fields.project.as_deref(), Some(kind.as_str())].into_iter().flatten().collect::<Vec<_>>().join(" · ");
-        InboxItem {
+        let item = InboxItem {
             id: InboxItem::make_id(account_id, format!("workitem/{id}")),
             account_id: account_id.into(),
             plugin_id: "azuredevops".into(),
@@ -591,6 +639,12 @@ impl WorkItem {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
+        };
+        if !open_changes.is_empty() || in_review::status(self.fields.state.as_deref()) {
+            item.waiting_on_review(open_changes)
+        } else {
+            item
         }
     }
 }
@@ -724,6 +778,32 @@ pub(crate) mod tests {
         assert!(bug.has_badge("status") && bug.needs_action);
         let task = &snapshot.items[3];
         assert!(task.priority == Some(Priority::Low) && !task.needs_action);
+    }
+
+    /// A work item linked to a pull request still active, even one you already voted on, waits on its review, tied
+    /// to its page; linked to one no longer listed (completed), it stays a task. As macOS.
+    #[tokio::test]
+    async fn work_items_with_an_active_pull_request_wait_on_its_review() {
+        let link = |id: u64| {
+            format!(
+                r#""relations": [{{"rel": "ArtifactLink", "url": "vstfs:///Git/PullRequestId/P1%2FR2%2F{id}"}},
+                {{"rel": "System.LinkTypes.Hierarchy-Reverse", "url": "https://dev.azure.com/acme/_apis/wit/workItems/1"}}]"#
+            )
+        };
+        let work_items = WORK_ITEMS
+            .replacen(r#""id": 43, "fields""#, &format!(r#""id": 43, {}, "fields""#, link(99)), 1)
+            .replacen(r#""id": 42, "fields""#, &format!(r#""id": 42, {}, "fields""#, link(14)), 1);
+        let routes: Vec<_> = routes()
+            .into_iter()
+            .map(|(path, body)| (path, if path == "/_apis/wit/workitems" { work_items.as_str() } else { body }))
+            .collect();
+        let snapshot = plugin(&routes, None).fetch().await.unwrap();
+        let bug = snapshot.items.iter().find(|i| i.context == "Acme · Bug 42").unwrap();
+        assert_eq!(bug.bundle, InboxBundle::awaiting());
+        assert!(!bug.needs_action);
+        assert_eq!(bug.related, Some(vec!["https://dev.azure.com/acme/Acme/_git/Acme/pullrequest/14".to_string()]));
+        let task = snapshot.items.iter().find(|i| i.context == "Acme · Task 43").unwrap();
+        assert_eq!((task.bundle.clone(), task.related.clone()), (InboxBundle::tasks(), None));
     }
 
     /// Checks or work items that can't be read are said; a rate limit fails the fetch, so the backoff waits it out.

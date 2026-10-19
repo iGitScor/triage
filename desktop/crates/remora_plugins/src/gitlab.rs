@@ -258,6 +258,7 @@ impl GitLabPlugin {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -405,6 +406,7 @@ impl BranchPipeline {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -483,6 +485,7 @@ impl Todo {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         })
     }
 }

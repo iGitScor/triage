@@ -11,6 +11,8 @@ struct JiraStub: HTTPClient {
     var watched: String
     var expectedAuthorization: String
     var confluence = JiraPluginTests.confluence
+    /// The assigned issues with a pull request still open (Cloud's development panel).
+    var withOpenChanges = #"{"issues": []}"#
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         #expect(request.value(forHTTPHeaderField: "Authorization") == expectedAuthorization)
@@ -19,7 +21,10 @@ struct JiraStub: HTTPClient {
         let body =
             url.path.hasSuffix("/wiki/rest/api/search")
             ? confluence
-            : url.path.hasSuffix("/myself") ? myself : jql?.hasPrefix("watcher") == true ? watched : assigned
+            : url.path.hasSuffix("/myself")
+                ? myself
+                : jql?.hasPrefix("watcher") == true
+                    ? watched : jql?.contains("development[") == true ? withOpenChanges : assigned
         return (Data(body.utf8), HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
     }
 }
@@ -96,6 +101,19 @@ struct JiraPluginTests {
             http: JiraStub(
                 myself: cloudMe, assigned: assigned ?? self.assigned, watched: watched(mentioning: "alice-id"),
                 expectedAuthorization: cloudAuth))
+    }
+
+    /// An issue with a pull request still open waits on the review; the others stay to do. As Windows.
+    @Test func anIssueWithAnOpenPullRequestWaits() async throws {
+        var stub = JiraStub(
+            myself: cloudMe, assigned: assigned, watched: watched(mentioning: "alice-id"),
+            expectedAuthorization: cloudAuth)
+        stub.withOpenChanges = #"{"issues": [{"id": "2", "key": "OPS-8", "fields": {"summary": "x"}}]}"#
+        let plugin = try JiraPlugin(
+            config: config(["host": "acme.atlassian.net", "email": "alice@acme.com", "token": "t0ken"]), http: stub)
+        let items = try await plugin.fetch().items
+        #expect(items.first { $0.context == "OPS-8" }?.bundle == .awaiting)
+        #expect(items.first { $0.context == "OPS-7" }?.bundle == .tasks)
     }
 
     @Test func assignedIssuesAreTasksWithPriorityAndDueDate() async throws {

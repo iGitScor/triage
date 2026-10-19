@@ -13,6 +13,7 @@ pub mod domain;
 pub mod emoji;
 pub mod failure;
 pub mod handoff;
+pub mod in_review;
 pub mod link;
 pub mod link_finder;
 pub mod mcp;

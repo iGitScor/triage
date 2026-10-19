@@ -10,9 +10,14 @@ description: Comment Remora range ce qui a besoin de vous. À moi et En attente,
 | Onglet | Ce qu’il contient |
 |---|---|
 | **À moi** | Quelqu’un attend après vous : une question, une demande de relecture, une correction, une tâche, un rappel revenu, votre merge request une fois approuvée, bloquée ou en échec. |
-| **En attente** | Vous attendez les autres : vos merge requests en relecture, vos brouillons. |
+| **En attente** | Vous attendez les autres : vos merge requests en relecture, vos brouillons, un ticket dont le travail est en relecture. |
 | **Reportés** | Ce que vous avez mis de côté. Voir [Reporter et rappels](./reporter-et-rappels). |
 | **Terminés** | Ce que vous avez terminé, jusqu’à ce qu’il y ait du nouveau. |
+
+Un ticket (Linear, Jira, GitHub, Azure DevOps, Notion) attend les autres dès qu’une pull ou merge request est
+ouverte pour lui, ou que son statut parle de relecture (*In Review*, *Code review*, *En revue*…). La ligne de la pull
+request dit ce qu’elle attend de vous, liée au ticket ; un commentaire du ticket qui vous demande quelque chose garde
+sa propre ligne dans *À moi*.
 
 Le compteur de la barre des menus ou de l’icône de la zone de notification ne compte que *À moi*, sans ce qui est
 discret (*À lire*, priorité basse). Réglages → Général → **Compteur** peut tout compter, n’afficher qu’un point quand quelque chose vous attend, ou rien.

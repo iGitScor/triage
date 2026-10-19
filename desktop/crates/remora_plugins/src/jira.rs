@@ -6,11 +6,11 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use regex::Regex;
-use remora_core::badge;
+use remora_core::{badge, in_review};
 use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, LazyLock};
 
 pub fn manifest() -> PluginManifest {
@@ -70,6 +70,10 @@ pub fn manifest() -> PluginManifest {
 }
 
 const ASSIGNED_JQL: &str = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC";
+/// Assigned issues with a pull request still open, from Jira's development panel (Cloud, with a Git tool connected to
+/// Jira): they wait on the review, like a status "In Review".
+const OPEN_CHANGES_JQL: &str =
+    "assignee = currentUser() AND statusCategory != Done AND development[pullrequests].open > 0";
 /// Issues you watch (Jira adds you to those you create, are assigned or comment on) with recent activity: their
 /// comments are read for mentions of you.
 const WATCHED_JQL: &str = "watcher = currentUser() AND updated >= -7d ORDER BY updated DESC";
@@ -141,16 +145,19 @@ impl JiraPlugin {
         decode(self.http.as_ref(), request).await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn snapshot(
         me: &Myself,
         assigned: &SearchPage,
         watched: &SearchPage,
         confluence: &ConfluencePage,
+        with_open_changes: &HashSet<String>,
         host: &str,
         account_id: &str,
         now: DateTime<Utc>,
     ) -> SourceSnapshot {
-        let mut items: Vec<InboxItem> = assigned.issues.iter().map(|i| i.item(host, account_id)).collect();
+        let mut items: Vec<InboxItem> =
+            assigned.issues.iter().map(|i| i.item(host, account_id, with_open_changes.contains(&i.key))).collect();
         let week_ago = now - Duration::days(7);
         for issue in &watched.issues {
             let comments = issue.fields.comment.as_ref().map(|c| c.comments.as_slice()).unwrap_or_default();
@@ -188,10 +195,21 @@ impl JiraPlugin {
 impl SourcePlugin for JiraPlugin {
     async fn fetch(&self) -> Result<SourceSnapshot, PluginError> {
         let me: Myself = self.cache.value("myself", IDENTITY_LIFETIME, || self.get("myself", &[])).await?;
-        let (assigned, watched) = futures::join!(
+        // Quiet when it fails: Data Center, or a site without a Git tool, doesn't know the field.
+        let with_changes = async {
+            if self.cloud {
+                self.search(OPEN_CHANGES_JQL, "summary", "50").await.ok()
+            } else {
+                None
+            }
+        };
+        let (assigned, watched, with_changes) = futures::join!(
             self.search(ASSIGNED_JQL, "summary,priority,duedate,status,updated", "50"),
             self.search(WATCHED_JQL, "summary,comment", "25"),
+            with_changes,
         );
+        let with_open_changes: HashSet<String> =
+            with_changes.map(|page| page.issues.into_iter().map(|i| i.key).collect()).unwrap_or_default();
         // Mentions are a bonus: if that search fails, assigned issues still come through, and a remark says so.
         let (watched, failed) = match watched {
             Ok(page) => (page, None),
@@ -211,7 +229,16 @@ impl SourcePlugin for JiraPlugin {
                 },
             }
         }
-        let mut snapshot = Self::snapshot(&me, &assigned?, &watched, &pages, &self.host, &self.account_id, Utc::now());
+        let mut snapshot = Self::snapshot(
+            &me,
+            &assigned?,
+            &watched,
+            &pages,
+            &with_open_changes,
+            &self.host,
+            &self.account_id,
+            Utc::now(),
+        );
         snapshot.remarks.extend(failed);
         snapshot.remarks.extend(confluence_failed);
         Ok(snapshot)
@@ -339,7 +366,8 @@ impl Issue {
         }
     }
 
-    fn item(&self, host: &str, account_id: &str) -> InboxItem {
+    /// `open_change`: a pull request is still open for it. Up for review then, or when its status says so.
+    fn item(&self, host: &str, account_id: &str, open_change: bool) -> InboxItem {
         let priority = self.item_priority();
         let mut badges = vec![];
         match priority {
@@ -356,7 +384,7 @@ impl Issue {
         if let Some(status) = &self.fields.status {
             badges.push(Badge::new(badge::STATUS, &status.name, Tone::Neutral));
         }
-        InboxItem {
+        let item = InboxItem {
             id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "jira".into(),
@@ -379,6 +407,12 @@ impl Issue {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
+        };
+        if open_change || in_review::status(self.fields.status.as_ref().map(|s| s.name.as_str())) {
+            item.waiting_on_review(vec![])
+        } else {
+            item
         }
     }
 }
@@ -424,6 +458,7 @@ impl Comment {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -623,6 +658,7 @@ impl ConfluenceResult {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         })
     }
 }
@@ -643,6 +679,8 @@ pub(crate) mod tests {
         myself: String,
         assigned: String,
         watched: String,
+        /// Keys with a pull request still open: none unless a test says.
+        open_changes: String,
         authorization: String,
     }
 
@@ -677,12 +715,16 @@ pub(crate) mod tests {
                 &self.myself
             } else if jql.starts_with("watcher") {
                 &self.watched
+            } else if jql.contains("development[pullrequests]") {
+                &self.open_changes
             } else {
                 &self.assigned
             };
             Ok(Response { status: 200, body: body.to_string(), etag: None, reset: None })
         }
     }
+
+    const NO_ISSUES: &str = r#"{"issues": [], "isLast": true}"#;
 
     fn jira(date: DateTime<Utc>) -> String {
         date.with_timezone(&chrono::FixedOffset::east_opt(2 * 3600).unwrap())
@@ -728,6 +770,7 @@ pub(crate) mod tests {
             myself: r#"{"accountId": "alice-id", "displayName": "Alice"}"#.into(),
             assigned: assigned_body.unwrap_or_else(|| assigned(&recent)),
             watched: watched(&recent, &old),
+            open_changes: NO_ISSUES.into(),
             authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
         };
         JiraPlugin::new(
@@ -796,6 +839,30 @@ pub(crate) mod tests {
         assert_eq!(VerbClassifier::classify(comment.clone()).bundle, InboxBundle::read());
     }
 
+    /// A pull request still open for it (Jira's development panel), or a review status: up for review, in Awaiting.
+    /// As macOS.
+    #[tokio::test]
+    async fn issues_up_for_review_wait_on_the_reviewers() {
+        let recent = jira(Utc::now() - Duration::hours(1));
+        let mut plugin = cloud(None);
+        let stub = JiraStub {
+            myself: r#"{"accountId": "alice-id", "displayName": "Alice"}"#.into(),
+            assigned: assigned(&recent).replace("To Do", "Code Review"),
+            watched: NO_ISSUES.into(),
+            open_changes:
+                r#"{"issues": [{"id": "10001", "key": "OPS-7", "fields": {"summary": "TLS"}}], "isLast": true}"#.into(),
+            authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
+        };
+        plugin.http = Arc::new(stub);
+        let items = plugin.fetch().await.unwrap().items;
+        assert_eq!(
+            items.iter().map(|i| (i.context.as_str(), i.bundle.clone(), i.needs_action)).collect::<Vec<_>>(),
+            [("OPS-7", InboxBundle::awaiting(), false), ("OPS-8", InboxBundle::awaiting(), false)],
+            "a key with an open pull request, a status Code Review"
+        );
+        assert!(cloud(None).fetch().await.unwrap().items.iter().all(|i| i.bundle != InboxBundle::awaiting()));
+    }
+
     #[tokio::test]
     async fn says_when_issues_are_cut() {
         let recent = jira(Utc::now());
@@ -817,6 +884,7 @@ pub(crate) mod tests {
             myself: r#"{"name": "alice", "key": "JIRAUSER1", "displayName": "Alice"}"#.into(),
             assigned: r#"{"issues": [], "total": 0}"#.into(),
             watched,
+            open_changes: NO_ISSUES.into(),
             authorization: "Bearer pat".into(),
         };
         // Data Center's Confluence is another server: the option is for Cloud.
@@ -839,6 +907,7 @@ pub(crate) mod tests {
             myself: r#"{"accountId": "alice-id", "displayName": "Alice"}"#.into(),
             assigned: assigned(&recent),
             watched: watched(&recent, &old),
+            open_changes: NO_ISSUES.into(),
             authorization: format!("Basic {}", base64(b"alice@acme.com:t0ken")),
         };
         crate::stub::EgressFixture {

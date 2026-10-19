@@ -10,9 +10,13 @@ description: How Remora sorts what needs you. My turn and Waiting, the verbs (To
 | Tab | What’s in it |
 |---|---|
 | **My turn** | Someone is waiting on you: a question, a review request, a fix, a task, a reminder that came back, your merge request once it’s approved, blocked or failing. |
-| **Waiting** | You’re waiting on others: your merge requests under review, drafts. |
+| **Waiting** | You’re waiting on others: your merge requests under review, drafts, a ticket whose work is up for review. |
 | **Snoozed** | What you put away until later. See [Snooze and reminders](./snooze-and-reminders). |
 | **Done** | What you marked done, until something new happens on it. |
+
+A ticket (Linear, Jira, GitHub, Azure DevOps, Notion) waits on others once a pull or merge request is open for it,
+or its status says review (*In Review*, *Code review*, *En revue*…). The pull request’s row says what it needs
+from you, linked to the ticket; a comment on the ticket that asks you something keeps its own row in *My turn*.
 
 The count on the menu bar or tray icon only covers *My turn*, minus what’s quiet (*To read*, low priority). Settings
 → General → **Show count of** can count everything, show only a dot when something needs you, or nothing.

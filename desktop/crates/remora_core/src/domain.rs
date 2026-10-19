@@ -54,6 +54,11 @@ pub struct InboxItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub reason: Option<SortReason>,
+    /// Pages the source ties this item to (a ticket's pull requests): linked for sure to the items at those
+    /// addresses. Not in the fingerprint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub related: Option<Vec<String>>,
 }
 
 /// Why a message went where it is (Swift's `SortReason`): the words that decided, the model, nothing clear, or you.

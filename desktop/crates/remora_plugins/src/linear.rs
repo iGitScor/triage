@@ -1,7 +1,7 @@
 use crate::{decode, HttpClient, PluginConfig, PluginError, Request, SourcePlugin, SourceSnapshot};
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Local, NaiveDate, TimeZone, Utc};
-use remora_core::badge;
+use remora_core::{badge, in_review};
 use remora_core::{Badge, ConfigField, Egress, InboxBundle, InboxItem, Person, PluginManifest, Priority, Tone};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -46,7 +46,10 @@ const ISSUES_QUERY: &str = r#"query {
   viewer {
     name
     assignedIssues(first: 50, orderBy: updatedAt, filter: { state: { type: { nin: ["completed", "canceled"] } } }) {
-      nodes { id identifier title url priority dueDate updatedAt state { name type } }
+      nodes {
+        id identifier title url priority dueDate updatedAt state { name type }
+        attachments(first: 10) { nodes { url metadata } }
+      }
       pageInfo { hasNextPage }
     }
   }
@@ -173,9 +176,54 @@ struct Issue {
     due_date: Option<String>,
     updated_at: DateTime<Utc>,
     state: Option<State>,
+    #[serde(default)]
+    attachments: Option<Nodes<Attachment>>,
+}
+
+/// A link on an issue. Its metadata is the integration's own: read leniently, so an unexpected shape never fails the
+/// fetch.
+#[derive(Deserialize)]
+struct Attachment {
+    #[serde(default, deserialize_with = "lenient_string")]
+    url: Option<String>,
+    #[serde(default)]
+    metadata: serde_json::Value,
+}
+
+impl Attachment {
+    /// A pull request's state as the integration last saw it ("open", "merged", "closed"…), when it says.
+    fn status(&self) -> Option<&str> {
+        self.metadata.get("status").and_then(|s| s.as_str())
+    }
+
+    /// Open unless the integration says it was merged or closed.
+    fn is_open(&self) -> bool {
+        !["merged", "closed"].contains(&self.status().unwrap_or("").to_lowercase().as_str())
+    }
+}
+
+/// A string, or None for anything else.
+fn lenient_string<'de, D: serde::Deserializer<'de>>(decoder: D) -> Result<Option<String>, D::Error> {
+    Ok(serde_json::Value::deserialize(decoder)?.as_str().map(String::from))
 }
 
 impl Issue {
+    /// Its pull and merge requests (Linear's GitHub and GitLab integrations, or a link pasted by hand).
+    fn changes(&self) -> Vec<&Attachment> {
+        let attachments = self.attachments.as_ref().map_or(&[][..], |a| &a.nodes);
+        attachments.iter().filter(|a| a.url.as_deref().is_some_and(in_review::is_change)).collect()
+    }
+
+    /// Up for review: a pull request still open, or a review status ("In Review"). Not from the backlog or triage,
+    /// which nobody has started.
+    fn in_review(&self) -> bool {
+        let kind = self.state.as_ref().and_then(|s| s.kind.as_deref());
+        if kind == Some("backlog") || kind == Some("triage") {
+            return false;
+        }
+        self.changes().iter().any(|c| c.is_open()) || in_review::status(self.state.as_ref().map(|s| s.name.as_str()))
+    }
+
     /// Linear's 1 urgent … 4 low (0 none). Backlog counts as low unless urgent or high.
     fn item_priority(&self) -> Priority {
         let mapped = match self.priority {
@@ -208,7 +256,7 @@ impl Issue {
             badges.push(Badge::new(badge::STATUS, &state.name, Tone::Neutral));
         }
         let priority = self.item_priority();
-        InboxItem {
+        let item = InboxItem {
             id: InboxItem::make_id(account_id, &self.id),
             account_id: account_id.into(),
             plugin_id: "linear".into(),
@@ -231,6 +279,13 @@ impl Issue {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
+        };
+        if self.in_review() {
+            let changes = self.changes().iter().filter_map(|c| c.url.clone()).collect();
+            item.waiting_on_review(changes)
+        } else {
+            item
         }
     }
 }
@@ -317,6 +372,7 @@ impl Notification {
             recurrence: None,
             reactions: None,
             reason: None,
+            related: None,
         }
     }
 }
@@ -380,6 +436,53 @@ pub(crate) mod tests {
         assert_eq!(tasks[0].app_url.as_deref(), Some("linear://x/issue/ENG-42"));
         let mentions: Vec<&InboxItem> = snapshot.items.iter().filter(|i| i.bundle == InboxBundle::mentions()).collect();
         assert_eq!(mentions.iter().map(|i| i.title.as_str()).collect::<Vec<_>>(), ["Erin mentioned you in ENG-40"]);
+    }
+
+    /// An open pull request, or a review status, puts an issue in Awaiting, tied to its pull requests; a merged one,
+    /// or a review status still in the backlog, doesn't. Metadata of an odd shape is no failure. As macOS.
+    #[tokio::test]
+    async fn issues_up_for_review_wait_on_the_reviewers() {
+        let recent = Utc::now().to_rfc3339();
+        let started = r#"{"name": "In Progress", "type": "started"}"#;
+        let review = r#"{"name": "In Review", "type": "started"}"#;
+        let backlog_review = r#"{"name": "In Review", "type": "backlog"}"#;
+        let open = r#"{"url": "https://github.com/acme/app/pull/9", "metadata": {"status": "open"}}"#;
+        let merged = r#"{"url": "https://github.com/acme/app/pull/8", "metadata": {"status": "merged"}}"#;
+        let odd = r#"{"url": 12, "metadata": {"status": {"name": "open"}}}"#;
+        let issue = |id: &str, state: &str, attachments: &str| {
+            format!(
+                r#"{{"id": "{id}", "identifier": "ENG-{id}", "title": "Issue {id}", "updatedAt": "{recent}",
+                  "state": {state}, "attachments": {{"nodes": [{attachments}]}}}}"#
+            )
+        };
+        let nodes = [
+            issue("1", started, open),
+            issue("2", started, merged),
+            issue("3", review, ""),
+            issue("4", backlog_review, open),
+            issue("5", started, &format!("{odd}, {}", r#"{"metadata": [1, 2]}"#)),
+        ]
+        .join(",");
+        let body =
+            format!(r#"{{"data": {{"viewer": {{"name": "Alice", "assignedIssues": {{"nodes": [{nodes}]}}}}}}}}"#);
+        let none = r#"{"data": {"notifications": {"nodes": []}}}"#;
+        let http = StubHttp::bodies(&[("notifications", none), ("assignedIssues", &body)]);
+        let snapshot = LinearPlugin::new(&config(&[("token", "k")]), Arc::new(http)).unwrap().fetch().await.unwrap();
+
+        let bundles: Vec<_> = snapshot.items.iter().map(|i| (i.context.as_str(), i.bundle.clone())).collect();
+        assert_eq!(
+            bundles,
+            [
+                ("ENG-1", InboxBundle::awaiting()),
+                ("ENG-2", InboxBundle::tasks()),
+                ("ENG-3", InboxBundle::awaiting()),
+                ("ENG-4", InboxBundle::tasks()),
+                ("ENG-5", InboxBundle::tasks()),
+            ]
+        );
+        assert_eq!(snapshot.items[0].related, Some(vec!["https://github.com/acme/app/pull/9".to_string()]));
+        assert!(!snapshot.items[0].needs_action);
+        assert_eq!(snapshot.items[2].related, None, "no pull request to tie it to");
     }
 
     #[tokio::test]

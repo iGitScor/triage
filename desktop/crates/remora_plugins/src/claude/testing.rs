@@ -38,6 +38,7 @@ pub fn item(id: &str) -> InboxItem {
         recurrence: None,
         reactions: None,
         reason: None,
+        related: None,
     }
 }
 

@@ -7,6 +7,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
@@ -32,6 +36,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
@@ -67,6 +75,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
@@ -77,6 +89,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
@@ -144,6 +160,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
@@ -272,6 +292,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
@@ -307,6 +331,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
@@ -352,6 +380,10 @@ What changed in each release of Remora, for the people who use it. Downloads are
 
 ### Changed
 
+- A ticket whose work is up for review waits on others instead of sitting in *To do*: a pull or merge request
+  is open for it (Linear's attachments, Jira Cloud's development panel, GitHub's linked pull requests, Azure DevOps
+  links), or its status says review. It's linked for sure to that pull request, and a Linear or Jira comment to its
+  ticket. Linear, Jira, GitHub, Azure DevOps and Notion; Mac, Windows and Linux.
 - A review request on a pull or merge request someone already approved stays in *To review*, last, neither counted
   nor announced: it can wait. It's back to normal if the approval goes. On GitHub, a repository that requires no
   review now shows approvals and requested changes too. Mac, Windows and Linux.
